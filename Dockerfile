@@ -4,6 +4,7 @@ FROM python:2
 WORKDIR /app
 ADD n9e /app
 ADD etc /app/etc/
+ADD pub /app/pub/
 RUN chmod +x n9e
 
 EXPOSE 19000

@@ -36,7 +36,6 @@ _test
 /run
 /vendor
 /tmp
-/pub
 /n9e
 /docker/pub
 /docker/n9e
