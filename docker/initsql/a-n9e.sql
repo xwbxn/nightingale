@@ -41,10 +41,12 @@ CREATE TABLE `user_group` (
 insert into user_group(id, name, create_at, create_by, update_at, update_by) values(1, 'demo-root-group', unix_timestamp(now()), 'root', unix_timestamp(now()), 'root');
 
 CREATE TABLE `user_group_member` (
+    `id` bigint unsigned not null auto_increment,
     `group_id` bigint unsigned not null,
     `user_id` bigint unsigned not null,
     KEY (`group_id`),
-    KEY (`user_id`)
+    KEY (`user_id`),
+    PRIMARY KEY(`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 insert into user_group_member(group_id, user_id) values(1, 1);
@@ -70,10 +72,12 @@ insert into `role`(name, note) values('Standard', 'Ordinary user role');
 insert into `role`(name, note) values('Guest', 'Readonly user role');
 
 CREATE TABLE `role_operation`(
+    `id` bigint unsigned not null auto_increment,
     `role_name` varchar(128) not null,
     `operation` varchar(191) not null,
     KEY (`role_name`),
-    KEY (`operation`)
+    KEY (`operation`),
+    PRIMARY KEY(`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 -- Admin is special, who has no concrete operation but can do anything.
@@ -226,6 +230,7 @@ CREATE TABLE `chart_share` (
 CREATE TABLE `alert_rule` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
+    `cate` varchar(128) not null,
     `cluster` varchar(128) not null,
     `name` varchar(255) not null,
     `note` varchar(1024) not null default '',
@@ -264,13 +269,18 @@ CREATE TABLE `alert_mute` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
     `prod` varchar(255) not null default '',
+    `note` varchar(1024) not null default '',
+    `cate` varchar(128) not null,
     `cluster` varchar(128) not null,
     `tags` varchar(4096) not null default '' comment 'json,map,tagkey->regexp|value',
     `cause` varchar(255) not null default '',
     `btime` bigint not null default 0 comment 'begin time',
     `etime` bigint not null default 0 comment 'end time',
+    `disabled` tinyint(1) not null default 0 comment '0:enabled 1:disabled',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
     PRIMARY KEY (`id`),
     KEY (`create_at`),
     KEY (`group_id`)
@@ -278,7 +288,10 @@ CREATE TABLE `alert_mute` (
 
 CREATE TABLE `alert_subscribe` (
     `id` bigint unsigned not null auto_increment,
+    `name` varchar(255) not null default '',
+    `disabled` tinyint(1) not null default 0 comment '0:enabled 1:disabled',
     `group_id` bigint not null default 0 comment 'busi group id',
+    `cate` varchar(128) not null,
     `cluster` varchar(128) not null,
     `rule_id` bigint not null default 0,
     `tags` varchar(4096) not null default '' comment 'json,map,tagkey->regexp|value',
@@ -350,7 +363,7 @@ CREATE TABLE `recording_rule` (
     `cluster` varchar(128) not null,
     `name` varchar(255) not null comment 'new metric name',
     `note` varchar(255) not null comment 'rule note',
-    `disabled` tinyint(1) not null comment '0:enabled 1:disabled',
+    `disabled` tinyint(1) not null default 0 comment '0:enabled 1:disabled',
     `prom_ql` varchar(8192) not null comment 'promql',
     `prom_eval_interval` int not null comment 'evaluate interval',
     `append_tags` varchar(255) default '' comment 'split by space: service=n9e mod=api',
@@ -380,6 +393,7 @@ insert into alert_aggr_view(name, rule, cate) values('By RuleName', 'field:rule_
 
 CREATE TABLE `alert_cur_event` (
     `id` bigint unsigned not null comment 'use alert_his_event.id',
+    `cate` varchar(128) not null,
     `cluster` varchar(128) not null,
     `group_id` bigint unsigned not null comment 'busi group id of rule',
     `group_name` varchar(255) not null default '' comment 'busi group name',
@@ -416,6 +430,7 @@ CREATE TABLE `alert_cur_event` (
 CREATE TABLE `alert_his_event` (
     `id` bigint unsigned not null AUTO_INCREMENT,
     `is_recovered` tinyint(1) not null,
+    `cate` varchar(128) not null,
     `cluster` varchar(128) not null,
     `group_id` bigint unsigned not null comment 'busi group id of rule',
     `group_name` varchar(255) not null default '' comment 'busi group name',
