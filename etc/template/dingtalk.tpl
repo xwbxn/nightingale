@@ -1,4 +1,4 @@
-#### {{if .IsRecovered}}<font color="#008800">S{{.Severity}} - Recovered - {{.RuleName}}</font>{{else}}<font color="#FF0000">S{{.Severity}} - Triggered - {{.RuleName}}</font>{{end}}
+#### {{if .IsRecovered}}<font color="#008800">S{{.Severity}} - 恢复 - {{.RuleName}}</font>{{else}}<font color="#FF0000">S{{.Severity}} - 告警 - {{.RuleName}}</font>{{end}}
 
 ---
 

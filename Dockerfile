@@ -4,7 +4,7 @@ FROM python:2
 WORKDIR /app
 ADD n9e /app
 ADD etc /app/etc/
-ADD pub /app/pub/
+RUN curl -sSL https://monset.oss-cn-hangzhou.aliyuncs.com/pub.tar.gz | tar xz
 RUN chmod +x n9e
 
 EXPOSE 19000

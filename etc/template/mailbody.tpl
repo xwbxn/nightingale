@@ -145,12 +145,12 @@
                 {{if .IsRecovered}}
                 <tr class="succ">
                     <th>级别状态：</th>
-                    <td>S{{.Severity}} Recovered</td>
+                    <td>S{{.Severity}} 恢复</td>
                 </tr>
                 {{else}}
                 <tr class="fail">
                     <th>级别状态：</th>
-                    <td>S{{.Severity}} Triggered</td>
+                    <td>S{{.Severity}} 告警</td>
                 </tr>
                 {{end}}
 
@@ -214,7 +214,7 @@
 
             <footer>
                 <div class="copyright" style="font-style: italic">
-                    我们希望与您一起，将监控这个事情，做到极致！
+                    SecOps 团队
                 </div>
             </footer>
         </div>
