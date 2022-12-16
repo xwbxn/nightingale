@@ -213,13 +213,22 @@ func falconPush(c *gin.Context) {
 			}
 		}
 
-		writer.Writers.PushSample(arr[i].Metric, pt)
+		LogSample(c.Request.RemoteAddr, pt)
+		if config.C.WriterOpt.ShardingKey == "ident" {
+			if ident == "" {
+				writer.Writers.PushSample("-", pt)
+			} else {
+				writer.Writers.PushSample(ident, pt)
+			}
+		} else {
+			writer.Writers.PushSample(arr[i].Metric, pt)
+		}
 
 		succ++
 	}
 
 	if succ > 0 {
-		cn := config.ReaderClient.GetClusterName()
+		cn := config.C.ClusterName
 		if cn != "" {
 			promstat.CounterSampleTotal.WithLabelValues(cn, "openfalcon").Add(float64(succ))
 		}

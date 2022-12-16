@@ -207,13 +207,22 @@ func handleOpenTSDB(c *gin.Context) {
 			}
 		}
 
-		writer.Writers.PushSample(arr[i].Metric, pt)
+		LogSample(c.Request.RemoteAddr, pt)
+		if config.C.WriterOpt.ShardingKey == "ident" {
+			if host == "" {
+				writer.Writers.PushSample("-", pt)
+			} else {
+				writer.Writers.PushSample(host, pt)
+			}
+		} else {
+			writer.Writers.PushSample(arr[i].Metric, pt)
+		}
 
 		succ++
 	}
 
 	if succ > 0 {
-		cn := config.ReaderClient.GetClusterName()
+		cn := config.C.ClusterName
 		if cn != "" {
 			promstat.CounterSampleTotal.WithLabelValues(cn, "opentsdb").Add(float64(succ))
 		}

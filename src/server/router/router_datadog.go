@@ -266,13 +266,22 @@ func datadogSeries(c *gin.Context) {
 			}
 		}
 
-		writer.Writers.PushSample(item.Metric, pt)
+		LogSample(c.Request.RemoteAddr, pt)
+		if config.C.WriterOpt.ShardingKey == "ident" {
+			if ident == "" {
+				writer.Writers.PushSample("-", pt)
+			} else {
+				writer.Writers.PushSample(ident, pt)
+			}
+		} else {
+			writer.Writers.PushSample(item.Metric, pt)
+		}
 
 		succ++
 	}
 
 	if succ > 0 {
-		cn := config.ReaderClient.GetClusterName()
+		cn := config.C.ClusterName
 		if cn != "" {
 			promstat.CounterSampleTotal.WithLabelValues(cn, "datadog").Add(float64(succ))
 		}

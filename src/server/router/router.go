@@ -69,7 +69,7 @@ func configRoute(r *gin.Engine, version string, reloadFunc func()) {
 	})
 
 	r.GET("/servers/active", func(c *gin.Context) {
-		lst, err := naming.ActiveServers()
+		lst, err := naming.ActiveServers(ginx.QueryStr(c, "cluster"))
 		ginx.NewRender(c).Data(lst, err)
 	})
 
@@ -100,6 +100,10 @@ func configRoute(r *gin.Engine, version string, reloadFunc func()) {
 	r.GET("/memory/user-group", userGroupGet)
 
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+
+	r.GET("/log-sample-filter", logSampleFilterGet)
+	r.POST("/log-sample-filter", logSampleFilterAdd)
+	r.DELETE("/log-sample-filter", logSampleFilterDel)
 
 	service := r.Group("/v1/n9e")
 	service.POST("/event", pushEventToQueue)
