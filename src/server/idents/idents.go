@@ -23,6 +23,11 @@ import (
 // ident -> timestamp
 var Idents = cmap.New()
 
+type IdentProps struct {
+	Now       int64
+	BusiGroup string
+}
+
 func loopToRedis(ctx context.Context) {
 	duration := time.Duration(4) * time.Second
 	for {
@@ -48,8 +53,9 @@ func toRedis() {
 	now := time.Now().Unix()
 
 	// clean old idents
-	for key, at := range items {
-		if at.(int64) < now-config.C.NoData.Interval {
+	for key, props := range items {
+		attrs := props.(IdentProps)
+		if attrs.Now < now-config.C.NoData.Interval {
 			Idents.Remove(key)
 		} else {
 			// use now as timestamp to redis
@@ -57,22 +63,36 @@ func toRedis() {
 			if err != nil {
 				logger.Errorf("redis hset idents failed: %v", err)
 			}
+			err = storage.Redis.HSet(context.Background(), busiGroupKey(config.C.ClusterName), key, attrs.BusiGroup).Err()
+			if err != nil {
+				logger.Errorf("redis hset busigroups failed: %v", err)
+			}
 		}
 	}
 }
 
 // hash struct:
-// /idents/Default -> {
-//     $ident => $timestamp
-//     $ident => $timestamp
-// }
+//
+//	/idents/Default -> {
+//	    $ident => $timestamp
+//	    $ident => $timestamp
+//	}
 func redisKey(cluster string) string {
 	return fmt.Sprintf("/idents/%s", cluster)
+}
+
+func busiGroupKey(cluster string) string {
+	return fmt.Sprintf("/busigroups/%s", cluster)
 }
 
 func clearDeadIdent(ctx context.Context, cluster, ident string) {
 	key := redisKey(cluster)
 	err := storage.Redis.HDel(ctx, key, ident).Err()
+	if err != nil {
+		logger.Warningf("failed to hdel %s %s, error: %v", key, ident, err)
+	}
+	key = busiGroupKey(cluster)
+	err = storage.Redis.HDel(ctx, key, ident).Err()
 	if err != nil {
 		logger.Warningf("failed to hdel %s %s, error: %v", key, ident, err)
 	}
@@ -157,13 +177,18 @@ func pushMetrics() {
 		target, has := memsto.TargetCache.Get(active)
 		if !has {
 			// target not exists
+			busigroup, err := storage.Redis.HGet(context.Background(), busiGroupKey(clusterName), active).Result()
+			if err != nil {
+				logger.Errorf("handle_idents: insert target(%s) fail: %v", active, err)
+			}
 			target = &models.Target{
-				Cluster:  clusterName,
-				Ident:    active,
-				Tags:     "",
-				TagsJSON: []string{},
-				TagsMap:  make(map[string]string),
-				UpdateAt: now,
+				Cluster:   clusterName,
+				Ident:     active,
+				Tags:      "",
+				TagsJSON:  []string{},
+				TagsMap:   make(map[string]string),
+				UpdateAt:  now,
+				BusiGroup: busigroup,
 			}
 
 			if err := target.Add(); err != nil {

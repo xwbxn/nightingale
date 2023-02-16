@@ -89,10 +89,11 @@ func remoteWrite(c *gin.Context) {
 	}
 
 	var (
-		now    = time.Now().Unix()
-		ids    = make(map[string]interface{})
-		ident  string
-		metric string
+		now       = time.Now().Unix()
+		ids       = make(map[string]interface{})
+		ident     string
+		metric    string
+		busiGroup string
 	)
 
 	for i := 0; i < count; i++ {
@@ -101,6 +102,7 @@ func remoteWrite(c *gin.Context) {
 		}
 
 		ident = ""
+		busiGroup = ""
 
 		// find ident label
 		for j := 0; j < len(req.Timeseries[i].Labels); j++ {
@@ -108,6 +110,10 @@ func remoteWrite(c *gin.Context) {
 				ident = req.Timeseries[i].Labels[j].Value
 			} else if req.Timeseries[i].Labels[j].Name == "host" {
 				ident = req.Timeseries[i].Labels[j].Value
+			}
+
+			if req.Timeseries[i].Labels[j].Name == "busigroup" {
+				busiGroup = req.Timeseries[i].Labels[j].Value
 			}
 
 			if req.Timeseries[i].Labels[j].Name == "__name__" {
@@ -136,7 +142,9 @@ func remoteWrite(c *gin.Context) {
 
 		if len(ident) > 0 {
 			// register host
-			ids[ident] = now
+			props := idents.IdentProps{Now: now, BusiGroup: busiGroup}
+			ids[ident] = props
+			// ids[ident] = now
 
 			// fill tags
 			target, has := memsto.TargetCache.Get(ident)

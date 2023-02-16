@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
 
 type Target struct {
 	Id       int64             `json:"id" gorm:"primaryKey"`
-	GroupId  int64             `json:"group_id"`
+	GroupId  int64             `json:"group_id" gorm:"group_id"`
 	GroupObj *BusiGroup        `json:"group_obj" gorm:"-"`
 	Cluster  string            `json:"cluster"`
 	Ident    string            `json:"ident"`
@@ -25,6 +26,8 @@ type Target struct {
 	LoadPerCore float64 `json:"load_per_core" gorm:"-"`
 	MemUtil     float64 `json:"mem_util" gorm:"-"`
 	DiskUtil    float64 `json:"disk_util" gorm:"-"`
+
+	BusiGroup string `json:"-" gorm:"-"`
 }
 
 func (t *Target) TableName() string {
@@ -35,6 +38,15 @@ func (t *Target) Add() error {
 	obj, err := TargetGet("ident = ?", t.Ident)
 	if err != nil {
 		return err
+	}
+
+	group, err := BusiGroupGet("label_value like ?", "%"+t.BusiGroup+"%")
+	if err != nil {
+		logger.Errorf("get busigroup fail: busigroup: %s, %v", t.BusiGroup, err)
+	}
+
+	if group != nil {
+		t.GroupId = group.Id
 	}
 
 	if obj == nil {

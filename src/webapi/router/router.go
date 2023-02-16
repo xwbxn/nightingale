@@ -198,7 +198,10 @@ func configRoute(r *gin.Engine, version string) {
 
 		pages.GET("/busi-group/:id/boards", auth(), user(), perm("/dashboards"), bgro(), boardGets)
 		pages.POST("/busi-group/:id/boards", auth(), user(), perm("/dashboards/add"), bgrw(), boardAdd)
+		pages.GET("/busi-group/:id/grafana-boards", auth(), user(), perm("/dashboards"), bgro(), grafanaBoardGets)
+		pages.POST("/busi-group/:id/grafana-boards", auth(), user(), perm("/dashboards/add"), bgrw(), grafanaBoardAdd)
 		pages.POST("/busi-group/:id/board/:bid/clone", auth(), user(), perm("/dashboards/add"), bgrw(), boardClone)
+		pages.GET("/busi-group/overview", auth(), user(), perm("/dashboards"), overviewGet)
 
 		pages.GET("/board/:bid", boardGet)
 		pages.GET("/board/:bid/pure", boardPureGet)
@@ -206,6 +209,11 @@ func configRoute(r *gin.Engine, version string) {
 		pages.PUT("/board/:bid/configs", auth(), user(), perm("/dashboards/put"), boardPutConfigs)
 		pages.PUT("/board/:bid/public", auth(), user(), perm("/dashboards/put"), boardPutPublic)
 		pages.DELETE("/boards", auth(), user(), perm("/dashboards/del"), boardDel)
+
+		pages.GET("/grafana-board/:bid", grafanaBoardGet)
+		pages.GET("/grafana-board/:bid/pure", grafanaBoardPureGet)
+		pages.PUT("/grafana-board/:bid", auth(), user(), perm("/dashboards/put"), grafanaBoardPut)
+		pages.DELETE("/grafana-board", auth(), user(), perm("/dashboards/del"), grafanaBoardDel)
 
 		// migrate v5.8.0
 		pages.GET("/dashboards", auth(), admin(), migrateDashboards)

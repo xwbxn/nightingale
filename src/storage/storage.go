@@ -41,6 +41,7 @@ var Redis interface {
 	Get(ctx context.Context, key string) *redis.StringCmd
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 	HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd
+	HGet(ctx context.Context, key string, fields string) *redis.StringCmd
 	HSet(ctx context.Context, key string, values ...interface{}) *redis.IntCmd
 	HDel(ctx context.Context, key string, fields ...string) *redis.IntCmd
 	Close() error
