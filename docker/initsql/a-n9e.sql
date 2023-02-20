@@ -527,3 +527,22 @@ CREATE TABLE `alerting_engines`
     `clock` bigint not null,
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- for grafana dashboard
+CREATE TABLE `grafana_board` (
+    `id` bigint unsigned not null auto_increment,
+    `group_id` bigint not null default 0 comment 'busi group id',
+    `name` varchar(191) not null,
+    `ident` varchar(200) not null default '',
+    `tags` varchar(255) not null comment 'split by space',
+    `public` tinyint(1) not null default 0 comment '0:false 1:true',
+    `create_at` bigint not null default 0,
+    `create_by` varchar(64) not null default '',
+    `update_at` bigint not null default 0,
+    `update_by` varchar(64) not null default '',
+    `grafana_id` bigint not null default 0,
+    `grafana_url` varchar(255) not null default '',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY (`group_id`, `name`),
+    KEY(`ident`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
