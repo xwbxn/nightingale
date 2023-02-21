@@ -8,13 +8,13 @@ import (
 )
 
 type BusiOverview struct {
-	GroupId    int64
-	GroupName  string
-	GroupLabel string
-	Targets    int64
-	Emergency  int64
-	Warning    int64
-	Notice     int64
+	GroupId    int64  `json:"id"`
+	GroupName  string `json:"name"`
+	GroupLabel string `json:"label"`
+	Targets    int64  `json:"targets"`
+	Emergency  int64  `json:"emergency"`
+	Warning    int64  `json:"warning"`
+	Notice     int64  `json:"notice"`
 }
 
 func overviewGet(c *gin.Context) {
@@ -34,8 +34,8 @@ func overviewGet(c *gin.Context) {
 		bov.GroupLabel = group.LabelValue
 
 		bov.Emergency, _ = models.AlertCurEventTotal("", group.Id, 0, 0, 1, []string{}, []string{}, "")
-		bov.Emergency, _ = models.AlertCurEventTotal("", group.Id, 0, 0, 2, []string{}, []string{}, "")
-		bov.Emergency, _ = models.AlertCurEventTotal("", group.Id, 0, 0, 3, []string{}, []string{}, "")
+		bov.Warning, _ = models.AlertCurEventTotal("", group.Id, 0, 0, 2, []string{}, []string{}, "")
+		bov.Notice, _ = models.AlertCurEventTotal("", group.Id, 0, 0, 3, []string{}, []string{}, "")
 		bov.Targets, _ = models.TargetTotal(group.Id, []string{}, "")
 
 		ret = append(ret, bov)
