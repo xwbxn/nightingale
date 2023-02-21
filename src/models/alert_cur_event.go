@@ -8,7 +8,6 @@ import (
 	"text/template"
 
 	"github.com/didi/nightingale/v5/src/pkg/tplx"
-	"github.com/toolkits/pkg/logger"
 )
 
 type AlertCurEvent struct {
@@ -462,32 +461,4 @@ type AlertOverview struct {
 	Emergency    int64
 	Warning      int64
 	Notice       int64
-}
-
-func AlertCurEventOverview(bgids []int64) ([]AlertOverview, error) {
-	ret := []AlertOverview{}
-	if len(bgids) == 0 {
-		return ret, nil
-	}
-
-	err := DB().Model(&AlertCurEvent{}).Select("group_id",
-		"count(*) as group_count",
-		"sum(if(severity=0,1,0)) as emergency",
-		"sum(if(severity=1,1,0)) as warning",
-		"sum(if(severity=2,1,0)) as notice").Where("group_id in ?", bgids).Group("group_id").Find(&ret).Error
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range ret {
-		var count int64
-		err = DB().Model(&Target{}).Where("group_id=?", v.GroupId).Count(&count).Error
-		if err != nil {
-			logger.Warningf("calc targets fail: %v", err)
-		} else {
-			ret[k].GroupTargets = count
-		}
-	}
-
-	return ret, nil
 }

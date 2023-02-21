@@ -7,6 +7,16 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
+type BusiOverview struct {
+	GroupId    int64
+	GroupName  string
+	GroupLabel string
+	Targets    int64
+	Emergency  int64
+	Warning    int64
+	Notice     int64
+}
+
 func overviewGet(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 
@@ -16,15 +26,20 @@ func overviewGet(c *gin.Context) {
 		ginx.Dangerous(err)
 	}
 
-	bgids := []int64{}
+	ret := []BusiOverview{}
 	for _, group := range busiGroups {
-		bgids = append(bgids, group.Id)
+		bov := BusiOverview{}
+		bov.GroupId = group.Id
+		bov.GroupName = group.Name
+		bov.GroupLabel = group.LabelValue
+
+		bov.Emergency, _ = models.AlertCurEventTotal("", group.Id, 0, 0, 1, []string{}, []string{}, "")
+		bov.Emergency, _ = models.AlertCurEventTotal("", group.Id, 0, 0, 2, []string{}, []string{}, "")
+		bov.Emergency, _ = models.AlertCurEventTotal("", group.Id, 0, 0, 3, []string{}, []string{}, "")
+		bov.Targets, _ = models.TargetTotal(group.Id, []string{}, "")
+
+		ret = append(ret, bov)
 	}
 
-	lst, err := models.AlertCurEventOverview(bgids)
-	if err != nil {
-		ginx.Dangerous(err)
-	}
-
-	ginx.NewRender(c).Data(lst, err)
+	ginx.NewRender(c).Data(ret, err)
 }
