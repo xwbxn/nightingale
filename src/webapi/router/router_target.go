@@ -128,7 +128,7 @@ func instantQuery(ctx context.Context, c *prom.ClusterType, promql string, ts ti
 }
 
 func ipAddressQuery(ctx context.Context, c *prom.ClusterType, ts time.Time) (map[string]string, error) {
-	promql := "count(target_up) by (ident, agent_ip)"
+	promql := "count(system_uptime) by (ident, agent_ip)"
 	ret := make(map[string]string)
 
 	val, warnings, err := c.PromClient.Query(ctx, promql, ts)
