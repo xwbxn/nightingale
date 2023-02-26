@@ -128,7 +128,7 @@ func instantQuery(ctx context.Context, c *prom.ClusterType, promql string, ts ti
 }
 
 func ipAddressQuery(ctx context.Context, c *prom.ClusterType, ts time.Time) (map[string]string, error) {
-	promql := "count(target_up) by (ident, ip_address)"
+	promql := "count(target_up) by (ident, agent_ip)"
 	ret := make(map[string]string)
 
 	val, warnings, err := c.PromClient.Query(ctx, promql, ts)
@@ -144,8 +144,8 @@ func ipAddressQuery(ctx context.Context, c *prom.ClusterType, ts time.Time) (map
 	for i := range vectors {
 		ident, has := vectors[i].Labels["ident"]
 		if has {
-			if vectors[i].Labels["ip_address"].IsValid() {
-				ret[string(ident)] = string(vectors[i].Labels["ip_address"])
+			if vectors[i].Labels["agent_ip"].IsValid() {
+				ret[string(ident)] = string(vectors[i].Labels["agent_ip"])
 			}
 		}
 	}
