@@ -26,6 +26,7 @@ type Target struct {
 	LoadPerCore float64 `json:"load_per_core" gorm:"-"`
 	MemUtil     float64 `json:"mem_util" gorm:"-"`
 	DiskUtil    float64 `json:"disk_util" gorm:"-"`
+	IpAddress   string  `json:"ip_address" gorm:"-"`
 
 	BusiGroup string `json:"-" gorm:"-"`
 }

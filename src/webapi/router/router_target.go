@@ -68,6 +68,15 @@ func targetGets(c *gin.Context) {
 				valuesMap[metric] = values
 			}
 
+			targetIPValues, err := ipAddressQuery(context.Background(), cc, now)
+			ginx.Dangerous(err)
+
+			for ident, target := range targetsMap {
+				if value, has := targetIPValues[ident]; has {
+					target.IpAddress = value
+				}
+			}
+
 			// handle values
 			for metric, values := range valuesMap {
 				for ident := range values {
@@ -112,6 +121,32 @@ func instantQuery(ctx context.Context, c *prom.ClusterType, promql string, ts ti
 		ident, has := vectors[i].Labels["ident"]
 		if has {
 			ret[string(ident)] = vectors[i].Value
+		}
+	}
+
+	return ret, nil
+}
+
+func ipAddressQuery(ctx context.Context, c *prom.ClusterType, ts time.Time) (map[string]string, error) {
+	promql := "count(target_up) by (ident, ip_address)"
+	ret := make(map[string]string)
+
+	val, warnings, err := c.PromClient.Query(ctx, promql, ts)
+	if err != nil {
+		return ret, err
+	}
+
+	if len(warnings) > 0 {
+		return ret, fmt.Errorf("instant query occur warnings, promql: %s, warnings: %v", promql, warnings)
+	}
+
+	vectors := conv.ConvertVectors(val)
+	for i := range vectors {
+		ident, has := vectors[i].Labels["ident"]
+		if has {
+			if vectors[i].Labels["ip_address"].IsValid() {
+				ret[string(ident)] = string(vectors[i].Labels["ip_address"])
+			}
 		}
 	}
 
