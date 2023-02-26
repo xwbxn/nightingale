@@ -71,8 +71,8 @@ func targetGets(c *gin.Context) {
 			targetIPValues, err := ipAddressQuery(context.Background(), cc, now)
 			ginx.Dangerous(err)
 
-			for ident, target := range targetsMap {
-				if value, has := targetIPValues[target.Cluster+ident]; has {
+			for _, target := range targetsMap {
+				if value, has := targetIPValues[target.Ident]; has {
 					target.IpAddress = value
 				}
 			}
