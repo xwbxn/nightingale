@@ -5,6 +5,8 @@ WORKDIR /app
 ADD n9e /app
 ADD etc /app/etc/
 # RUN curl -sSL https://monset.oss-cn-hangzhou.aliyuncs.com/pub.tar.gz | tar xz
+RUN mkdir -p /app/pub
+ADD pub /app/pub/
 RUN chmod +x n9e
 
 EXPOSE 19000
