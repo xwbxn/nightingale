@@ -140,6 +140,7 @@ type Config struct {
 	CAS                  cas.Config
 	OAuth                oauth2x.Config
 	TargetMetrics        map[string]string
+	Categraf             Categraf
 }
 
 type ClusterOptions struct {
@@ -201,4 +202,12 @@ type Ibex struct {
 
 func (c *Config) IsDebugMode() bool {
 	return c.RunMode == "debug"
+}
+
+type Categraf struct {
+	WriterUrl  string
+	WriterUser string
+	WriterPass string
+	ServerHost string
+	ServerPort int64
 }

@@ -51,3 +51,5 @@ _test
 queries.active
 
 /n9e-*
+/etc/categraf/dist/categraf
+/etc/categraf/dist/categraf.exe

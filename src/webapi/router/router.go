@@ -311,6 +311,11 @@ func configRoute(r *gin.Engine, version string) {
 		pages.PUT("/server/:id", auth(), admin(), serverBindCluster)
 		pages.POST("/servers", auth(), admin(), serverAddCluster)
 		pages.DELETE("/servers", auth(), admin(), serverDelCluster)
+
+		// 探针管理
+		r.GET("/categraf/install", CategrafInstall)
+		r.GET("/categraf/download", CategrafDownload)
+		pages.GET("/categraf/getstart", auth(), CategrefGetStart)
 	}
 
 	service := r.Group("/v1/n9e")
