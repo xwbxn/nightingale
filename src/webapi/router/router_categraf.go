@@ -43,7 +43,8 @@ func CategrefGetStart(c *gin.Context) {
 	}
 
 	serverHost := getServerHost(c)
-	cmd := fmt.Sprintf("curl http://%s:%d/categraf/install?token=%s", serverHost, config.C.Categraf.ServerPort, token)
+	serverPort := getServerPort()
+	cmd := fmt.Sprintf("curl http://%s:%d/categraf/install?token=%s", serverHost, serverPort, token)
 	ginx.NewRender(c).Data(map[string]string{"url": cmd}, nil)
 }
 
@@ -51,10 +52,11 @@ func CategrafInstall(c *gin.Context) {
 	token := ginx.QueryStr(c, "token")
 
 	serverHost := getServerHost(c)
+	serverPort := getServerPort()
 	vars := InstallVar{
 		Token:      token,
 		ServerHost: serverHost,
-		ServerPort: config.C.Categraf.ServerPort,
+		ServerPort: serverPort,
 	}
 
 	template_file := path.Join("etc", "categraf", "install.tpl")
@@ -145,6 +147,15 @@ func getServerHost(c *gin.Context) string {
 		serverHost = strings.Split(c.Request.Host, ":")[0]
 	}
 	return serverHost
+}
+
+// 如果配置未指定port, 则设置为默认值8080
+func getServerPort() int64 {
+	serverPort := config.C.Categraf.ServerPort
+	if serverPort == 0 {
+		serverPort = 8080
+	}
+	return serverPort
 }
 
 /**
