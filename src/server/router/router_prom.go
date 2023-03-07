@@ -74,6 +74,32 @@ func duplicateLabelKey(series *prompb.TimeSeries) bool {
 	return false
 }
 
+func extractIdentFromTimeSeries(s *prompb.TimeSeries) string {
+	for i := 0; i < len(s.Labels); i++ {
+		if s.Labels[i].Name == "ident" {
+			return s.Labels[i].Value
+		}
+	}
+
+	// agent_hostname for grafana-agent and categraf
+	for i := 0; i < len(s.Labels); i++ {
+		if s.Labels[i].Name == "agent_hostname" {
+			s.Labels[i].Name = "ident"
+			return s.Labels[i].Value
+		}
+	}
+
+	// telegraf, output plugin: http, format: prometheusremotewrite
+	for i := 0; i < len(s.Labels); i++ {
+		if s.Labels[i].Name == "host" {
+			s.Labels[i].Name = "ident"
+			return s.Labels[i].Value
+		}
+	}
+
+	return ""
+}
+
 func remoteWrite(c *gin.Context) {
 	req, err := DecodeWriteRequest(c.Request.Body)
 	if err != nil {
@@ -101,34 +127,16 @@ func remoteWrite(c *gin.Context) {
 			continue
 		}
 
-		ident = ""
+		ident = extractIdentFromTimeSeries(req.Timeseries[i])
 		busiGroup = ""
 
-		// find ident label
 		for j := 0; j < len(req.Timeseries[i].Labels); j++ {
-			if req.Timeseries[i].Labels[j].Name == "ident" {
-				ident = req.Timeseries[i].Labels[j].Value
-			} else if req.Timeseries[i].Labels[j].Name == "host" {
-				ident = req.Timeseries[i].Labels[j].Value
-			}
-
 			if req.Timeseries[i].Labels[j].Name == "busigroup" {
 				busiGroup = req.Timeseries[i].Labels[j].Value
 			}
 
 			if req.Timeseries[i].Labels[j].Name == "__name__" {
 				metric = req.Timeseries[i].Labels[j].Value
-			}
-		}
-
-		if ident == "" {
-			// not found, try agent_hostname
-			for j := 0; j < len(req.Timeseries[i].Labels); j++ {
-				// agent_hostname for grafana-agent
-				if req.Timeseries[i].Labels[j].Name == "agent_hostname" {
-					req.Timeseries[i].Labels[j].Name = "ident"
-					ident = req.Timeseries[i].Labels[j].Value
-				}
 			}
 		}
 
