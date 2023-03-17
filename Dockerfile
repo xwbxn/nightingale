@@ -4,8 +4,8 @@ FROM python:2
 WORKDIR /app
 ADD n9e /app
 ADD etc /app/etc/
-# RUN curl -sSL https://monset.oss-cn-hangzhou.aliyuncs.com/pub.tar.gz | tar xz
-RUN mkdir -p /app/pub
+ADD https://monset.oss-cn-hangzhou.aliyuncs.com/wait /wait
+RUN mkdir -p /app/pub && chmod +x /wait
 ADD pub /app/pub/
 RUN chmod +x n9e
 
