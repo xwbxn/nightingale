@@ -90,7 +90,7 @@ func (s *Set) updateTargets(lst map[string]IdentProps, now int64) error {
 	if count == 0 {
 		return nil
 	}
-	namelist := make([]string, count)
+	namelist := []string{}
 	for ident := range lst {
 		namelist = append(namelist, ident)
 	}
@@ -114,7 +114,9 @@ func (s *Set) updateTargets(lst map[string]IdentProps, now int64) error {
 	news := slice.SubString(namelist, exists)
 	for i := 0; i < len(news); i++ {
 		busigroup := lst[news[i]].BusiGroup
-		err = s.db.Exec("INSERT INTO target(ident, busigroup, update_at) VALUES(?, ?)", news[i], busigroup, now).Error
+		var group int64
+		s.db.Raw("select id from busi_group where label_value = ?", busigroup).Scan(&group)
+		err = s.db.Exec("INSERT INTO target(ident, group_id, update_at) VALUES(?, ?, ?)", news[i], group, now).Error
 		if err != nil {
 			logger.Error("failed to insert target:", news[i], "error:", err)
 		}
