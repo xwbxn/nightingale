@@ -16,8 +16,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/didi/nightingale/v5/src/storage"
-	"github.com/didi/nightingale/v5/src/webapi/config"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 )
@@ -28,7 +26,7 @@ type InstallVar struct {
 	ServerPort int64
 }
 
-func CategrefGetStart(c *gin.Context) {
+func (rt *Router) CategrefGetStart(c *gin.Context) {
 	busigroup := ginx.QueryStr(c, "busigroup")
 
 	// 生成随机token，5分钟有效，在下载探针时验证
@@ -37,22 +35,22 @@ func CategrefGetStart(c *gin.Context) {
 	rand.Read(rand_arr)
 	token := hex.EncodeToString(rand_arr)
 
-	err := storage.Redis.Set(c.Request.Context(), token, busigroup, time.Minute*5).Err()
+	err := rt.Redis.Set(c.Request.Context(), token, busigroup, time.Minute*5).Err()
 	if err != nil {
 		ginx.Bomb(http.StatusInternalServerError, err.Error())
 	}
 
-	serverHost := getServerHost(c)
-	serverPort := getServerPort()
+	serverHost := rt.getServerHost(c)
+	serverPort := rt.getServerPort()
 	cmd := fmt.Sprintf("curl http://%s:%d/categraf/install?token=%s", serverHost, serverPort, token)
 	ginx.NewRender(c).Data(map[string]string{"url": cmd}, nil)
 }
 
-func CategrafInstall(c *gin.Context) {
+func (rt *Router) CategrafInstall(c *gin.Context) {
 	token := ginx.QueryStr(c, "token")
 
-	serverHost := getServerHost(c)
-	serverPort := getServerPort()
+	serverHost := rt.getServerHost(c)
+	serverPort := rt.getServerPort()
 	vars := InstallVar{
 		Token:      token,
 		ServerHost: serverHost,
@@ -79,10 +77,10 @@ type CategrafConfig struct {
 	ProviderServer string
 }
 
-func CategrafDownload(c *gin.Context) {
+func (rt *Router) CategrafDownload(c *gin.Context) {
 	token := ginx.QueryStr(c, "token")
 
-	busigroup, err := storage.Redis.Get(c.Request.Context(), token).Result()
+	busigroup, err := rt.Redis.Get(c.Request.Context(), token).Result()
 	if err != nil {
 		ginx.Bomb(http.StatusInternalServerError, err.Error())
 	}
@@ -102,9 +100,8 @@ func CategrafDownload(c *gin.Context) {
 		ginx.Bomb(http.StatusInternalServerError, err.Error())
 	}
 
-	serverHost := getServerHost(c)
-
-	writerUrl := config.C.Categraf.WriterUrl
+	serverHost := rt.getServerHost(c)
+	writerUrl := rt.Center.Categraf.WriterUrl
 	if writerUrl == "" {
 		writerUrl = fmt.Sprintf("http://%s:19000/prometheus/v1/write", serverHost)
 	}
@@ -112,8 +109,8 @@ func CategrafDownload(c *gin.Context) {
 	categrafConfig := CategrafConfig{
 		Busigroup:      busigroup,
 		WriterUrl:      writerUrl,
-		WriterUser:     config.C.Categraf.WriterUser,
-		WriterPass:     config.C.Categraf.WriterPass,
+		WriterUser:     rt.Center.Categraf.WriterUser,
+		WriterPass:     rt.Center.Categraf.WriterPass,
 		IbexEnable:     "false",
 		IbexServer:     serverHost + ":20090",
 		HttpEnable:     "false",
@@ -141,8 +138,8 @@ func CategrafDownload(c *gin.Context) {
 }
 
 // 如果配置未指定host, 则从请求的host头中取，用于生成链接
-func getServerHost(c *gin.Context) string {
-	serverHost := config.C.Categraf.ServerHost
+func (rt *Router) getServerHost(c *gin.Context) string {
+	serverHost := rt.Center.Categraf.ServerHost
 	if serverHost == "" {
 		serverHost = strings.Split(c.Request.Host, ":")[0]
 	}
@@ -150,8 +147,8 @@ func getServerHost(c *gin.Context) string {
 }
 
 // 如果配置未指定port, 则设置为默认值8080
-func getServerPort() int64 {
-	serverPort := config.C.Categraf.ServerPort
+func (rt *Router) getServerPort() int64 {
+	serverPort := rt.Center.Categraf.ServerPort
 	if serverPort == 0 {
 		serverPort = 8080
 	}

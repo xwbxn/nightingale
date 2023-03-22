@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/gin-gonic/gin"
 	"github.com/mailru/easyjson"
 	"github.com/prometheus/common/model"
@@ -180,7 +181,7 @@ func (rt *Router) falconPush(c *gin.Context) {
 		fail int
 		msg  = "received"
 		ts   = time.Now().Unix()
-		ids  = make(map[string]struct{})
+		ids  = make(map[string]idents.IdentProps)
 	)
 
 	for i := 0; i < len(arr); i++ {
@@ -197,7 +198,7 @@ func (rt *Router) falconPush(c *gin.Context) {
 
 		if ident != "" {
 			// register host
-			ids[ident] = struct{}{}
+			ids[ident] = idents.IdentProps{}
 
 			// fill tags
 			target, has := rt.TargetCache.Get(ident)

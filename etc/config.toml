@@ -129,6 +129,13 @@ I18NHeaderKey = "X-Language"
 PromQuerier = true
 AlertDetail = true
 
+[Center.Categraf]
+# ServerHost = "127.0.0.1"
+# ServerPort = 8080
+# WriterUrl = "http://127.0.0.1:19000/prometheus/v1/write"
+# WriterUser = ""
+# WriterPass = ""
+
 [Pushgw]
 # use target labels in database instead of in series
 LabelRewrite = true

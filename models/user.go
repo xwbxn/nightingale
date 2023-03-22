@@ -596,9 +596,6 @@ func (u *User) ExtractToken(key string) (string, bool) {
 	case Feishu:
 		ret := gjson.GetBytes(bs, FeishuKey)
 		return ret.String(), ret.Exists()
-	case FeishuCard:
-		ret := gjson.GetBytes(bs, FeishuKey)
-		return ret.String(), ret.Exists()
 	case Mm:
 		ret := gjson.GetBytes(bs, MmKey)
 		return ret.String(), ret.Exists()

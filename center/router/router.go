@@ -310,6 +310,13 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/notify-config", rt.auth(), rt.admin(), rt.notifyConfigGet)
 		pages.PUT("/notify-config", rt.auth(), rt.admin(), rt.notifyConfigPut)
+
+		// 探针管理
+		r.GET("/categraf/install", rt.CategrafInstall)
+		r.GET("/categraf/download", rt.CategrafDownload)
+		pages.GET("/categraf/getstart", rt.auth(), rt.CategrefGetStart)
+		// 总览试图
+		pages.GET("/busi-group/overview", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.overviewGet)
 	}
 
 	if rt.HTTP.Service.Enable {

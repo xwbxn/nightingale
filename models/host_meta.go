@@ -12,6 +12,7 @@ type HostMeta struct {
 	MemUtil      float64 `json:"mem_util"`
 	Offset       int64   `json:"offset"`
 	UnixTime     int64   `json:"unixtime"`
+	IpAddress    string  `json:"ip_address"`
 }
 
 func (h HostMeta) MarshalBinary() ([]byte, error) {

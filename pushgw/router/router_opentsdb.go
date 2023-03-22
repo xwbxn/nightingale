@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/prompb"
@@ -166,7 +167,7 @@ func (rt *Router) openTSDBPut(c *gin.Context) {
 		fail int
 		msg  = "received"
 		ts   = time.Now().Unix()
-		ids  = make(map[string]struct{})
+		ids  = make(map[string]idents.IdentProps)
 	)
 
 	for i := 0; i < len(arr); i++ {
@@ -192,7 +193,7 @@ func (rt *Router) openTSDBPut(c *gin.Context) {
 		host, has := arr[i].Tags["ident"]
 		if has {
 			// register host
-			ids[host] = struct{}{}
+			ids[host] = idents.IdentProps{}
 
 			// fill tags
 			target, has := rt.TargetCache.Get(host)

@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/gin-gonic/gin"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
@@ -63,32 +64,6 @@ func duplicateLabelKey(series *prompb.TimeSeries) bool {
 	return false
 }
 
-func extractIdentFromTimeSeries(s *prompb.TimeSeries) string {
-	for i := 0; i < len(s.Labels); i++ {
-		if s.Labels[i].Name == "ident" {
-			return s.Labels[i].Value
-		}
-	}
-
-	// agent_hostname for grafana-agent and categraf
-	for i := 0; i < len(s.Labels); i++ {
-		if s.Labels[i].Name == "agent_hostname" {
-			s.Labels[i].Name = "ident"
-			return s.Labels[i].Value
-		}
-	}
-
-	// telegraf, output plugin: http, format: prometheusremotewrite
-	for i := 0; i < len(s.Labels); i++ {
-		if s.Labels[i].Name == "host" {
-			s.Labels[i].Name = "ident"
-			return s.Labels[i].Value
-		}
-	}
-
-	return ""
-}
-
 func (rt *Router) remoteWrite(c *gin.Context) {
 	req, err := DecodeWriteRequest(c.Request.Body)
 	if err != nil {
@@ -104,8 +79,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 	}
 
 	var (
-		now       = time.Now().Unix()
-		ids       = make(map[string]struct{})
+		ids       = make(map[string]idents.IdentProps)
 		ident     string
 		metric    string
 		busiGroup string
@@ -139,7 +113,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 
 		if len(ident) > 0 {
 			// register host
-			props := idents.IdentProps{Now: now, BusiGroup: busiGroup}
+			props := idents.IdentProps{BusiGroup: busiGroup}
 			ids[ident] = props
 			// ids[ident] = now
 

@@ -14,6 +14,7 @@ type Center struct {
 	MetricDesc             MetricDescType
 	TargetMetrics          map[string]string
 	AnonymousAccess        AnonymousAccess
+	Categraf               Categraf
 }
 
 type Plugin struct {

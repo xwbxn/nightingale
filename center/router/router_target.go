@@ -78,15 +78,6 @@ func (rt *Router) targetGets(c *gin.Context) {
 				metaMap[meta.Hostname] = &meta
 			}
 
-			targetIPValues, err := ipAddressQuery(context.Background(), cc, now)
-			ginx.Dangerous(err)
-
-			for _, target := range targetsMap {
-				if value, has := targetIPValues[target.Ident]; has {
-					target.IpAddress = value
-				}
-			}
-
 			for i := 0; i < len(list); i++ {
 				if meta, ok := metaMap[list[i].Ident]; ok {
 					list[i].FillMeta(meta)
@@ -108,56 +99,7 @@ func (rt *Router) targetGets(c *gin.Context) {
 	}, nil)
 }
 
-func instantQuery(ctx context.Context, c *prom.ClusterType, promql string, ts time.Time) (map[string]float64, error) {
-	ret := make(map[string]float64)
-
-	val, warnings, err := c.PromClient.Query(ctx, promql, ts)
-	if err != nil {
-		return ret, err
-	}
-
-	if len(warnings) > 0 {
-		return ret, fmt.Errorf("instant query occur warnings, promql: %s, warnings: %v", promql, warnings)
-	}
-
-	vectors := conv.ConvertVectors(val)
-	for i := range vectors {
-		ident, has := vectors[i].Labels["ident"]
-		if has {
-			ret[string(ident)] = vectors[i].Value
-		}
-	}
-
-	return ret, nil
-}
-
-func ipAddressQuery(ctx context.Context, c *prom.ClusterType, ts time.Time) (map[string]string, error) {
-	promql := "count(system_uptime) by (ident, agent_ip)"
-	ret := make(map[string]string)
-
-	val, warnings, err := c.PromClient.Query(ctx, promql, ts)
-	if err != nil {
-		return ret, err
-	}
-
-	if len(warnings) > 0 {
-		return ret, fmt.Errorf("instant query occur warnings, promql: %s, warnings: %v", promql, warnings)
-	}
-
-	vectors := conv.ConvertVectors(val)
-	for i := range vectors {
-		ident, has := vectors[i].Labels["ident"]
-		if has {
-			if vectors[i].Labels["agent_ip"].IsValid() {
-				ret[string(ident)] = string(vectors[i].Labels["agent_ip"])
-			}
-		}
-	}
-
-	return ret, nil
-}
-
-func targetGetTags(c *gin.Context) {
+func (rt *Router) targetGetTags(c *gin.Context) {
 	idents := ginx.QueryStr(c, "idents")
 	idents = strings.ReplaceAll(idents, ",", " ")
 	lst, err := models.TargetGetTags(rt.Ctx, strings.Fields(idents))
