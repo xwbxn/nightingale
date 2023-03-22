@@ -6,13 +6,13 @@ networks:
 
 services:
   mysql:
-    platform: linux/x86_64
+    # platform: linux/x86_64
     image: "mysql:5.7"
     container_name: mysql
     hostname: mysql
     restart: always
     ports:
-      - "3306:3306"
+      - "3406:3306"
     environment:
       TZ: Asia/Shanghai
       MYSQL_ROOT_PASSWORD: 1234
@@ -79,10 +79,10 @@ services:
     command: >
       sh -c "/wait && /app/ibex server"
 
-  nwebapi:
+  n9e:
     image: flashcatcloud/nightingale:latest
-    container_name: nwebapi
-    hostname: nwebapi
+    container_name: n9e
+    hostname: n9e
     restart: always
     environment:
       GIN_MODE: release
@@ -90,8 +90,9 @@ services:
       WAIT_HOSTS: mysql:3306, redis:6379
     volumes:
       - ./n9eetc:/app/etc
+      - ./integrations:/app/integrations
     ports:
-      - "18000:18000"
+      - "17000:17000"
     networks:
       - nightingale
     depends_on:
@@ -105,35 +106,7 @@ services:
       - prometheus:prometheus
       - ibex:ibex
     command: >
-      sh -c "/wait && /app/n9e webapi"
-
-  nserver:
-    image: flashcatcloud/nightingale:latest
-    container_name: nserver
-    hostname: nserver
-    restart: always
-    environment:
-      GIN_MODE: release
-      TZ: Asia/Shanghai
-      WAIT_HOSTS: mysql:3306, redis:6379
-    volumes:
-      - ./n9eetc:/app/etc
-    ports:
-      - "19000:19000"
-    networks:
-      - nightingale
-    depends_on:
-      - mysql
-      - redis
-      - prometheus
-      - ibex
-    links:
-      - mysql:mysql
-      - redis:redis
-      - prometheus:prometheus
-      - ibex:ibex
-    command: >
-      sh -c "/wait && /app/n9e server"
+      sh -c "/wait && /app/n9e"
 
   categraf:
     image: "flashcatcloud/categraf:latest"
@@ -149,31 +122,13 @@ services:
       - ./categraf/conf:/etc/categraf/conf
       - /:/hostfs
       - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "9100:9100/tcp"
+    # ports:
+    #   - "9100:9100/tcp"
     networks:
       - nightingale
     depends_on:
-      - nserver
-    links:
-      - nserver:nserver
-
-  agentd:
-    image: ulric2019/ibex:0.3
-    container_name: agentd
-    hostname: agentd
-    restart: always
-    environment:
-      GIN_MODE: release
-      TZ: Asia/Shanghai
-    volumes:
-      - ./ibexetc:/app/etc
-    networks:
-      - nightingale
-    depends_on:
+      - n9e
       - ibex
     links:
+      - n9e:n9e
       - ibex:ibex
-    command:
-      - "/app/ibex"
-      - "agentd"

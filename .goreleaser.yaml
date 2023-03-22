@@ -15,7 +15,7 @@ builds:
     hooks:
       pre:
        - ./fe.sh
-    main: ./src/
+    main: ./cmd/center/
     binary: n9e
     env:
       - CGO_ENABLED=0
@@ -26,7 +26,7 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X github.com/didi/nightingale/v5/src/pkg/version.VERSION={{ .Tag }}-{{.Commit}}
+      - -X github.com/ccfos/nightingale/v6/pkg/version.Version={{ .Tag }}-{{.Commit}}
 
 archives:
   - id: n9e
@@ -42,6 +42,8 @@ archives:
       - docker/*
       - etc/*
       - pub/*
+      - integrations/*
+      - n9e.sql
 
 release:
   github:
@@ -59,6 +61,7 @@ dockers:
     dockerfile: docker/Dockerfile.goreleaser
     extra_files:
       - pub
+      - etc
     use: buildx
     build_flag_templates:
       - "--platform=linux/amd64"
@@ -71,6 +74,7 @@ dockers:
     dockerfile: docker/Dockerfile.goreleaser
     extra_files:
       - pub
+      - etc
     use: buildx
     build_flag_templates:
       - "--platform=linux/arm64/v8"
