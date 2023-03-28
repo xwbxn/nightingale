@@ -32,9 +32,14 @@ type httpRemoteProviderResponse struct {
 
 func (rt *Router) CategrafConfigGet(c *gin.Context) {
 	ident := ginx.QueryStr(c, "ident")
-	busigroup := ginx.QueryInt64(c, "busigroup")
+	busigroup := ginx.QueryStr(c, "busigroup")
 
-	provider := rt.ProviderCache.GetByIdentAndGroup(ident, busigroup)
+	group := rt.BusiGroupCache.GetByBusiGroupLabel(busigroup)
+	if group == nil {
+		ginx.Dangerous("not found", 404)
+	}
+
+	provider := rt.ProviderCache.GetByIdentAndGroup(ident, group.Id)
 	resp := convertToResponse(provider)
 	c.JSON(200, resp)
 }

@@ -59,6 +59,19 @@ func (c *BusiGroupCacheType) GetByBusiGroupId(id int64) *models.BusiGroup {
 	return c.ugs[id]
 }
 
+func (c *BusiGroupCacheType) GetByBusiGroupLabel(label string) *models.BusiGroup {
+	c.RLock()
+	defer c.RUnlock()
+
+	for _, v := range c.ugs {
+		if v.LabelValue == label {
+			return v
+		}
+	}
+
+	return nil
+}
+
 func (c *BusiGroupCacheType) SyncBusiGroups() {
 	err := c.syncBusiGroups()
 	if err != nil {

@@ -40,9 +40,9 @@ func (rt *Router) Config(r *gin.Engine) {
 	if len(rt.HTTP.Provider.BasicAuth) > 0 {
 		// enable basic auth
 		auth := gin.BasicAuth(rt.HTTP.Provider.BasicAuth)
-		r.GET("/categraf/config", auth, rt.CategrafConfigGet)
+		r.GET("/categraf/configs", auth, rt.CategrafConfigGet)
 	} else {
 		// no need basic auth
-		r.GET("/categraf/config", rt.CategrafConfigGet)
+		r.GET("/categraf/configs", rt.CategrafConfigGet)
 	}
 }
