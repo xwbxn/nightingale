@@ -35,6 +35,7 @@ type Config struct {
 	Pushgw           Pushgw
 	Heartbeat        Heartbeat
 	Service          Service
+	Provider         Provider
 }
 
 type Alert struct {
@@ -61,6 +62,11 @@ type ProxyAuth struct {
 	Enable            bool
 	HeaderUserNameKey string
 	DefaultRoles      []string
+}
+
+type Provider struct {
+	BasicAuth gin.Accounts
+	Enable    bool
 }
 
 type JWTAuth struct {

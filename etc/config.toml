@@ -77,6 +77,11 @@ Enable = false
 HeaderUserNameKey = "X-User-Name"
 DefaultRoles = ["Standard"]
 
+[HTTP.Provider]
+Enable = true 
+# [HTTP.Provider.BasicAuth]
+# user001 = "ccc26da7b9aba533cbb263a36c07dcc5"
+
 [DB]
 # postgres: host=%s port=%s user=%s dbname=%s password=%s sslmode=%s
 DSN="root:1234@tcp(127.0.0.1:3306)/n9e_v6?charset=utf8mb4&parseTime=True&loc=Local&allowNativePasswords=true"

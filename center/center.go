@@ -24,6 +24,7 @@ import (
 
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	centerrt "github.com/ccfos/nightingale/v6/center/router"
+	providerrt "github.com/ccfos/nightingale/v6/provider/router"
 	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
 )
 
@@ -69,6 +70,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
 	notifyConfigCache := memsto.NewNotifyConfigCache(ctx)
+	providerCache := memsto.NewProviderCache(ctx, syncStats)
 
 	promClients := prom.NewPromClient(ctx, config.Alert.Heartbeat)
 
@@ -80,12 +82,14 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, notifyConfigCache, promClients, redis, sso, ctx, metas)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, idents, writers, ctx)
+	providerRouter := providerrt.New(config.HTTP, config.Provider, targetCache, busiGroupCache, providerCache, ctx)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 
 	centerRouter.Config(r)
 	alertrtRouter.Config(r)
 	pushgwRouter.Config(r)
+	providerRouter.Config(r)
 
 	httpClean := httpx.Init(config.HTTP, r)
 

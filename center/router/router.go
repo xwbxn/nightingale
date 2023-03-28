@@ -317,8 +317,15 @@ func (rt *Router) Config(r *gin.Engine) {
 		r.GET("/categraf/install", rt.CategrafInstall)
 		r.GET("/categraf/download", rt.CategrafDownload)
 		pages.GET("/categraf/getstart", rt.auth(), rt.CategrefGetStart)
+
 		// 总览试图
 		pages.GET("/busi-group/overview", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.overviewGet)
+
+		// 探针配置管理
+		pages.GET("/providers/:id", rt.auth(), rt.admin(), rt.providerGet)
+		pages.POST("/providers", rt.auth(), rt.admin(), rt.providerAdd)
+		pages.PUT("/providers", rt.auth(), rt.admin(), rt.providerPut)
+		pages.DELETE("/providers/:id", rt.auth(), rt.admin(), rt.providerDel)
 	}
 
 	if rt.HTTP.Service.Enable {

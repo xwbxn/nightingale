@@ -9,7 +9,6 @@ RUN mkdir -p /app/pub && chmod +x /wait
 ADD pub /app/pub/
 RUN chmod +x n9e
 
-EXPOSE 19000
-EXPOSE 18000
+EXPOSE 17000
 
 CMD ["/app/n9e", "-h"]
