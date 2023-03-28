@@ -36,7 +36,7 @@ func (rt *Router) CategrafConfigGet(c *gin.Context) {
 
 	group := rt.BusiGroupCache.GetByBusiGroupLabel(busigroup)
 	if group == nil {
-		ginx.Dangerous("not found", 404)
+		ginx.Dangerous("config not found", 404)
 	}
 
 	provider := rt.ProviderCache.GetByIdentAndGroup(ident, group.Id)

@@ -93,14 +93,7 @@ func (hpc *ProviderCacheType) syncProviders() error {
 		return errors.WithMessage(err, "failed to exec HttpProviderStatistics")
 	}
 
-	if !hpc.StatChanged(stat.Total, stat.LastUpdated) {
-		hpc.stats.GaugeCronDuration.WithLabelValues("sync_http_providers").Set(0)
-		hpc.stats.GaugeSyncNumber.WithLabelValues("sync_http_providers").Set(0)
-
-		logger.Debug("http providers not changed")
-		return nil
-	}
-
+	// 因为有内容变化，因此全部同步，不进行状态判定
 	lst, err := models.ProviderGetAll(hpc.ctx)
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec HttpProviderGetAll")

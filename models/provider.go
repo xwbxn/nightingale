@@ -21,7 +21,7 @@ type Provider struct {
 }
 
 func (hp *Provider) TableName() string {
-	return "http_provider"
+	return "provider"
 }
 
 func (hp *Provider) Verify() error {
