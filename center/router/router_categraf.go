@@ -103,7 +103,7 @@ func (rt *Router) CategrafDownload(c *gin.Context) {
 	serverHost := rt.getServerHost(c)
 	writerUrl := rt.Center.Categraf.WriterUrl
 	if writerUrl == "" {
-		writerUrl = fmt.Sprintf("http://%s:19000/prometheus/v1/write", serverHost)
+		writerUrl = fmt.Sprintf("http://%s:17000/prometheus/v1/write", serverHost)
 	}
 
 	categrafConfig := CategrafConfig{
