@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/common/model"
@@ -64,13 +65,13 @@ func (rt *Router) targetGets(c *gin.Context) {
 
 		if len(keys) > 0 {
 			metaMap := make(map[string]*models.HostMeta)
-			vals := rt.Redis.MGet(context.Background(), keys...).Val()
+			vals, _ := storage.MGet(context.Background(), rt.Redis, keys)
 			for _, value := range vals {
 				var meta models.HostMeta
 				if value == nil {
 					continue
 				}
-				err := json.Unmarshal([]byte(value.(string)), &meta)
+				err := json.Unmarshal(value, &meta)
 				if err != nil {
 					logger.Warningf("unmarshal %v host meta failed: %v", value, err)
 					continue
@@ -79,11 +80,12 @@ func (rt *Router) targetGets(c *gin.Context) {
 			}
 
 			for i := 0; i < len(list); i++ {
+				if now.Unix()-list[i].UpdateAt < 120 {
+					list[i].TargetUp = 1
+				}
+
 				if meta, ok := metaMap[list[i].Ident]; ok {
 					list[i].FillMeta(meta)
-					if now.Unix()-list[i].UpdateAt < 120 {
-						list[i].TargetUp = 1
-					}
 				} else {
 					// 未上报过元数据的主机，cpuNum默认为-1, 用于前端展示 unknown
 					list[i].CpuNum = -1

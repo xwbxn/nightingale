@@ -20,6 +20,7 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 		cache := make(map[int64]*models.UserGroup)
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
+			ars[i].FillSeverities()
 		}
 	}
 	ginx.NewRender(c).Data(ars, err)
@@ -76,11 +77,6 @@ func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "input json is empty")
 	}
 
-	for i := 0; i < count; i++ {
-		if lst[i].Prod != models.HOST {
-			lst[i].DatasourceIdsJson = []int64{0}
-		}
-	}
 	bgid := ginx.UrlParamInt64(c, "id")
 	reterr := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
 

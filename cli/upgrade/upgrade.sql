@@ -19,7 +19,7 @@ alter table `alert_rule` add rule_config text not null comment 'rule_config';
 alter table `alert_rule` add annotations text not null comment 'annotations';
 
 alter table `alert_mute` add datasource_ids varchar(255) not null default '';
-alter table `alert_mute` add periodic_mutes varchar(4096) not null default '';
+alter table `alert_mute` add periodic_mutes varchar(4096) not null default '[]';
 alter table `alert_mute` add mute_time_type tinyint(1) not null default 0;
 
 alter table `alert_subscribe` add datasource_ids varchar(255) not null default '';
@@ -28,11 +28,9 @@ alter table `alert_subscribe` add webhooks text;
 alter table `alert_subscribe` add redefine_webhooks tinyint(1) default 0;
 alter table `alert_subscribe` add for_duration bigint not null default 0;
 
-alter table `target` add datasource_id bigint unsigned not null default 0;
-alter table `target` add offset bigint not null default 0;
-alter table `target` modify cluster varchar(128) not null default '';
-
 alter table `recording_rule` add datasource_ids varchar(255) default '';
+
+alter table `target` modify cluster varchar(128) not null default '';
 
 alter table `alert_cur_event` add datasource_id bigint unsigned not null default 0;
 alter table `alert_cur_event` add annotations text not null comment 'annotations';
@@ -42,7 +40,7 @@ alter table `alert_his_event` add datasource_id bigint unsigned not null default
 alter table `alert_his_event` add annotations text not null comment 'annotations';
 alter table `alert_his_event` add rule_config text not null comment 'rule_config';
 
-alter table alerting_engines add datasource_id bigint unsigned not null default 0;
+alter table `alerting_engines` add datasource_id bigint unsigned not null default 0;
 
 CREATE TABLE `datasource`
 (
@@ -83,7 +81,7 @@ CREATE TABLE `notify_tpl` (
 
 CREATE TABLE `sso_config` (
     `id` bigint unsigned not null auto_increment,
-    `name` varchar(255) not null,
+    `name` varchar(191) not null,
     `content` text not null,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`name`)

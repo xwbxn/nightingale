@@ -45,9 +45,9 @@ func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operatio
 		NotifyConfigCache: ncc,
 		PromClients:       pc,
 		Redis:             redis,
+		MetaSet:           metaSet,
 		Sso:               sso,
 		Ctx:               ctx,
-		MetaSet:           metaSet,
 	}
 }
 
@@ -208,8 +208,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/share-charts", rt.chartShareGets)
 		pages.POST("/share-charts", rt.auth(), rt.chartShareAdd)
 
-		pages.GET("/alert-rules/builtin/list", rt.auth(), rt.user(), rt.alertRuleBuiltinList)
 		pages.GET("/alert-rules/builtin/alerts-cates", rt.auth(), rt.user(), rt.builtinAlertCateGets)
+		pages.GET("/alert-rules/builtin/list", rt.auth(), rt.user(), rt.builtinAlertRules)
 
 		pages.GET("/busi-group/:id/alert-rules", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRuleGets)
 		pages.POST("/busi-group/:id/alert-rules", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.bgrw(), rt.alertRuleAddByFE)
