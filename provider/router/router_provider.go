@@ -31,7 +31,7 @@ type httpRemoteProviderResponse struct {
 }
 
 func (rt *Router) CategrafConfigGet(c *gin.Context) {
-	ident := ginx.QueryStr(c, "ident")
+	ident := ginx.QueryStr(c, "agent_hostname")
 	busigroup := ginx.QueryStr(c, "busigroup")
 
 	group := rt.BusiGroupCache.GetByBusiGroupLabel(busigroup)
