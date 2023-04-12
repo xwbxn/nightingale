@@ -124,6 +124,7 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 			}
 		}
 
+		rt.EnrichLabels(req.Timeseries[i])
 		rt.debugSample(c.Request.RemoteAddr, req.Timeseries[i])
 
 		if rt.Pushgw.WriterOpt.ShardingKey == "ident" {
