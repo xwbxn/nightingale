@@ -167,7 +167,7 @@ CREATE TABLE `busi_group_member` (
     KEY (`user_group_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-insert into busi_group_member(busi_group_id, user_group_id, perm_flag) values(1, 1, "rw");
+insert into busi_group_member(busi_group_id, user_group_id, perm_flag) values(1, 1, 'rw');
 
 -- for dashboard new version
 CREATE TABLE `board` (
@@ -234,7 +234,7 @@ CREATE TABLE `chart` (
 CREATE TABLE `chart_share` (
     `id` bigint unsigned not null auto_increment,
     `cluster` varchar(128) not null,
-    `dashboard_id` bigint unsigned not null,
+    `datasource_id` bigint unsigned not null default 0,
     `configs` text,
     `create_at` bigint not null default 0,
     `create_by` varchar(64) not null default '',
@@ -334,7 +334,7 @@ CREATE TABLE `alert_subscribe` (
     KEY (`update_at`),
     KEY (`group_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
-  
+
 CREATE TABLE `target` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
@@ -383,7 +383,7 @@ CREATE TABLE `metric_view` (
 ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
 insert into metric_view(name, cate, configs) values('Host View', 0, '{"filters":[{"oper":"=","label":"__name__","value":"cpu_usage_idle"}],"dynamicLabels":[],"dimensionLabels":[{"label":"ident","value":""}]}');
- 
+
 CREATE TABLE `recording_rule` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default '0' comment 'group_id',
@@ -531,6 +531,7 @@ CREATE TABLE `task_tpl_host`
 CREATE TABLE `task_record`
 (
     `id` bigint unsigned not null comment 'ibex task id',
+    `event_id` bigint not null comment 'event id' default 0,
     `group_id` bigint not null comment 'busi group id',
     `ibex_address`   varchar(128) not null,
     `ibex_auth_user` varchar(128) not null default '',
@@ -547,7 +548,8 @@ CREATE TABLE `task_record`
     `create_by` varchar(64) not null default '',
     PRIMARY KEY (`id`),
     KEY (`create_at`, `group_id`),
-    KEY (`create_by`)
+    KEY (`create_by`),
+    KEY (`event_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE `alerting_engines`
@@ -555,11 +557,10 @@ CREATE TABLE `alerting_engines`
     `id` int unsigned NOT NULL AUTO_INCREMENT,
     `instance` varchar(128) not null default '' comment 'instance identification, e.g. 10.9.0.9:9090',
     `datasource_id` bigint not null default 0 comment 'datasource id',
-    `cluster` varchar(128) not null default '' comment 'n9e-alert cluster',
+    `engine_cluster` varchar(128) not null default '' comment 'n9e-alert cluster',
     `clock` bigint not null,
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
-
 
 CREATE TABLE `datasource`
 (
@@ -581,15 +582,15 @@ CREATE TABLE `datasource`
     `updated_by` varchar(64) not null default '',
     UNIQUE KEY (`name`),
     PRIMARY KEY (`id`)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4; 
-  
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
 CREATE TABLE `builtin_cate` (
     `id` bigint unsigned not null auto_increment,
     `name` varchar(191) not null,
     `user_id` bigint not null default 0,
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
- 
+
 CREATE TABLE `notify_tpl` (
     `id` bigint unsigned not null auto_increment,
     `channel` varchar(32) not null,

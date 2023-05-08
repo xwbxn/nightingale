@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"runtime"
 	"strings"
 	"time"
 
@@ -17,7 +18,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/runner"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,12 +32,13 @@ type Router struct {
 	PromClients       *prom.PromClientMap
 	Redis             storage.Redis
 	MetaSet           *metas.Set
+	TargetCache       *memsto.TargetCacheType
 	Sso               *sso.SsoClient
 	Ctx               *ctx.Context
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
-	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set) *Router {
+	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, tc *memsto.TargetCacheType) *Router {
 	return &Router{
 		HTTP:              httpConfig,
 		Center:            center,
@@ -46,6 +48,7 @@ func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operatio
 		PromClients:       pc,
 		Redis:             redis,
 		MetaSet:           metaSet,
+		TargetCache:       tc,
 		Sso:               sso,
 		Ctx:               ctx,
 	}
@@ -92,9 +95,23 @@ func (rt *Router) configNoRoute(r *gin.Engine) {
 		suffix := arr[len(arr)-1]
 		switch suffix {
 		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map":
-			c.File(path.Join(strings.Split("pub/"+c.Request.URL.Path, "/")...))
+			cwdarr := []string{"/"}
+			if runtime.GOOS == "windows" {
+				cwdarr[0] = ""
+			}
+			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
+			cwdarr = append(cwdarr, "pub")
+			cwdarr = append(cwdarr, strings.Split(c.Request.URL.Path, "/")...)
+			c.File(path.Join(cwdarr...))
 		default:
-			c.File(path.Join("pub", "index.html"))
+			cwdarr := []string{"/"}
+			if runtime.GOOS == "windows" {
+				cwdarr[0] = ""
+			}
+			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
+			cwdarr = append(cwdarr, "pub")
+			cwdarr = append(cwdarr, "index.html")
+			c.File(path.Join(cwdarr...))
 		}
 	})
 }
@@ -112,10 +129,12 @@ func (rt *Router) Config(r *gin.Engine) {
 			pages.Any("/proxy/:id/*url", rt.dsProxy)
 			pages.POST("/query-range-batch", rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.promBatchQueryInstant)
+			pages.GET("/datasource/brief", rt.datasourceBriefs)
 		} else {
 			pages.Any("/proxy/:id/*url", rt.auth(), rt.dsProxy)
 			pages.POST("/query-range-batch", rt.auth(), rt.promBatchQueryRange)
 			pages.POST("/query-instant-batch", rt.auth(), rt.promBatchQueryInstant)
+			pages.GET("/datasource/brief", rt.auth(), rt.datasourceBriefs)
 		}
 
 		pages.POST("/auth/login", rt.jwtMock(), rt.loginPost)
@@ -188,11 +207,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/dashboards/builtin/list", rt.builtinBoardGets)
 		pages.GET("/builtin-boards-cates", rt.auth(), rt.user(), rt.builtinBoardCateGets)
 		pages.POST("/builtin-boards-detail", rt.auth(), rt.user(), rt.builtinBoardDetailGets)
-		pages.GET("/integrations/icon/:cate/:name", func(c *gin.Context) {
-			cate := ginx.UrlParamStr(c, "cate")
-			fp := "integrations/" + cate + "/icon/" + ginx.UrlParamStr(c, "name")
-			c.File(path.Join(fp))
-		})
+		pages.GET("/integrations/icon/:cate/:name", rt.builtinIcon)
 
 		pages.GET("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.bgro(), rt.boardGets)
 		pages.POST("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards/add"), rt.bgrw(), rt.boardAdd)
@@ -401,9 +416,9 @@ func Dangerous(c *gin.Context, v interface{}, code ...int) {
 	switch t := v.(type) {
 	case string:
 		if t != "" {
-			c.JSON(http.StatusOK, gin.H{"error": gin.H{"message": v}})
+			c.JSON(http.StatusOK, gin.H{"error": v})
 		}
 	case error:
-		c.JSON(http.StatusOK, gin.H{"error": gin.H{"message": t.Error()}})
+		c.JSON(http.StatusOK, gin.H{"error": t.Error()})
 	}
 }

@@ -40,6 +40,7 @@ _test
 /docker/pub
 /docker/n9e
 /docker/mysqldata
+/docker/experience_pg_vm/pgdata
 /etc.local
 
 .alerts
@@ -52,5 +53,6 @@ _test
 queries.active
 
 /n9e-*
+n9e.sql
 /etc/categraf/dist/categraf
 /etc/categraf/dist/categraf.exe
