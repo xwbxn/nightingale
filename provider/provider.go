@@ -32,7 +32,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx := ctx.NewContext(context.Background(), db)
+	ctx := ctx.NewContext(context.Background(), db, false)
 
 	stats := memsto.NewSyncStats()
 
