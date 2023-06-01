@@ -3,8 +3,6 @@ package router
 import (
 	"fmt"
 	"net/http"
-	"path"
-	"runtime"
 	"strings"
 	"time"
 
@@ -12,15 +10,17 @@ import (
 	"github.com/ccfos/nightingale/v6/center/cstats"
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/center/sso"
+	_ "github.com/ccfos/nightingale/v6/front/statik"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/storage"
-	"github.com/toolkits/pkg/runner"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rakyll/statik/fs"
+	"github.com/toolkits/pkg/logger"
 )
 
 type Router struct {
@@ -89,37 +89,31 @@ func languageDetector(i18NHeaderKey string) gin.HandlerFunc {
 	}
 }
 
-func (rt *Router) configNoRoute(r *gin.Engine) {
+func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 	r.NoRoute(func(c *gin.Context) {
 		arr := strings.Split(c.Request.URL.Path, ".")
 		suffix := arr[len(arr)-1]
+
 		switch suffix {
 		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map":
-			cwdarr := []string{"/"}
-			if runtime.GOOS == "windows" {
-				cwdarr[0] = ""
-			}
-			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
-			cwdarr = append(cwdarr, "pub")
-			cwdarr = append(cwdarr, strings.Split(c.Request.URL.Path, "/")...)
-			c.File(path.Join(cwdarr...))
+			c.FileFromFS(c.Request.URL.Path, *fs)
 		default:
-			cwdarr := []string{"/"}
-			if runtime.GOOS == "windows" {
-				cwdarr[0] = ""
-			}
-			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
-			cwdarr = append(cwdarr, "pub")
-			cwdarr = append(cwdarr, "index.html")
-			c.File(path.Join(cwdarr...))
+			c.FileFromFS("/", *fs)
 		}
 	})
 }
 
 func (rt *Router) Config(r *gin.Engine) {
+
 	r.Use(stat())
 	r.Use(languageDetector(rt.Center.I18NHeaderKey))
 	r.Use(aop.Recovery())
+
+	statikFS, err := fs.New()
+	if err != nil {
+		logger.Errorf("cannot create statik fs: %v", err)
+	}
+	r.StaticFS("/pub", statikFS)
 
 	pagesPrefix := "/api/n9e"
 	pages := r.Group(pagesPrefix)
@@ -148,6 +142,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/auth/callback", rt.loginCallback)
 		pages.GET("/auth/callback/cas", rt.loginCallbackCas)
 		pages.GET("/auth/callback/oauth", rt.loginCallbackOAuth)
+		pages.GET("/auth/perms", rt.allPerms)
 
 		pages.GET("/metrics/desc", rt.metricsDescGetFile)
 		pages.POST("/metrics/desc", rt.metricsDescGetMap)
@@ -303,7 +298,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		pages.GET("/role/:id/ops", rt.auth(), rt.admin(), rt.operationOfRole)
 		pages.PUT("/role/:id/ops", rt.auth(), rt.admin(), rt.roleBindOperation)
-		pages.GET("operation", rt.operations)
+		pages.GET("/operation", rt.operations)
 
 		pages.GET("/notify-tpls", rt.auth(), rt.admin(), rt.notifyTplGets)
 		pages.PUT("/notify-tpl/content", rt.auth(), rt.admin(), rt.notifyTplUpdateContent)
@@ -353,7 +348,10 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.POST("/users", rt.userAddPost)
 			service.GET("/users", rt.userFindAll)
 
-			service.GET("/targets", rt.targetGets)
+			service.GET("/user-groups", rt.userGroupGetsByService)
+			service.GET("/user-group-members", rt.userGroupMemberGetsByService)
+
+			service.GET("/targets", rt.targetGetsByService)
 			service.GET("/targets/tags", rt.targetGetTags)
 			service.POST("/targets/tags", rt.targetBindTagsByService)
 			service.DELETE("/targets/tags", rt.targetUnbindTagsByService)
@@ -365,22 +363,41 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/alert-rule/:arid", rt.alertRuleGet)
 			service.GET("/alert-rules", rt.alertRulesGetByService)
 
+			service.GET("/alert-subscribes", rt.alertSubscribeGetsByService)
+
+			service.GET("/busi-groups", rt.busiGroupGetsByService)
+
+			service.GET("/datasources", rt.datasourceGetsByService)
+			service.GET("/datasource-ids", rt.getDatasourceIds)
+			service.POST("/server-heartbeat", rt.serverHeartbeat)
+			service.GET("/servers-active", rt.serversActive)
+
+			service.GET("/recording-rules", rt.recordingRuleGetsByService)
+
 			service.GET("/alert-mutes", rt.alertMuteGets)
 			service.POST("/alert-mutes", rt.alertMuteAddByService)
 			service.DELETE("/alert-mutes", rt.alertMuteDel)
 
 			service.GET("/alert-cur-events", rt.alertCurEventsList)
+			service.GET("/alert-cur-events-get-by-rid", rt.alertCurEventsGetByRid)
 			service.GET("/alert-his-events", rt.alertHisEventsList)
 			service.GET("/alert-his-event/:eid", rt.alertHisEventGet)
 
 			service.GET("/config/:id", rt.configGet)
 			service.GET("/configs", rt.configsGet)
+			service.GET("/config", rt.configGetByKey)
 			service.PUT("/configs", rt.configsPut)
 			service.POST("/configs", rt.configsPost)
 			service.DELETE("/configs", rt.configsDel)
 
 			service.POST("/conf-prop/encrypt", rt.confPropEncrypt)
 			service.POST("/conf-prop/decrypt", rt.confPropDecrypt)
+
+			service.GET("/statistic", rt.statistic)
+
+			service.GET("/notify-tpls", rt.notifyTplGets)
+
+			service.POST("/task-record-add", rt.taskRecordAdd)
 		}
 	}
 
@@ -394,7 +411,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		}
 	}
 
-	rt.configNoRoute(r)
+	rt.configNoRoute(r, &statikFS)
+
 }
 
 func Render(c *gin.Context, data, msg interface{}) {

@@ -1,6 +1,7 @@
 package naming
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/toolkits/pkg/consistent"
@@ -39,8 +40,8 @@ func RebuildConsistentHashRing(datasourceId int64, nodes []string) {
 }
 
 func (chr *DatasourceHashRingType) GetNode(datasourceId int64, pk string) (string, error) {
-	chr.RLock()
-	defer chr.RUnlock()
+	chr.Lock()
+	defer chr.Unlock()
 	_, exists := chr.Rings[datasourceId]
 	if !exists {
 		chr.Rings[datasourceId] = NewConsistentHashRing(int32(NodeReplicas), []string{})
@@ -52,14 +53,18 @@ func (chr *DatasourceHashRingType) GetNode(datasourceId int64, pk string) (strin
 func (chr *DatasourceHashRingType) IsHit(datasourceId int64, pk string, currentNode string) bool {
 	node, err := chr.GetNode(datasourceId, pk)
 	if err != nil {
-		logger.Debugf("datasource id:%d pk:%s failed to get node from hashring:%v", datasourceId, pk, err)
+		if errors.Is(err, consistent.ErrEmptyCircle) {
+			logger.Debugf("rule id:%s is not work, datasource id:%d is not assigned to active alert engine", pk, datasourceId)
+		} else {
+			logger.Debugf("rule id:%s is not work, datasource id:%d failed to get node from hashring:%v", pk, datasourceId, err)
+		}
 		return false
 	}
 	return node == currentNode
 }
 
 func (chr *DatasourceHashRingType) Set(datasourceId int64, r *consistent.Consistent) {
-	chr.RLock()
-	defer chr.RUnlock()
+	chr.Lock()
+	defer chr.Unlock()
 	chr.Rings[datasourceId] = r
 }

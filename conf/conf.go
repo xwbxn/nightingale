@@ -15,20 +15,28 @@ import (
 	"github.com/ccfos/nightingale/v6/provider/cpconf"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/storage"
+
+	"github.com/gin-gonic/gin"
 )
 
 type ConfigType struct {
-	Global GlobalConfig
-	Log    logx.Config
-	HTTP   httpx.Config
-	DB     ormx.DBConfig
-	Redis  storage.RedisConfig
+	Global    GlobalConfig
+	Log       logx.Config
+	HTTP      httpx.Config
+	DB        ormx.DBConfig
+	Redis     storage.RedisConfig
+	CenterApi CenterApi
 
 	Pushgw pconf.Pushgw
 	Alert  aconf.Alert
 	Center cconf.Center
 
 	Provider cpconf.Provider
+}
+
+type CenterApi struct {
+	Addrs     []string
+	BasicAuth gin.Accounts
 }
 
 type GlobalConfig struct {

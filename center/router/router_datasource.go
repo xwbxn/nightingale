@@ -36,6 +36,12 @@ func (rt *Router) datasourceList(c *gin.Context) {
 	Render(c, list, err)
 }
 
+func (rt *Router) datasourceGetsByService(c *gin.Context) {
+	typ := ginx.QueryStr(c, "typ", "")
+	lst, err := models.GetDatasourcesGetsBy(rt.Ctx, typ, "", "", "")
+	ginx.NewRender(c).Data(lst, err)
+}
+
 type datasourceBrief struct {
 	Id         int64  `json:"id"`
 	Name       string `json:"name"`
@@ -177,6 +183,13 @@ func (rt *Router) datasourceDel(c *gin.Context) {
 	ginx.BindJSON(c, &ids)
 	err := models.DatasourceDel(rt.Ctx, ids)
 	Render(c, nil, err)
+}
+
+func (rt *Router) getDatasourceIds(c *gin.Context) {
+	name := ginx.QueryStr(c, "name")
+	datasourceIds, err := models.GetDatasourceIdsByEngineName(rt.Ctx, name)
+
+	ginx.NewRender(c).Data(datasourceIds, err)
 }
 
 func Username(c *gin.Context) string {

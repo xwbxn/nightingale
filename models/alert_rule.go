@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
@@ -76,8 +77,11 @@ type AlertRule struct {
 }
 
 type PromRuleConfig struct {
-	Queries []PromQuery `json:"queries"`
-	Inhibit bool        `json:"inhibit"`
+	Queries    []PromQuery `json:"queries"`
+	Inhibit    bool        `json:"inhibit"`
+	PromQl     string      `json:"prom_ql"`
+	Severity   int         `json:"severity"`
+	AlgoParams interface{} `json:"algo_params"`
 }
 
 type HostRuleConfig struct {
@@ -88,26 +92,39 @@ type HostRuleConfig struct {
 
 type PromQuery struct {
 	PromQl   string `json:"prom_ql"`
-	Severity int    `json:"severity"` // 1: Emergency 2: Warning 3: Notice
+	Severity int    `json:"severity"`
 }
 
 type HostTrigger struct {
 	Type     string `json:"type"`
 	Duration int    `json:"duration"`
 	Percent  int    `json:"percent"`
-	Severity int    `json:"severity"` // 1: Emergency 2: Warning 3: Notice
+	Severity int    `json:"severity"`
 }
 
-func GetHostsQuery(queries []HostQuery) map[string]interface{} {
-	var query = make(map[string]interface{})
+type RuleQuery struct {
+	Queries  []interface{} `json:"queries"`
+	Triggers []Trigger     `json:"triggers"`
+}
+
+type Trigger struct {
+	Expressions interface{} `json:"expressions"`
+	Mode        int         `json:"mode"`
+	Exp         string      `json:"exp"`
+	Severity    int         `json:"severity"`
+}
+
+func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
+	var query []map[string]interface{}
 	for _, q := range queries {
+		m := make(map[string]interface{})
 		switch q.Key {
 		case "group_ids":
 			ids := ParseInt64(q.Values)
 			if q.Op == "==" {
-				query["group_id in (?)"] = ids
+				m["group_id in (?)"] = ids
 			} else {
-				query["group_id not in (?)"] = ids
+				m["group_id not in (?)"] = ids
 			}
 		case "tags":
 			lst := []string{}
@@ -118,12 +135,16 @@ func GetHostsQuery(queries []HostQuery) map[string]interface{} {
 				lst = append(lst, v.(string))
 			}
 			if q.Op == "==" {
+				blank := " "
 				for _, tag := range lst {
-					query["tags like ?"] = "% " + tag + " %"
+					m["tags like ?"+blank] = "%" + tag + "%"
+					blank += " "
 				}
 			} else {
+				blank := " "
 				for _, tag := range lst {
-					query["tags not like ?"] = "% " + tag + " %"
+					m["tags not like ?"+blank] = "%" + tag + "%"
+					blank += " "
 				}
 			}
 		case "hosts":
@@ -135,11 +156,12 @@ func GetHostsQuery(queries []HostQuery) map[string]interface{} {
 				lst = append(lst, v.(string))
 			}
 			if q.Op == "==" {
-				query["ident in (?)"] = lst
+				m["ident in (?)"] = lst
 			} else {
-				query["ident not in (?)"] = lst
+				m["ident not in (?)"] = lst
 			}
 		}
+		query = append(query, m)
 	}
 	return query
 }
@@ -299,6 +321,15 @@ func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interfa
 				return err
 			}
 
+			if len(ruleConfig.Queries) < 1 {
+				ruleConfig.Severity = severity
+				b, err := json.Marshal(ruleConfig)
+				if err != nil {
+					return err
+				}
+				return DB(ctx).Model(ar).UpdateColumn("rule_config", string(b)).Error
+			}
+
 			if len(ruleConfig.Queries) != 1 {
 				return nil
 			}
@@ -322,6 +353,23 @@ func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interfa
 
 			ruleConfig.Triggers[0].Severity = severity
 
+			b, err := json.Marshal(ruleConfig)
+			if err != nil {
+				return err
+			}
+			return DB(ctx).Model(ar).UpdateColumn("rule_config", string(b)).Error
+		} else {
+			var ruleConfig RuleQuery
+			err := json.Unmarshal([]byte(ar.RuleConfig), &ruleConfig)
+			if err != nil {
+				return err
+			}
+
+			if len(ruleConfig.Triggers) != 1 {
+				return nil
+			}
+
+			ruleConfig.Triggers[0].Severity = severity
 			b, err := json.Marshal(ruleConfig)
 			if err != nil {
 				return err
@@ -370,21 +418,27 @@ func (ar *AlertRule) FillDatasourceIds(ctx *ctx.Context) error {
 
 func (ar *AlertRule) FillSeverities() error {
 	if ar.RuleConfig != "" {
-		if ar.Prod == HOST {
-			var rule HostRuleConfig
-			if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
-				return err
-			}
-			for i := range rule.Queries {
-				ar.Severities = append(ar.Severities, rule.Triggers[i].Severity)
-			}
-		} else {
+		if ar.Cate == PROMETHEUS {
 			var rule PromRuleConfig
 			if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
 				return err
 			}
+
+			if len(rule.Queries) == 0 {
+				ar.Severities = append(ar.Severities, rule.Severity)
+				return nil
+			}
+
 			for i := range rule.Queries {
 				ar.Severities = append(ar.Severities, rule.Queries[i].Severity)
+			}
+		} else {
+			var rule HostRuleConfig
+			if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
+				return err
+			}
+			for i := range rule.Triggers {
+				ar.Severities = append(ar.Severities, rule.Triggers[i].Severity)
 			}
 		}
 	}
@@ -596,7 +650,18 @@ func AlertRuleGets(ctx *ctx.Context, groupId int64) ([]AlertRule, error) {
 }
 
 func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
-	session := DB(ctx).Where("disabled = ? and (prod = ? or prod = ? or prod = ?)", 0, "", HOST, METRIC)
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]*AlertRule](ctx, "/v1/n9e/alert-rules?disabled=0")
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < len(lst); i++ {
+			lst[i].FE2DB()
+		}
+		return lst, err
+	}
+
+	session := DB(ctx).Where("disabled = ?", 0)
 
 	var lst []*AlertRule
 	err := session.Find(&lst).Error
@@ -615,7 +680,11 @@ func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
 }
 
 func AlertRulesGetsBy(ctx *ctx.Context, prods []string, query, algorithm, cluster string, cates []string, disabled int) ([]*AlertRule, error) {
-	session := DB(ctx).Where("prod in (?)", prods)
+	session := DB(ctx)
+
+	if len(prods) > 0 {
+		session = session.Where("prod in (?)", prods)
+	}
 
 	if query != "" {
 		arr := strings.Fields(query)
@@ -687,7 +756,12 @@ func AlertRuleGetName(ctx *ctx.Context, id int64) (string, error) {
 }
 
 func AlertRuleStatistics(ctx *ctx.Context) (*Statistics, error) {
-	session := DB(ctx).Model(&AlertRule{}).Select("count(*) as total", "max(update_at) as last_updated").Where("disabled = ? and (prod = ? or prod = ? or prod = ?)", 0, "", HOST, METRIC)
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=alert_rule")
+		return s, err
+	}
+
+	session := DB(ctx).Model(&AlertRule{}).Select("count(*) as total", "max(update_at) as last_updated").Where("disabled = ?", 0)
 
 	var stats []*Statistics
 	err := session.Find(&stats).Error
@@ -699,7 +773,7 @@ func AlertRuleStatistics(ctx *ctx.Context) (*Statistics, error) {
 }
 
 func (ar *AlertRule) IsPrometheusRule() bool {
-	return ar.Algorithm == "" && (ar.Cate == "" || strings.ToLower(ar.Cate) == PROMETHEUS)
+	return ar.Prod == METRIC && ar.Cate == PROMETHEUS
 }
 
 func (ar *AlertRule) IsHostRule() bool {
@@ -810,7 +884,7 @@ func AlertRuleUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
 			"annotations":    lst[i].Annotations,
 			"rule_config":    lst[i].RuleConfig,
 			"prod":           lst[i].Prod,
-			"cate":           PROMETHEUS,
+			"cate":           lst[i].Cate,
 		})
 		if err != nil {
 			logger.Errorf("update alert rule:%d datasource ids failed, %v", lst[i].Id, err)
