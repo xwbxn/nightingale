@@ -4,9 +4,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
+
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/slice"
-	"gorm.io/gorm"
 )
 
 type IdentProps struct {
@@ -15,14 +17,14 @@ type IdentProps struct {
 
 type Set struct {
 	sync.Mutex
-	items map[string]IdentProps
-	db    *gorm.DB
+	items map[string]struct{}
+	ctx   *ctx.Context
 }
 
-func New(db *gorm.DB) *Set {
+func New(ctx *ctx.Context) *Set {
 	set := &Set{
-		items: make(map[string]IdentProps),
-		db:    db,
+		items: make(map[string]struct{}),
+		ctx:   ctx,
 	}
 
 	set.Init()
@@ -72,7 +74,7 @@ func (s *Set) updateTimestamp(items map[string]IdentProps) {
 		lst[ident] = props
 		num++
 		if num == 100 {
-			if err := s.updateTargets(lst, now); err != nil {
+			if err := s.UpdateTargets(lst, now); err != nil {
 				logger.Errorf("failed to update targets: %v", err)
 			}
 			lst = make(map[string]IdentProps, 100)
@@ -80,12 +82,26 @@ func (s *Set) updateTimestamp(items map[string]IdentProps) {
 		}
 	}
 
-	if err := s.updateTargets(lst, now); err != nil {
+	if err := s.UpdateTargets(lst, now); err != nil {
 		logger.Errorf("failed to update targets: %v", err)
 	}
 }
 
-func (s *Set) updateTargets(lst map[string]IdentProps, now int64) error {
+type TargetUpdate struct {
+	Lst []string `json:"lst"`
+	Now int64    `json:"now"`
+}
+
+func (s *Set) UpdateTargets(lst []string, now int64) error {
+	if !s.ctx.IsCenter {
+		t := TargetUpdate{
+			Lst: lst,
+			Now: now,
+		}
+		err := poster.PostByUrls(s.ctx, "/v1/n9e/target-update", t)
+		return err
+	}
+
 	count := int64(len(lst))
 	if count == 0 {
 		return nil
@@ -95,7 +111,7 @@ func (s *Set) updateTargets(lst map[string]IdentProps, now int64) error {
 		namelist = append(namelist, ident)
 	}
 
-	ret := s.db.Table("target").Where("ident in ?", namelist).Update("update_at", now)
+	ret := s.ctx.DB.Table("target").Where("ident in ?", lst).Update("update_at", now)
 	if ret.Error != nil {
 		return ret.Error
 	}
@@ -106,17 +122,14 @@ func (s *Set) updateTargets(lst map[string]IdentProps, now int64) error {
 
 	// there are some idents not found in db, so insert them
 	var exists []string
-	err := s.db.Table("target").Where("ident in ?", namelist).Pluck("ident", &exists).Error
+	err := s.ctx.DB.Table("target").Where("ident in ?", lst).Pluck("ident", &exists).Error
 	if err != nil {
 		return err
 	}
 
 	news := slice.SubString(namelist, exists)
 	for i := 0; i < len(news); i++ {
-		busigroup := lst[news[i]].BusiGroup
-		var group int64
-		s.db.Raw("select id from busi_group where label_value = ?", busigroup).Scan(&group)
-		err = s.db.Exec("INSERT INTO target(ident, group_id, update_at) VALUES(?, ?, ?)", news[i], group, now).Error
+		err = s.ctx.DB.Exec("INSERT INTO target(ident, update_at) VALUES(?, ?)", news[i], now).Error
 		if err != nil {
 			logger.Error("failed to insert target:", news[i], "error:", err)
 		}

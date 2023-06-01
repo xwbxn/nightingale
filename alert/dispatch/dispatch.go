@@ -28,8 +28,9 @@ type Dispatch struct {
 
 	alerting aconf.Alerting
 
-	senders map[string]sender.Sender
-	tpls    map[string]*template.Template
+	senders      map[string]sender.Sender
+	tpls         map[string]*template.Template
+	ExtraSenders map[string]sender.Sender
 
 	ctx *ctx.Context
 
@@ -50,8 +51,9 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 
 		alerting: alerting,
 
-		senders: make(map[string]sender.Sender),
-		tpls:    make(map[string]*template.Template),
+		senders:      make(map[string]sender.Sender),
+		tpls:         make(map[string]*template.Template),
+		ExtraSenders: make(map[string]sender.Sender),
 
 		ctx: ctx,
 	}
@@ -88,6 +90,12 @@ func (e *Dispatch) relaodTpls() error {
 		models.Mm:       sender.NewSender(models.Mm, tmpTpls, smtp),
 		models.Telegram: sender.NewSender(models.Telegram, tmpTpls, smtp),
 	}
+
+	e.RwLock.RLock()
+	for channel, sender := range e.ExtraSenders {
+		senders[channel] = sender
+	}
+	e.RwLock.RUnlock()
 
 	e.RwLock.Lock()
 	e.tpls = tmpTpls
@@ -180,7 +188,7 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 		s := e.senders[channel]
 		e.RwLock.RUnlock()
 		if s == nil {
-			logger.Warningf("no sender for channel: %s", channel)
+			logger.Debugf("no sender for channel: %s", channel)
 			continue
 		}
 		logger.Debugf("send event: %s, channel: %s", event.Hash, channel)
@@ -191,7 +199,7 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	}
 
 	// handle event callbacks
-	sender.SendCallbacks(e.ctx, notifyTarget.ToCallbackList(), event, e.targetCache, e.notifyConfigCache.GetIbex())
+	sender.SendCallbacks(e.ctx, notifyTarget.ToCallbackList(), event, e.targetCache, e.userCache, e.notifyConfigCache.GetIbex())
 
 	// handle global webhooks
 	sender.SendWebhooks(notifyTarget.ToWebhookList(), event)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -19,7 +20,7 @@ type Target struct {
 	Note     string            `json:"note"`
 	Tags     string            `json:"-"`
 	TagsJSON []string          `json:"tags" gorm:"-"`
-	TagsMap  map[string]string `json:"-" gorm:"-"` // internal use, append tags to series
+	TagsMap  map[string]string `json:"tags_maps" gorm:"-"` // internal use, append tags to series
 	UpdateAt int64             `json:"update_at"`
 
 	UnixTime   int64   `json:"unixtime" gorm:"-"`
@@ -59,6 +60,11 @@ func (t *Target) FillGroup(ctx *ctx.Context, cache map[int64]*BusiGroup) error {
 }
 
 func TargetStatistics(ctx *ctx.Context) (*Statistics, error) {
+	if !ctx.IsCenter {
+		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=target")
+		return s, err
+	}
+
 	var stats []*Statistics
 	err := DB(ctx).Model(&Target{}).Select("count(*) as total", "max(update_at) as last_updated").Find(&stats).Error
 	if err != nil {
@@ -117,7 +123,7 @@ func TargetGets(ctx *ctx.Context, bgid int64, dsIds []int64, query string, limit
 }
 
 // 根据 groupids, tags, hosts 查询 targets
-func TargetGetsByFilter(ctx *ctx.Context, query map[string]interface{}, limit, offset int) ([]*Target, error) {
+func TargetGetsByFilter(ctx *ctx.Context, query []map[string]interface{}, limit, offset int) ([]*Target, error) {
 	var lst []*Target
 	session := TargetFilterQueryBuild(ctx, query, limit, offset)
 	err := session.Order("ident").Find(&lst).Error
@@ -130,12 +136,12 @@ func TargetGetsByFilter(ctx *ctx.Context, query map[string]interface{}, limit, o
 	return lst, err
 }
 
-func TargetCountByFilter(ctx *ctx.Context, query map[string]interface{}) (int64, error) {
+func TargetCountByFilter(ctx *ctx.Context, query []map[string]interface{}) (int64, error) {
 	session := TargetFilterQueryBuild(ctx, query, 0, 0)
 	return Count(session)
 }
 
-func MissTargetGetsByFilter(ctx *ctx.Context, query map[string]interface{}, ts int64) ([]*Target, error) {
+func MissTargetGetsByFilter(ctx *ctx.Context, query []map[string]interface{}, ts int64) ([]*Target, error) {
 	var lst []*Target
 	session := TargetFilterQueryBuild(ctx, query, 0, 0)
 	session = session.Where("update_at < ?", ts)
@@ -144,16 +150,20 @@ func MissTargetGetsByFilter(ctx *ctx.Context, query map[string]interface{}, ts i
 	return lst, err
 }
 
-func MissTargetCountByFilter(ctx *ctx.Context, query map[string]interface{}, ts int64) (int64, error) {
+func MissTargetCountByFilter(ctx *ctx.Context, query []map[string]interface{}, ts int64) (int64, error) {
 	session := TargetFilterQueryBuild(ctx, query, 0, 0)
 	session = session.Where("update_at < ?", ts)
 	return Count(session)
 }
 
-func TargetFilterQueryBuild(ctx *ctx.Context, query map[string]interface{}, limit, offset int) *gorm.DB {
+func TargetFilterQueryBuild(ctx *ctx.Context, query []map[string]interface{}, limit, offset int) *gorm.DB {
 	session := DB(ctx).Model(&Target{})
-	for k, v := range query {
-		session = session.Where(k, v)
+	for _, q := range query {
+		tx := DB(ctx).Model(&Target{})
+		for k, v := range q {
+			tx = tx.Or(k, v)
+		}
+		session = session.Where(tx)
 	}
 
 	if limit > 0 {
@@ -164,8 +174,16 @@ func TargetFilterQueryBuild(ctx *ctx.Context, query map[string]interface{}, limi
 }
 
 func TargetGetsAll(ctx *ctx.Context) ([]*Target, error) {
+	if !ctx.IsCenter {
+		lst, err := poster.GetByUrls[[]*Target](ctx, "/v1/n9e/targets")
+		return lst, err
+	}
+
 	var lst []*Target
 	err := DB(ctx).Model(&Target{}).Find(&lst).Error
+	for i := 0; i < len(lst); i++ {
+		lst[i].FillTagsMap()
+	}
 	return lst, err
 }
 
