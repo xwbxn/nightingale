@@ -11,10 +11,6 @@ import (
 	"github.com/toolkits/pkg/slice"
 )
 
-type IdentProps struct {
-	BusiGroup string
-}
-
 type Set struct {
 	sync.Mutex
 	items map[string]struct{}
@@ -35,11 +31,11 @@ func (s *Set) Init() {
 	go s.LoopPersist()
 }
 
-func (s *Set) MSet(items map[string]IdentProps) {
+func (s *Set) MSet(items map[string]struct{}) {
 	s.Lock()
 	defer s.Unlock()
-	for ident, props := range items {
-		s.items[ident] = props
+	for ident := range items {
+		s.items[ident] = struct{}{}
 	}
 }
 
@@ -51,7 +47,7 @@ func (s *Set) LoopPersist() {
 }
 
 func (s *Set) persist() {
-	var items map[string]IdentProps
+	var items map[string]struct{}
 
 	s.Lock()
 	if len(s.items) == 0 {
@@ -60,24 +56,24 @@ func (s *Set) persist() {
 	}
 
 	items = s.items
-	s.items = make(map[string]IdentProps)
+	s.items = make(map[string]struct{})
 	s.Unlock()
 
 	s.updateTimestamp(items)
 }
 
-func (s *Set) updateTimestamp(items map[string]IdentProps) {
-	lst := make(map[string]IdentProps, 100)
+func (s *Set) updateTimestamp(items map[string]struct{}) {
+	lst := make([]string, 0, 100)
 	now := time.Now().Unix()
 	num := 0
-	for ident, props := range items {
-		lst[ident] = props
+	for ident := range items {
+		lst = append(lst, ident)
 		num++
 		if num == 100 {
 			if err := s.UpdateTargets(lst, now); err != nil {
 				logger.Errorf("failed to update targets: %v", err)
 			}
-			lst = make(map[string]IdentProps, 100)
+			lst = lst[:0]
 			num = 0
 		}
 	}
@@ -106,10 +102,6 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 	if count == 0 {
 		return nil
 	}
-	namelist := []string{}
-	for ident := range lst {
-		namelist = append(namelist, ident)
-	}
 
 	ret := s.ctx.DB.Table("target").Where("ident in ?", lst).Update("update_at", now)
 	if ret.Error != nil {
@@ -127,7 +119,7 @@ func (s *Set) UpdateTargets(lst []string, now int64) error {
 		return err
 	}
 
-	news := slice.SubString(namelist, exists)
+	news := slice.SubString(lst, exists)
 	for i := 0; i < len(news); i++ {
 		err = s.ctx.DB.Exec("INSERT INTO target(ident, update_at) VALUES(?, ?)", news[i], now).Error
 		if err != nil {

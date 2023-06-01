@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/gin-gonic/gin"
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
@@ -80,10 +79,9 @@ func (rt *Router) remoteWrite(c *gin.Context) {
 	}
 
 	var (
-		ids       = make(map[string]idents.IdentProps)
-		ident     string
-		metric    string
-		busiGroup string
+		ids    = make(map[string]struct{})
+		ident  string
+		metric string
 	)
 
 	for i := 0; i < count; i++ {

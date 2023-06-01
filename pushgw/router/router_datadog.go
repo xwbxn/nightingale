@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/gin-gonic/gin"
 	easyjson "github.com/mailru/easyjson"
 	"github.com/prometheus/common/model"
@@ -225,7 +224,7 @@ func (r *Router) datadogSeries(c *gin.Context) {
 		succ int
 		fail int
 		msg  = "received"
-		ids  = make(map[string]idents.IdentProps)
+		ids  = make(map[string]struct{})
 	)
 
 	for i := 0; i < cnt; i++ {
@@ -248,7 +247,7 @@ func (r *Router) datadogSeries(c *gin.Context) {
 
 		if ident != "" {
 			// register host
-			ids[ident] = idents.IdentProps{}
+			ids[ident] = struct{}{}
 
 			// fill tags
 			target, has := r.TargetCache.Get(ident)
