@@ -2,16 +2,17 @@ package router
 
 import (
 	"compress/gzip"
-	"encoding/json"
+	json "encoding/json"
 	"io/ioutil"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
-
+	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 )
 
+// heartbeat Forward heartbeat request to the center.
 func (rt *Router) heartbeat(c *gin.Context) {
 	var bs []byte
 	var err error
@@ -35,25 +36,9 @@ func (rt *Router) heartbeat(c *gin.Context) {
 	err = json.Unmarshal(bs, &req)
 	ginx.Dangerous(err)
 
-	// maybe from pushgw
-	if req.Offset == 0 {
-		req.Offset = (time.Now().UnixMilli() - req.UnixTime)
-	}
+	req.Offset = (time.Now().UnixMilli() - req.UnixTime)
+	req.RemoteAddr = c.ClientIP()
+	gid := ginx.QueryStr(c, "gid", "")
 
-	if req.RemoteAddr == "" {
-		req.RemoteAddr = c.ClientIP()
-	}
-
-	rt.MetaSet.Set(req.Hostname, req)
-
-	gid := ginx.QueryInt64(c, "gid", 0)
-
-	if gid != 0 {
-		target, has := rt.TargetCache.Get(req.Hostname)
-		if has && target.GroupId != gid {
-			err = models.TargetUpdateBgid(rt.Ctx, []string{req.Hostname}, gid, false)
-		}
-	}
-
-	ginx.NewRender(c).Message(err)
+	ginx.NewRender(c).Message(poster.PostByUrls(rt.Ctx, "/v1/n9e/heartbeat?gid="+gid, req))
 }
