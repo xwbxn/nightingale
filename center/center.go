@@ -56,7 +56,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		return nil, err
 	}
 
-	metas := metas.New(redis)
+	metas := metas.New(ctx, redis)
 	idents := idents.New(ctx)
 
 	syncStats := memsto.NewSyncStats()
@@ -82,7 +82,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, notifyConfigCache, promClients, redis, sso, ctx, metas, targetCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, idents, writers, ctx)
-	providerRouter := providerrt.New(config.HTTP, config.Provider, targetCache, busiGroupCache, providerCache, ctx)
+	providerRouter := providerrt.New(config.HTTP, targetCache, busiGroupCache, providerCache, ctx)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 

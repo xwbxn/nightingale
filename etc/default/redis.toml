@@ -1,0 +1,14 @@
+# # collect interval
+# interval = 15
+
+[[instances]]
+address = "{{.address}}:{{.port}}"
+# username = "{{.user}}"
+password = "{{.password}}"
+# pool_size = 2
+
+# # Optional. Specify redis commands to retrieve values
+# commands = [
+#     {command = ["get", "sample-key1"], metric = "custom_metric_name1"},
+#     {command = ["get", "sample-key2"], metric = "custom_metric_name2"}
+# ]

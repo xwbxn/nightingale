@@ -331,11 +331,21 @@ func (rt *Router) Config(r *gin.Engine) {
 		// 总览试图
 		pages.GET("/busi-group/overview", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.overviewGet)
 
-		// 探针配置管理
-		pages.GET("/providers/:id", rt.auth(), rt.admin(), rt.providerGet)
-		pages.POST("/providers", rt.auth(), rt.admin(), rt.providerAdd)
-		pages.PUT("/providers", rt.auth(), rt.admin(), rt.providerPut)
-		pages.DELETE("/providers/:id", rt.auth(), rt.admin(), rt.providerDel)
+		// 资产管理
+		pages.GET("/assets/:id", rt.auth(), rt.admin(), rt.assetsGet)
+		pages.GET("/assets", rt.auth(), rt.admin(), rt.assetsGets)
+		pages.POST("/assets", rt.auth(), rt.admin(), rt.assetsAdd)
+		pages.PUT("/assets", rt.auth(), rt.admin(), rt.assetPut)
+		pages.DELETE("/assets", rt.auth(), rt.user(), rt.perm("/assets/del"), rt.assetDel)
+		pages.POST("/assets/config/default/:type", rt.auth(), rt.admin(), rt.assetDefaultConfigGet)
+		pages.GET("/assets/idents", rt.auth(), rt.admin(), rt.assetIdentGetAll)
+		pages.GET("/assets/types", rt.auth(), rt.admin(), rt.assetGetTypeList)
+		pages.GET("/assets/tags", rt.auth(), rt.user(), rt.assetGetTags)
+		pages.POST("/assets/tags", rt.auth(), rt.user(), rt.perm("/assets/put"), rt.assetBindTagsByFE)
+		pages.DELETE("/assets/tags", rt.auth(), rt.user(), rt.perm("/assets/put"), rt.assetUnbindTagsByFE)
+		pages.PUT("/assets/bgid", rt.auth(), rt.user(), rt.perm("/assets/put"), rt.assetUpdateBgid)
+		pages.PUT("/assets/note", rt.auth(), rt.user(), rt.perm("/assets/note"), rt.assetUpdateNote)
+
 	}
 
 	if rt.HTTP.APIForService.Enable {

@@ -12,7 +12,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/pkg/logx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
-	"github.com/ccfos/nightingale/v6/provider/cpconf"
 	"github.com/ccfos/nightingale/v6/pushgw/pconf"
 	"github.com/ccfos/nightingale/v6/storage"
 )
@@ -28,8 +27,6 @@ type ConfigType struct {
 	Pushgw pconf.Pushgw
 	Alert  aconf.Alert
 	Center cconf.Center
-
-	Provider cpconf.Provider
 }
 
 type CenterApi struct {

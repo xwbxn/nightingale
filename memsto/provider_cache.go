@@ -19,7 +19,7 @@ type ProviderCacheType struct {
 	stats           *Stats
 
 	sync.RWMutex
-	hps map[int64]*models.Provider // key: id
+	hps map[int64]*models.Asset // key: id
 }
 
 func NewProviderCache(ctx *ctx.Context, stats *Stats) *ProviderCacheType {
@@ -28,7 +28,7 @@ func NewProviderCache(ctx *ctx.Context, stats *Stats) *ProviderCacheType {
 		statLastUpdated: -1,
 		ctx:             ctx,
 		stats:           stats,
-		hps:             make(map[int64]*models.Provider),
+		hps:             make(map[int64]*models.Asset),
 	}
 	hpc.SyncProviders()
 	return hpc
@@ -42,7 +42,7 @@ func (hpc *ProviderCacheType) StatChanged(total, lastUpdated int64) bool {
 	return true
 }
 
-func (hpc *ProviderCacheType) Set(hps map[int64]*models.Provider, total, lastUpdated int64) {
+func (hpc *ProviderCacheType) Set(hps map[int64]*models.Asset, total, lastUpdated int64) {
 	hpc.Lock()
 	hpc.hps = hps
 	hpc.Unlock()
@@ -52,23 +52,24 @@ func (hpc *ProviderCacheType) Set(hps map[int64]*models.Provider, total, lastUpd
 	hpc.statLastUpdated = lastUpdated
 }
 
-func (hpc *ProviderCacheType) GetByIdentAndGroup(ident string, groupId int64) *models.Provider {
+func (hpc *ProviderCacheType) GetByIdent(ident string) []*models.Asset {
 	hpc.RLock()
 	defer hpc.RUnlock()
 
+	items := []*models.Asset{}
 	for _, item := range hpc.hps {
-		if item.Ident == ident && item.GroupId == groupId {
-			return item
+		if item.Ident == ident {
+			items = append(items, item)
 		}
 	}
 
-	return nil
+	return items
 }
 
 func (hpc *ProviderCacheType) SyncProviders() {
 	err := hpc.syncProviders()
 	if err != nil {
-		fmt.Println("failed to sync http providers:", err)
+		fmt.Println("failed to sync assets:", err)
 		exit(1)
 	}
 
@@ -80,7 +81,7 @@ func (hpc *ProviderCacheType) loopSyncProviders() {
 	for {
 		time.Sleep(duration)
 		if err := hpc.syncProviders(); err != nil {
-			logger.Warning("failed to sync http providers:", err)
+			logger.Warning("failed to sync assets:", err)
 		}
 	}
 }
@@ -88,18 +89,24 @@ func (hpc *ProviderCacheType) loopSyncProviders() {
 func (hpc *ProviderCacheType) syncProviders() error {
 	start := time.Now()
 
-	stat, err := models.ProviderStatistics(hpc.ctx)
+	stat, err := models.AssetStatistics(hpc.ctx)
 	if err != nil {
-		return errors.WithMessage(err, "failed to exec HttpProviderStatistics")
+		return errors.WithMessage(err, "failed to exec AssetsStatistics")
 	}
 
-	// 因为有内容变化，因此全部同步，不进行状态判定
-	lst, err := models.ProviderGetAll(hpc.ctx)
+	if !hpc.StatChanged(stat.Total, stat.LastUpdated) {
+		hpc.stats.GaugeCronDuration.WithLabelValues("sync_assets").Set(0)
+		hpc.stats.GaugeSyncNumber.WithLabelValues("sync_assets").Set(0)
+		logger.Debug("assets not changed")
+		return nil
+	}
+
+	lst, err := models.AssetGetAll(hpc.ctx)
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec HttpProviderGetAll")
 	}
 
-	m := make(map[int64]*models.Provider)
+	m := make(map[int64]*models.Asset)
 	for i := 0; i < len(lst); i++ {
 		m[lst[i].Id] = lst[i]
 	}
@@ -107,10 +114,10 @@ func (hpc *ProviderCacheType) syncProviders() error {
 	hpc.Set(m, stat.Total, stat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
-	hpc.stats.GaugeCronDuration.WithLabelValues("sync_providers").Set(float64(ms))
-	hpc.stats.GaugeSyncNumber.WithLabelValues("sync_providers").Set(float64(len(m)))
+	hpc.stats.GaugeCronDuration.WithLabelValues("sync_assets").Set(float64(ms))
+	hpc.stats.GaugeSyncNumber.WithLabelValues("sync_assets").Set(float64(len(m)))
 
-	logger.Infof("timer: sync providers done, cost: %dms, number: %d", ms, len(m))
+	logger.Infof("timer: sync assets done, cost: %dms, number: %d", ms, len(m))
 
 	return nil
 }

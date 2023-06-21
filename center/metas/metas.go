@@ -6,21 +6,25 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/toolkits/pkg/logger"
+	"github.com/toolkits/pkg/slice"
 )
 
 type Set struct {
 	sync.RWMutex
 	items map[string]models.HostMeta
 	redis storage.Redis
+	ctx   *ctx.Context
 }
 
-func New(redis storage.Redis) *Set {
+func New(ctx *ctx.Context, redis storage.Redis) *Set {
 	set := &Set{
 		items: make(map[string]models.HostMeta),
 		redis: redis,
+		ctx:   ctx,
 	}
 
 	set.Init()
@@ -95,10 +99,35 @@ func (s *Set) updateTargets(m map[string]models.HostMeta) error {
 		return nil
 	}
 
+	// there are some idents not found in db, so insert them
+	var exists []string
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+
+	err := s.ctx.DB.Table("assets").Where("ident in ? and plugin = 'host'", keys).Pluck("ident", &exists).Error
+	if err != nil {
+		return err
+	}
+
+	now := time.Now().Unix()
+	news := slice.SubString(keys, exists)
+	for i := 0; i < len(news); i++ {
+		conf, _ := models.AssetGenConfig("主机", make(map[string]interface{}))
+
+		new := m[news[i]]
+		err = s.ctx.DB.Exec("INSERT INTO assets(configs, version, group_id, ident, name, label, type, memo, create_at, create_by, plugin) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)",
+			conf.String(), "init", 0, new.Hostname, new.Hostname, new.RemoteAddr, "主机", "auto", now, "system", "host").Error
+		if err != nil {
+			logger.Error("failed to insert assets:", news[i], "error:", err)
+		}
+	}
+
 	newMap := make(map[string]interface{}, count)
 	for ident, meta := range m {
 		newMap[models.WrapIdent(ident)] = meta
 	}
-	err := storage.MSet(context.Background(), s.redis, newMap)
+	err = storage.MSet(context.Background(), s.redis, newMap)
 	return err
 }

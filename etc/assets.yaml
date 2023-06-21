@@ -1,0 +1,81 @@
+config:
+  - name: 主机
+    plugin: host
+    key: instance
+    metrics_url: ""
+    form: []
+
+  - name: 主机(exporter)
+    plugin: prometheus
+    key: instance
+    metrics_url: ""
+    form:
+      - label: 监控Url
+        name: url
+
+  - name: MySQL
+    plugin: mysql
+    key: instance
+    metrics_url: ""
+    form:
+      - label: 地址
+        name: address
+      - label: 端口
+        name: port
+      - label: 用户名
+        name: user
+      - label: 密码
+        name: password
+
+  - name: Redis
+    plugin: redis
+    key: instance
+    metrics_url: ""
+    form:
+      - label: 地址
+        name: address
+      - label: 端口
+        name: port
+      - label: 用户名
+        name: user
+      - label: 密码
+        name: password
+
+  - name: Web服务
+    plugin: http_response
+    key: instance
+    metrics_url: ""
+    form:
+      - label: 服务地址
+        name: url
+
+  - name: 网络连通
+    plugin: ping
+    key: instance
+    metrics_url: ""
+    form:
+      - label: IP地址
+        name: address
+
+  - name: 网络服务
+    plugin: net_response
+    key: instance
+    metrics_url: ""
+    form:
+      - label: 协议
+        name: protocol
+        items: ["tcp", "udp"]
+      - label: 地址
+        name: address
+      - label: 端口
+        name: port
+
+  - name: ES集群
+    plugin: elastic_search
+    key: cluster
+    metrics_url: ""
+
+  - name: DNS解析
+    plugin: dns_query
+    key: cluster
+    metrics_url: ""

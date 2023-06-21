@@ -1,0 +1,81 @@
+[cpu]
+# # collect interval
+# interval = 15
+
+# # whether collect per cpu
+# collect_per_cpu = false
+
+[disk]
+# # collect interval
+# interval = 15
+
+# # By default stats will be gathered for all mount points.
+# # Set mount_points will restrict the stats to only the specified mount points.
+# mount_points = ["/"]
+
+# Ignore mount points by filesystem type.
+ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs", "nsfs"]
+
+ignore_mount_points = ["/boot", "/var/lib/kubelet/pods"]
+
+
+[diskio]
+# # collect interval
+# interval = 15
+
+# # By default, categraf will gather stats for all devices including disk partitions.
+# # Setting devices will restrict the stats to the specified devices.
+# devices = ["sda", "sdb", "vd*"]
+
+[kernel]
+# # collect interval
+# interval = 15
+
+[mem]
+# # collect interval
+# interval = 15
+
+# # whether collect platform specified metrics
+collect_platform_fields = true
+
+[net]
+# # collect interval
+# interval = 15
+
+# # whether collect protocol stats on Linux
+# collect_protocol_stats = false
+
+# # setting interfaces will tell categraf to gather these explicit interfaces
+# interfaces = ["eth0"]
+
+[netstat]
+# # collect interval
+# interval = 15
+
+disable_summary_stats = false
+## if machine has many network connections, use this plugin may exhaust your cpu resource, diable connection stat to avoid this
+disable_connection_stats = true
+
+tcp_ext = false
+ip_ext = false
+
+[processes]
+# # collect interval
+# interval = 15
+
+# # force use ps command to gather
+# force_ps = false
+
+# # force use /proc to gather
+# force_proc = false
+
+[self_metrics]
+# # collect interval
+# interval = 15
+
+[system]
+# # collect interval
+# interval = 15
+
+# # whether collect metric: system_n_users
+# collect_user_number = false

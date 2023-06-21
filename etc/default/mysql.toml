@@ -1,0 +1,24 @@
+# # collect interval
+# interval = 15
+
+[[instances]]
+address = "{{.address}}:{{.port}}"
+username = "{{.user}}"
+password = "{{.password}}"
+
+extra_status_metrics = true
+extra_innodb_metrics = true
+# gather_processlist_processes_by_state = false
+# gather_processlist_processes_by_user = false
+# gather_schema_size = true
+# gather_table_size = false
+# gather_system_table_size = false
+# gather_slave_status = true
+
+#[[instances.queries]]
+# mesurement = "lock_wait"
+# metric_fields = [ "total" ]
+# timeout = "3s"
+# request = '''
+#SELECT count(*) as total FROM information_schema.innodb_trx WHERE trx_state='LOCK WAIT'
+#'''

@@ -7,7 +7,6 @@ import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
-	"github.com/ccfos/nightingale/v6/provider/cpconf"
 )
 
 type Router struct {
@@ -18,7 +17,7 @@ type Router struct {
 	Ctx            *ctx.Context
 }
 
-func New(httpConfig httpx.Config, provider cpconf.Provider, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType, hpc *memsto.ProviderCacheType, ctx *ctx.Context) *Router {
+func New(httpConfig httpx.Config, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType, hpc *memsto.ProviderCacheType, ctx *ctx.Context) *Router {
 	return &Router{
 		HTTP:           httpConfig,
 		Ctx:            ctx,

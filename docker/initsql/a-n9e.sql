@@ -607,3 +607,25 @@ CREATE TABLE `sso_config` (
     PRIMARY KEY (`id`),
     UNIQUE KEY (`name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE `assets` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `ident` varchar(200) NOT NULL,
+  `group_id` bigint(20) NOT NULL,
+  `name` varchar(200) NOT NULL,
+  `type` varchar(255) NOT NULL,
+  `memo` varchar(255) NOT NULL DEFAULT '',
+  `configs` text,
+  `tags` varchar(512) NOT NULL DEFAULT '',
+  `plugin` varchar(100) NOT NULL DEFAULT '',
+  `label` varchar(200) NOT NULL DEFAULT '',
+  `params` varchar(2000) NOT NULL DEFAULT '',
+  `status` int(1) NOT NULL DEFAULT '0',
+  `create_at` bigint(20) NOT NULL DEFAULT '0',
+  `create_by` varchar(64) NOT NULL DEFAULT '',
+  `update_at` bigint(20) NOT NULL DEFAULT '0',
+  `update_by` varchar(64) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  KEY `group_id` (`group_id`),
+  KEY `ident` (`ident`)
+) ENGINE=InnoDB AUTO_INCREMENT=177 DEFAULT CHARSET=utf8mb4;

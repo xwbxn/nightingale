@@ -1,0 +1,10 @@
+# # collect interval
+# interval = 15
+
+[[instances]]
+urls = [
+     "{{.url}}"
+]
+
+url_label_key = "instance"
+url_label_value = "host-{{.Address}}"
