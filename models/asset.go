@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"path"
 	"sort"
 	"strings"
@@ -194,6 +195,10 @@ func AssetGenConfig(assetType string, f map[string]interface{}) (bytes.Buffer, e
 	filepath := path.Join("etc", "default", fmt.Sprintf("%s.toml", pluginName))
 
 	tpl, err := template.ParseFiles(filepath)
+	if err != nil {
+		log.Printf("unable to open config: %s", filepath)
+		return bytes.Buffer{}, err
+	}
 	var content bytes.Buffer
 	tpl.Execute(&content, f)
 	return content, err

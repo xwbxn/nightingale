@@ -628,4 +628,4 @@ CREATE TABLE `assets` (
   PRIMARY KEY (`id`),
   KEY `group_id` (`group_id`),
   KEY `ident` (`ident`)
-) ENGINE=InnoDB AUTO_INCREMENT=177 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

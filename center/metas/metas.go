@@ -117,8 +117,8 @@ func (s *Set) updateTargets(m map[string]models.HostMeta) error {
 		conf, _ := models.AssetGenConfig("主机", make(map[string]interface{}))
 
 		new := m[news[i]]
-		err = s.ctx.DB.Exec("INSERT INTO assets(configs, version, group_id, ident, name, label, type, memo, create_at, create_by, plugin) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)",
-			conf.String(), "init", 0, new.Hostname, new.Hostname, new.RemoteAddr, "主机", "auto", now, "system", "host").Error
+		err = s.ctx.DB.Exec("INSERT INTO assets(configs, group_id, ident, name, label, type, memo, create_at, create_by, plugin) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?,?)",
+			conf.String(), 0, new.Hostname, new.Hostname, new.RemoteAddr, "主机", "auto", now, "system", "host").Error
 		if err != nil {
 			logger.Error("failed to insert assets:", news[i], "error:", err)
 		}
