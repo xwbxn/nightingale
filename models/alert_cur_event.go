@@ -221,13 +221,14 @@ func (e *AlertCurEvent) ToHis(ctx *ctx.Context) *AlertHisEvent {
 	}
 }
 
-func (e *AlertCurEvent) DB2FE() {
+func (e *AlertCurEvent) DB2FE() error {
 	e.NotifyChannelsJSON = strings.Fields(e.NotifyChannels)
 	e.NotifyGroupsJSON = strings.Fields(e.NotifyGroups)
 	e.CallbacksJSON = strings.Fields(e.Callbacks)
 	e.TagsJSON = strings.Split(e.Tags, ",,")
 	json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
 	json.Unmarshal([]byte(e.RuleConfig), &e.RuleConfigJson)
+	return nil
 }
 
 func (e *AlertCurEvent) FE2DB() {
@@ -240,6 +241,7 @@ func (e *AlertCurEvent) FE2DB() {
 
 	b, _ = json.Marshal(e.RuleConfigJson)
 	e.RuleConfig = string(b)
+
 }
 
 func (e *AlertCurEvent) DB2Mem() {
@@ -458,11 +460,21 @@ func AlertCurEventGetByIds(ctx *ctx.Context, ids []int64) ([]*AlertCurEvent, err
 func AlertCurEventGetByRuleIdAndDsId(ctx *ctx.Context, ruleId int64, datasourceId int64) ([]*AlertCurEvent, error) {
 	if !ctx.IsCenter {
 		lst, err := poster.GetByUrls[[]*AlertCurEvent](ctx, "/v1/n9e/alert-cur-events-get-by-rid?rid="+strconv.FormatInt(ruleId, 10)+"&dsid="+strconv.FormatInt(datasourceId, 10))
+		if err == nil {
+			for i := 0; i < len(lst); i++ {
+				lst[i].FE2DB()
+			}
+		}
 		return lst, err
 	}
 
 	var lst []*AlertCurEvent
 	err := DB(ctx).Where("rule_id=? and datasource_id = ?", ruleId, datasourceId).Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+		}
+	}
 	return lst, err
 }
 

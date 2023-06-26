@@ -16,22 +16,38 @@ import (
 
 // A RecordingRule records its vector expression into new timeseries.
 type RecordingRule struct {
-	Id                int64    `json:"id" gorm:"primaryKey"`
-	GroupId           int64    `json:"group_id"`                // busi group id
-	DatasourceIds     string   `json:"-" gorm:"datasource_ids"` // datasource ids
-	DatasourceIdsJson []int64  `json:"datasource_ids" gorm:"-"` // for fe
-	Cluster           string   `json:"cluster"`                 // take effect by cluster, seperated by space
-	Name              string   `json:"name"`                    // new metric name
-	Note              string   `json:"note"`                    // note
-	Disabled          int      `json:"disabled"`                // 0: enabled, 1: disabled
-	PromQl            string   `json:"prom_ql"`                 // just one ql for promql
-	PromEvalInterval  int      `json:"prom_eval_interval"`      // unit:s
-	AppendTags        string   `json:"-"`                       // split by space: service=n9e mod=api
-	AppendTagsJSON    []string `json:"append_tags" gorm:"-"`    // for fe
-	CreateAt          int64    `json:"create_at"`
-	CreateBy          string   `json:"create_by"`
-	UpdateAt          int64    `json:"update_at"`
-	UpdateBy          string   `json:"update_by"`
+	Id                int64         `json:"id" gorm:"primaryKey"`
+	GroupId           int64         `json:"group_id"`                // busi group id
+	DatasourceIds     string        `json:"-" gorm:"datasource_ids"` // datasource ids
+	DatasourceIdsJson []int64       `json:"datasource_ids" gorm:"-"` // for fe
+	Cluster           string        `json:"cluster"`                 // take effect by cluster, seperated by space
+	Name              string        `json:"name"`                    // new metric name
+	Disabled          int           `json:"disabled"`                // 0: enabled, 1: disabled
+	PromQl            string        `json:"prom_ql"`                 // just one ql for promql
+	QueryConfigs      string        `json:"-" gorm:"query_configs"`  // query_configs
+	QueryConfigsJson  []QueryConfig `json:"query_configs" gorm:"-"`  // query_configs for fe
+	PromEvalInterval  int           `json:"prom_eval_interval"`      // unit:s
+	AppendTags        string        `json:"-"`                       // split by space: service=n9e mod=api
+	AppendTagsJSON    []string      `json:"append_tags" gorm:"-"`    // for fe
+	Note              string        `json:"note"`                    // note
+	CreateAt          int64         `json:"create_at"`
+	CreateBy          string        `json:"create_by"`
+	UpdateAt          int64         `json:"update_at"`
+	UpdateBy          string        `json:"update_by"`
+}
+
+type QueryConfig struct {
+	Queries           []Query `json:"queries"`
+	NewMetric         string  `json:"new_metric"`
+	Exp               string  `json:"exp"`
+	WriteDatasourceId int64   `json:"write_datasource_id"`
+	Delay             int     `json:"delay"`
+}
+
+type Query struct {
+	DatasourceIds []int64     `json:"datasource_ids"`
+	Cate          string      `json:"cate"`
+	Config        interface{} `json:"config"`
 }
 
 func (re *RecordingRule) TableName() string {
@@ -42,11 +58,18 @@ func (re *RecordingRule) FE2DB() {
 	re.AppendTags = strings.Join(re.AppendTagsJSON, " ")
 	idsByte, _ := json.Marshal(re.DatasourceIdsJson)
 	re.DatasourceIds = string(idsByte)
+
+	queryConfigsByte, _ := json.Marshal(re.QueryConfigsJson)
+	re.QueryConfigs = string(queryConfigsByte)
 }
 
-func (re *RecordingRule) DB2FE(ctx *ctx.Context) {
+func (re *RecordingRule) DB2FE() error {
 	re.AppendTagsJSON = strings.Fields(re.AppendTags)
 	json.Unmarshal([]byte(re.DatasourceIds), &re.DatasourceIdsJson)
+
+	json.Unmarshal([]byte(re.QueryConfigs), &re.QueryConfigsJson)
+	return nil
+
 }
 
 func (re *RecordingRule) Verify() error {
@@ -58,11 +81,17 @@ func (re *RecordingRule) Verify() error {
 		re.DatasourceIdsJson = []int64{0}
 	}
 
-	if !model.MetricNameRE.MatchString(re.Name) {
+	if re.PromQl != "" && !model.MetricNameRE.MatchString(re.Name) {
 		return errors.New("Name has invalid chreacters")
 	}
 
-	if re.Name == "" {
+	for _, queryConfig := range re.QueryConfigsJson {
+		if !model.MetricNameRE.MatchString(queryConfig.NewMetric) {
+			return errors.New("Metric Name has invalid chreacters")
+		}
+	}
+
+	if re.Name == "" && re.PromQl != "" {
 		return errors.New("name is blank")
 	}
 
@@ -172,7 +201,7 @@ func RecordingRuleGets(ctx *ctx.Context, groupId int64) ([]RecordingRule, error)
 	err := session.Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
-			lst[i].DB2FE(ctx)
+			lst[i].DB2FE()
 		}
 	}
 
@@ -190,7 +219,7 @@ func RecordingRuleGet(ctx *ctx.Context, where string, regs ...interface{}) (*Rec
 		return nil, nil
 	}
 
-	lst[0].DB2FE(ctx)
+	lst[0].DB2FE()
 
 	return lst[0], nil
 }
@@ -209,7 +238,7 @@ func RecordingRuleEnabledGets(ctx *ctx.Context) ([]*RecordingRule, error) {
 	}
 
 	for i := 0; i < len(lst); i++ {
-		lst[i].DB2FE(ctx)
+		lst[i].DB2FE()
 	}
 	return lst, nil
 }
@@ -239,7 +268,7 @@ func RecordingRuleGetsByCluster(ctx *ctx.Context) ([]*RecordingRule, error) {
 	}
 
 	for i := 0; i < len(lst); i++ {
-		lst[i].DB2FE(ctx)
+		lst[i].DB2FE()
 	}
 	return lst, nil
 }

@@ -54,7 +54,7 @@ insert into user_group_member(group_id, user_id) values(1, 1);
 CREATE TABLE `configs` (
     `id` bigint unsigned not null auto_increment,
     `ckey` varchar(191) not null,
-    `cval` varchar(4096) not null default '',
+    `cval` text not null,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`ckey`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
@@ -94,9 +94,16 @@ insert into `role_operation`(role_name, operation) values('Standard', '/log/expl
 insert into `role_operation`(role_name, operation) values('Standard', '/trace/explorer');
 insert into `role_operation`(role_name, operation) values('Standard', '/help/version');
 insert into `role_operation`(role_name, operation) values('Standard', '/help/contact');
+insert into `role_operation`(role_name, operation) values('Standard', '/help/servers');
+insert into `role_operation`(role_name, operation) values('Standard', '/help/migrate');
 insert into `role_operation`(role_name, operation) values('Standard', '/alert-rules-built-in');
 insert into `role_operation`(role_name, operation) values('Standard', '/dashboards-built-in');
 insert into `role_operation`(role_name, operation) values('Standard', '/trace/dependencies');
+
+insert into `role_operation`(role_name, operation) values('Admin', '/help/source');
+insert into `role_operation`(role_name, operation) values('Admin', '/help/sso');
+insert into `role_operation`(role_name, operation) values('Admin', '/help/notification-tpls');
+insert into `role_operation`(role_name, operation) values('Admin', '/help/notification-settings');
 
 insert into `role_operation`(role_name, operation) values('Standard', '/users');
 insert into `role_operation`(role_name, operation) values('Standard', '/user-groups');
@@ -395,6 +402,7 @@ CREATE TABLE `recording_rule` (
     `prom_ql` varchar(8192) not null comment 'promql',
     `prom_eval_interval` int not null comment 'evaluate interval',
     `append_tags` varchar(255) default '' comment 'split by space: service=n9e mod=api',
+    `query_configs` text not null comment 'query configs',
     `create_at` bigint default '0',
     `create_by` varchar(64) default '',
     `update_at` bigint default '0',
