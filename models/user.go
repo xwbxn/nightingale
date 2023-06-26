@@ -23,6 +23,7 @@ const (
 	Dingtalk     = "dingtalk"
 	Wecom        = "wecom"
 	Feishu       = "feishu"
+	FeishuCard   = "feishucard"
 	Mm           = "mm"
 	Telegram     = "telegram"
 	Email        = "email"
@@ -33,6 +34,10 @@ const (
 	FeishuKey   = "feishu_robot_token"
 	MmKey       = "mm_webhook_url"
 	TelegramKey = "telegram_robot_token"
+)
+
+var (
+	DefaultChannels = []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, FeishuCard}
 )
 
 type User struct {
@@ -56,6 +61,10 @@ type User struct {
 
 func (u *User) TableName() string {
 	return "users"
+}
+
+func (u *User) DB2FE() error {
+	return nil
 }
 
 func (u *User) String() string {
@@ -285,7 +294,7 @@ func LdapLogin(ctx *ctx.Context, username, pass, roles string, ldap *ldapx.SsoCl
 		user.Email = sr.Entries[0].GetAttributeValue(attrs.Email)
 	}
 	if attrs.Phone != "" {
-		user.Phone = sr.Entries[0].GetAttributeValue(attrs.Phone)
+		user.Phone = strings.Replace(sr.Entries[0].GetAttributeValue(attrs.Phone), " ", "", -1)
 	}
 
 	if user.Roles == "" {
@@ -607,7 +616,7 @@ func (u *User) ExtractToken(key string) (string, bool) {
 	case Wecom:
 		ret := gjson.GetBytes(bs, WecomKey)
 		return ret.String(), ret.Exists()
-	case Feishu:
+	case Feishu, FeishuCard:
 		ret := gjson.GetBytes(bs, FeishuKey)
 		return ret.String(), ret.Exists()
 	case Mm:

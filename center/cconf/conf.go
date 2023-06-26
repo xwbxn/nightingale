@@ -9,6 +9,7 @@ type Center struct {
 	MetricDesc             MetricDescType
 	AnonymousAccess        AnonymousAccess
 	Categraf               Categraf
+	UseFileAssets          bool
 }
 
 type Plugin struct {
