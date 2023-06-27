@@ -7,4 +7,4 @@ urls = [
 ]
 
 url_label_key = "instance"
-url_label_value = "host-{{.Address}}"
+url_label_value = "{{.url}}"

@@ -79,3 +79,11 @@ config:
     plugin: dns_query
     key: cluster
     metrics_url: ""
+
+  - name: victoria-metrics
+    plugin: prometheus
+    key: instance
+    metrics_url: ""
+    form:
+      - label: 监控Url
+        name: url

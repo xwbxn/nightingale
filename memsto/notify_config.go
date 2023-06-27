@@ -34,7 +34,7 @@ Batch = 5
 `
 
 const DefaultIbex = `
-Address = "http://127.0.0.1:10090"
+Address = "http://n9e:10090"
 BasicAuthUser = "ibex"
 BasicAuthPass = "ibex"
 Timeout = 3000
