@@ -1,10 +1,10 @@
 package i18nx
 
-const I18N = `
+var I18N = `
 {
-    "zh": {
+  "zh": {
       "Username or password invalid": "用户名或密码错误",
-	  "incorrect verification code": "验证码错误",
+      "incorrect verification code": "验证码错误",
       "roles empty": "角色不能为空",
       "Username already exists": "此用户名已存在 请使用其他用户名",
       "failed to count user-groups": "校验数据失败 请重试",
@@ -49,6 +49,6 @@ const I18N = `
       "url path invalid":"url非法",
       "no such server":"无此实例",
       "admin role can not be modified":"管理员角色不允许修改"
-    }
+  }
 }
 `
