@@ -26,6 +26,7 @@ config:
         name: user
       - label: 密码
         name: password
+        password: true
 
   - name: Redis
     plugin: redis
@@ -40,6 +41,7 @@ config:
         name: user
       - label: 密码
         name: password
+        password: true
 
   - name: Web服务
     plugin: http_response
