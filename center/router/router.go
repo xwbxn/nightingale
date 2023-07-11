@@ -298,6 +298,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/alert-his-events/list", rt.auth(), rt.alertHisEventsList)
 		pages.DELETE("/alert-cur-events", rt.auth(), rt.user(), rt.perm("/alert-cur-events/del"), rt.alertCurEventDel)
 
+		pages.POST("/alert-his-event/solve/:eid", rt.auth(), rt.user(), rt.alertHisEventSolve) //人工解决异常接口
+		pages.POST("/alert-his-event/close/:eid", rt.auth(), rt.user(), rt.alertHisEventClose) //人工关闭异常接口
+
 		pages.GET("/alert-aggr-views", rt.auth(), rt.alertAggrViewGets)
 		pages.DELETE("/alert-aggr-views", rt.auth(), rt.user(), rt.alertAggrViewDel)
 		pages.POST("/alert-aggr-views", rt.auth(), rt.user(), rt.alertAggrViewAdd)
@@ -445,6 +448,7 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/notify-tpls", rt.notifyTplGets)
 
 			service.POST("/task-record-add", rt.taskRecordAdd)
+
 		}
 	}
 

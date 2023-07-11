@@ -58,6 +58,7 @@ type AlertCurEvent struct {
 	LastSentTime       int64             `json:"last_sent_time" gorm:"-"`   // 上次发送时间
 	NotifyCurNumber    int               `json:"notify_cur_number"`         // notify: current number
 	FirstTriggerTime   int64             `json:"first_trigger_time"`        // 连续告警的首次告警时间
+	Status             int               `json:"status"`                    // 状态
 }
 
 func (e *AlertCurEvent) TableName() string {
@@ -178,6 +179,7 @@ func (e *AlertCurEvent) GetField(field string) string {
 func (e *AlertCurEvent) ToHis(ctx *ctx.Context) *AlertHisEvent {
 	isRecovered := 0
 	var recoverTime int64 = 0
+	// var status int = 0 //添加Status参数
 	if e.IsRecovered {
 		isRecovered = 1
 		recoverTime = e.LastEvalTime
@@ -218,6 +220,7 @@ func (e *AlertCurEvent) ToHis(ctx *ctx.Context) *AlertHisEvent {
 		LastEvalTime:     e.LastEvalTime,
 		NotifyCurNumber:  e.NotifyCurNumber,
 		FirstTriggerTime: e.FirstTriggerTime,
+		Status:           e.Status, //添加状态参数
 	}
 }
 
