@@ -52,6 +52,10 @@ type AlertHisEvent struct {
 	AnnotationsJSON    map[string]string `json:"annotations" gorm:"-"` // for fe
 	NotifyCurNumber    int               `json:"notify_cur_number"`    // notify: current number
 	FirstTriggerTime   int64             `json:"first_trigger_time"`   // 连续告警的首次告警时间
+	Status             int               `json:"status"`               // 状态
+	Remark             string            `json:"remark"`               // 备注
+	HandleAt           int64             `json:"handle_at"`            // 创建时间
+	HandleBy           string            `json:"handle_by"`            // 创建人
 }
 
 func (e *AlertHisEvent) TableName() string {
@@ -105,7 +109,7 @@ func (e *AlertHisEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 	return nil
 }
 
-func AlertHisEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, recovered int, dsIds []int64, cates []string, query string) (int64, error) {
+func AlertHisEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, recovered int, dsIds []int64, cates []string, query string, status int) (int64, error) {
 	session := DB(ctx).Model(&AlertHisEvent{}).Where("last_eval_time between ? and ?", stime, etime)
 
 	if len(prods) > 0 {
@@ -131,6 +135,9 @@ func AlertHisEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int
 	if len(cates) > 0 {
 		session = session.Where("cate in ?", cates)
 	}
+	if status >= 0 {
+		session = session.Where("status = ?", status)
+	}
 
 	if query != "" {
 		arr := strings.Fields(query)
@@ -143,7 +150,7 @@ func AlertHisEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int
 	return Count(session)
 }
 
-func AlertHisEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, recovered int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertHisEvent, error) {
+func AlertHisEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, recovered int, dsIds []int64, cates []string, query string, limit, offset int, status int) ([]AlertHisEvent, error) {
 	session := DB(ctx).Where("last_eval_time between ? and ?", stime, etime)
 
 	if len(prods) != 0 {
@@ -160,6 +167,9 @@ func AlertHisEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int6
 
 	if recovered >= 0 {
 		session = session.Where("is_recovered = ?", recovered)
+	}
+	if status >= 0 {
+		session = session.Where("status = ?", status)
 	}
 
 	if len(dsIds) > 0 {
@@ -213,6 +223,25 @@ func AlertHisEventGetById(ctx *ctx.Context, id int64) (*AlertHisEvent, error) {
 
 func (m *AlertHisEvent) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
 	return DB(ctx).Model(m).Updates(fields).Error
+}
+
+/**
+通过IsRecovered判断指标是否恢复
+**/
+func (m *AlertHisEvent) UpdateStatus(ctx *ctx.Context, id int64, status int, remark string, handleBy string) error {
+
+	modes, err := AlertHisEventGetById(ctx, id)
+	if modes == nil {
+		logger.Errorf("Sorry,Event isn't recovered, %s", err)
+	}
+
+	// return DB(ctx).Model(m).Where("id = ?", id).Update("status", status).Error
+	modes.Status = status
+	modes.Remark = remark
+	modes.HandleAt = time.Now().Unix()
+	modes.HandleBy = handleBy
+
+	return DB(ctx).Model(m).Updates(modes).Error
 }
 
 func AlertHisEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
