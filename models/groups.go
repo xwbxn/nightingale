@@ -1,6 +1,7 @@
 package models
 
 import (
+	"reflect"
 	"strings"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -8,10 +9,29 @@ import (
 )
 
 type Groups struct {
-	Id       int64  `json:"id" gorm:"primaryKey"` // id
-	Name     string `json:"name"`                 // 组织名
-	ParentId int64  `json:"parent_id"`            // 组织父id
-	Path     string `json:"path"`                 // 路径
+	Id       int64     `json:"id" gorm:"primaryKey"` // id
+	Name     string    `json:"name"`                 // 组织名
+	ParentId int64     `json:"parent_id"`            // 组织父id
+	Path     string    `json:"path"`                 // 路径
+	Children []*Groups `json:"children" gorm:"-"`
+}
+
+func tree(menus []*Groups, pid int64) []*Groups {
+	//定义子节点目录
+	var nodes []*Groups
+	if reflect.ValueOf(menus).IsValid() {
+		//循环所有一级菜单
+		for _, v := range menus {
+			//查询所有该菜单下的所有子菜单
+			if v.ParentId == pid {
+				//特别注意压入元素不是单个所有加三个 **...** 告诉切片无论多少元素一并压入
+				v.Children = append(v.Children, tree(menus, v.Id)...)
+				nodes = append(nodes, v)
+			}
+
+		}
+	}
+	return nodes
 }
 
 /**
@@ -43,6 +63,20 @@ func GroupsDel(ctx *ctx.Context, ids []string) error {
 **/
 func (u *Groups) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {
 	return DB(ctx).Model(u).Select(selectField, selectFields...).Updates(u).Error
+}
+
+func GroupsList(ctx *ctx.Context) ([]*Groups, error) {
+	var lst []*Groups
+	err := DB(ctx).Find(&lst).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(lst) == 0 {
+		return nil, nil
+	}
+	return tree(lst, 0), nil
 }
 
 /**
