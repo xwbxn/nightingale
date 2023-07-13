@@ -14,15 +14,15 @@ func (rt *Router) groupsList(c *gin.Context) {
 }
 
 func (rt *Router) groupsGet(c *gin.Context) {
-	// eid := ginx.UrlParamInt64(c, "eid")
-	// event, err := models.GroupsGetById(rt.Ctx, eid)
-	// ginx.Dangerous(err)
+	eid := ginx.UrlParamInt64(c, "eid")
+	event, err := models.GroupsGetById(rt.Ctx, eid)
+	ginx.Dangerous(err)
 
-	// if event == nil {
-	// 	ginx.Bomb(404, "No such alert event")
-	// }
+	if event == nil {
+		ginx.Bomb(404, "No such group")
+	}
 
-	// ginx.NewRender(c).Data(event, err)
+	ginx.NewRender(c).Data(event, err)
 }
 
 func (rt *Router) updateGroups(c *gin.Context) {
@@ -35,17 +35,33 @@ func (rt *Router) updateGroups(c *gin.Context) {
 	} else {
 		var f models.Groups
 		ginx.BindJSON(c, &f)
-		// err = m.UpdateAll(rt.Ctx, eid, f.Name, f.ParentId, f.Path)
+		err = m.UpdateAll(rt.Ctx, eid, f.Name, f.ParentId, f.Path)
 		ginx.Dangerous(err)
 	}
 	ginx.NewRender(c).Message(err)
 }
 
 func (rt *Router) groupsDel(c *gin.Context) {
-	var f idsForm
-	ginx.BindJSON(c, &f)
-	f.Verify()
+	eid := ginx.UrlParamInt64(c, "eid")
+	event, err := models.GroupsGetById(rt.Ctx, eid)
+	ginx.Dangerous(err)
+	if event == nil {
+		ginx.Bomb(404, "No such group")
+	}
+	var list = []int64{eid}
+	ginx.NewRender(c).Message(models.GroupsDels(rt.Ctx, list))
 
-	// param(busiGroupId) for protect
-	ginx.NewRender(c).Message(models.GroupsDels(rt.Ctx, f.Ids, ginx.UrlParamInt64(c, "id")))
+}
+
+func (rt *Router) groupsAdd(c *gin.Context) {
+	var f models.Groups
+	ginx.BindJSON(c, &f)
+
+	u := models.Groups{
+		Name:     f.Name,
+		ParentId: f.ParentId,
+		Path:     f.Path,
+	}
+
+	ginx.NewRender(c).Message(u.Add(rt.Ctx))
 }

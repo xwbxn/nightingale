@@ -9,11 +9,15 @@ import (
 )
 
 type Groups struct {
-	Id       int64     `json:"id" gorm:"primaryKey"` // id
-	Name     string    `json:"name"`                 // 组织名
-	ParentId int64     `json:"parent_id"`            // 组织父id
-	Path     string    `json:"path"`                 // 路径
-	Children []*Groups `json:"children" gorm:"-"`
+	Id           int64     `json:"id" gorm:"primaryKey"` // id
+	Name         string    `json:"name"`                 // 组织名
+	ParentId     int64     `json:"parent_id"`            // 组织父id
+	Path         string    `json:"path"`                 // 路径
+	Children     []*Groups `json:"children" gorm:"-"`
+	IsEditable   bool      `json:"isEditable" gorm:"-"`
+	Key          int       `json:"key" gorm:"-"`
+	Value        string    `json:"value" gorm:"-"`
+	DefaultValue string    `json:"defaultValue" gorm:"-"`
 }
 
 func tree(menus []*Groups, pid int64) []*Groups {
@@ -28,6 +32,10 @@ func tree(menus []*Groups, pid int64) []*Groups {
 				v.Children = append(v.Children, tree(menus, v.Id)...)
 				nodes = append(nodes, v)
 			}
+			v.IsEditable = false
+			v.DefaultValue = v.Name
+			v.Key = int(v.Id)
+			v.Value = v.Name
 
 		}
 	}
@@ -191,12 +199,9 @@ func (m *Groups) UpdateAll(ctx *ctx.Context, id int64, name string, parent_id in
 	return DB(ctx).Model(m).Updates(modes).Error
 }
 
-func GroupsDels(ctx *ctx.Context, ids []int64, bgid ...int64) error {
+func GroupsDels(ctx *ctx.Context, ids []int64) error {
 	for i := 0; i < len(ids); i++ {
 		session := DB(ctx).Where("id = ?", ids[i])
-		if len(bgid) > 0 {
-			session = session.Where("group_id = ?", bgid[0])
-		}
 		ret := session.Delete(&Groups{})
 		if ret.Error != nil {
 			return ret.Error
