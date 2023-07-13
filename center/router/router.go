@@ -385,7 +385,10 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/assets/tags", rt.auth(), rt.user(), rt.perm("/assets/put"), rt.assetUnbindTagsByFE)
 		pages.PUT("/assets/bgid", rt.auth(), rt.user(), rt.perm("/assets/put"), rt.assetUpdateBgid)
 		pages.PUT("/assets/note", rt.auth(), rt.user(), rt.perm("/assets/note"), rt.assetUpdateNote)
-
+		pages.GET("/groups/get/:id", rt.auth(), rt.user(), rt.groupsGet)    // 依据id获取组织信息
+		pages.GET("/groups/list", rt.auth(), rt.user(), rt.groupsList)      // 获取组织信息
+		pages.POST("/groups/update", rt.auth(), rt.user(), rt.updateGroups) // 上传组织信息
+		pages.DELETE("/groups/del", rt.auth(), rt.user(), rt.groupsDel)
 	}
 
 	if rt.HTTP.APIForService.Enable {
