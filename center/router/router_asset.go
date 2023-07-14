@@ -119,7 +119,7 @@ func (rt *Router) assetIdentGetAll(c *gin.Context) {
 }
 
 func (rt *Router) assetGetTypeList(c *gin.Context) {
-	data, err := models.AssetGetTypeList()
+	data, err := models.AssetTypeGetsAll()
 	ginx.NewRender(c).Data(data, err)
 }
 
