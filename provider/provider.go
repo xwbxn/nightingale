@@ -38,7 +38,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 
 	busiGroupCache := memsto.NewBusiGroupCache(ctx, stats)
 	targetCache := memsto.NewTargetCache(ctx, stats, nil)
-	provicerCache := memsto.NewProviderCache(ctx, stats)
+	provicerCache := memsto.NewAssetCache(ctx, stats)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 	rt := router.New(config.HTTP, targetCache, busiGroupCache, provicerCache, ctx)

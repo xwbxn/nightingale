@@ -52,7 +52,7 @@ func (rt *Router) CategrafConfigGet(c *gin.Context) {
 	ident := ginx.QueryStr(c, "agent_hostname")
 	version := ginx.QueryStr(c, "version", "")
 
-	provider := rt.ProviderCache.GetByIdent(ident)
+	provider := rt.AssetCache.GetByIdent(ident)
 	if len(provider) == 0 {
 		ginx.Dangerous("config not found", 404)
 	}
@@ -63,6 +63,7 @@ func (rt *Router) CategrafConfigGet(c *gin.Context) {
 	c.JSON(200, resp)
 }
 
+// 计算配置版本，对所有key排序后进行hash，如有变化则会生成新的版本号
 func calcVersion(conf map[string]map[string]*ConfigWithFormat) string {
 	hash := fnv.New32a()
 	keys := make([]string, 0, len(conf))
@@ -91,24 +92,25 @@ func calcVersion(conf map[string]map[string]*ConfigWithFormat) string {
 	return strconv.Itoa(int(hashValue))
 }
 
-func convertToResponse(rt *Router, models []*models.Asset) httpRemoteProviderResponse {
+func convertToResponse(rt *Router, assets []*models.Asset) httpRemoteProviderResponse {
 	resp := httpRemoteProviderResponse{
 		Configs: make(map[string]map[string]*ConfigWithFormat),
 	}
 
-	for _, model := range models {
-		if model.Plugin == "host" {
+	for _, asset := range assets {
+		if asset.Plugin == "host" {
 			// 对于主机监控，解析toml文件, 拆分为多个插件配置
 			configs := make(map[string]map[string]interface{})
-			toml.Unmarshal([]byte(model.Configs), &configs)
+			toml.Unmarshal([]byte(asset.Configs), &configs)
 
 			for k, v := range configs {
 				if v == nil {
 					v = make(map[string]interface{})
 				}
 				labels := make(map[string]string)
-				labels["asset_type"] = model.Type
-				group := rt.BusiGroupCache.GetByBusiGroupId(model.GroupId)
+				labels["asset_type"] = asset.Type
+				labels["asset_id"] = fmt.Sprintf("%d", asset.Id)
+				group := rt.BusiGroupCache.GetByBusiGroupId(asset.GroupId)
 				if group != nil {
 					if group.LabelEnable == 1 {
 						labels["busigroup"] = group.LabelValue
@@ -116,10 +118,10 @@ func convertToResponse(rt *Router, models []*models.Asset) httpRemoteProviderRes
 						labels["busigroup"] = group.Name
 					}
 				}
-				labels["instance"] = model.Label
+				labels["instance"] = asset.Label
 
 				//将tags写入到label里，给指标打标
-				for _, tags := range strings.Fields(model.Tags) {
+				for _, tags := range strings.Fields(asset.Tags) {
 					attr := strings.Split(tags, "=")
 					if len(attr) > 1 {
 						labels[attr[0]] = attr[1]
@@ -144,8 +146,9 @@ func convertToResponse(rt *Router, models []*models.Asset) httpRemoteProviderRes
 		} else {
 			//其他插件不用解析
 			labels := make(map[string]string)
-			labels["asset_type"] = model.Type
-			group := rt.BusiGroupCache.GetByBusiGroupId(model.GroupId)
+			labels["asset_type"] = asset.Type
+			labels["asset_id"] = fmt.Sprintf("%d", asset.Id)
+			group := rt.BusiGroupCache.GetByBusiGroupId(asset.GroupId)
 			if group != nil {
 				if group.LabelEnable == 1 {
 					labels["busigroup"] = group.LabelValue
@@ -153,10 +156,10 @@ func convertToResponse(rt *Router, models []*models.Asset) httpRemoteProviderRes
 					labels["busigroup"] = group.Name
 				}
 			}
-			labels["instance"] = model.Label
+			labels["instance"] = asset.Label
 
 			//将tags写入到label里，给指标打标
-			for _, tags := range strings.Fields(model.Tags) {
+			for _, tags := range strings.Fields(asset.Tags) {
 				attr := strings.Split(tags, "=")
 				if len(attr) > 1 {
 					labels[attr[0]] = attr[1]
@@ -164,23 +167,23 @@ func convertToResponse(rt *Router, models []*models.Asset) httpRemoteProviderRes
 			}
 
 			var configs map[string]interface{}
-			toml.Unmarshal([]byte(model.Configs), &configs)
+			toml.Unmarshal([]byte(asset.Configs), &configs)
 			configs["instances"].([]interface{})[0].(map[string]interface{})["labels"] = labels
 
 			cfg, err := toml.Marshal(configs)
 			if err != nil {
-				logger.Warningf("parse config %s error: %s", model.Type, err)
+				logger.Warningf("parse config %s error: %s", asset.Type, err)
 				continue
 			}
 			conf := &ConfigWithFormat{
 				Format: TomlFormat,
 				Config: string(cfg),
 			}
-			checksum := fmt.Sprintf("%s-%x", model.Plugin, md5.Sum(cfg))
-			if resp.Configs[model.Plugin] == nil {
-				resp.Configs[model.Plugin] = make(map[string]*ConfigWithFormat)
+			checksum := fmt.Sprintf("%s-%x", asset.Plugin, md5.Sum(cfg))
+			if resp.Configs[asset.Plugin] == nil {
+				resp.Configs[asset.Plugin] = make(map[string]*ConfigWithFormat)
 			}
-			resp.Configs[model.Plugin][checksum] = conf
+			resp.Configs[asset.Plugin][checksum] = conf
 		}
 	}
 

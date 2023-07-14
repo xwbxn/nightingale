@@ -72,21 +72,21 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
 	notifyConfigCache := memsto.NewNotifyConfigCache(ctx)
-	providerCache := memsto.NewProviderCache(ctx, syncStats)
+	assetCache := memsto.NewAssetCache(ctx, syncStats)
 
 	promClients := prom.NewPromClient(ctx, config.Alert.Heartbeat)
 
 	externalProcessors := process.NewExternalProcessors()
-	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, dsCache, ctx, promClients)
+	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, dsCache, ctx, promClients, assetCache)
 
 	writers := writer.NewWriters(config.Pushgw)
 
 	httpx.InitRSAConfig(&config.HTTP.RSA)
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
-	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, notifyConfigCache, promClients, redis, sso, ctx, metas, idents, targetCache)
+	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, notifyConfigCache, promClients, redis, sso, ctx, metas, idents, targetCache, assetCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, idents, writers, ctx)
-	providerRouter := providerrt.New(config.HTTP, targetCache, busiGroupCache, providerCache, ctx)
+	providerRouter := providerrt.New(config.HTTP, targetCache, busiGroupCache, assetCache, ctx)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 
