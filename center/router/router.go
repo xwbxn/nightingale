@@ -40,10 +40,11 @@ type Router struct {
 	TargetCache       *memsto.TargetCacheType
 	Sso               *sso.SsoClient
 	Ctx               *ctx.Context
+	assetCache        *memsto.AssetCacheType
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
-	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType) *Router {
+	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType, ac *memsto.AssetCacheType) *Router {
 	return &Router{
 		HTTP:              httpConfig,
 		Center:            center,
@@ -57,6 +58,7 @@ func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operatio
 		TargetCache:       tc,
 		Sso:               sso,
 		Ctx:               ctx,
+		assetCache:        ac,
 	}
 }
 
@@ -452,6 +454,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/notify-tpls", rt.notifyTplGets)
 
 			service.POST("/task-record-add", rt.taskRecordAdd)
+
+			service.GET("/dashboard/assets", rt.getDashboardAssets)
 
 		}
 	}

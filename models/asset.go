@@ -34,18 +34,23 @@ type Asset struct {
 	CreateBy string   `json:"create_by"`
 	UpdateAt int64    `json:"update_at"`
 	UpdateBy string   `json:"update_by"`
+
+	//下面的是健康检查使用，在memsto缓存中保存
+	Health   int64 `json:"-" gorm:"-"` //0: fail 1: ok
+	HealthAt int64 `json:"-" gorm:"-"`
 }
 
 type AssetType struct {
-	Name       string                   `json:"name"`
-	Plugin     string                   `json:"plugin"`
-	Key        string                   `json:"key"`
-	MetricsUrl string                   `json:"metrics_url"`
-	Form       []map[string]interface{} `json:"form"`
+	Name         string                   `json:"name"`
+	Plugin       string                   `json:"plugin"`
+	HealthMetric string                   `json:"health_metric" yaml:"health_metric"`
+	Metrics      []string                 `json:"metrics"`
+	Category     string                   `json:"category"`
+	Form         []map[string]interface{} `json:"form"`
 }
 
 type AssetConfigs struct {
-	Config []AssetType `json:"config"`
+	Config []*AssetType `json:"config"`
 }
 
 func (ins *Asset) TableName() string {
@@ -71,7 +76,7 @@ func (ins *Asset) Add(ctx *ctx.Context) error {
 	ins.CreateAt = now
 	ins.UpdateAt = now
 	ins.Status = 0
-	assetTypes, err := AssetGetTypeList()
+	assetTypes, err := AssetTypeGetsAll()
 	if err != nil {
 		return err
 	}
@@ -161,7 +166,7 @@ func AssetGets(ctx *ctx.Context, bgid int64, query string) ([]*Asset, error) {
 	return lst, nil
 }
 
-func AssetGetAll(ctx *ctx.Context) ([]*Asset, error) {
+func AssetGetsAll(ctx *ctx.Context) ([]*Asset, error) {
 	return AssetGets(ctx, -1, "")
 }
 
@@ -182,7 +187,7 @@ func AssetStatistics(ctx *ctx.Context) (*Statistics, error) {
 }
 
 func AssetGenConfig(assetType string, f map[string]interface{}) (bytes.Buffer, error) {
-	assetTypes, err := AssetGetTypeList()
+	assetTypes, err := AssetTypeGetsAll()
 	ginx.Dangerous(err)
 
 	pluginName := ""
@@ -204,7 +209,7 @@ func AssetGenConfig(assetType string, f map[string]interface{}) (bytes.Buffer, e
 	return content, err
 }
 
-func AssetGetTypeList() ([]AssetType, error) {
+func AssetTypeGetsAll() ([]*AssetType, error) {
 	fp := path.Join("etc", "assets.yaml")
 	var assetConfig AssetConfigs
 	err := file.ReadYaml(fp, &assetConfig)
