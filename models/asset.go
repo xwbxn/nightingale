@@ -36,17 +36,17 @@ type Asset struct {
 	UpdateBy string   `json:"update_by"`
 
 	//下面的是健康检查使用，在memsto缓存中保存
-	Health   int64 `json:"-" gorm:"-"` //0: fail 1: ok
-	HealthAt int64 `json:"-" gorm:"-"`
+	Health   int64               `json:"-" gorm:"-"` //0: fail 1: ok
+	HealthAt int64               `json:"-" gorm:"-"`
+	Metrics  []map[string]string `json:"-" gorm:"-"`
 }
 
 type AssetType struct {
-	Name         string                   `json:"name"`
-	Plugin       string                   `json:"plugin"`
-	HealthMetric string                   `json:"health_metric" yaml:"health_metric"`
-	Metrics      []string                 `json:"metrics"`
-	Category     string                   `json:"category"`
-	Form         []map[string]interface{} `json:"form"`
+	Name     string                   `json:"name"`
+	Plugin   string                   `json:"plugin"`
+	Metrics  []string                 `json:"metrics"`
+	Category string                   `json:"category"`
+	Form     []map[string]interface{} `json:"form"`
 }
 
 type AssetConfigs struct {

@@ -32,10 +32,9 @@ func NewAssetCache(ctx *ctx.Context, stats *Stats) *AssetCacheType {
 		ctx:             ctx,
 		stats:           stats,
 		assets:          make(map[int64]*models.Asset),
-		health:          make(map[int64]int64),
 	}
 	cache.SyncAssets()
-	cache.SyncHealthCheck()
+	cache.SyncAssetType()
 	return cache
 }
 
@@ -63,12 +62,6 @@ func (cache *AssetCacheType) SetTypes(types map[string]*models.AssetType) {
 	cache.Unlock()
 }
 
-func (cache *AssetCacheType) SetHealth(assetId int64, health int64) {
-	cache.Lock()
-	cache.health[assetId] = health
-	cache.Unlock()
-}
-
 func (cache *AssetCacheType) Get(id int64) (*models.Asset, bool) {
 	cache.RLock()
 	defer cache.RUnlock()
@@ -82,7 +75,6 @@ func (cache *AssetCacheType) GetAll() []*models.Asset {
 
 	items := []*models.Asset{}
 	for _, item := range cache.assets {
-		// item.Health = cache.health[item.Id]
 		items = append(items, item)
 	}
 
@@ -179,6 +171,16 @@ func (cache *AssetCacheType) syncAssets() error {
 
 	m := make(map[int64]*models.Asset)
 	for i := 0; i < len(lst); i++ {
+		if old, has := cache.assets[lst[i].Id]; has {
+			// 刷新缓存时，需要保留原有的监控记录
+			lst[i].Health = old.Health
+			lst[i].HealthAt = old.HealthAt
+			lst[i].Metrics = old.Metrics
+		} else {
+			//默认值
+			lst[i].Health = 2
+			lst[i].Metrics = []map[string]string{}
+		}
 		m[lst[i].Id] = lst[i]
 	}
 
@@ -193,27 +195,27 @@ func (cache *AssetCacheType) syncAssets() error {
 	return nil
 }
 
-func (cache *AssetCacheType) SyncHealthCheck() {
-	err := cache.healthCheck()
+func (cache *AssetCacheType) SyncAssetType() {
+	err := cache.syncAssetType()
 	if err != nil {
-		fmt.Println("failed to health check:", err)
+		fmt.Println("failed to sync asset_types:", err)
 		exit(1)
 	}
 
-	go cache.loopSyncHealthCheck()
+	go cache.loopSyncAssetType()
 }
 
-func (cache *AssetCacheType) loopSyncHealthCheck() error {
+func (cache *AssetCacheType) loopSyncAssetType() error {
 	duration := time.Duration(9000) * time.Millisecond
 	for {
 		time.Sleep(duration)
-		if err := cache.healthCheck(); err != nil {
-			logger.Warning("failed to health check:", err)
+		if err := cache.syncAssetType(); err != nil {
+			logger.Warning("failed to sync asset_types:", err)
 		}
 	}
 }
 
-func (cache *AssetCacheType) healthCheck() error {
+func (cache *AssetCacheType) syncAssetType() error {
 	start := time.Now()
 
 	lst, err := models.AssetTypeGetsAll()
