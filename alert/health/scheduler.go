@@ -40,11 +40,11 @@ func NewScheduler(aconf aconf.Alert, ac *memsto.AssetCacheType, promClients *pro
 		stats: stats,
 	}
 
-	go scheduler.LoopSyncRules(context.Background())
+	go scheduler.LoopSyncHealthRules(context.Background())
 	return scheduler
 }
 
-func (s *Scheduler) LoopSyncRules(ctx context.Context) {
+func (s *Scheduler) LoopSyncHealthRules(ctx context.Context) {
 	time.Sleep(time.Duration(s.aconf.EngineDelay) * time.Second)
 	duration := 9000 * time.Millisecond
 	for {

@@ -2,14 +2,13 @@ config:
   - name: 主机
     category: "业务资产"
     plugin: host
-    health_metric: "system_uptime"
-    metrics: ['cpu_usage_active{instance=', 'mem_used_percent', 'max(disk_used_percent)']
+    metrics: ['cpu_usage_active', 'mem_used_percent', 'topk(1, disk_used_percent)']
     form: []
 
   - name: 主机(exporter)
     category: "业务资产"
     plugin: prometheus
-    health_metric: ""
+    metrics: []
     form:
       - label: 监控Url
         name: url
@@ -17,7 +16,7 @@ config:
   - name: MySQL
     category: "业务资产"
     plugin: mysql
-    health_metric: "mysql_up"
+    metrics: ["mysql_up"]
     form:
       - label: 地址
         name: address
@@ -32,7 +31,7 @@ config:
   - name: Redis
     category: "业务资产"
     plugin: redis
-    health_metric: ""
+    metrics: []
     form:
       - label: 地址
         name: address
@@ -47,7 +46,7 @@ config:
   - name: Web服务
     category: "业务资产"
     plugin: http_response
-    health_metric: ""
+    metrics: []
     form:
       - label: 服务地址
         name: url
@@ -55,7 +54,7 @@ config:
   - name: 网络连通
     category: "网络资产"
     plugin: ping
-    health_metric: ""
+    metrics: []
     form:
       - label: IP地址
         name: address
@@ -63,7 +62,7 @@ config:
   - name: 网络服务
     category: "业务资产"
     plugin: net_response
-    health_metric: ""
+    metrics: []
     form:
       - label: 协议
         name: protocol
@@ -76,18 +75,18 @@ config:
   - name: ES集群
     category: "业务资产"
     plugin: elastic_search
-    health_metric: ""
+    metrics: []
 
   - name: DNS解析
     category: "业务资产"
     plugin: dns_query
     key: cluster
-    health_metric: ""
+    metrics: []
 
   - name: victoria-metrics
     category: "业务资产"
     plugin: prometheus
-    health_metric: ""
+    metrics: []
     form:
       - label: 监控Url
         name: url

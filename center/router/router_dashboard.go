@@ -29,15 +29,15 @@ type MetricJson struct {
 }
 
 type AssetJson struct {
-	Id       int64        `json:"id"`
-	Name     string       `json:"name"`
-	Status   int64        `json:"status"`
-	UpdateAt int64        `json:"update_at"`
-	Category string       `json:"category"`
-	Type     string       `json:"type"`
-	Metrics  []MetricJson `json:"metrics"`
-	GroupId  int64        `json:"group_id"`
-	Tags     []string     `json:"tags"`
+	Id       int64               `json:"id"`
+	Name     string              `json:"name"`
+	Status   int64               `json:"status"`
+	UpdateAt int64               `json:"update_at"`
+	Category string              `json:"category"`
+	Type     string              `json:"type"`
+	Metrics  []map[string]string `json:"metrics"`
+	GroupId  int64               `json:"group_id"`
+	Tags     []string            `json:"tags"`
 }
 
 func (rt *Router) getDashboardAssets(c *gin.Context) {
@@ -51,7 +51,7 @@ func (rt *Router) getDashboardAssets(c *gin.Context) {
 			UpdateAt: item.HealthAt,
 			Category: item.Type,
 			Type:     item.Type,
-			Metrics:  nil,
+			Metrics:  item.Metrics,
 			GroupId:  item.GroupId,
 			Tags:     item.TagsJSON,
 		})

@@ -43,7 +43,7 @@ func (hrc *HealthRuleContext) Key() string {
 func (hrc *HealthRuleContext) Hash() string {
 	return str.MD5(fmt.Sprintf("%s_%s_%d",
 		hrc.assetType.Name,
-		hrc.assetType.HealthMetric,
+		hrc.assetType.Category,
 		hrc.datasourceId,
 	))
 }
@@ -53,7 +53,7 @@ func (hrc *HealthRuleContext) Prepare() {}
 func (hrc *HealthRuleContext) Start() {
 	logger.Infof("eval:%s started", hrc.Key())
 	// interval := hrc.rule.PromEvalInterval
-	interval := 30
+	interval := 15
 	if interval <= 0 {
 		interval = 10
 	}
@@ -63,19 +63,20 @@ func (hrc *HealthRuleContext) Start() {
 			case <-hrc.quit:
 				return
 			default:
-				hrc.Eval()
+				hrc.HealthCheck()
 				time.Sleep(time.Duration(interval) * time.Second)
 			}
 		}
 	}()
 }
 
-func (hrc *HealthRuleContext) Eval() {
-	promql := strings.TrimSpace(hrc.assetType.HealthMetric)
-	if promql == "" {
-		logger.Errorf("eval:%s promql is blank", hrc.Key())
+func (hrc *HealthRuleContext) HealthCheck() {
+	if hrc.assetType.Metrics == nil || len(hrc.assetType.Metrics) == 0 {
+		logger.Errorf("eval:%s metrics is nil or empty", hrc.Key())
 		return
 	}
+
+	promql := fmt.Sprintf("%s", strings.Join(hrc.assetType.Metrics, " or "))
 
 	if hrc.promClients.IsNil(hrc.datasourceId) {
 		logger.Errorf("eval:%s reader client is nil", hrc.Key())
@@ -94,7 +95,7 @@ func (hrc *HealthRuleContext) Eval() {
 	}
 
 	assetsOfType := hrc.assetCache.GetByType(hrc.assetType.Name)
-	ts := ConvertToTimeSeries(value, hrc.assetType, assetsOfType)
+	ts := ConvertMetricTimeSeries(value, hrc.assetType, assetsOfType)
 	if len(ts) != 0 {
 		hrc.promClients.GetWriterCli(hrc.datasourceId).Write(ts)
 	}
