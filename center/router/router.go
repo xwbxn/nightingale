@@ -387,11 +387,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/assets/tags", rt.auth(), rt.user(), rt.perm("/assets/put"), rt.assetUnbindTagsByFE)
 		pages.PUT("/assets/bgid", rt.auth(), rt.user(), rt.perm("/assets/put"), rt.assetUpdateBgid)
 		pages.PUT("/assets/note", rt.auth(), rt.user(), rt.perm("/assets/note"), rt.assetUpdateNote)
-		pages.GET("/groups/get/:eid", rt.auth(), rt.user(), rt.groupsGet)        // 依据id获取组织信息
-		pages.GET("/groups/list", rt.auth(), rt.user(), rt.groupsList)           // 获取组织信息
-		pages.POST("/groups/update/:eid", rt.auth(), rt.user(), rt.updateGroups) // 修改组织信息
-		pages.DELETE("/groups/del/:eid", rt.auth(), rt.user(), rt.groupsDel)     // 删除组织信息
-		pages.POST("/groups/add", rt.auth(), rt.user(), rt.groupsAdd)            // 上传组织信息
+		pages.POST("/assets/updatesOrganize", rt.auth(), rt.user(), rt.updatesAssetOrganize) //批量修改资产组织ID
+
+		pages.GET("/organize/get/:eid", rt.auth(), rt.user(), rt.organizeGet)    // 依据id获取组织信息
+		pages.GET("/organize/list", rt.auth(), rt.user(), rt.organizeList)       // 获取组织树
+		pages.PUT("/organize/:eid", rt.auth(), rt.user(), rt.updateOrganize)     // 修改组织信息
+		pages.DELETE("/organize/del/:eid", rt.auth(), rt.user(), rt.organizeDel) // 删除组织信息
+		pages.POST("/organize/add", rt.auth(), rt.user(), rt.organizeAdd)        // 上传组织信息
+		pages.GET("/organize/orglist", rt.auth(), rt.user(), rt.findOrg)         // 提供前端组织树接口
 	}
 
 	if rt.HTTP.APIForService.Enable {

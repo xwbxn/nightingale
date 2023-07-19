@@ -17,23 +17,24 @@ import (
 )
 
 type Asset struct {
-	Id       int64    `json:"id" gorm:"primaryKey"`
-	Ident    string   `json:"ident"`
-	GroupId  int64    `json:"group_id"`
-	Name     string   `json:"name"`
-	Label    string   `json:"label"`
-	Tags     string   `json:"-"`
-	TagsJSON []string `json:"tags" gorm:"-"`
-	Type     string   `json:"type"`
-	Memo     string   `json:"memo"`
-	Configs  string   `json:"configs"`
-	Params   string   `json:"params"`
-	Plugin   string   `json:"plugin"`
-	Status   int64    `json:"status"` //0: 未生效, 1: 已生效
-	CreateAt int64    `json:"create_at"`
-	CreateBy string   `json:"create_by"`
-	UpdateAt int64    `json:"update_at"`
-	UpdateBy string   `json:"update_by"`
+	Id         int64    `json:"id" gorm:"primaryKey"`
+	Ident      string   `json:"ident"`
+	GroupId    int64    `json:"group_id"`
+	Name       string   `json:"name"`
+	Label      string   `json:"label"`
+	Tags       string   `json:"-"`
+	TagsJSON   []string `json:"tags" gorm:"-"`
+	Type       string   `json:"type"`
+	Memo       string   `json:"memo"`
+	Configs    string   `json:"configs"`
+	Params     string   `json:"params"`
+	Plugin     string   `json:"plugin"`
+	Status     int64    `json:"status"` //0: 未生效, 1: 已生效
+	CreateAt   int64    `json:"create_at"`
+	CreateBy   string   `json:"create_by"`
+	UpdateAt   int64    `json:"update_at"`
+	UpdateBy   string   `json:"update_by"`
+	OrganizeId int64    `json:"organize_id"`
 
 	//下面的是健康检查使用，在memsto缓存中保存
 	Health   int64               `json:"-" gorm:"-"` //0: fail 1: ok
@@ -137,13 +138,15 @@ func AssetGet(ctx *ctx.Context, where string, args ...interface{}) (*Asset, erro
 	return lst[0], nil
 }
 
-func AssetGets(ctx *ctx.Context, bgid int64, query string) ([]*Asset, error) {
+func AssetGets(ctx *ctx.Context, bgid int64, query string, organizeId int64) ([]*Asset, error) {
 	var lst []*Asset
 	session := DB(ctx).Where("1 = 1")
 	if bgid >= 0 {
 		session = session.Where("group_id = ?", bgid)
 	}
-
+	if organizeId >= 0 {
+		session = session.Where("organize_id = ?", organizeId)
+	}
 	if query != "" {
 		arr := strings.Fields(query)
 		for i := 0; i < len(arr); i++ {
@@ -167,7 +170,7 @@ func AssetGets(ctx *ctx.Context, bgid int64, query string) ([]*Asset, error) {
 }
 
 func AssetGetsAll(ctx *ctx.Context) ([]*Asset, error) {
-	return AssetGets(ctx, -1, "")
+	return AssetGets(ctx, -1, "", -1)
 }
 
 func AssetCount(ctx *ctx.Context, where string, args ...interface{}) (num int64, err error) {
@@ -313,5 +316,12 @@ func AssetUpdateNote(ctx *ctx.Context, ids []string, memo string) error {
 func AssetSetStatus(ctx *ctx.Context, ident string, status int64) error {
 	return DB(ctx).Model(&Asset{}).Where("ident = ?", ident).Updates(map[string]interface{}{
 		"status": status,
+	}).Error
+}
+
+func UpdateOrganize(ctx *ctx.Context, ids []int64, organize_id int64) error {
+	return DB(ctx).Model(&Asset{}).Where("id in ?", ids).Updates(map[string]interface{}{
+		"organize_id": organize_id,
+		"update_at":   time.Now().Unix(),
 	}).Error
 }

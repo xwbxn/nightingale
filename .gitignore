@@ -46,6 +46,7 @@ _test
 /pub
 /etc_dev
 
+
 .alerts
 .idea
 .index
@@ -53,6 +54,8 @@ _test
 .DS_Store
 .cache-loader
 .payload
+.history
+
 queries.active
 
 /n9e-*
