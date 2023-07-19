@@ -28,6 +28,11 @@ type MetricJson struct {
 	Value string `json:"value"`
 }
 
+/***
+  对外提供的资产信息列表
+  author:guoxp
+*/
+
 type AssetJson struct {
 	Id       int64               `json:"id"`
 	Name     string              `json:"name"`
@@ -41,15 +46,17 @@ type AssetJson struct {
 }
 
 func (rt *Router) getDashboardAssets(c *gin.Context) {
+
 	var data []*AssetJson
 	lst := rt.assetCache.GetAll()
 	for _, item := range lst {
+		ar, _ := rt.assetCache.GetType(item.Type)
 		data = append(data, &AssetJson{
 			Id:       item.Id,
 			Name:     item.Name,
 			Status:   item.Health,
 			UpdateAt: item.HealthAt,
-			Category: item.Type,
+			Category: ar.Category,
 			Type:     item.Type,
 			Metrics:  item.Metrics,
 			GroupId:  item.GroupId,
