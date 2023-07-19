@@ -90,3 +90,13 @@ config:
     form:
       - label: 监控Url
         name: url
+
+  - name: 交换机
+    category: "网络设备"
+    plugin: switch_legacy
+    metrics: []
+    form:
+      - label: 地址
+        name: address
+      - label: 团体字
+        name: community
