@@ -23,7 +23,7 @@ func (rt *Router) assetsGet(c *gin.Context) {
 func (rt *Router) assetsGets(c *gin.Context) {
 	bgid := ginx.QueryInt64(c, "bgid", -1)
 	query := ginx.QueryStr(c, "query", "")
-	organizeId := ginx.QueryInt64(c, "organizeId", -1)
+	organizeId := ginx.QueryInt64(c, "organize_id", -1)
 	assets, err := models.AssetGets(rt.Ctx, bgid, query, organizeId)
 	ginx.NewRender(c).Data(assets, err)
 }

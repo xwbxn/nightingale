@@ -28,12 +28,11 @@ func (rt *Router) updateOrganize(c *gin.Context) {
 	eid := ginx.UrlParamInt64(c, "eid")
 	m, err := models.OrganizeGetById(rt.Ctx, eid)
 	ginx.Dangerous(err)
-
+	var f models.Organize
+	ginx.BindJSON(c, &f)
 	if m == nil {
 		ginx.Bomb(404, "No such organize")
 	} else {
-		var f models.Organize
-		ginx.BindJSON(c, &f)
 		err = m.UpdateAll(rt.Ctx, eid, f.Name, f.ParentId, f.Path)
 		ginx.Dangerous(err)
 	}
@@ -65,21 +64,21 @@ func (rt *Router) organizeAdd(c *gin.Context) {
 	ginx.NewRender(c).Message(u.Add(rt.Ctx))
 }
 
-type IdOrganize struct {
-	ID int `json:"id"`
-}
+// type IdOrganize struct {
+// 	ID int `json:"id"`
+// }
 
-type IdsOrganize struct {
-	Ids        []int64 `json:"ids"`         //资产id组
-	OrganizeId int64   `json:"organize_id"` //组织id
+// type IdsOrganize struct {
+// 	Ids        []int64 `json:"ids"`         //资产id组
+// 	OrganizeId int64   `json:"organize_id"` //组织id
 
-}
+// }
 
-func (rt *Router) updatesOrganize(c *gin.Context) {
-	var f IdsOrganize
-	ginx.BindJSON(c, &f)
-	models.UpdateOrganize(rt.Ctx, f.Ids, f.OrganizeId)
-}
+// func (rt *Router) updatesOrganize(c *gin.Context) {
+// 	var f IdsOrganize
+// 	ginx.BindJSON(c, &f)
+// 	models.UpdateOrganize(rt.Ctx, f.Ids, f.OrganizeId)
+// }
 
 func (rt *Router) findOrg(c *gin.Context) {
 	list, err := models.OrgList(rt.Ctx)

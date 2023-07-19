@@ -299,6 +299,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/alert-cur-events/card/details", rt.auth(), rt.alertCurEventsCardDetails)
 		pages.GET("/alert-his-events/list", rt.auth(), rt.alertHisEventsList)
 		pages.DELETE("/alert-cur-events", rt.auth(), rt.user(), rt.perm("/alert-cur-events/del"), rt.alertCurEventDel)
+		pages.GET("/alert-cur-events/felist", rt.auth(), rt.FeAlertList) //前端接口返回
 
 		pages.POST("/alert-his-event/solve/:eid", rt.auth(), rt.user(), rt.alertHisEventSolve) //人工解决异常接口
 		pages.POST("/alert-his-event/close/:eid", rt.auth(), rt.user(), rt.alertHisEventClose) //人工关闭异常接口
