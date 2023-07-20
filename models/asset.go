@@ -319,7 +319,7 @@ func AssetSetStatus(ctx *ctx.Context, ident string, status int64) error {
 	}).Error
 }
 
-func UpdateOrganize(ctx *ctx.Context, ids []int64, organize_id int64) error {
+func UpdateOrganize(ctx *ctx.Context, ids []string, organize_id int64) error {
 	return DB(ctx).Model(&Asset{}).Where("id in ?", ids).Updates(map[string]interface{}{
 		"organize_id": organize_id,
 		"update_at":   time.Now().Unix(),

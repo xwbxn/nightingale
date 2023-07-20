@@ -8,18 +8,11 @@ import (
 )
 
 type Organize struct {
-	Id   int64  `json:"id" gorm:"primaryKey"` // id
-	Name string `json:"name"`                 // 组织名
-	// ParentId int64  `json:"parent_id"`            // 组织父id
-	ParentId int64 `json:"parent_id"` // 组织父id
-	// Path         string      `json:"path"`                 // 路径
-	Path         string      `json:"-"` // 路径
-	Children     []*Organize `json:"children" gorm:"-"`
-	IsEditable   bool        `json:"isEditable" gorm:"-"`
-	Key          int         `json:"key" gorm:"-"`
-	Value        int64       `json:"value" gorm:"-"`
-	DefaultValue string      `json:"defaultValue" gorm:"-"`
-	Title        string      `json:"title" gorm:"-"`
+	Id       int64       `json:"id" gorm:"primaryKey"` // id
+	Name     string      `json:"name"`                 // 组织名
+	ParentId int64       `json:"parent_id"`            // 组织父id
+	Path     string      `json:"-"`                    // 路径
+	Children []*Organize `json:"children" gorm:"-"`
 }
 
 func tree(menus []*Organize, pid int64) []*Organize {
@@ -34,34 +27,34 @@ func tree(menus []*Organize, pid int64) []*Organize {
 				v.Children = append(v.Children, tree(menus, v.Id)...)
 				nodes = append(nodes, v)
 			}
-			v.IsEditable = false
-			v.DefaultValue = v.Name
-			v.Key = int(v.Id)
-			v.Value = v.Id
-			v.Title = v.Name
-
 		}
 	}
 	return nodes
 }
 
-/**
+/*
+*
 获取表名
-**/
+*
+*/
 func (e *Organize) TableName() string {
 	return "organize"
 }
 
-/**
+/*
+*
 添加单条数据
-**/
+*
+*/
 func (e *Organize) Add(ctx *ctx.Context) error {
 	return Insert(ctx, e)
 }
 
-/**
+/*
+*
 删除单条数据
-**/
+*
+*/
 func OrganizeDel(ctx *ctx.Context, ids []string) error {
 	if len(ids) == 0 {
 		panic("ids empty")
@@ -69,9 +62,11 @@ func OrganizeDel(ctx *ctx.Context, ids []string) error {
 	return DB(ctx).Where("id in ?", ids).Delete(new(Organize)).Error
 }
 
-/**
+/*
+*
 更新单条数据
-**/
+*
+*/
 func (u *Organize) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {
 	return DB(ctx).Model(u).Select(selectField, selectFields...).Updates(u).Error
 }
@@ -90,9 +85,11 @@ func OrganizeList(ctx *ctx.Context) ([]*Organize, error) {
 	return tree(lst, 0), nil
 }
 
-/**
+/*
+*
 获取一组数据
-**/
+*
+*/
 func OrganizeGet(ctx *ctx.Context, where string, args ...interface{}) (*Organize, error) {
 	var lst []*Organize
 	err := DB(ctx).Where(where, args...).Find(&lst).Error
@@ -161,8 +158,8 @@ func (m *Organize) UpdatesAll(ctx *ctx.Context, ids []int64, name string, parent
 	return nil
 }
 
-//前端输出组织接口
-//前端结构定义
+// 前端输出组织接口
+// 前端结构定义
 type FeOrg struct {
 	Id       int64    `json:"id"`   // id
 	Name     string   `json:"name"` // 组织名
@@ -170,7 +167,7 @@ type FeOrg struct {
 	Children []*FeOrg `json:"children"`
 }
 
-//前端数组织生成
+// 前端数组织生成
 func fetree(menus []*FeOrg, pid int64) []*FeOrg {
 	//定义子节点目录
 	var nodes []*FeOrg
@@ -189,7 +186,7 @@ func fetree(menus []*FeOrg, pid int64) []*FeOrg {
 	return nodes
 }
 
-//前端组织数
+// 前端组织数
 func OrgList(ctx *ctx.Context) ([]*FeOrg, error) {
 	var lst []*Organize
 	var felst []*FeOrg

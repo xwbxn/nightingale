@@ -271,8 +271,8 @@ func (rt *Router) assetUpdateNote(c *gin.Context) {
 }
 
 type Assetorganize struct {
-	Ids []int64 `json:"ids" binding:"required"` //资产id组
-	Id  int64   `json:"id"`                     //组织树id
+	Ids []string `json:"ids" binding:"required"` //资产id组
+	Id  int64    `json:"id"`                     //组织树id
 }
 
 func (rt *Router) updatesAssetOrganize(c *gin.Context) {
