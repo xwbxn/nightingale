@@ -280,3 +280,9 @@ func (rt *Router) updatesAssetOrganize(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 	ginx.NewRender(c).Message(models.UpdateOrganize(rt.Ctx, f.Ids, f.Id))
 }
+
+func (rt *Router) findAssetByOrg(c *gin.Context) {
+	organize_id := ginx.UrlParamInt64(c, "organize_id")
+	lst, err := models.FindAssetByOrg(rt.Ctx, organize_id)
+	ginx.NewRender(c).Data(lst, err)
+}

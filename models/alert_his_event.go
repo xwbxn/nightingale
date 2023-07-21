@@ -234,8 +234,6 @@ func (m *AlertHisEvent) UpdateStatus(ctx *ctx.Context, id int64, status int, rem
 	if modes == nil {
 		logger.Errorf("Sorry,Event isn't recovered, %s", err)
 	}
-
-	// return DB(ctx).Model(m).Where("id = ?", id).Update("status", status).Error
 	modes.Status = status
 	modes.Remark = remark
 	modes.HandleAt = time.Now().Unix()

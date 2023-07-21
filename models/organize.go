@@ -13,6 +13,7 @@ type Organize struct {
 	ParentId int64       `json:"parent_id"`            // 组织父id
 	Path     string      `json:"-"`                    // 路径
 	Children []*Organize `json:"children" gorm:"-"`
+	Son      int64       `json:"-"`
 }
 
 func tree(menus []*Organize, pid int64) []*Organize {
@@ -186,7 +187,7 @@ func fetree(menus []*FeOrg, pid int64) []*FeOrg {
 	return nodes
 }
 
-// 前端组织数
+// 前端组织树
 func OrgList(ctx *ctx.Context) ([]*FeOrg, error) {
 	var lst []*Organize
 	var felst []*FeOrg

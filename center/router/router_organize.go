@@ -46,7 +46,20 @@ func (rt *Router) organizeDel(c *gin.Context) {
 	if event == nil {
 		ginx.Bomb(404, "No such organize")
 	}
+	lss, err := models.OrganizeGets(rt.Ctx)
+	for i := 0; i < len(lss); i++ {
+		if lss[i].ParentId == event.Id {
+			ginx.Bomb(404, "This organize hava suborganize")
+		}
+
+	}
+	lst, err := models.FindAssetByOrg(rt.Ctx, event.Id)
+	if lst != nil {
+		ginx.Bomb(404, "This organize hava assets")
+	}
+
 	var list = []int64{eid}
+
 	ginx.NewRender(c).Message(models.OrganizeDels(rt.Ctx, list))
 
 }
