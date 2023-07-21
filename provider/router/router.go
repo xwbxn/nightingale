@@ -13,17 +13,17 @@ type Router struct {
 	HTTP           httpx.Config
 	TargetCache    *memsto.TargetCacheType
 	BusiGroupCache *memsto.BusiGroupCacheType
-	ProviderCache  *memsto.ProviderCacheType
+	AssetCache     *memsto.AssetCacheType
 	Ctx            *ctx.Context
 }
 
-func New(httpConfig httpx.Config, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType, hpc *memsto.ProviderCacheType, ctx *ctx.Context) *Router {
+func New(httpConfig httpx.Config, tc *memsto.TargetCacheType, bg *memsto.BusiGroupCacheType, ac *memsto.AssetCacheType, ctx *ctx.Context) *Router {
 	return &Router{
 		HTTP:           httpConfig,
 		Ctx:            ctx,
 		TargetCache:    tc,
 		BusiGroupCache: bg,
-		ProviderCache:  hpc,
+		AssetCache:     ac,
 	}
 }
 

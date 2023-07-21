@@ -58,6 +58,7 @@ type AlertCurEvent struct {
 	LastSentTime       int64             `json:"last_sent_time" gorm:"-"`   // 上次发送时间
 	NotifyCurNumber    int               `json:"notify_cur_number"`         // notify: current number
 	FirstTriggerTime   int64             `json:"first_trigger_time"`        // 连续告警的首次告警时间
+	Status             int               `json:"status"`                    // 状态
 }
 
 func (e *AlertCurEvent) TableName() string {
@@ -178,6 +179,7 @@ func (e *AlertCurEvent) GetField(field string) string {
 func (e *AlertCurEvent) ToHis(ctx *ctx.Context) *AlertHisEvent {
 	isRecovered := 0
 	var recoverTime int64 = 0
+	// var status int = 0 //添加Status参数
 	if e.IsRecovered {
 		isRecovered = 1
 		recoverTime = e.LastEvalTime
@@ -218,6 +220,7 @@ func (e *AlertCurEvent) ToHis(ctx *ctx.Context) *AlertHisEvent {
 		LastEvalTime:     e.LastEvalTime,
 		NotifyCurNumber:  e.NotifyCurNumber,
 		FirstTriggerTime: e.FirstTriggerTime,
+		Status:           e.Status, //添加状态参数
 	}
 }
 
@@ -564,4 +567,51 @@ func AlertCurEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 		}
 	}
 	return nil
+}
+
+//定义适用于前端返回的结构体
+type FeAlert struct {
+	Id             int64       `json:"id"`            //告警id
+	Name           string      `json:"name"`          //告警规则名称 rulename
+	Rule           string      `json:"rule"`          //告警规则 RuleConfigJson中prom_ql字段
+	Severity       int         `json:"severity"`      //告警级别 0:紧急 1:警告 2:提醒 ，0为最高
+	AssetId        int         `json:"asset_id"`      //资产id，对应TagsJSON中ident字段
+	TriggerTime    int64       `json:"trigger_time"`  //trigger_value
+	TriggerValue   string      `json:"trigger_value"` //trigger_value
+	Tags           string      `json:"-"`
+	TagsJSON       []string    `json:"-"`
+	RuleConfig     string      `json:"-"`
+	RuleConfigJson interface{} `json:"-"`
+	// RuleConfigJson interface{} `json:"ruleconfigJson"`
+}
+
+type ruleConfigJson struct {
+	Queries []map[string]interface{} `json:"queries"`
+}
+
+//生成新的适用于前端页面的返回数据格式
+func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
+	var dat []*AlertCurEvent
+	var fedat []*FeAlert
+	var s []string
+	var s1 int
+	err := DB(ctx).Find(&dat).Error
+	for i := 0; i < len(dat); i++ {
+		dat[i].DB2FE()
+		s = strings.Split(dat[i].TagsJSON[4], "=")
+		s1, err = strconv.Atoi(s[1])
+		dic := &ruleConfigJson{}
+		json.Unmarshal([]byte(dat[i].RuleConfig), dic)
+		fedat = append(fedat, &FeAlert{
+			Id:           dat[i].Id,
+			Name:         dat[i].RuleName,
+			Severity:     dat[i].Severity,
+			TriggerTime:  dat[i].TriggerTime,
+			TriggerValue: dat[i].TriggerValue,
+			// RuleConfigJson: dat[i].RuleConfigJson,
+			Rule:    dic.Queries[0]["prom_ql"].(string),
+			AssetId: s1,
+		})
+	}
+	return fedat, err
 }

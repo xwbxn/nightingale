@@ -43,6 +43,9 @@ _test
 /docker/experience_pg_vm/pgdata
 /etc.local*
 /front/statik/statik.go
+/pub
+/etc_dev
+
 
 .alerts
 .idea
@@ -51,6 +54,8 @@ _test
 .DS_Store
 .cache-loader
 .payload
+.history
+
 queries.active
 
 /n9e-*

@@ -427,19 +427,7 @@ CREATE TABLE `alert_aggr_view` (
 insert into alert_aggr_view(name, rule, cate) values('By BusiGroup, Severity', 'field:group_name::field:severity', 0);
 insert into alert_aggr_view(name, rule, cate) values('By RuleName', 'field:rule_name', 0);
 
-CREATE TABLE `alert_cur_event` (
-    `id` bigint unsigned not null comment 'use alert_his_event.id',
-    `cate` varchar(128) not null,
-    `datasource_id` bigint not null default 0 comment 'datasource id',
-    `cluster` varchar(128) not null,
-    `group_id` bigint unsigned not null comment 'busi group id of rule',
-    `group_name` varchar(255) not null default '' comment 'busi group name',
-    `hash` varchar(64) not null comment 'rule_id + vector_pk',
-    `rule_id` bigint unsigned not null,
-    `rule_name` varchar(255) not null,
-    `rule_note` varchar(2048) not null default 'alert rule note',
-    `rule_prod` varchar(255) not null default '',
-    `rule_algo` varchar(255) not null default '',
+default '',
     `severity` tinyint(1) not null comment '0:Emergency 1:Warning 2:Notice',
     `prom_for_duration` int not null comment 'prometheus for, unit:s',
     `prom_ql` varchar(8192) not null comment 'promql',
@@ -459,6 +447,7 @@ CREATE TABLE `alert_cur_event` (
     `annotations` text not null comment 'annotations',
     `rule_config` text not null comment 'annotations',
     `tags` varchar(1024) not null default '' comment 'merge data_tags rule_tags, split by ,,',
+    `status` tinyint(1) not null default 0 comment '状态',
     PRIMARY KEY (`id`),
     KEY (`hash`),
     KEY (`rule_id`),
@@ -500,6 +489,10 @@ CREATE TABLE `alert_his_event` (
     `tags` varchar(1024) not null default '' comment 'merge data_tags rule_tags, split by ,,',
     `annotations` text not null comment 'annotations',
     `rule_config` text not null comment 'annotations',
+    `status` tinyint(1) not null default 0 comment '状态',
+    `handle_by` varchar(255) not null default '',
+    `handle_at` bigint not null default 0,
+    `remark` varchar(255) not null default '',
     PRIMARY KEY (`id`),
     KEY (`hash`),
     KEY (`rule_id`),
@@ -633,7 +626,16 @@ CREATE TABLE `assets` (
   `create_by` varchar(64) NOT NULL DEFAULT '',
   `update_at` bigint(20) NOT NULL DEFAULT '0',
   `update_by` varchar(64) NOT NULL DEFAULT '',
+  `organize_id` bigint(20) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `group_id` (`group_id`),
   KEY `ident` (`ident`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `organize` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) DEFAULT NULL,
+  `parent_id` int(10) DEFAULT NULL,
+  `path` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

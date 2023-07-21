@@ -18,8 +18,8 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
 	"github.com/ccfos/nightingale/v6/prom"
-	"github.com/ccfos/nightingale/v6/storage"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
+	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rakyll/statik/fs"
@@ -36,14 +36,15 @@ type Router struct {
 	PromClients       *prom.PromClientMap
 	Redis             storage.Redis
 	MetaSet           *metas.Set
-	IdentSet           *idents.Set
+	IdentSet          *idents.Set
 	TargetCache       *memsto.TargetCacheType
 	Sso               *sso.SsoClient
 	Ctx               *ctx.Context
+	assetCache        *memsto.AssetCacheType
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
-	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType) *Router {
+	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType, ac *memsto.AssetCacheType) *Router {
 	return &Router{
 		HTTP:              httpConfig,
 		Center:            center,
@@ -57,6 +58,7 @@ func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operatio
 		TargetCache:       tc,
 		Sso:               sso,
 		Ctx:               ctx,
+		assetCache:        ac,
 	}
 }
 
@@ -170,6 +172,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/auth/ifshowcaptcha", rt.ifShowCaptcha)
 
 		pages.GET("/auth/sso-config", rt.ssoConfigNameGet)
+		pages.GET("/auth/rsa-config", rt.rsaConfigGet)
 		pages.GET("/auth/redirect", rt.loginRedirect)
 		pages.GET("/auth/redirect/cas", rt.loginRedirectCas)
 		pages.GET("/auth/redirect/oauth", rt.loginRedirectOAuth)
@@ -296,6 +299,10 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/alert-cur-events/card/details", rt.auth(), rt.alertCurEventsCardDetails)
 		pages.GET("/alert-his-events/list", rt.auth(), rt.alertHisEventsList)
 		pages.DELETE("/alert-cur-events", rt.auth(), rt.user(), rt.perm("/alert-cur-events/del"), rt.alertCurEventDel)
+		pages.GET("/alert-cur-events/felist", rt.auth(), rt.FeAlertList) //前端接口返回
+
+		pages.POST("/alert-his-event/solve/:eid", rt.auth(), rt.user(), rt.alertHisEventSolve) //人工解决异常接口
+		pages.POST("/alert-his-event/close/:eid", rt.auth(), rt.user(), rt.alertHisEventClose) //人工关闭异常接口
 
 		pages.GET("/alert-aggr-views", rt.auth(), rt.alertAggrViewGets)
 		pages.DELETE("/alert-aggr-views", rt.auth(), rt.user(), rt.alertAggrViewDel)
@@ -381,7 +388,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/assets/tags", rt.auth(), rt.user(), rt.perm("/assets/put"), rt.assetUnbindTagsByFE)
 		pages.PUT("/assets/bgid", rt.auth(), rt.user(), rt.perm("/assets/put"), rt.assetUpdateBgid)
 		pages.PUT("/assets/note", rt.auth(), rt.user(), rt.perm("/assets/note"), rt.assetUpdateNote)
+		pages.POST("/assets/updatesOrganize", rt.auth(), rt.user(), rt.updatesAssetOrganize) //批量修改资产组织ID
 
+		pages.GET("/organize/get/:eid", rt.auth(), rt.user(), rt.organizeGet)    // 依据id获取组织信息
+		pages.GET("/organize/list", rt.auth(), rt.user(), rt.organizeList)       // 获取组织树
+		pages.PUT("/organize/:eid", rt.auth(), rt.user(), rt.updateOrganize)     // 修改组织信息
+		pages.DELETE("/organize/del/:eid", rt.auth(), rt.user(), rt.organizeDel) // 删除组织信息
+		pages.POST("/organize/add", rt.auth(), rt.user(), rt.organizeAdd)        // 上传组织信息
+		pages.GET("/organize/orglist", rt.auth(), rt.user(), rt.findOrg)         // 提供前端组织树接口
 	}
 
 	if rt.HTTP.APIForService.Enable {
@@ -444,6 +458,9 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/notify-tpls", rt.notifyTplGets)
 
 			service.POST("/task-record-add", rt.taskRecordAdd)
+
+			service.GET("/dashboard/assets", rt.getDashboardAssets)
+
 		}
 	}
 

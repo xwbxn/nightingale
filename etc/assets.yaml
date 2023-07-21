@@ -1,22 +1,22 @@
 config:
   - name: 主机
+    category: "业务资产"
     plugin: host
-    key: instance
-    metrics_url: ""
+    metrics: ['cpu_usage_active', 'mem_used_percent', 'topk(1, disk_used_percent)']
     form: []
 
   - name: 主机(exporter)
+    category: "业务资产"
     plugin: prometheus
-    key: instance
-    metrics_url: ""
+    metrics: []
     form:
       - label: 监控Url
         name: url
 
   - name: MySQL
+    category: "业务资产"
     plugin: mysql
-    key: instance
-    metrics_url: ""
+    metrics: ["mysql_up"]
     form:
       - label: 地址
         name: address
@@ -29,9 +29,9 @@ config:
         password: true
 
   - name: Redis
+    category: "业务资产"
     plugin: redis
-    key: instance
-    metrics_url: ""
+    metrics: []
     form:
       - label: 地址
         name: address
@@ -44,25 +44,25 @@ config:
         password: true
 
   - name: Web服务
+    category: "业务资产"
     plugin: http_response
-    key: instance
-    metrics_url: ""
+    metrics: []
     form:
       - label: 服务地址
         name: url
 
   - name: 网络连通
+    category: "网络资产"
     plugin: ping
-    key: instance
-    metrics_url: ""
+    metrics: []
     form:
       - label: IP地址
         name: address
 
   - name: 网络服务
+    category: "业务资产"
     plugin: net_response
-    key: instance
-    metrics_url: ""
+    metrics: []
     form:
       - label: 协议
         name: protocol
@@ -73,19 +73,30 @@ config:
         name: port
 
   - name: ES集群
+    category: "业务资产"
     plugin: elastic_search
-    key: cluster
-    metrics_url: ""
+    metrics: []
 
   - name: DNS解析
+    category: "业务资产"
     plugin: dns_query
     key: cluster
-    metrics_url: ""
+    metrics: []
 
   - name: victoria-metrics
+    category: "业务资产"
     plugin: prometheus
-    key: instance
-    metrics_url: ""
+    metrics: []
     form:
       - label: 监控Url
         name: url
+
+  - name: 交换机
+    category: "网络设备"
+    plugin: switch_legacy
+    metrics: []
+    form:
+      - label: 地址
+        name: address
+      - label: 团体字
+        name: community

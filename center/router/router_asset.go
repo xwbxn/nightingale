@@ -23,22 +23,24 @@ func (rt *Router) assetsGet(c *gin.Context) {
 func (rt *Router) assetsGets(c *gin.Context) {
 	bgid := ginx.QueryInt64(c, "bgid", -1)
 	query := ginx.QueryStr(c, "query", "")
-	assets, err := models.AssetGets(rt.Ctx, bgid, query)
+	organizeId := ginx.QueryInt64(c, "organize_id", -1)
+	assets, err := models.AssetGets(rt.Ctx, bgid, query, organizeId)
 	ginx.NewRender(c).Data(assets, err)
 }
 
 type assetsModel struct {
-	Id      int64  `json:"id"`
-	Version string `json:"version"`
-	Ident   string `json:"ident"`
-	GroupId int64  `json:"group_id"`
-	Name    string `json:"name"`
-	Label   string `json:"label"`
-	Tags    string `json:"tags"`
-	Type    string `json:"type"`
-	Memo    string `json:"memo"`
-	Configs string `json:"configs"`
-	Params  string `json:"params"`
+	Id         int64  `json:"id"`
+	Version    string `json:"version"`
+	Ident      string `json:"ident"`
+	GroupId    int64  `json:"group_id"`
+	Name       string `json:"name"`
+	Label      string `json:"label"`
+	Tags       string `json:"tags"`
+	Type       string `json:"type"`
+	Memo       string `json:"memo"`
+	Configs    string `json:"configs"`
+	Params     string `json:"params"`
+	OrganizeId int64  `json:"organize_id"`
 }
 
 func (rt *Router) assetsAdd(c *gin.Context) {
@@ -47,16 +49,17 @@ func (rt *Router) assetsAdd(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 
 	var assets = models.Asset{
-		GroupId:  f.GroupId,
-		Name:     f.Name,
-		Ident:    f.Ident,
-		Label:    f.Label,
-		Type:     f.Type,
-		Memo:     f.Memo,
-		Configs:  f.Configs,
-		Params:   f.Params,
-		CreateBy: me.Username,
-		CreateAt: time.Now().Unix(),
+		GroupId:    f.GroupId,
+		Name:       f.Name,
+		Ident:      f.Ident,
+		Label:      f.Label,
+		Type:       f.Type,
+		Memo:       f.Memo,
+		Configs:    f.Configs,
+		Params:     f.Params,
+		CreateBy:   me.Username,
+		CreateAt:   time.Now().Unix(),
+		OrganizeId: f.OrganizeId,
 	}
 
 	err := assets.Add(rt.Ctx)
@@ -119,7 +122,7 @@ func (rt *Router) assetIdentGetAll(c *gin.Context) {
 }
 
 func (rt *Router) assetGetTypeList(c *gin.Context) {
-	data, err := models.AssetGetTypeList()
+	data, err := models.AssetTypeGetsAll()
 	ginx.NewRender(c).Data(data, err)
 }
 
@@ -265,4 +268,15 @@ func (rt *Router) assetUpdateNote(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(models.AssetUpdateNote(rt.Ctx, f.Ids, f.Note))
+}
+
+type Assetorganize struct {
+	Ids []string `json:"ids" binding:"required"` //资产id组
+	Id  int64    `json:"id"`                     //组织树id
+}
+
+func (rt *Router) updatesAssetOrganize(c *gin.Context) {
+	var f Assetorganize
+	ginx.BindJSON(c, &f)
+	ginx.NewRender(c).Message(models.UpdateOrganize(rt.Ctx, f.Ids, f.Id))
 }
