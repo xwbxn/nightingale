@@ -597,11 +597,15 @@ func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
 	err := DB(ctx).Find(&dat).Error
 	for i := 0; i < len(dat); i++ {
 		dat[i].DB2FE()
-		s := strings.Split(dat[i].TagsJSON[4], "=")
-		for i := 0; i < len(dat[i].TagsJSON); i++ {
-			if s[i] == "Asset_id" {
-				s1, err = strconv.Atoi(s[i])
+		// s := strings.Split(dat[i].TagsJSON[4], "=")
+	loop:
+		for u := 0; u < len(dat[i].TagsJSON); u++ {
+			s := strings.Split(dat[i].TagsJSON[u], "=")
+			if s[0] == "asset_id" {
+				s1, err = strconv.Atoi(s[1])
+				break loop
 			}
+
 		}
 
 		dic := &ruleConfigJson{}
