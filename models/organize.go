@@ -161,24 +161,24 @@ func (m *Organize) UpdatesAll(ctx *ctx.Context, ids []int64, name string, parent
 
 // 前端输出组织接口
 // 前端结构定义
-type FeOrg struct {
+type feOrg struct {
 	Id       int64    `json:"id"`   // id
 	Name     string   `json:"name"` // 组织名
 	ParentId int64    `json:"-"`    // 组织父id
-	Children []*FeOrg `json:"children"`
+	Children []*feOrg `json:"children"`
 }
 
 // 前端数组织生成
-func fetree(menus []*FeOrg, pid int64) []*FeOrg {
+func feTree(menus []*feOrg, pid int64) []*feOrg {
 	//定义子节点目录
-	var nodes []*FeOrg
+	var nodes []*feOrg
 	if reflect.ValueOf(menus).IsValid() {
 		//循环所有一级菜单
 		for _, v := range menus {
 			//查询所有该菜单下的所有子菜单
 			if v.ParentId == pid {
 				//特别注意压入元素不是单个所有加三个 **...** 告诉切片无论多少元素一并压入
-				v.Children = append(v.Children, fetree(menus, v.Id)...)
+				v.Children = append(v.Children, feTree(menus, v.Id)...)
 				nodes = append(nodes, v)
 			}
 
@@ -188,18 +188,18 @@ func fetree(menus []*FeOrg, pid int64) []*FeOrg {
 }
 
 // 前端组织树
-func OrgList(ctx *ctx.Context) ([]*FeOrg, error) {
+func OrganizeTreeGetsFE(ctx *ctx.Context) ([]*feOrg, error) {
 	var lst []*Organize
-	var felst []*FeOrg
+	var felst []*feOrg
 	err := DB(ctx).Find(&lst).Error
 	for i := 0; i < len(lst); i++ {
-		felst = append(felst, &FeOrg{
+		felst = append(felst, &feOrg{
 			Id:       lst[i].Id,
 			Name:     lst[i].Name,
 			ParentId: lst[i].ParentId,
 		})
 
 	}
-	x := fetree(felst, 0)
+	x := feTree(felst, 0)
 	return x, err
 }
