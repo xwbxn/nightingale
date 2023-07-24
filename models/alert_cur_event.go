@@ -593,12 +593,11 @@ type ruleConfigJson struct {
 func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
 	var dat []*AlertCurEvent
 	var fedat []*FeAlert
-	var s []string
 	var s1 int
 	err := DB(ctx).Find(&dat).Error
 	for i := 0; i < len(dat); i++ {
 		dat[i].DB2FE()
-		s = strings.Split(dat[i].TagsJSON[4], "=")
+		s := strings.Split(dat[i].TagsJSON[4], "=")
 		s1, err = strconv.Atoi(s[1])
 		dic := &ruleConfigJson{}
 		json.Unmarshal([]byte(dat[i].RuleConfig), dic)
@@ -608,9 +607,8 @@ func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
 			Severity:     dat[i].Severity,
 			TriggerTime:  dat[i].TriggerTime,
 			TriggerValue: dat[i].TriggerValue,
-			// RuleConfigJson: dat[i].RuleConfigJson,
-			Rule:    dic.Queries[0]["prom_ql"].(string),
-			AssetId: s1,
+			Rule:         dic.Queries[0]["prom_ql"].(string),
+			AssetId:      s1,
 		})
 	}
 	return fedat, err

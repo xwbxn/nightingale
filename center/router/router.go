@@ -388,7 +388,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/assets/tags", rt.auth(), rt.user(), rt.perm("/assets/put"), rt.assetUnbindTagsByFE)
 		pages.PUT("/assets/bgid", rt.auth(), rt.user(), rt.perm("/assets/put"), rt.assetUpdateBgid)
 		pages.PUT("/assets/note", rt.auth(), rt.user(), rt.perm("/assets/note"), rt.assetUpdateNote)
-		pages.POST("/assets/updatesOrganize", rt.auth(), rt.user(), rt.updatesAssetOrganize) //批量修改资产组织ID
+		pages.POST("/assets/updatesOrganize", rt.auth(), rt.user(), rt.updatesAssetOrganize)    // 批量修改资产组织ID
+		pages.GET("/assets/assetbyorgid/:organize_id", rt.auth(), rt.user(), rt.findAssetByOrg) // 通过组织id获取资产
 
 		pages.GET("/organize/get/:eid", rt.auth(), rt.user(), rt.organizeGet)    // 依据id获取组织信息
 		pages.GET("/organize/list", rt.auth(), rt.user(), rt.organizeList)       // 获取组织树

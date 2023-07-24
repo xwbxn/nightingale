@@ -88,6 +88,9 @@ func (rt *Router) alertHisEventGet(c *gin.Context) {
 func (rt *Router) alertHisEventSolve(c *gin.Context) {
 	eid := ginx.UrlParamInt64(c, "eid")
 	event, err := models.AlertHisEventGetById(rt.Ctx, eid)
+	me := c.MustGet("user").(*models.User)
+	var f bodyModel
+	ginx.BindJSON(c, &f)
 	ginx.Dangerous(err)
 
 	if event == nil {
@@ -96,9 +99,6 @@ func (rt *Router) alertHisEventSolve(c *gin.Context) {
 		if event.IsRecovered == 0 {
 			ginx.Dangerous("指标尚未恢复")
 		} else {
-			me := c.MustGet("user").(*models.User)
-			var f bodyModel
-			ginx.BindJSON(c, &f)
 			err = event.UpdateStatus(rt.Ctx, eid, 1, f.Remark, me.Username)
 			ginx.Dangerous(err)
 		}
@@ -117,17 +117,15 @@ type bodyModel struct {
 func (rt *Router) alertHisEventClose(c *gin.Context) {
 	eid := ginx.UrlParamInt64(c, "eid")
 	event, err := models.AlertHisEventGetById(rt.Ctx, eid)
+	me := c.MustGet("user").(*models.User)
 	ginx.Dangerous(err)
+	var f bodyModel
+	ginx.BindJSON(c, &f)
 
 	if event == nil {
 		ginx.Bomb(404, "No such alert event")
 	} else {
-		me := c.MustGet("user").(*models.User)
-		var f bodyModel
-		ginx.BindJSON(c, &f)
 		err = event.UpdateStatus(rt.Ctx, eid, 2, f.Remark, me.Username)
-
 	}
-
 	ginx.NewRender(c).Data(event, err)
 }
