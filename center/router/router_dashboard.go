@@ -79,6 +79,8 @@ func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
 			Tags:     item.TagsJSON,
 		})
 	}
+	//ws.SetMessage(1, data) //socket推送内容
+
 	ginx.NewRender(c).Data(data, nil)
 }
 
