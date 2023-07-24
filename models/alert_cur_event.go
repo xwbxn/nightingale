@@ -598,7 +598,12 @@ func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
 	for i := 0; i < len(dat); i++ {
 		dat[i].DB2FE()
 		s := strings.Split(dat[i].TagsJSON[4], "=")
-		s1, err = strconv.Atoi(s[1])
+		for i := 0; i < len(dat[i].TagsJSON); i++ {
+			if s[i] == "Asset_id" {
+				s1, err = strconv.Atoi(s[i])
+			}
+		}
+
 		dic := &ruleConfigJson{}
 		json.Unmarshal([]byte(dat[i].RuleConfig), dic)
 		fedat = append(fedat, &FeAlert{
