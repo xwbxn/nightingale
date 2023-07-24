@@ -299,7 +299,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/alert-cur-events/card/details", rt.auth(), rt.alertCurEventsCardDetails)
 		pages.GET("/alert-his-events/list", rt.auth(), rt.alertHisEventsList)
 		pages.DELETE("/alert-cur-events", rt.auth(), rt.user(), rt.perm("/alert-cur-events/del"), rt.alertCurEventDel)
-		pages.GET("/alert-cur-events/felist", rt.auth(), rt.FeAlertList) //前端接口返回
 
 		pages.POST("/alert-his-event/solve/:eid", rt.auth(), rt.user(), rt.alertHisEventSolve) //人工解决异常接口
 		pages.POST("/alert-his-event/close/:eid", rt.auth(), rt.user(), rt.alertHisEventClose) //人工关闭异常接口
@@ -396,7 +395,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/organize/:eid", rt.auth(), rt.user(), rt.updateOrganize)     // 修改组织信息
 		pages.DELETE("/organize/del/:eid", rt.auth(), rt.user(), rt.organizeDel) // 删除组织信息
 		pages.POST("/organize/add", rt.auth(), rt.user(), rt.organizeAdd)        // 上传组织信息
-		pages.GET("/organize/orglist", rt.auth(), rt.user(), rt.findOrg)         // 提供前端组织树接口
 	}
 
 	if rt.HTTP.APIForService.Enable {
@@ -460,7 +458,10 @@ func (rt *Router) Config(r *gin.Engine) {
 
 			service.POST("/task-record-add", rt.taskRecordAdd)
 
-			service.GET("/dashboard/assets", rt.getDashboardAssets)
+			//前端大屏接口
+			service.GET("/dashboard/assets", rt.getDashboardAssetsByFE)     // 资产清单
+			service.GET("/dashboard/organize-tree", rt.getOrganizeTreeByFE) // 提供前端组织树接口
+			service.GET("/dashboard/alert-cur-events", rt.getAlertListByFE) // 告警列表接口前端接口返回
 
 		}
 	}
