@@ -92,5 +92,14 @@ func (rt *Router) getOrganizeTreeByFE(c *gin.Context) {
 
 func (rt *Router) getAlertListByFE(c *gin.Context) {
 	list, err := models.AlertFeList(rt.Ctx)
+
+	//从资产缓存中更新orgid
+	for _, item := range list {
+		asset, has := rt.assetCache.Get(item.Id)
+		if has {
+			item.OrganizeId = int(asset.OrganizeId)
+		}
+	}
+
 	ginx.NewRender(c).Data(list, err)
 }
