@@ -35,6 +35,10 @@ type Redis interface {
 	HGet(ctx context.Context, key string, fields string) *redis.StringCmd
 	HSet(ctx context.Context, key string, values ...interface{}) *redis.IntCmd
 	HDel(ctx context.Context, key string, fields ...string) *redis.IntCmd
+	LPush(ctx context.Context, key string, values ...interface{}) *redis.IntCmd
+	RPop(ctx context.Context, key string) *redis.StringCmd
+	RPopCount(ctx context.Context, key string, count int) *redis.StringSliceCmd
+	LLen(ctx context.Context, key string) *redis.IntCmd
 	Close() error
 	Ping(ctx context.Context) *redis.StatusCmd
 	Publish(ctx context.Context, channel string, message interface{}) *redis.IntCmd
