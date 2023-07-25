@@ -592,14 +592,10 @@ type ruleConfigJson struct {
 }
 
 // 生成新的适用于前端页面的返回数据格式
-func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
-	var dat []*AlertCurEvent
-	var fedat []*FeAlert
+func MakeFeAlert(dat []*AlertCurEvent) (Fe []*FeAlert) {
 	var assetID int
-	err := DB(ctx).Find(&dat).Error
 	for i := 0; i < len(dat); i++ {
 		dat[i].DB2FE()
-
 		for u := 0; u < len(dat[i].TagsJSON); u++ {
 			s := strings.Split(dat[i].TagsJSON[u], "=")
 			if s[0] == "asset_id" {
@@ -607,10 +603,9 @@ func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
 				break
 			}
 		}
-
 		dic := &ruleConfigJson{}
 		json.Unmarshal([]byte(dat[i].RuleConfig), dic)
-		fedat = append(fedat, &FeAlert{
+		Fe = append(Fe, &FeAlert{
 			Id:           dat[i].Id,
 			Name:         dat[i].RuleName,
 			Severity:     dat[i].Severity,
@@ -620,5 +615,44 @@ func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
 			AssetId:      assetID,
 		})
 	}
-	return fedat, err
+	return Fe
+}
+
+// 生成新的适用于前端页面的返回数据格式
+// func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
+// 	var dat []*AlertCurEvent
+// 	var fedat []*FeAlert
+// 	var assetID int
+// 	err := DB(ctx).Find(&dat).Error
+// 	for i := 0; i < len(dat); i++ {
+// 		dat[i].DB2FE()
+
+// 		for u := 0; u < len(dat[i].TagsJSON); u++ {
+// 			s := strings.Split(dat[i].TagsJSON[u], "=")
+// 			if s[0] == "asset_id" {
+// 				assetID, _ = strconv.Atoi(s[1])
+// 				break
+// 			}
+// 		}
+
+// 		dic := &ruleConfigJson{}
+// 		json.Unmarshal([]byte(dat[i].RuleConfig), dic)
+// 		fedat = append(fedat, &FeAlert{
+// 			Id:           dat[i].Id,
+// 			Name:         dat[i].RuleName,
+// 			Severity:     dat[i].Severity,
+// 			TriggerTime:  dat[i].TriggerTime,
+// 			TriggerValue: dat[i].TriggerValue,
+// 			Rule:         dic.Queries[0]["prom_ql"].(string),
+// 			AssetId:      assetID,
+// 		})
+// 	}
+// 	return fedat, err
+// }
+
+func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
+	var dat []*AlertCurEvent
+	err := DB(ctx).Find(&dat).Error
+	Fe := MakeFeAlert(dat)
+	return Fe, err
 }
