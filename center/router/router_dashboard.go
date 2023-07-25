@@ -1,6 +1,8 @@
 package router
 
 import (
+	"sort"
+
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -37,6 +39,7 @@ type MetricJson struct {
 type AssetJson struct {
 	Id       int64               `json:"id"`
 	Name     string              `json:"name"`
+	Label    string              `json:"label"`
 	Status   int64               `json:"status"`
 	UpdateAt int64               `json:"update_at"`
 	Category string              `json:"category"`
@@ -70,6 +73,7 @@ func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
 		data = append(data, &AssetJson{
 			Id:       item.Id,
 			Name:     item.Name,
+			Label:    item.Label,
 			Status:   item.Health,
 			UpdateAt: item.HealthAt,
 			Category: ar.Category,
@@ -95,11 +99,34 @@ func (rt *Router) getAlertListByFE(c *gin.Context) {
 
 	//从资产缓存中更新orgid
 	for _, item := range list {
-		asset, has := rt.assetCache.Get(item.Id)
+		asset, has := rt.assetCache.Get(int64(item.AssetId))
 		if has {
 			item.OrganizeId = int(asset.OrganizeId)
 		}
 	}
 
 	ginx.NewRender(c).Data(list, err)
+}
+
+func (rt *Router) getDashboardAssetStatistics(c *gin.Context) {
+	key := ginx.QueryStr(c, "key", "type")
+
+	data := map[string]int64{}
+	lst := rt.assetCache.GetAll()
+
+	if key == "type" {
+		sort.Slice(lst, func(i, j int) bool {
+			return lst[i].Type > lst[j].Type
+		})
+
+		for _, item := range lst {
+			_, has := data[item.Type]
+			if !has {
+				data[item.Type] = 0
+			}
+			data[item.Type] += 1
+		}
+	}
+
+	ginx.NewRender(c).Data(data, nil)
 }
