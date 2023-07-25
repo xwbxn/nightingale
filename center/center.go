@@ -11,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/center/sso"
 	"github.com/ccfos/nightingale/v6/conf"
+	"github.com/ccfos/nightingale/v6/dumper"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/models/migrate"
@@ -73,18 +74,20 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
 	notifyConfigCache := memsto.NewNotifyConfigCache(ctx)
 	assetCache := memsto.NewAssetCache(ctx, syncStats)
+	userCache := memsto.NewUserCache(ctx, syncStats)
+	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
 
 	promClients := prom.NewPromClient(ctx, config.Alert.Heartbeat)
 
 	externalProcessors := process.NewExternalProcessors()
-	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, dsCache, ctx, promClients, assetCache)
+	alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache, alertRuleCache, notifyConfigCache, dsCache, ctx, promClients, assetCache, userCache, userGroupCache)
 
 	writers := writer.NewWriters(config.Pushgw)
 
 	httpx.InitRSAConfig(&config.HTTP.RSA)
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
-	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, notifyConfigCache, promClients, redis, sso, ctx, metas, idents, targetCache, assetCache)
+	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, notifyConfigCache, promClients, redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, assetCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, idents, writers, ctx)
 	providerRouter := providerrt.New(config.HTTP, targetCache, busiGroupCache, assetCache, ctx)
 
@@ -94,6 +97,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	alertrtRouter.Config(r)
 	pushgwRouter.Config(r)
 	providerRouter.Config(r)
+	dumper.ConfigRouter(r)
 
 	httpClean := httpx.Init(config.HTTP, r)
 

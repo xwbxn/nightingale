@@ -56,6 +56,7 @@ type AlertHisEvent struct {
 	Remark             string            `json:"remark"`               // 备注
 	HandleAt           int64             `json:"handle_at"`            // 创建时间
 	HandleBy           string            `json:"handle_by"`            // 创建人
+	ExtraConfig        interface{}       `json:"extra_config" gorm:"-"`
 }
 
 func (e *AlertHisEvent) TableName() string {
@@ -225,9 +226,11 @@ func (m *AlertHisEvent) UpdateFieldsMap(ctx *ctx.Context, fields map[string]inte
 	return DB(ctx).Model(m).Updates(fields).Error
 }
 
-/**
+/*
+*
 通过IsRecovered判断指标是否恢复
-**/
+*
+*/
 func (m *AlertHisEvent) UpdateStatus(ctx *ctx.Context, id int64, status int, remark string, handleBy string) error {
 
 	modes, err := AlertHisEventGetById(ctx, id)
