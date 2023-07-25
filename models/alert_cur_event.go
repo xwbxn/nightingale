@@ -63,7 +63,6 @@ type AlertCurEvent struct {
 	Status                   int               `json:"status" gorm:"-"`
 	Claimant                 string            `json:"claimant" gorm:"-"`
 	SubRuleId                int64             `json:"sub_rule_id" gorm:"-"`
-	BusiStatus               int               `json:"busi_status" gorm:"status"` // 状态
 }
 
 func (e *AlertCurEvent) TableName() string {
