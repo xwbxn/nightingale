@@ -596,7 +596,6 @@ func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
 	var dat []*AlertCurEvent
 	var fedat []*FeAlert
 	var assetID int
-	var organizeId int
 	err := DB(ctx).Find(&dat).Error
 	for i := 0; i < len(dat); i++ {
 		dat[i].DB2FE()
@@ -605,9 +604,7 @@ func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
 			s := strings.Split(dat[i].TagsJSON[u], "=")
 			if s[0] == "asset_id" {
 				assetID, _ = strconv.Atoi(s[1])
-			}
-			if s[0] == "organize_id" {
-				organizeId, _ = strconv.Atoi(s[1])
+				break
 			}
 		}
 
@@ -621,7 +618,6 @@ func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
 			TriggerValue: dat[i].TriggerValue,
 			Rule:         dic.Queries[0]["prom_ql"].(string),
 			AssetId:      assetID,
-			OrganizeId:   organizeId,
 		})
 	}
 	return fedat, err
