@@ -95,7 +95,7 @@ func (rt *Router) getAlertListByFE(c *gin.Context) {
 
 	//从资产缓存中更新orgid
 	for _, item := range list {
-		asset, has := rt.assetCache.Get(item.Id)
+		asset, has := rt.assetCache.Get(int64(item.AssetId))
 		if has {
 			item.OrganizeId = int(asset.OrganizeId)
 		}
