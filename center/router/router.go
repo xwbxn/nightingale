@@ -459,9 +459,10 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.POST("/task-record-add", rt.taskRecordAdd)
 
 			//前端大屏接口
-			service.GET("/dashboard/assets", rt.getDashboardAssetsByFE)     // 资产清单
-			service.GET("/dashboard/organize-tree", rt.getOrganizeTreeByFE) // 提供前端组织树接口
-			service.GET("/dashboard/alert-cur-events", rt.getAlertListByFE) // 告警列表接口前端接口返回
+			service.GET("/dashboard/assets", rt.getDashboardAssetsByFE)                 // 资产清单
+			service.GET("/dashboard/organize-tree", rt.getOrganizeTreeByFE)             // 提供前端组织树接口
+			service.GET("/dashboard/alert-cur-events", rt.getAlertListByFE)             // 告警列表接口前端接口返回
+			service.GET("/dashboard/assets/statistics", rt.getDashboardAssetStatistics) //资产统计接口
 
 		}
 	}
