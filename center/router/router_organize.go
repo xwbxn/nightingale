@@ -41,12 +41,27 @@ func (rt *Router) updateOrganize(c *gin.Context) {
 
 func (rt *Router) organizeDel(c *gin.Context) {
 	eid := ginx.UrlParamInt64(c, "eid")
-	event, err := models.OrganizeGetById(rt.Ctx, eid)
+	org, err := models.OrganizeGetById(rt.Ctx, eid)
 	ginx.Dangerous(err)
-	if event == nil {
+	if org == nil {
 		ginx.Bomb(404, "No such organize")
 	}
+
+	//TODO: 这里不应进行遍历，待优化
+	lss, err := models.OrganizeGets(rt.Ctx)
+	for i := 0; i < len(lss); i++ {
+		if lss[i].ParentId == org.Id {
+			ginx.Bomb(404, "This organize hava suborganize")
+		}
+
+	}
+	lst, err := models.FindAssetByOrg(rt.Ctx, org.Id)
+	if lst != nil {
+		ginx.Bomb(404, "This organize hava assets")
+	}
+
 	var list = []int64{eid}
+
 	ginx.NewRender(c).Message(models.OrganizeDels(rt.Ctx, list))
 
 }
@@ -79,9 +94,3 @@ func (rt *Router) organizeAdd(c *gin.Context) {
 // 	ginx.BindJSON(c, &f)
 // 	models.UpdateOrganize(rt.Ctx, f.Ids, f.OrganizeId)
 // }
-
-func (rt *Router) findOrg(c *gin.Context) {
-	list, err := models.OrgList(rt.Ctx)
-	ginx.Dangerous(err)
-	ginx.NewRender(c).Data(list, nil)
-}

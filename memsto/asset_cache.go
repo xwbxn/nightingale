@@ -21,8 +21,8 @@ type AssetCacheType struct {
 	sync.RWMutex
 	assets map[int64]*models.Asset // key: id
 	types  map[string]*models.AssetType
-	health map[int64]int64
-	rules  map[int64]*models.AlertRule // key: rule id
+	health map[int64]int64             //暂未使用
+	rules  map[int64]*models.AlertRule // key: rule id //暂未使用
 }
 
 func NewAssetCache(ctx *ctx.Context, stats *Stats) *AssetCacheType {

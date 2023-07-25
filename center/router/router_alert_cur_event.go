@@ -208,8 +208,3 @@ func (rt *Router) alertCurEventGet(c *gin.Context) {
 
 	ginx.NewRender(c).Data(event, nil)
 }
-
-func (rt *Router) FeAlertList(c *gin.Context) {
-	list, err := models.AlertFeList(rt.Ctx)
-	ginx.NewRender(c).Data(list, err)
-}

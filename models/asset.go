@@ -140,7 +140,8 @@ func AssetGet(ctx *ctx.Context, where string, args ...interface{}) (*Asset, erro
 
 func AssetGets(ctx *ctx.Context, bgid int64, query string, organizeId int64) ([]*Asset, error) {
 	var lst []*Asset
-	session := DB(ctx).Where("1 = 1")
+	// session := DB(ctx).Where("1 = 1")
+	session := DB(ctx).Find(&lst)
 	if bgid >= 0 {
 		session = session.Where("group_id = ?", bgid)
 	}
@@ -324,4 +325,22 @@ func UpdateOrganize(ctx *ctx.Context, ids []string, organize_id int64) error {
 		"organize_id": organize_id,
 		"update_at":   time.Now().Unix(),
 	}).Error
+}
+
+//根据组织id查询资产
+// func FindAssetByOrg(ctx *ctx.Context, orgid int64) error {
+// 	var as []Asset
+// 	// lst := DB(ctx).Where("organize_id = ?", orgid).Find(&as)
+// 	// if lst.Error != nil {
+
+// 	// }
+// 	// return as
+// 	return DB(ctx).Model(&Asset{}).Where("organize_id = ?", orgid).Find(&as).Error
+// }
+
+func FindAssetByOrg(ctx *ctx.Context, organize_id int64) ([]Asset, error) {
+	session := DB(ctx).Where("organize_id = ?", organize_id)
+	var lst []Asset
+	err := session.Order("id desc").Find(&lst).Error
+	return lst, err
 }

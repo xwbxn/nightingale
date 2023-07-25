@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 )
@@ -45,12 +46,27 @@ type AssetJson struct {
 	Tags     []string            `json:"tags"`
 }
 
-func (rt *Router) getDashboardAssets(c *gin.Context) {
+func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
+
+	category := ginx.QueryStr(c, "category", "")
+	atype := ginx.QueryStr(c, "atype", "")
+	groupId := ginx.QueryInt64(c, "group_id", -1)
 
 	var data []*AssetJson
 	lst := rt.assetCache.GetAll()
 	for _, item := range lst {
 		ar, _ := rt.assetCache.GetType(item.Type)
+
+		if category != "" && ar.Category != category {
+			continue
+		}
+		if atype != "" && item.Type != atype {
+			continue
+		}
+		if groupId > -1 && item.OrganizeId != groupId { //这里使用orgid作为group返回查询条件
+			continue
+		}
+
 		data = append(data, &AssetJson{
 			Id:       item.Id,
 			Name:     item.Name,
@@ -59,9 +75,22 @@ func (rt *Router) getDashboardAssets(c *gin.Context) {
 			Category: ar.Category,
 			Type:     item.Type,
 			Metrics:  item.Metrics,
-			GroupId:  item.GroupId,
+			GroupId:  item.OrganizeId, //这里使用orgid作为group返回查询条件
 			Tags:     item.TagsJSON,
 		})
 	}
+	//ws.SetMessage(1, data) //socket推送内容
+
 	ginx.NewRender(c).Data(data, nil)
+}
+
+func (rt *Router) getOrganizeTreeByFE(c *gin.Context) {
+	list, err := models.OrganizeTreeGetsFE(rt.Ctx)
+	ginx.Dangerous(err)
+	ginx.NewRender(c).Data(list, nil)
+}
+
+func (rt *Router) getAlertListByFE(c *gin.Context) {
+	list, err := models.AlertFeList(rt.Ctx)
+	ginx.NewRender(c).Data(list, err)
 }

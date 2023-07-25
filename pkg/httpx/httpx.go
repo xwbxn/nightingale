@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/center/ws"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/gin-contrib/pprof"
@@ -98,6 +99,8 @@ func GinEngine(mode string, cfg Config) *gin.Engine {
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(200, "pong")
 	})
+
+	r.GET("/alert/ws", ws.WsHandler)
 
 	r.GET("/pid", func(c *gin.Context) {
 		c.String(200, fmt.Sprintf("%d", os.Getpid()))

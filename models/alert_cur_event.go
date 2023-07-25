@@ -569,15 +569,17 @@ func AlertCurEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 	return nil
 }
 
-//定义适用于前端返回的结构体
+// 定义适用于前端返回的结构体
 type FeAlert struct {
-	Id             int64       `json:"id"`            //告警id
-	Name           string      `json:"name"`          //告警规则名称 rulename
-	Rule           string      `json:"rule"`          //告警规则 RuleConfigJson中prom_ql字段
-	Severity       int         `json:"severity"`      //告警级别 0:紧急 1:警告 2:提醒 ，0为最高
-	AssetId        int         `json:"asset_id"`      //资产id，对应TagsJSON中ident字段
-	TriggerTime    int64       `json:"trigger_time"`  //trigger_value
-	TriggerValue   string      `json:"trigger_value"` //trigger_value
+	Id           int64  `json:"id"`            //告警id
+	Name         string `json:"name"`          //告警规则名称 rulename
+	Rule         string `json:"rule"`          //告警规则 RuleConfigJson中prom_ql字段
+	Severity     int    `json:"severity"`      //告警级别 0:紧急 1:警告 2:提醒 ，0为最高
+	AssetId      int    `json:"asset_id"`      //资产id，对应TagsJSON中ident字段
+	TriggerTime  int64  `json:"trigger_time"`  //trigger_value
+	TriggerValue string `json:"trigger_value"` //trigger_value
+	OrganizeId   int    `json:"organize_id"`   //组织id
+
 	Tags           string      `json:"-"`
 	TagsJSON       []string    `json:"-"`
 	RuleConfig     string      `json:"-"`
@@ -589,17 +591,26 @@ type ruleConfigJson struct {
 	Queries []map[string]interface{} `json:"queries"`
 }
 
-//生成新的适用于前端页面的返回数据格式
+// 生成新的适用于前端页面的返回数据格式
 func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
 	var dat []*AlertCurEvent
 	var fedat []*FeAlert
-	var s []string
-	var s1 int
+	var assetID int
+	var organizeId int
 	err := DB(ctx).Find(&dat).Error
 	for i := 0; i < len(dat); i++ {
 		dat[i].DB2FE()
-		s = strings.Split(dat[i].TagsJSON[4], "=")
-		s1, err = strconv.Atoi(s[1])
+
+		for u := 0; u < len(dat[i].TagsJSON); u++ {
+			s := strings.Split(dat[i].TagsJSON[u], "=")
+			if s[0] == "asset_id" {
+				assetID, _ = strconv.Atoi(s[1])
+			}
+			if s[0] == "organize_id" {
+				organizeId, _ = strconv.Atoi(s[1])
+			}
+		}
+
 		dic := &ruleConfigJson{}
 		json.Unmarshal([]byte(dat[i].RuleConfig), dic)
 		fedat = append(fedat, &FeAlert{
@@ -608,9 +619,9 @@ func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
 			Severity:     dat[i].Severity,
 			TriggerTime:  dat[i].TriggerTime,
 			TriggerValue: dat[i].TriggerValue,
-			// RuleConfigJson: dat[i].RuleConfigJson,
-			Rule:    dic.Queries[0]["prom_ql"].(string),
-			AssetId: s1,
+			Rule:         dic.Queries[0]["prom_ql"].(string),
+			AssetId:      assetID,
+			OrganizeId:   organizeId,
 		})
 	}
 	return fedat, err
