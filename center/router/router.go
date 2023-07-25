@@ -376,9 +376,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		r.GET("/categraf/download", rt.CategrafDownload)
 		pages.GET("/categraf/getstart", rt.auth(), rt.CategrefGetStart)
 
-		// 总览试图
-		pages.GET("/busi-group/overview", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.overviewGet)
-
 		// 资产管理
 		pages.GET("/assets/:id", rt.auth(), rt.admin(), rt.assetsGet)
 		pages.GET("/assets", rt.auth(), rt.admin(), rt.assetsGets)
