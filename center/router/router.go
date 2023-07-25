@@ -39,12 +39,15 @@ type Router struct {
 	IdentSet          *idents.Set
 	TargetCache       *memsto.TargetCacheType
 	Sso               *sso.SsoClient
+	UserCache         *memsto.UserCacheType
+	UserGroupCache    *memsto.UserGroupCacheType
 	Ctx               *ctx.Context
 	assetCache        *memsto.AssetCacheType
 }
 
 func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
-	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType, ac *memsto.AssetCacheType) *Router {
+	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType,
+	uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, ac *memsto.AssetCacheType) *Router {
 	return &Router{
 		HTTP:              httpConfig,
 		Center:            center,
@@ -57,6 +60,8 @@ func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operatio
 		IdentSet:          idents,
 		TargetCache:       tc,
 		Sso:               sso,
+		UserCache:         uc,
+		UserGroupCache:    ugc,
 		Ctx:               ctx,
 		assetCache:        ac,
 	}
@@ -103,7 +108,7 @@ func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 		suffix := arr[len(arr)-1]
 
 		switch suffix {
-		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map":
+		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf":
 			if !rt.Center.UseFileAssets {
 				c.FileFromFS(c.Request.URL.Path, *fs)
 			} else {
@@ -265,6 +270,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/busi-group/:id/alert-rules/fields", rt.auth(), rt.user(), rt.perm("/alert-rules/put"), rt.bgrw(), rt.alertRulePutFields)
 		pages.PUT("/busi-group/:id/alert-rule/:arid", rt.auth(), rt.user(), rt.perm("/alert-rules/put"), rt.alertRulePutByFE)
 		pages.GET("/alert-rule/:arid", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRuleGet)
+		pages.PUT("/busi-group/:id/alert-rule/:arid/validate", rt.auth(), rt.user(), rt.perm("/alert-rules/put"), rt.alertRuleValidation)
 
 		pages.GET("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGets)
 		pages.POST("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules/add"), rt.bgrw(), rt.recordingRuleAddByFE)
@@ -395,6 +401,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/organize/:eid", rt.auth(), rt.user(), rt.updateOrganize)     // 修改组织信息
 		pages.DELETE("/organize/del/:eid", rt.auth(), rt.user(), rt.organizeDel) // 删除组织信息
 		pages.POST("/organize/add", rt.auth(), rt.user(), rt.organizeAdd)        // 上传组织信息
+
+		pages.GET("/es-index-pattern", rt.auth(), rt.esIndexPatternGet)
+		pages.GET("/es-index-pattern-list", rt.auth(), rt.esIndexPatternGetList)
+		pages.POST("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternAdd)
+		pages.PUT("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternPut)
+		pages.DELETE("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternDel)
 	}
 
 	if rt.HTTP.APIForService.Enable {
