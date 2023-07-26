@@ -17,24 +17,26 @@ import (
 )
 
 type Asset struct {
-	Id         int64    `json:"id" gorm:"primaryKey"`
-	Ident      string   `json:"ident"`
-	GroupId    int64    `json:"group_id"`
-	Name       string   `json:"name"`
-	Label      string   `json:"label"`
-	Tags       string   `json:"-"`
-	TagsJSON   []string `json:"tags" gorm:"-"`
-	Type       string   `json:"type"`
-	Memo       string   `json:"memo"`
-	Configs    string   `json:"configs"`
-	Params     string   `json:"params"`
-	Plugin     string   `json:"plugin"`
-	Status     int64    `json:"status"` //0: 未生效, 1: 已生效
-	CreateAt   int64    `json:"create_at"`
-	CreateBy   string   `json:"create_by"`
-	UpdateAt   int64    `json:"update_at"`
-	UpdateBy   string   `json:"update_by"`
-	OrganizeId int64    `json:"organize_id"`
+	Id                  int64    `json:"id" gorm:"primaryKey"`
+	Ident               string   `json:"ident"`
+	GroupId             int64    `json:"group_id"`
+	Name                string   `json:"name"`
+	Label               string   `json:"label"`
+	Tags                string   `json:"-"`
+	TagsJSON            []string `json:"tags" gorm:"-"`
+	Type                string   `json:"type"`
+	Memo                string   `json:"memo"`
+	Configs             string   `json:"configs"`
+	Params              string   `json:"params"`
+	Plugin              string   `json:"plugin"`
+	Status              int64    `json:"status"` //0: 未生效, 1: 已生效
+	CreateAt            int64    `json:"create_at"`
+	CreateBy            string   `json:"create_by"`
+	UpdateAt            int64    `json:"update_at"`
+	UpdateBy            string   `json:"update_by"`
+	OrganizeId          int64    `json:"organize_id" gorm:"-"`
+	OptionalMetrics     string   `json:"-"`
+	OptionalMetricsJSON []string `json:"optional_metrics" gorm:"-"`
 
 	//下面的是健康检查使用，在memsto缓存中保存
 	Health   int64               `json:"-" gorm:"-"` //0: fail 1: ok
@@ -43,11 +45,12 @@ type Asset struct {
 }
 
 type AssetType struct {
-	Name     string                   `json:"name"`
-	Plugin   string                   `json:"plugin"`
-	Metrics  []string                 `json:"metrics"`
-	Category string                   `json:"category"`
-	Form     []map[string]interface{} `json:"form"`
+	Name            string                   `json:"name"`
+	Plugin          string                   `json:"plugin"`
+	Metrics         []string                 `json:"metrics"`
+	OptionalMetrics []string                 `json:"optional_metrics" yaml:"optional_metrics"`
+	Category        string                   `json:"category"`
+	Form            []map[string]interface{} `json:"form"`
 }
 
 type AssetConfigs struct {
@@ -328,19 +331,12 @@ func UpdateOrganize(ctx *ctx.Context, ids []string, organize_id int64) error {
 }
 
 //根据组织id查询资产
-// func FindAssetByOrg(ctx *ctx.Context, orgid int64) error {
-// 	var as []Asset
-// 	// lst := DB(ctx).Where("organize_id = ?", orgid).Find(&as)
-// 	// if lst.Error != nil {
-
-// 	// }
-// 	// return as
-// 	return DB(ctx).Model(&Asset{}).Where("organize_id = ?", orgid).Find(&as).Error
-// }
-
 func FindAssetByOrg(ctx *ctx.Context, organize_id int64) ([]Asset, error) {
 	session := DB(ctx).Where("organize_id = ?", organize_id)
 	var lst []Asset
 	err := session.Order("id desc").Find(&lst).Error
 	return lst, err
+}
+func (e *Asset) FE2DB() {
+	e.OptionalMetrics = strings.Join(e.OptionalMetricsJSON, " ")
 }

@@ -3,12 +3,14 @@ config:
     category: "业务资产"
     plugin: host
     metrics: ['cpu_usage_active', 'mem_used_percent', 'topk(1, disk_used_percent)']
+    optional_metrics: ['cpu_usage_active', 'mem_used_percent', 'topk(1, disk_used_percent)']
     form: []
 
   - name: 主机(exporter)
     category: "业务资产"
     plugin: prometheus
     metrics: []
+    optional_metrics: []
     form:
       - label: 监控Url
         name: url
@@ -17,6 +19,7 @@ config:
     category: "业务资产"
     plugin: mysql
     metrics: ["mysql_up"]
+    optional_metrics: []
     form:
       - label: 地址
         name: address
@@ -32,6 +35,7 @@ config:
     category: "业务资产"
     plugin: redis
     metrics: ["redis_up"]
+    optional_metrics: []
     form:
       - label: 地址
         name: address
@@ -46,7 +50,7 @@ config:
   - name: Web服务
     category: "业务资产"
     plugin: http_response
-    metrics: ["http_response_response_time"]
+    metrics: ["http_response_result_code"]
     form:
       - label: 服务地址
         name: url
@@ -55,6 +59,7 @@ config:
     category: "网络资产"
     plugin: ping
     metrics: ["ping_result_code"]
+    optional_metrics: []
     form:
       - label: IP地址
         name: address
@@ -63,6 +68,7 @@ config:
     category: "业务资产"
     plugin: net_response
     metrics: ["net_response_result_code"]
+    optional_metrics: []
     form:
       - label: 协议
         name: protocol
@@ -76,17 +82,20 @@ config:
     category: "业务资产"
     plugin: elastic_search
     metrics: ["elasticsearch_cluster_health_status_code"]
+    optional_metrics: []
 
   - name: DNS解析
     category: "业务资产"
     plugin: dns_query
     key: cluster
     metrics: ["dns_query_result_code"]
+    optional_metrics: []
 
   - name: victoria-metrics
     category: "业务资产"
     plugin: prometheus
     metrics: ["vm_app_version"]
+    optional_metrics: []
     form:
       - label: 监控Url
         name: url
@@ -95,6 +104,7 @@ config:
     category: "网络设备"
     plugin: switch_legacy
     metrics: [switch_legacy_ping_up]
+    optional_metrics: []
     form:
       - label: 地址
         name: address
@@ -105,6 +115,7 @@ config:
     category: "网络设备"
     plugin: switch_legacy
     metrics: [switch_legacy_ping_up]
+    optional_metrics: []
     form:
       - label: 地址
         name: address
@@ -115,6 +126,7 @@ config:
     category: "网络安全"
     plugin: switch_legacy
     metrics: [switch_legacy_ping_up]
+    optional_metrics: []
     form:
       - label: 地址
         name: address
@@ -125,6 +137,7 @@ config:
     category: "网络安全"
     plugin: switch_legacy
     metrics: [switch_legacy_ping_up]
+    optional_metrics: []
     form:
       - label: 地址
         name: address
@@ -135,6 +148,7 @@ config:
     category: "网络安全"
     plugin: switch_legacy
     metrics: [switch_legacy_ping_up]
+    optional_metrics: []
     form:
       - label: 地址
         name: address
@@ -145,6 +159,7 @@ config:
     category: "网络安全"
     plugin: switch_legacy
     metrics: [switch_legacy_ping_up]
+    optional_metrics: []
     form:
       - label: 地址
         name: address
