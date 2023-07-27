@@ -210,6 +210,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 					m[k] = v
 				}
 				m["ident"] = target.Ident
+				m["agent_ip"] = target.RemoteAddr
 
 				bg := arw.processor.BusiGroupCache.GetByBusiGroupId(target.GroupId)
 				if bg != nil && bg.LabelEnable == 1 {
@@ -240,6 +241,7 @@ func (arw *AlertRuleWorker) GetHostAnomalyPoint(ruleConfig string) []common.Anom
 					}
 				}
 				m["ident"] = host
+				m["agent_ip"] = target.RemoteAddr
 
 				bg := arw.processor.BusiGroupCache.GetByBusiGroupId(target.GroupId)
 				if bg != nil && bg.LabelEnable == 1 {
