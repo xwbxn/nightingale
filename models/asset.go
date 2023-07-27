@@ -37,6 +37,7 @@ type Asset struct {
 	OrganizeId          int64    `json:"organize_id" gorm:"-"`
 	OptionalMetrics     string   `json:"-"`
 	OptionalMetricsJSON []string `json:"optional_metrics" gorm:"-"`
+	Dashboard           string   `json:"dashboard" gorm:"-"`
 
 	//下面的是健康检查使用，在memsto缓存中保存
 	Health   int64               `json:"-" gorm:"-"` //0: fail 1: ok
@@ -51,6 +52,8 @@ type AssetType struct {
 	OptionalMetrics []string                 `json:"optional_metrics" yaml:"optional_metrics"`
 	Category        string                   `json:"category"`
 	Form            []map[string]interface{} `json:"form"`
+
+	Dashboard string `json:"-"`
 }
 
 type AssetConfigs struct {
@@ -330,7 +333,7 @@ func UpdateOrganize(ctx *ctx.Context, ids []string, organize_id int64) error {
 	}).Error
 }
 
-//根据组织id查询资产
+// 根据组织id查询资产
 func FindAssetByOrg(ctx *ctx.Context, organize_id int64) ([]Asset, error) {
 	session := DB(ctx).Where("organize_id = ?", organize_id)
 	var lst []Asset

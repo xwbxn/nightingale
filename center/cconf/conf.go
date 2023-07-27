@@ -8,7 +8,6 @@ type Center struct {
 	I18NHeaderKey          string
 	MetricDesc             MetricDescType
 	AnonymousAccess        AnonymousAccess
-	Categraf               Categraf
 	UseFileAssets          bool
 }
 

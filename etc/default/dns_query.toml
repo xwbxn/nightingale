@@ -1,0 +1,14 @@
+# interval = 15
+
+[[instances]]
+auto_detect_local_dns_server  = false
+
+## servers to query
+# servers = ["8.8.8.8"]
+servers = []
+
+## Domains or subdomains to query.
+# domains = ["{{.domain}}"]
+
+## Query timeout in seconds.
+# timeout = 2

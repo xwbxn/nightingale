@@ -79,3 +79,7 @@ ip_ext = false
 
 # # whether collect metric: system_n_users
 # collect_user_number = false
+
+[linux_sysctl_fs]
+# # collect interval
+# interval = 15

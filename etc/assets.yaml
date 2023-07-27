@@ -4,6 +4,7 @@ config:
     plugin: host
     metrics: ['cpu_usage_active', 'mem_used_percent', 'topk(1, disk_used_percent)']
     optional_metrics: ['cpu_usage_active', 'mem_used_percent', 'topk(1, disk_used_percent)']
+    dashboard: '/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Server&id=${id}&viewMode=fullscreen'
     form: []
 
   - name: 主机(exporter)
@@ -11,6 +12,7 @@ config:
     plugin: prometheus
     metrics: []
     optional_metrics: []
+    dashboard: '/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Server&id=${id}&viewMode=fullscreen'
     form:
       - label: 监控Url
         name: url
@@ -20,6 +22,7 @@ config:
     plugin: mysql
     metrics: ["mysql_up"]
     optional_metrics: []
+    dashboard: '/dashboards-built-in/detail?__built-in-cate=MySQL&__built-in-name=MySQL&id=${id}&viewMode=fullscreen'
     form:
       - label: 地址
         name: address
@@ -36,6 +39,7 @@ config:
     plugin: redis
     metrics: ["redis_up"]
     optional_metrics: []
+    dashboard: '/dashboards-built-in/detail?__built-in-cate=Redis&__built-in-name=Redis&id=${id}&viewMode=fullscreen'
     form:
       - label: 地址
         name: address
@@ -50,7 +54,8 @@ config:
   - name: Web服务
     category: "业务资产"
     plugin: http_response
-    metrics: ["http_response_response_time"]
+    metrics: ["http_response_result_code"]
+    dashboard: '/dashboards-built-in/detail?__built-in-cate=HTTP&__built-in-name=WebAPI&id=${id}&viewMode=fullscreen'
     form:
       - label: 服务地址
         name: url
@@ -87,9 +92,11 @@ config:
   - name: DNS解析
     category: "业务资产"
     plugin: dns_query
-    key: cluster
     metrics: ["dns_query_result_code"]
     optional_metrics: []
+    form:
+      - label: 域名
+        name: domain
 
   - name: victoria-metrics
     category: "业务资产"
@@ -104,6 +111,7 @@ config:
     category: "网络设备"
     plugin: switch_legacy
     metrics: [switch_legacy_ping_up]
+    dashboard: '/dashboards-built-in/detail?__built-in-cate=SNMP&__built-in-name=Switch&id=${id}&viewMode=fullscreen'
     optional_metrics: []
     form:
       - label: 地址

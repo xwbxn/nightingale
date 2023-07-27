@@ -25,6 +25,13 @@ func (rt *Router) assetsGets(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	organizeId := ginx.QueryInt64(c, "organize_id", -1)
 	assets, err := models.AssetGets(rt.Ctx, bgid, query, organizeId)
+	ginx.Dangerous(err)
+	for _, asset := range assets {
+		atype, has := rt.assetCache.GetType(asset.Type)
+		if has {
+			asset.Dashboard = strings.ReplaceAll(atype.Dashboard, "${id}", fmt.Sprintf("%d", asset.Id))
+		}
+	}
 	ginx.NewRender(c).Data(assets, err)
 }
 
