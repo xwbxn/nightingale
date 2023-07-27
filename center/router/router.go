@@ -381,6 +381,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/assets", rt.auth(), rt.admin(), rt.assetsGets)
 		pages.POST("/assets", rt.auth(), rt.admin(), rt.assetsAdd)
 		pages.PUT("/assets", rt.auth(), rt.admin(), rt.assetPut)
+		pages.PUT("/assets/set/optmetrics", rt.auth(), rt.admin(), rt.putOptionalMetrics)
 		pages.DELETE("/assets", rt.auth(), rt.user(), rt.perm("/assets/del"), rt.assetDel)
 		pages.POST("/assets/config/default/:type", rt.auth(), rt.admin(), rt.assetDefaultConfigGet)
 		pages.GET("/assets/idents", rt.auth(), rt.admin(), rt.assetIdentGetAll)

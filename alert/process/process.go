@@ -353,7 +353,9 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 
 	p.stats.CounterAlertsTotal.WithLabelValues(fmt.Sprintf("%d", e.DatasourceId)).Inc()
 	dispatch.LogEvent(e, "push_queue")
-	ws.SetMessage(1, e) //socket推送内容 guoxp
+	var alerts []*models.AlertCurEvent
+	alerts = append(alerts, e)
+	ws.SetMessage(1, models.MakeFeAlert(alerts)) //socket推送内容 guoxp
 	if !queue.EventQueue.PushFront(e) {
 		logger.Warningf("event_push_queue: queue is full, event:%+v", e)
 	}

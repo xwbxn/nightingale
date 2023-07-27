@@ -29,18 +29,19 @@ func (rt *Router) assetsGets(c *gin.Context) {
 }
 
 type assetsModel struct {
-	Id         int64  `json:"id"`
-	Version    string `json:"version"`
-	Ident      string `json:"ident"`
-	GroupId    int64  `json:"group_id"`
-	Name       string `json:"name"`
-	Label      string `json:"label"`
-	Tags       string `json:"tags"`
-	Type       string `json:"type"`
-	Memo       string `json:"memo"`
-	Configs    string `json:"configs"`
-	Params     string `json:"params"`
-	OrganizeId int64  `json:"organize_id"`
+	Id              int64  `json:"id"`
+	Version         string `json:"version"`
+	Ident           string `json:"ident"`
+	GroupId         int64  `json:"group_id"`
+	Name            string `json:"name"`
+	Label           string `json:"label"`
+	Tags            string `json:"tags"`
+	Type            string `json:"type"`
+	Memo            string `json:"memo"`
+	Configs         string `json:"configs"`
+	Params          string `json:"params"`
+	OrganizeId      int64  `json:"organize_id"`
+	OptionalMetrics string `json:"optional_metrics"`
 }
 
 func (rt *Router) assetsAdd(c *gin.Context) {
@@ -63,6 +64,24 @@ func (rt *Router) assetsAdd(c *gin.Context) {
 	}
 
 	err := assets.Add(rt.Ctx)
+	ginx.NewRender(c).Message(err)
+}
+func (rt *Router) putOptionalMetrics(c *gin.Context) {
+	var f assetsModel
+	ginx.BindJSON(c, &f)
+	oldAssets, err := models.AssetGet(rt.Ctx, "id=?", f.Id)
+	ginx.Dangerous(err)
+	me := c.MustGet("user").(*models.User)
+
+	if oldAssets == nil {
+		ginx.Bomb(http.StatusOK, "assets not found")
+	}
+
+	oldAssets.OptionalMetrics = f.OptionalMetrics
+	oldAssets.UpdateAt = time.Now().Unix()
+	oldAssets.UpdateBy = me.Username
+
+	err = oldAssets.Update(rt.Ctx, "optional_metrics", "update_at", "update_by")
 	ginx.NewRender(c).Message(err)
 }
 

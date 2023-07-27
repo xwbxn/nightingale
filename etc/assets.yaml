@@ -50,7 +50,7 @@ config:
   - name: Web服务
     category: "业务资产"
     plugin: http_response
-    metrics: ["http_response_result_code"]
+    metrics: ["http_response_response_time"]
     form:
       - label: 服务地址
         name: url
