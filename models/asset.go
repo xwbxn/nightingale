@@ -2,6 +2,7 @@ package models
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -17,37 +18,48 @@ import (
 )
 
 type Asset struct {
-	Id         int64    `json:"id" gorm:"primaryKey"`
-	Ident      string   `json:"ident"`
-	GroupId    int64    `json:"group_id"`
-	Name       string   `json:"name"`
-	Label      string   `json:"label"`
-	Tags       string   `json:"-"`
-	TagsJSON   []string `json:"tags" gorm:"-"`
-	Type       string   `json:"type"`
-	Memo       string   `json:"memo"`
-	Configs    string   `json:"configs"`
-	Params     string   `json:"params"`
-	Plugin     string   `json:"plugin"`
-	Status     int64    `json:"status"` //0: 未生效, 1: 已生效
-	CreateAt   int64    `json:"create_at"`
-	CreateBy   string   `json:"create_by"`
-	UpdateAt   int64    `json:"update_at"`
-	UpdateBy   string   `json:"update_by"`
-	OrganizeId int64    `json:"organize_id"`
+	Id                 int64      `json:"id" gorm:"primaryKey"`
+	Ident              string     `json:"ident"`
+	GroupId            int64      `json:"group_id"`
+	Name               string     `json:"name"`
+	Label              string     `json:"label"`
+	Tags               string     `json:"-"`
+	TagsJSON           []string   `json:"tags" gorm:"-"`
+	Type               string     `json:"type"`
+	Memo               string     `json:"memo"`
+	Configs            string     `json:"configs"`
+	Params             string     `json:"params"`
+	Plugin             string     `json:"plugin"`
+	Status             int64      `json:"status"` //0: 未生效, 1: 已生效
+	CreateAt           int64      `json:"create_at"`
+	CreateBy           string     `json:"create_by"`
+	UpdateAt           int64      `json:"update_at"`
+	UpdateBy           string     `json:"update_by"`
+	OrganizeId         int64      `json:"organize_id"`
+	OptionalMetrics    string     `json:"-"`
+	OptinalMetricsJson []*Metrics `json:"optional_metrics" gorm:"-"` //巡检检查使用
+	Dashboard          string     `json:"dashboard" gorm:"-"`
 
 	//下面的是健康检查使用，在memsto缓存中保存
-	Health   int64               `json:"-" gorm:"-"` //0: fail 1: ok
-	HealthAt int64               `json:"-" gorm:"-"`
-	Metrics  []map[string]string `json:"-" gorm:"-"`
+	Health   int64                        `json:"-" gorm:"-"` //0: fail 1: ok
+	HealthAt int64                        `json:"-" gorm:"-"`
+	Metrics  map[string]map[string]string `json:"-" gorm:"-"`
+}
+
+type Metrics struct {
+	Name    string `json:"name"`
+	Metrics string `json:"metrics"`
 }
 
 type AssetType struct {
-	Name     string                   `json:"name"`
-	Plugin   string                   `json:"plugin"`
-	Metrics  []string                 `json:"metrics"`
-	Category string                   `json:"category"`
-	Form     []map[string]interface{} `json:"form"`
+	Name            string                   `json:"name"`
+	Plugin          string                   `json:"plugin"`
+	Metrics         []*Metrics               `json:"metrics"`
+	OptionalMetrics []string                 `json:"optional_metrics" yaml:"optional_metrics"`
+	Category        string                   `json:"category"`
+	Form            []map[string]interface{} `json:"form"`
+
+	Dashboard string `json:"-"`
 }
 
 type AssetConfigs struct {
@@ -135,6 +147,8 @@ func AssetGet(ctx *ctx.Context, where string, args ...interface{}) (*Asset, erro
 		return nil, nil
 	}
 
+	lst[0].DB2FE()
+
 	return lst[0], nil
 }
 
@@ -164,6 +178,7 @@ func AssetGets(ctx *ctx.Context, bgid int64, query string, organizeId int64) ([]
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
 			lst[i].TagsJSON = strings.Fields(lst[i].Tags)
+			lst[i].DB2FE()
 		}
 	}
 
@@ -327,20 +342,14 @@ func UpdateOrganize(ctx *ctx.Context, ids []string, organize_id int64) error {
 	}).Error
 }
 
-//根据组织id查询资产
-// func FindAssetByOrg(ctx *ctx.Context, orgid int64) error {
-// 	var as []Asset
-// 	// lst := DB(ctx).Where("organize_id = ?", orgid).Find(&as)
-// 	// if lst.Error != nil {
-
-// 	// }
-// 	// return as
-// 	return DB(ctx).Model(&Asset{}).Where("organize_id = ?", orgid).Find(&as).Error
-// }
-
+// 根据组织id查询资产
 func FindAssetByOrg(ctx *ctx.Context, organize_id int64) ([]Asset, error) {
 	session := DB(ctx).Where("organize_id = ?", organize_id)
 	var lst []Asset
 	err := session.Order("id desc").Find(&lst).Error
 	return lst, err
+}
+
+func (e *Asset) DB2FE() {
+	json.Unmarshal([]byte(e.OptionalMetrics), &e.OptinalMetricsJson)
 }

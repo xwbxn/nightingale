@@ -371,16 +371,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/notify-config", rt.auth(), rt.admin(), rt.notifyConfigGet)
 		pages.PUT("/notify-config", rt.auth(), rt.admin(), rt.notifyConfigPut)
 
-		// 探针管理
-		r.GET("/categraf/install", rt.CategrafInstall)
-		r.GET("/categraf/download", rt.CategrafDownload)
-		pages.GET("/categraf/getstart", rt.auth(), rt.CategrefGetStart)
-
 		// 资产管理
 		pages.GET("/assets/:id", rt.auth(), rt.admin(), rt.assetsGet)
 		pages.GET("/assets", rt.auth(), rt.admin(), rt.assetsGets)
 		pages.POST("/assets", rt.auth(), rt.admin(), rt.assetsAdd)
 		pages.PUT("/assets", rt.auth(), rt.admin(), rt.assetPut)
+		pages.PUT("/assets/set/optmetrics", rt.auth(), rt.admin(), rt.putOptionalMetrics)
 		pages.DELETE("/assets", rt.auth(), rt.user(), rt.perm("/assets/del"), rt.assetDel)
 		pages.POST("/assets/config/default/:type", rt.auth(), rt.admin(), rt.assetDefaultConfigGet)
 		pages.GET("/assets/idents", rt.auth(), rt.admin(), rt.assetIdentGetAll)

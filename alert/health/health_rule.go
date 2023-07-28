@@ -3,7 +3,6 @@ package health
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/memsto"
@@ -51,8 +50,8 @@ func (hrc *HealthRuleContext) Hash() string {
 func (hrc *HealthRuleContext) Prepare() {}
 
 func (hrc *HealthRuleContext) Start() {
-	logger.Infof("eval:%s started", hrc.Key())
-	// interval := hrc.rule.PromEvalInterval
+	logger.Infof("health_check:%s started", hrc.Key())
+	// interval := hrc.rule.PromHealth_checkInterval
 	interval := 15
 	if interval <= 0 {
 		interval = 10
@@ -63,39 +62,72 @@ func (hrc *HealthRuleContext) Start() {
 			case <-hrc.quit:
 				return
 			default:
-				hrc.HealthCheck()
+				hrc.TypeHealthCheck()
+				hrc.AssetMetricsCheck()
 				time.Sleep(time.Duration(interval) * time.Second)
 			}
 		}
 	}()
 }
 
-func (hrc *HealthRuleContext) HealthCheck() {
+func (hrc *HealthRuleContext) AssetMetricsCheck() {
+	assetsOfType := hrc.assetCache.GetByType(hrc.assetType.Name)
+	for _, asset := range assetsOfType {
+		metrics := []*models.Metrics{}
+		if asset.OptinalMetricsJson != nil {
+			metrics = append(metrics, asset.OptinalMetricsJson...)
+		}
+		if hrc.assetType.Metrics != nil {
+			metrics = append(metrics, hrc.assetType.Metrics...)
+		}
+		if len(metrics) == 0 {
+			logger.Errorf("health_check: asset %d metrics is nil or empty", asset.Id)
+			continue
+		}
+
+		for _, m := range metrics {
+			value, warnings, err := hrc.promClients.GetCli(hrc.datasourceId).Query(context.Background(), m.Metrics, time.Now())
+			if err != nil {
+				logger.Errorf("metrics_check:%s promql:%s, error:%v", hrc.Key(), m.Metrics, err)
+				return
+			}
+
+			if len(warnings) > 0 {
+				logger.Errorf("metrics_check:%s promql:%s, warnings:%v", hrc.Key(), m.Metrics, warnings)
+				return
+			}
+			ConvertMetricTimeSeries(value, m, assetsOfType)
+		}
+	}
+}
+
+func (hrc *HealthRuleContext) TypeHealthCheck() {
 	if hrc.assetType.Metrics == nil || len(hrc.assetType.Metrics) == 0 {
-		logger.Errorf("eval:%s metrics is nil or empty", hrc.Key())
+		logger.Errorf("health_check:%s metrics is nil or empty", hrc.Key())
 		return
 	}
-
-	promql := fmt.Sprintf("%s", strings.Join(hrc.assetType.Metrics, " or "))
 
 	if hrc.promClients.IsNil(hrc.datasourceId) {
-		logger.Errorf("eval:%s reader client is nil", hrc.Key())
+		logger.Errorf("health_check:%s reader client is nil", hrc.Key())
 		return
 	}
 
+	// 健康状态使用类型指标的第一个
+	metric := hrc.assetType.Metrics[0]
+	promql := metric.Metrics
 	value, warnings, err := hrc.promClients.GetCli(hrc.datasourceId).Query(context.Background(), promql, time.Now())
 	if err != nil {
-		logger.Errorf("eval:%s promql:%s, error:%v", hrc.Key(), promql, err)
+		logger.Errorf("health_check:%s promql:%s, error:%v", hrc.Key(), promql, err)
 		return
 	}
 
 	if len(warnings) > 0 {
-		logger.Errorf("eval:%s promql:%s, warnings:%v", hrc.Key(), promql, warnings)
+		logger.Errorf("health_check:%s promql:%s, warnings:%v", hrc.Key(), promql, warnings)
 		return
 	}
 
 	assetsOfType := hrc.assetCache.GetByType(hrc.assetType.Name)
-	ts := ConvertMetricTimeSeries(value, hrc.assetType, assetsOfType)
+	ts := ConvertHealthCheckSeries(value, metric, assetsOfType)
 	if len(ts) != 0 {
 		hrc.promClients.GetWriterCli(hrc.datasourceId).Write(ts)
 	}

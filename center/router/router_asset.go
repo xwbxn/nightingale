@@ -1,6 +1,7 @@
 package router
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -25,22 +26,30 @@ func (rt *Router) assetsGets(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	organizeId := ginx.QueryInt64(c, "organize_id", -1)
 	assets, err := models.AssetGets(rt.Ctx, bgid, query, organizeId)
+	ginx.Dangerous(err)
+	for _, asset := range assets {
+		atype, has := rt.assetCache.GetType(asset.Type)
+		if has {
+			asset.Dashboard = strings.ReplaceAll(atype.Dashboard, "${id}", fmt.Sprintf("%d", asset.Id))
+		}
+	}
 	ginx.NewRender(c).Data(assets, err)
 }
 
 type assetsModel struct {
-	Id         int64  `json:"id"`
-	Version    string `json:"version"`
-	Ident      string `json:"ident"`
-	GroupId    int64  `json:"group_id"`
-	Name       string `json:"name"`
-	Label      string `json:"label"`
-	Tags       string `json:"tags"`
-	Type       string `json:"type"`
-	Memo       string `json:"memo"`
-	Configs    string `json:"configs"`
-	Params     string `json:"params"`
-	OrganizeId int64  `json:"organize_id"`
+	Id              int64  `json:"id"`
+	Version         string `json:"version"`
+	Ident           string `json:"ident"`
+	GroupId         int64  `json:"group_id"`
+	Name            string `json:"name"`
+	Label           string `json:"label"`
+	Tags            string `json:"tags"`
+	Type            string `json:"type"`
+	Memo            string `json:"memo"`
+	Configs         string `json:"configs"`
+	Params          string `json:"params"`
+	OrganizeId      int64  `json:"organize_id"`
+	OptionalMetrics string `json:"optional_metrics"`
 }
 
 func (rt *Router) assetsAdd(c *gin.Context) {
@@ -63,6 +72,32 @@ func (rt *Router) assetsAdd(c *gin.Context) {
 	}
 
 	err := assets.Add(rt.Ctx)
+	ginx.NewRender(c).Message(err)
+}
+
+type optionalMetricsForm struct {
+	Id              int64             `json:"id"`
+	OptionalMetrics []*models.Metrics `json:"optional_metrics"`
+}
+
+func (rt *Router) putOptionalMetrics(c *gin.Context) {
+	var f optionalMetricsForm
+	ginx.BindJSON(c, &f)
+	oldAssets, err := models.AssetGet(rt.Ctx, "id=?", f.Id)
+	ginx.Dangerous(err)
+	me := c.MustGet("user").(*models.User)
+
+	if oldAssets == nil {
+		ginx.Bomb(http.StatusOK, "assets not found")
+	}
+
+	om, err := json.Marshal(f.OptionalMetrics)
+	ginx.Dangerous(err)
+	oldAssets.OptionalMetrics = string(om)
+	oldAssets.UpdateAt = time.Now().Unix()
+	oldAssets.UpdateBy = me.Username
+
+	err = oldAssets.Update(rt.Ctx, "optional_metrics", "update_at", "update_by")
 	ginx.NewRender(c).Message(err)
 }
 

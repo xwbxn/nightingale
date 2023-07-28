@@ -70,6 +70,11 @@ func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
 			continue
 		}
 
+		metrics := []map[string]string{}
+		for _, m := range item.Metrics {
+			metrics = append(metrics, m)
+		}
+
 		data = append(data, &AssetJson{
 			Id:       item.Id,
 			Name:     item.Name,
@@ -78,7 +83,7 @@ func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
 			UpdateAt: item.HealthAt,
 			Category: ar.Category,
 			Type:     item.Type,
-			Metrics:  item.Metrics,
+			Metrics:  metrics,
 			GroupId:  item.OrganizeId, //这里使用orgid作为group返回查询条件
 			Tags:     item.TagsJSON,
 		})

@@ -179,7 +179,7 @@ func (cache *AssetCacheType) syncAssets() error {
 		} else {
 			//默认值
 			lst[i].Health = 2
-			lst[i].Metrics = []map[string]string{}
+			lst[i].Metrics = map[string]map[string]string{}
 		}
 		m[lst[i].Id] = lst[i]
 	}

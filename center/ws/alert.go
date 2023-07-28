@@ -91,12 +91,18 @@ func deleteClient(id uint, conn *websocket.Conn) {
 	mux.Unlock()
 }
 
+type Data struct {
+	Err string      `json:"err"`
+	Dat interface{} `json:"dat"`
+}
+
 func SetMessage(userId uint, content interface{}) {
 
 	conns := getClients(userId)
 	for i := range conns {
 		i := i
-		err := conns[i].WriteJSON(content)
+		data := Data{"", content}
+		err := conns[i].WriteJSON(data)
 		if err != nil {
 			log.Println("write json err:", err)
 			deleteClient(userId, conns[i])
