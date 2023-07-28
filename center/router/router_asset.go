@@ -1,6 +1,7 @@
 package router
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -73,8 +74,14 @@ func (rt *Router) assetsAdd(c *gin.Context) {
 	err := assets.Add(rt.Ctx)
 	ginx.NewRender(c).Message(err)
 }
+
+type optionalMetricsForm struct {
+	Id              int64             `json:"id"`
+	OptionalMetrics []*models.Metrics `json:"optional_metrics"`
+}
+
 func (rt *Router) putOptionalMetrics(c *gin.Context) {
-	var f assetsModel
+	var f optionalMetricsForm
 	ginx.BindJSON(c, &f)
 	oldAssets, err := models.AssetGet(rt.Ctx, "id=?", f.Id)
 	ginx.Dangerous(err)
@@ -84,7 +91,9 @@ func (rt *Router) putOptionalMetrics(c *gin.Context) {
 		ginx.Bomb(http.StatusOK, "assets not found")
 	}
 
-	oldAssets.OptionalMetrics = f.OptionalMetrics
+	om, err := json.Marshal(f.OptionalMetrics)
+	ginx.Dangerous(err)
+	oldAssets.OptionalMetrics = string(om)
 	oldAssets.UpdateAt = time.Now().Unix()
 	oldAssets.UpdateBy = me.Username
 

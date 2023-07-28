@@ -18,33 +18,44 @@ const (
 	HealthMetric  = "asset_health"
 )
 
-func ConvertMetricTimeSeries(value model.Value, atype *models.AssetType, assets []*models.Asset) (lst []*prompb.TimeSeries) {
-	// 用于健康检查使用的是query接口，返回一定是Vector类型
-	items, ok := value.(model.Vector)
+func ConvertHealthCheckSeries(value model.Value, mts *models.Metrics, assets []*models.Asset) (lst []*prompb.TimeSeries) {
+	result, ok := value.(model.Vector)
 	if !ok {
 		return
 	}
 
-	labels := strings.Join(atype.Metrics, "|")
-
 	for _, asset := range assets {
 		health := 0
-		var health_metrics []map[string]string
-		for _, item := range items {
-			if strings.Contains(labels, string(item.Metric[LabelName])) && strings.Contains(fmt.Sprintf("%d", asset.Id), string(item.Metric[AssetId])) {
-				health_metrics = append(health_metrics, map[string]string{
-					"name":  string(item.Metric[LabelName]),
-					"value": fmt.Sprintf("%f", item.Value),
-				})
-
+		for _, resultValue := range result {
+			if strings.Contains(fmt.Sprintf("%d", asset.Id), string(resultValue.Metric[AssetId])) {
 				health = 1
+				break
 			}
 		}
-		asset.Metrics = health_metrics
 		ts := convertHealthSeries(asset, health)
 		lst = append(lst, ts)
 	}
 	return
+}
+
+func ConvertMetricTimeSeries(value model.Value, mts *models.Metrics, assets []*models.Asset) {
+	// 用于健康检查使用的是query接口，返回一定是Vector类型
+	result, ok := value.(model.Vector)
+	if !ok {
+		return
+	}
+
+	for _, asset := range assets {
+		for _, resultValue := range result {
+			if strings.Contains(fmt.Sprintf("%d", asset.Id), string(resultValue.Metric[AssetId])) {
+				asset.Metrics[mts.Name] = map[string]string{
+					"label": string(resultValue.Metric[LabelName]),
+					"value": fmt.Sprintf("%f", resultValue.Value),
+					"name":  mts.Name,
+				}
+			}
+		}
+	}
 }
 
 func convertHealthSeries(asset *models.Asset, health int) (ts *prompb.TimeSeries) {

@@ -18,36 +18,35 @@ import (
 )
 
 type Asset struct {
-	Id              int64    `json:"id" gorm:"primaryKey"`
-	Ident           string   `json:"ident"`
-	GroupId         int64    `json:"group_id"`
-	Name            string   `json:"name"`
-	Label           string   `json:"label"`
-	Tags            string   `json:"-"`
-	TagsJSON        []string `json:"tags" gorm:"-"`
-	Type            string   `json:"type"`
-	Memo            string   `json:"memo"`
-	Configs         string   `json:"configs"`
-	Params          string   `json:"params"`
-	Plugin          string   `json:"plugin"`
-	Status          int64    `json:"status"` //0: 未生效, 1: 已生效
-	CreateAt        int64    `json:"create_at"`
-	CreateBy        string   `json:"create_by"`
-	UpdateAt        int64    `json:"update_at"`
-	UpdateBy        string   `json:"update_by"`
-	OrganizeId      int64    `json:"organize_id"`
-	OptionalMetrics string   `json:"optional_metrics"`
-	Dashboard       string   `json:"dashboard" gorm:"-"`
+	Id                 int64      `json:"id" gorm:"primaryKey"`
+	Ident              string     `json:"ident"`
+	GroupId            int64      `json:"group_id"`
+	Name               string     `json:"name"`
+	Label              string     `json:"label"`
+	Tags               string     `json:"-"`
+	TagsJSON           []string   `json:"tags" gorm:"-"`
+	Type               string     `json:"type"`
+	Memo               string     `json:"memo"`
+	Configs            string     `json:"configs"`
+	Params             string     `json:"params"`
+	Plugin             string     `json:"plugin"`
+	Status             int64      `json:"status"` //0: 未生效, 1: 已生效
+	CreateAt           int64      `json:"create_at"`
+	CreateBy           string     `json:"create_by"`
+	UpdateAt           int64      `json:"update_at"`
+	UpdateBy           string     `json:"update_by"`
+	OrganizeId         int64      `json:"organize_id"`
+	OptionalMetrics    string     `json:"-"`
+	OptinalMetricsJson []*Metrics `json:"optional_metrics" gorm:"-"` //巡检检查使用
+	Dashboard          string     `json:"dashboard" gorm:"-"`
 
 	//下面的是健康检查使用，在memsto缓存中保存
-	Health   int64               `json:"-" gorm:"-"` //0: fail 1: ok
-	HealthAt int64               `json:"-" gorm:"-"`
-	Metrics  []map[string]string `json:"-" gorm:"-"`
-
-	HealthMetrics []*HealthMetricsType `json:"-" gorm:"-"` //巡检检查使用
+	Health   int64                        `json:"-" gorm:"-"` //0: fail 1: ok
+	HealthAt int64                        `json:"-" gorm:"-"`
+	Metrics  map[string]map[string]string `json:"-" gorm:"-"`
 }
 
-type HealthMetricsType struct {
+type Metrics struct {
 	Name    string `json:"name"`
 	Metrics string `json:"metrics"`
 }
@@ -55,7 +54,7 @@ type HealthMetricsType struct {
 type AssetType struct {
 	Name            string                   `json:"name"`
 	Plugin          string                   `json:"plugin"`
-	Metrics         []string                 `json:"metrics"`
+	Metrics         []*Metrics               `json:"metrics"`
 	OptionalMetrics []string                 `json:"optional_metrics" yaml:"optional_metrics"`
 	Category        string                   `json:"category"`
 	Form            []map[string]interface{} `json:"form"`
@@ -352,5 +351,5 @@ func FindAssetByOrg(ctx *ctx.Context, organize_id int64) ([]Asset, error) {
 }
 
 func (e *Asset) DB2FE() {
-	json.Unmarshal([]byte(e.OptionalMetrics), &e.HealthMetrics)
+	json.Unmarshal([]byte(e.OptionalMetrics), &e.OptinalMetricsJson)
 }
