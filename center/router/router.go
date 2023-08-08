@@ -25,6 +25,11 @@ import (
 	"github.com/rakyll/statik/fs"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
+
+	_ "github.com/ccfos/nightingale/v6/docs"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type Router struct {
@@ -45,6 +50,9 @@ type Router struct {
 	assetCache        *memsto.AssetCacheType
 }
 
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
 	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType,
 	uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, ac *memsto.AssetCacheType) *Router {
@@ -400,6 +408,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternAdd)
 		pages.PUT("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternPut)
 		pages.DELETE("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternDel)
+
+		pages.GET("/device-type", rt.auth(), rt.admin(), rt.deviceTypeGets)
+		pages.GET("/device-type/:id", rt.auth(), rt.admin(), rt.deviceTypeGet)
+		pages.POST("/device-type", rt.auth(), rt.admin(), rt.deviceTypeAdd)
+		pages.PUT("/device-type", rt.auth(), rt.admin(), rt.deviceTypePut)
+		pages.DELETE("/device-type/:id", rt.auth(), rt.admin(), rt.deviceTypeDel)
 	}
 
 	if rt.HTTP.APIForService.Enable {
@@ -481,6 +495,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			heartbeat.POST("/heartbeat", rt.heartbeat)
 		}
 	}
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	rt.configNoRoute(r, &statikFS)
 
