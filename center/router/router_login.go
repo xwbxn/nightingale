@@ -25,10 +25,18 @@ import (
 type loginForm struct {
 	Username    string `json:"username" binding:"required"`
 	Password    string `json:"password" binding:"required"`
-	Captchaid   string `json:"captchaid"`
-	Verifyvalue string `json:"verifyvalue"`
+	Captchaid   string `json:"captchaid" swaggerignore:"true"`
+	Verifyvalue string `json:"verifyvalue" swaggerignore:"true"`
 }
 
+// @Summary      登录
+// @Description  登录
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param		 loginForm  body  loginForm  true  "登录信息"
+// @Success      200
+// @Router       /api/n9e/auth/login [post]
 func (rt *Router) loginPost(c *gin.Context) {
 	var f loginForm
 	ginx.BindJSON(c, &f)

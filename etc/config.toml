@@ -42,7 +42,7 @@ WriteTimeout = 40
 IdleTimeout = 120
 
 [HTTP.ShowCaptcha]
-Enable = true 
+Enable = false 
 
 [HTTP.APIForAgent]
 Enable = true 
