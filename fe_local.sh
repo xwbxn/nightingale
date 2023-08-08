@@ -5,7 +5,7 @@ fi
 
 
 # Embed files into a go binary
-if ! $GOPATH/bin/statik -src=./pub -dest=./front; then
+if ! statik -src=./pub -dest=./front; then
     echo "failed to embed files into a go binary!"
     exit 4
 fi
