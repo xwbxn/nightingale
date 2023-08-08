@@ -1,0 +1,1 @@
+swag init  -g ./center/router/router.go

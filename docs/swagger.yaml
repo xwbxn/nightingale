@@ -1,0 +1,161 @@
+definitions:
+  models.DeviceType:
+    properties:
+      id:
+        description: type:*int     comment:主键        version:2023-07-08 11:44
+        type: integer
+      name:
+        type: string
+    type: object
+  router.loginForm:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+info:
+  contact: {}
+paths:
+  /api/n9e/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: 登录
+      parameters:
+      - description: 登录信息
+        in: body
+        name: loginForm
+        required: true
+        schema:
+          $ref: '#/definitions/router.loginForm'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: 登录
+      tags:
+      - auth
+  /api/n9e/device-type/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询设备类型
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DeviceType'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询设备类型
+      tags:
+      - 设备类型
+    post:
+      consumes:
+      - application/json
+      description: 创建设备类型
+      parameters:
+      - description: add deviceType
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DeviceType'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建设备类型
+      tags:
+      - 设备类型
+    put:
+      consumes:
+      - application/json
+      description: 更新设备类型
+      parameters:
+      - description: update deviceType
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DeviceType'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新设备类型
+      tags:
+      - 设备类型
+  /api/n9e/device-type/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除设备类型
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除设备类型
+      tags:
+      - 设备类型
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取设备类型
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeviceType'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取设备类型
+      tags:
+      - 设备类型
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

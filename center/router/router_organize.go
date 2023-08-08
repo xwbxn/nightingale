@@ -56,7 +56,7 @@ func (rt *Router) organizeDel(c *gin.Context) {
 
 	}
 	lst, err := models.FindAssetByOrg(rt.Ctx, org.Id)
-	if lst != nil {
+	if len(lst) > 0 {
 		ginx.Bomb(404, "This organize hava assets")
 	}
 

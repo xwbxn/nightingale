@@ -597,6 +597,7 @@ type ruleConfigJson struct {
 
 // 生成新的适用于前端页面的返回数据格式
 func MakeFeAlert(dat []*AlertCurEvent) (Fe []*FeAlert) {
+	Fe = make([]*FeAlert, 0) //避免返回null
 	var assetID int
 	for i := 0; i < len(dat); i++ {
 		dat[i].DB2FE()
