@@ -1,0 +1,352 @@
+{
+    "name": "WebAPI",
+    "tags": "",
+    "ident": "",
+    "configs": {
+        "panels": [
+            {
+                "type": "table",
+                "id": "3674dbfa-243a-49f6-baa5-b7f887c1afb0",
+                "layout": {
+                    "h": 3,
+                    "w": 24,
+                    "x": 0,
+                    "y": 0,
+                    "i": "3674dbfa-243a-49f6-baa5-b7f887c1afb0",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "expr": "max(http_response_result_code{asset_id=\"$id\"}) by (target)",
+                        "instant": true,
+                        "legend": "UP?",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "max(http_response_response_code{asset_id=\"$id\"}) by (target)",
+                        "instant": true,
+                        "legend": "status code",
+                        "refId": "B"
+                    },
+                    {
+                        "expr": "max(http_response_response_time{asset_id=\"$id\"}) by (target) *1000",
+                        "instant": true,
+                        "legend": "latency",
+                        "refId": "C"
+                    },
+                    {
+                        "expr": "max(http_response_cert_expire_timestamp{asset_id=\"$id\"}) by (target) - time()",
+                        "instant": true,
+                        "legend": "cert expire",
+                        "refId": "D"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "URL Details",
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "background",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelValuesToRows",
+                    "aggrDimension": "target",
+                    "sortColumn": "target",
+                    "sortOrder": "ascend"
+                },
+                "options": {
+                    "valueMappings": [],
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "value": "A"
+                        },
+                        "properties": {
+                            "standardOptions": {},
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "special": 0
+                                    },
+                                    "result": {
+                                        "color": "#417505",
+                                        "text": "UP"
+                                    },
+                                    "type": "special"
+                                },
+                                {
+                                    "match": {
+                                        "from": 1,
+                                        "special": 1
+                                    },
+                                    "result": {
+                                        "color": "#e90f0f",
+                                        "text": "DOWN"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "matcher": {
+                            "value": "D"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "humantimeSeconds"
+                            },
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "to": 604800
+                                    },
+                                    "result": {
+                                        "color": "#f60c0c"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "to": 2592000
+                                    },
+                                    "result": {
+                                        "color": "#ffae39"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        },
+                        "type": "special"
+                    },
+                    {
+                        "matcher": {
+                            "value": "B"
+                        },
+                        "properties": {
+                            "standardOptions": {},
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "to": 399
+                                    },
+                                    "result": {
+                                        "color": "#2c9d3d"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "to": 499
+                                    },
+                                    "result": {
+                                        "color": "#ff656b"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "from": 500
+                                    },
+                                    "result": {
+                                        "color": "#f10808"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        },
+                        "type": "special"
+                    },
+                    {
+                        "matcher": {
+                            "value": "C"
+                        },
+                        "properties": {
+                            "standardOptions": {
+                                "util": "milliseconds"
+                            },
+                            "valueMappings": [
+                                {
+                                    "match": {
+                                        "to": 400
+                                    },
+                                    "result": {
+                                        "color": "#2c9d3d"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "from": 400
+                                    },
+                                    "result": {
+                                        "color": "#ff656b"
+                                    },
+                                    "type": "range"
+                                },
+                                {
+                                    "match": {
+                                        "from": 2000
+                                    },
+                                    "result": {
+                                        "color": "#f11313"
+                                    },
+                                    "type": "range"
+                                }
+                            ]
+                        },
+                        "type": "special"
+                    }
+                ]
+            },
+            {
+                "type": "timeseries",
+                "id": "b996687f-a54d-46e1-8f07-c554c4e2bf49",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 0,
+                    "y": 3,
+                    "i": "b996687f-a54d-46e1-8f07-c554c4e2bf49",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "http_response_response_time{asset_id=\"$id\"}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "响应时间",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    },
+                    "lineInterpolation": "smooth"
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "0533f14b-aee9-40b3-8e4c-6be6cb7df4a0",
+                "layout": {
+                    "h": 4,
+                    "w": 12,
+                    "x": 12,
+                    "y": 3,
+                    "i": "4cce7267-18f7-496b-92ed-a3820eb2500d",
+                    "isResizable": true
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${Datasource}",
+                "targets": [
+                    {
+                        "refId": "A",
+                        "expr": "http_response_response_code{asset_id=\"$id\"}"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "状态码",
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {
+                        "util": "none"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "smooth",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            }
+        ],
+        "var": [
+            {
+                "definition": "prometheus",
+                "name": "Datasource",
+                "type": "datasource"
+            },
+            {
+                "name": "id",
+                "label": "id",
+                "type": "textbox",
+                "hide": true,
+                "defaultValue": ""
+            }
+        ],
+        "version": "3.0.0"
+    }
+}
