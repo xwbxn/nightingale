@@ -18,12 +18,14 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/httpx"
+	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rakyll/statik/fs"
+	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/runner"
 
@@ -49,6 +51,8 @@ type Router struct {
 	UserGroupCache    *memsto.UserGroupCacheType
 	Ctx               *ctx.Context
 	assetCache        *memsto.AssetCacheType
+
+	DatasourceCheckHook func(*gin.Context) bool
 }
 
 // @securityDefinitions.apikey ApiKeyAuth
@@ -73,6 +77,8 @@ func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operatio
 		UserGroupCache:    ugc,
 		Ctx:               ctx,
 		assetCache:        ac,
+
+		DatasourceCheckHook: func(ctx *gin.Context) bool { return false },
 	}
 }
 
@@ -272,6 +278,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/builtin-boards-cates", rt.auth(), rt.user(), rt.builtinBoardCateGets)
 		pages.POST("/builtin-boards-detail", rt.auth(), rt.user(), rt.builtinBoardDetailGets)
 		pages.GET("/integrations/icon/:cate/:name", rt.builtinIcon)
+		pages.GET("/integrations/makedown/:cate", rt.builtinMarkdown)
 
 		pages.GET("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards"), rt.bgro(), rt.boardGets)
 		pages.POST("/busi-group/:id/boards", rt.auth(), rt.user(), rt.perm("/dashboards/add"), rt.bgrw(), rt.boardAdd)
@@ -435,6 +442,16 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/device-type/:id", rt.auth(), rt.admin(), rt.deviceTypeDel)
 	}
 
+	r.GET("/api/n9e/versions", func(c *gin.Context) {
+		v := version.Version
+		lastIndex := strings.LastIndex(version.Version, "-")
+		if lastIndex != -1 {
+			v = version.Version[:lastIndex]
+		}
+
+		ginx.NewRender(c).Data(gin.H{"version": v, "github_verison": version.GithubVersion.Load().(string)}, nil)
+	})
+
 	if rt.HTTP.APIForService.Enable {
 		service := r.Group("/v1/n9e")
 		if len(rt.HTTP.APIForService.BasicAuth) > 0 {
@@ -479,6 +496,8 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/alert-cur-events-get-by-rid", rt.alertCurEventsGetByRid)
 			service.GET("/alert-his-events", rt.alertHisEventsList)
 			service.GET("/alert-his-event/:eid", rt.alertHisEventGet)
+
+			service.GET("/task-tpl/:tid", rt.taskTplGetByService)
 
 			service.GET("/config/:id", rt.configGet)
 			service.GET("/configs", rt.configsGet)
