@@ -4,7 +4,6 @@
 package router
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"reflect"
@@ -247,27 +246,4 @@ func (rt *Router) exportDeviceModels(c *gin.Context) {
 	}
 	excels.NewMyExcel("设备型号数据").ExportDataToWeb(datas, "cn", c)
 
-}
-
-func StructToMap(obj interface{}, tagName string) map[string]interface{} {
-	out := make(map[string]interface{})
-	t := reflect.TypeOf(obj)
-	v := reflect.ValueOf(obj)
-	// 取出指针的值
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-	// 判断是否是结构体
-	if v.Kind() != reflect.Struct {
-		fmt.Println("it is not struct")
-		return nil
-	}
-
-	for i := 0; i < t.NumField(); i++ {
-		_, ok := t.Field(i).Tag.Lookup(tagName)
-		if ok == true {
-			out[t.Field(i).Name] = v.Field(i).Interface()
-		}
-	}
-	return out
 }
