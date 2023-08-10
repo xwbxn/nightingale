@@ -37,6 +37,87 @@ func (l *lzExcelExport) ExportToPath(params []map[string]string, data []map[stri
 }
 
 //导出到浏览器。此处使用的gin框架 其他框架可自行修改ctx
+func (l *lzExcelExport) ExportDataToWeb(data []interface{}, tagName string, c *gin.Context) {
+
+	dataKey := make([]map[string]string, 0) //表头
+
+	datas := make([]map[string]interface{}, 0) //数据
+
+	if data != nil && len(data) > 0 {
+		t := reflect.TypeOf(data[0])
+		v := reflect.ValueOf(data[0])
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		// 判断是否是结构体
+		if v.Kind() != reflect.Struct {
+			fmt.Println("it is not struct")
+			return
+		}
+		for i := 0; i < t.NumField(); i++ {
+			_, ok := t.Field(i).Tag.Lookup(tagName)
+			if ok == true {
+
+			}
+		}
+		for i := 0; i < t.NumField(); i++ {
+
+			fieldInfo := t.Field(i)
+			_, ok := fieldInfo.Tag.Lookup(tagName)
+
+			if ok == true {
+				var is_num string = "0"
+				switch fieldType := fieldInfo.Type.Kind(); fieldType {
+				case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64:
+					is_num = "1"
+				}
+				dataKey = append(dataKey, map[string]string{
+					"key":    fieldInfo.Name,
+					"title":  string(fieldInfo.Tag.Get(tagName)),
+					"width":  "20",
+					"is_num": is_num,
+				})
+			}
+		}
+
+		for _, entity := range data {
+			out := make(map[string]interface{})
+			t := reflect.TypeOf(entity)
+			v := reflect.ValueOf(entity)
+			// 取出指针的值
+			if v.Kind() == reflect.Ptr {
+				v = v.Elem()
+			}
+			// 判断是否是结构体
+			if v.Kind() != reflect.Struct {
+				fmt.Println("it is not struct")
+			}
+
+			for i := 0; i < t.NumField(); i++ {
+				_, ok := t.Field(i).Tag.Lookup(tagName)
+				if ok == true {
+					out[t.Field(i).Name] = v.Field(i).Interface()
+				}
+			}
+			datas = append(datas, out)
+		}
+
+	}
+
+	l.export(dataKey, datas)
+	buffer, _ := l.file.WriteToBuffer()
+	//设置文件类型
+	c.Header("Content-Type", "application/vnd.ms-excel;charset=utf8")
+	//设置文件名称
+	c.Header("Content-Disposition", "attachment; filename="+url.QueryEscape(createFileName()))
+	_, _ = c.Writer.Write(buffer.Bytes())
+}
+
+func length(data []interface{}) {
+	panic("unimplemented")
+}
+
+//导出到浏览器。此处使用的gin框架 其他框架可自行修改ctx
 func (l *lzExcelExport) ExportToWeb(params []map[string]string, data []map[string]interface{}, c *gin.Context) {
 	l.export(params, data)
 	buffer, _ := l.file.WriteToBuffer()

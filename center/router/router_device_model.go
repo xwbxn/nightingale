@@ -12,7 +12,6 @@ import (
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 	models "github.com/ccfos/nightingale/v6/models"
-
 	excels "github.com/ccfos/nightingale/v6/pkg/excel"
 
 	"github.com/gin-gonic/gin"
@@ -236,47 +235,17 @@ func readExcel(xlsx *excelize.File) ([]models.DeviceModel, error) {
 func (rt *Router) exportDeviceModels(c *gin.Context) {
 
 	query := ginx.QueryStr(c, "query", "")
-
-	dataKey := make([]map[string]string, 0) //表头
-
-	props := make([]string, 0) //属性
-
 	list, err := models.DeviceModelGets(rt.Ctx, query, 0, ginx.Offset(c, 0)) //获取数据
-
-	fields := reflect.ValueOf(new(models.DeviceModel)).Elem()
-
-	for i := 0; i < fields.NumField(); i++ {
-
-		fieldInfo := fields.Type().Field(i)
-
-		_, ok := fieldInfo.Tag.Lookup("cn")
-
-		if ok == true {
-			props = append(props, fieldInfo.Name)
-			var is_num string = "0"
-			switch fieldType := fieldInfo.Type.Kind(); fieldType {
-			case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64:
-				is_num = "1"
-			}
-			dataKey = append(dataKey, map[string]string{
-				"key":    fieldInfo.Name,
-				"title":  string(fieldInfo.Tag.Get("cn")),
-				"width":  "20",
-				"is_num": is_num,
-			})
-		}
-	}
 	ginx.Dangerous(err)
 
-	datas := make([]map[string]interface{}, 0)
-
+	datas := make([]interface{}, 0)
 	if len(list) > 0 {
 		for _, v := range list {
-			datas = append(datas, StructToMap(v, "cn"))
+			datas = append(datas, v)
 
 		}
 	}
-	excels.NewMyExcel("设备型号数据").ExportToWeb(dataKey, datas, c)
+	excels.NewMyExcel("设备型号数据").ExportDataToWeb(datas, "cn", c)
 
 }
 
