@@ -414,6 +414,16 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/device-type", rt.auth(), rt.admin(), rt.deviceTypeAdd)
 		pages.PUT("/device-type", rt.auth(), rt.admin(), rt.deviceTypePut)
 		pages.DELETE("/device-type/:id", rt.auth(), rt.admin(), rt.deviceTypeDel)
+
+		//设备模型管理-
+		pages.GET("/device-model", rt.auth(), rt.admin(), rt.deviceModelGets)
+		pages.GET("/device-model/:id", rt.auth(), rt.admin(), rt.deviceModelGet)
+		pages.POST("/device-model", rt.auth(), rt.admin(), rt.deviceModelAdd)
+		pages.PUT("/device-model", rt.auth(), rt.admin(), rt.deviceModelPut)
+		pages.DELETE("/device-model/:id", rt.auth(), rt.admin(), rt.deviceModelDel)
+		pages.POST("/device-model/import", rt.auth(), rt.admin(), rt.importDeviceModels)
+		pages.POST("/device-model/outport", rt.auth(), rt.admin(), rt.exportDeviceModels)
+
 	}
 
 	if rt.HTTP.APIForService.Enable {
