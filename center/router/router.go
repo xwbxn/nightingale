@@ -450,6 +450,15 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/device-model/import", rt.auth(), rt.admin(), rt.importDeviceModels)
 		pages.POST("/device-model/outport", rt.auth(), rt.admin(), rt.exportDeviceModels)
 
+		//设备厂商管理
+		pages.GET("/device-producer", rt.auth(), rt.admin(), rt.deviceProducerGets)
+		pages.GET("/device-producer/:id", rt.auth(), rt.admin(), rt.deviceProducerGet)
+		pages.POST("/device-producer", rt.auth(), rt.admin(), rt.deviceProducerAdd)
+		pages.PUT("/device-producer", rt.auth(), rt.admin(), rt.deviceProducerPut)
+		pages.DELETE("/device-producer/:id", rt.auth(), rt.admin(), rt.deviceProducerDel)
+		pages.POST("/device-producer/import-xls", rt.auth(), rt.admin(), rt.importDeviceProducer)
+		pages.POST("/device-producer/download-xls", rt.auth(), rt.admin(), rt.dowmloadDeviceProducer)
+
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
