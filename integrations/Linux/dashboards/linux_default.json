@@ -1940,8 +1940,7 @@
                 "name": "prom",
                 "label": "prom",
                 "type": "datasource",
-                "definition": "prometheus",
-                "defaultValue": 1
+                "definition": "prometheus"
             },
             {
                 "name": "id",
