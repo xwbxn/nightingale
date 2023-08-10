@@ -24,8 +24,8 @@ func (rt *Router) assetsGet(c *gin.Context) {
 func (rt *Router) assetsGets(c *gin.Context) {
 	bgid := ginx.QueryInt64(c, "bgid", -1)
 	query := ginx.QueryStr(c, "query", "")
-	organizeId := ginx.QueryInt64(c, "organize_id", -1)
-	assets, err := models.AssetGets(rt.Ctx, bgid, query, organizeId)
+	orgId := ginx.QueryInt64(c, "organization_id", -1)
+	assets, err := models.AssetGets(rt.Ctx, bgid, query, orgId)
 	ginx.Dangerous(err)
 	for _, asset := range assets {
 		atype, has := rt.assetCache.GetType(asset.Type)
@@ -305,19 +305,13 @@ func (rt *Router) assetUpdateNote(c *gin.Context) {
 	ginx.NewRender(c).Message(models.AssetUpdateNote(rt.Ctx, f.Ids, f.Note))
 }
 
-type Assetorganize struct {
+type AssetOrganizationForm struct {
 	Ids []string `json:"ids" binding:"required"` //资产id组
 	Id  int64    `json:"id"`                     //组织树id
 }
 
-func (rt *Router) updatesAssetOrganize(c *gin.Context) {
-	var f Assetorganize
+func (rt *Router) assetUpdateOrganization(c *gin.Context) {
+	var f AssetOrganizationForm
 	ginx.BindJSON(c, &f)
-	ginx.NewRender(c).Message(models.UpdateOrganize(rt.Ctx, f.Ids, f.Id))
-}
-
-func (rt *Router) findAssetByOrg(c *gin.Context) {
-	organize_id := ginx.UrlParamInt64(c, "organize_id")
-	lst, err := models.FindAssetByOrg(rt.Ctx, organize_id)
-	ginx.NewRender(c).Data(lst, err)
+	ginx.NewRender(c).Message(models.AssetUpdateOrganization(rt.Ctx, f.Ids, f.Id))
 }

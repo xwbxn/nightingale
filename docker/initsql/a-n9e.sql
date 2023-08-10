@@ -630,13 +630,13 @@ CREATE TABLE `assets` (
   `create_by` varchar(64) NOT NULL DEFAULT '',
   `update_at` bigint(20) NOT NULL DEFAULT '0',
   `update_by` varchar(64) NOT NULL DEFAULT '',
-  `organize_id` bigint(20) NOT NULL,
+  `organization_id` bigint(20) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `group_id` (`group_id`),
   KEY `ident` (`ident`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `organize` (
+CREATE TABLE `orgnazation` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) DEFAULT NULL,
   `parent_id` int(10) DEFAULT NULL,
@@ -658,3 +658,5 @@ CREATE TABLE `es_index_pattern` (
     PRIMARY KEY (`id`),
     UNIQUE KEY (`datasource_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+INSERT INTO `datasource`(`id`, `name`, `description`, `category`, `plugin_id`, `plugin_type`, `plugin_type_name`, `cluster_name`, `settings`, `status`, `http`, `auth`) VALUES (1, 'default', '', '', 0, 'prometheus', '', 'default', '{\"write_addr\":\"http://localhost:8428/api/v1/write\"}', 'enabled', '{\"timeout\":10000,\"dial_timeout\":0,\"tls\":{\"skip_tls_verify\":false},\"max_idle_conns_per_host\":0,\"url\":\"http://localhost:8428\",\"headers\":{}}', '{\"basic_auth\":false,\"basic_auth_user\":\"vm\",\"basic_auth_password\":\"vmdctbcab\"}');

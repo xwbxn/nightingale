@@ -93,8 +93,8 @@ func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
 	ginx.NewRender(c).Data(data, nil)
 }
 
-func (rt *Router) getOrganizeTreeByFE(c *gin.Context) {
-	list, err := models.OrganizeTreeGetsFE(rt.Ctx)
+func (rt *Router) getOrganizationTreeByFE(c *gin.Context) {
+	list, err := models.OrganizationTreeGetsFE(rt.Ctx)
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(list, nil)
 }
