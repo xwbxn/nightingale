@@ -152,7 +152,7 @@ func (rt *Router) assetDefaultConfigGet(c *gin.Context) {
 
 func (rt *Router) assetIdentGetAll(c *gin.Context) {
 	bgid := ginx.QueryInt64(c, "bgid", 0)
-	data, err := models.TargetGets(rt.Ctx, []int64{bgid}, nil, "", 100, 0)
+	data, err := models.TargetGets(rt.Ctx, []int64{bgid}, nil, "", 0, 100, 0)
 	ginx.NewRender(c).Data(data, err)
 }
 
