@@ -128,8 +128,8 @@ func (hrc *HealthRuleContext) TypeHealthCheck() {
 
 	assetsOfType := hrc.assetCache.GetByType(hrc.assetType.Name)
 	ts := ConvertHealthCheckSeries(value, metric, assetsOfType)
-	if len(ts) != 0 {
-		hrc.writers.PushSample("health", ts)
+	for _, series := range ts {
+		hrc.writers.PushSample("health_check", series)
 	}
 }
 

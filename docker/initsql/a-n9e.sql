@@ -642,6 +642,7 @@ CREATE TABLE `assets` (
   `update_at` bigint(20) NOT NULL DEFAULT 0,
   `update_by` varchar(64) NOT NULL DEFAULT '',
   `organization_id` bigint(20) NOT NULL DEFAULT 0,
+  `optional_metrics` text,
   PRIMARY KEY (`id`),
   KEY `group_id` (`group_id`),
   KEY `ident` (`ident`),
