@@ -18,8 +18,8 @@ type HealthRuleContext struct {
 	datasourceId int64
 	quit         chan struct{}
 
-	assetType *models.AssetType
-	// writers     *writer.WritersType
+	assetType   *models.AssetType
+	writers     *writer.WritersType
 	promClients *prom.PromClientMap
 	assetCache  *memsto.AssetCacheType
 }
@@ -31,7 +31,7 @@ func NewHealthRuleContext(atype *models.AssetType, datasourceId int64, promClien
 		assetType:    atype,
 		promClients:  promClients,
 		assetCache:   cache,
-		//writers:      writers,
+		writers:      writers,
 	}
 }
 
@@ -129,7 +129,7 @@ func (hrc *HealthRuleContext) TypeHealthCheck() {
 	assetsOfType := hrc.assetCache.GetByType(hrc.assetType.Name)
 	ts := ConvertHealthCheckSeries(value, metric, assetsOfType)
 	if len(ts) != 0 {
-		hrc.promClients.GetWriterCli(hrc.datasourceId).Write(ts)
+		hrc.writers.PushSample("health", ts)
 	}
 }
 

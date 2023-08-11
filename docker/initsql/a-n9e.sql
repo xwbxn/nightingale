@@ -1,6 +1,5 @@
 set names utf8mb4;
 
-drop database if exists n9e_v6;
 create database n9e_v6;
 use n9e_v6;
 
@@ -431,7 +430,19 @@ CREATE TABLE `alert_aggr_view` (
 insert into alert_aggr_view(name, rule, cate) values('By BusiGroup, Severity', 'field:group_name::field:severity', 0);
 insert into alert_aggr_view(name, rule, cate) values('By RuleName', 'field:rule_name', 0);
 
-default '',
+CREATE TABLE `alert_cur_event` (
+    `id` bigint unsigned not null comment 'use alert_his_event.id',
+    `cate` varchar(128) not null,
+    `datasource_id` bigint not null default 0 comment 'datasource id',
+    `cluster` varchar(128) not null,
+    `group_id` bigint unsigned not null comment 'busi group id of rule',
+    `group_name` varchar(255) not null default '' comment 'busi group name',
+    `hash` varchar(64) not null comment 'rule_id + vector_pk',
+    `rule_id` bigint unsigned not null,
+    `rule_name` varchar(255) not null,
+    `rule_note` varchar(2048) not null default 'alert rule note',
+    `rule_prod` varchar(255) not null default '',
+    `rule_algo` varchar(255) not null default '',
     `severity` tinyint(1) not null comment '0:Emergency 1:Warning 2:Notice',
     `prom_for_duration` int not null comment 'prometheus for, unit:s',
     `prom_ql` varchar(8192) not null comment 'promql',
@@ -624,19 +635,20 @@ CREATE TABLE `assets` (
   `tags` varchar(512) NOT NULL DEFAULT '',
   `plugin` varchar(100) NOT NULL DEFAULT '',
   `label` varchar(200) NOT NULL DEFAULT '',
-  `params` varchar(2000) NOT NULL DEFAULT '',
+  `params` text,
   `status` int(1) NOT NULL DEFAULT '0',
-  `create_at` bigint(20) NOT NULL DEFAULT '0',
+  `create_at` bigint(20) NOT NULL DEFAULT 0,
   `create_by` varchar(64) NOT NULL DEFAULT '',
-  `update_at` bigint(20) NOT NULL DEFAULT '0',
+  `update_at` bigint(20) NOT NULL DEFAULT 0,
   `update_by` varchar(64) NOT NULL DEFAULT '',
-  `organization_id` bigint(20) NOT NULL,
+  `organization_id` bigint(20) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `group_id` (`group_id`),
-  KEY `ident` (`ident`)
+  KEY `ident` (`ident`),
+  KEY `organization_id` (`organization_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `orgnazation` (
+CREATE TABLE `organization` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) DEFAULT NULL,
   `parent_id` int(10) DEFAULT NULL,
@@ -659,4 +671,4 @@ CREATE TABLE `es_index_pattern` (
     UNIQUE KEY (`datasource_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-INSERT INTO `datasource`(`id`, `name`, `description`, `category`, `plugin_id`, `plugin_type`, `plugin_type_name`, `cluster_name`, `settings`, `status`, `http`, `auth`) VALUES (1, 'default', '', '', 0, 'prometheus', '', 'default', '{\"write_addr\":\"http://localhost:8428/api/v1/write\"}', 'enabled', '{\"timeout\":10000,\"dial_timeout\":0,\"tls\":{\"skip_tls_verify\":false},\"max_idle_conns_per_host\":0,\"url\":\"http://localhost:8428\",\"headers\":{}}', '{\"basic_auth\":false,\"basic_auth_user\":\"vm\",\"basic_auth_password\":\"vmdctbcab\"}');
+INSERT INTO `datasource`(`id`, `name`, `description`, `category`, `plugin_id`, `plugin_type`, `plugin_type_name`, `cluster_name`, `settings`, `status`, `http`, `auth`) VALUES (1, 'default', '', '', 0, 'prometheus', '', 'default', '{\"write_addr\":\"http://victoria-metrics:8428/api/v1/write\"}', 'enabled', '{\"timeout\":10000,\"dial_timeout\":0,\"tls\":{\"skip_tls_verify\":false},\"max_idle_conns_per_host\":0,\"url\":\"http://victoria-metrics:8428\",\"headers\":{}}', '{\"basic_auth\":false,\"basic_auth_user\":\"vm\",\"basic_auth_password\":\"vmdctbcab\"}');

@@ -48,7 +48,7 @@ type assetsModel struct {
 	Memo            string `json:"memo"`
 	Configs         string `json:"configs"`
 	Params          string `json:"params"`
-	OrganizeId      int64  `json:"organize_id"`
+	OrganizationId  int64  `json:"organization_id"`
 	OptionalMetrics string `json:"optional_metrics"`
 }
 
@@ -58,17 +58,17 @@ func (rt *Router) assetsAdd(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 
 	var assets = models.Asset{
-		GroupId:    f.GroupId,
-		Name:       f.Name,
-		Ident:      f.Ident,
-		Label:      f.Label,
-		Type:       f.Type,
-		Memo:       f.Memo,
-		Configs:    f.Configs,
-		Params:     f.Params,
-		CreateBy:   me.Username,
-		CreateAt:   time.Now().Unix(),
-		OrganizeId: f.OrganizeId,
+		GroupId:        f.GroupId,
+		Name:           f.Name,
+		Ident:          f.Ident,
+		Label:          f.Label,
+		Type:           f.Type,
+		Memo:           f.Memo,
+		Configs:        f.Configs,
+		Params:         f.Params,
+		CreateBy:       me.Username,
+		CreateAt:       time.Now().Unix(),
+		OrganizationId: f.OrganizationId,
 	}
 
 	err := assets.Add(rt.Ctx)

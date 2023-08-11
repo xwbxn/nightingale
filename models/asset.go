@@ -35,7 +35,7 @@ type Asset struct {
 	CreateBy           string     `json:"create_by"`
 	UpdateAt           int64      `json:"update_at"`
 	UpdateBy           string     `json:"update_by"`
-	OrganizeId         int64      `json:"organize_id"`
+	OrganizationId     int64      `json:"organization_id"`
 	OptionalMetrics    string     `json:"-"`
 	OptinalMetricsJson []*Metrics `json:"optional_metrics" gorm:"-"` //巡检检查使用
 	Dashboard          string     `json:"dashboard" gorm:"-"`
