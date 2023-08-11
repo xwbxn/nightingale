@@ -1,0 +1,699 @@
+{
+    "name": "Switch",
+    "tags": "",
+    "ident": "",
+    "configs": {
+        "links": [],
+        "panels": [
+            {
+                "type": "stat",
+                "id": "d5e905cf-da22-48be-9fca-1f92695ca730",
+                "layout": {
+                    "h": 3,
+                    "i": "d5e905cf-da22-48be-9fca-1f92695ca730",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 0,
+                    "y": 0
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "switch_legacy_uptime{asset_id=\"$id\"}/100",
+                        "instant": true,
+                        "legend": "",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "已运行时间",
+                "links": [],
+                "description": "系统启动时间",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {
+                        "util": "seconds"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "d755c99d-a323-41e6-8117-6bc006bef8b7",
+                "layout": {
+                    "h": 3,
+                    "i": "bd2cd5b0-50ac-42d7-b29d-ea89ceb015a7",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 8,
+                    "y": 0
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "switch_legacy_cpu_util{asset_id=\"$id\"}",
+                        "legend": "Out",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "CPU 使用率 %",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "c3991b49-1ad8-4f63-87b8-d41bbf729833",
+                "layout": {
+                    "h": 3,
+                    "i": "109aad94-79bd-4aec-b8ac-db73cb6601a8",
+                    "isResizable": true,
+                    "w": 8,
+                    "x": 16,
+                    "y": 0
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "switch_legacy_mem_util{asset_id=\"$id\"}",
+                        "legend": "mem_usage",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "内存使用率 %",
+                "links": [],
+                "description": "内存使用率 ",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "26ae7fc1-230e-451e-9415-ea93ae8b2abb",
+                "layout": {
+                    "h": 3,
+                    "i": "26ae7fc1-230e-451e-9415-ea93ae8b2abb",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 0,
+                    "y": 3
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "max(switch_legacy_if_out{asset_id=\"$id\"})",
+                        "instant": true,
+                        "legend": "Out",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "最大端口流量 (Out)",
+                "links": [],
+                "description": "端口每秒最大出流量  单位是bit，大盘自动转换",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "custom": {
+                    "calc": "lastNotNull",
+                    "colSpan": 1,
+                    "colorMode": "value",
+                    "graphMode": "none",
+                    "textMode": "value",
+                    "textSize": {},
+                    "valueField": "Value"
+                },
+                "datasourceCate": "prometheus",
+                "datasourceValue": 1,
+                "description": "端口每秒最大入流量",
+                "id": "c5496f39-e194-401c-888c-556292e39254",
+                "layout": {
+                    "h": 3,
+                    "i": "c5496f39-e194-401c-888c-556292e39254",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 6,
+                    "y": 3
+                },
+                "links": [],
+                "maxPerRow": 4,
+                "name": "最大端口流量 (In)",
+                "options": {
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "type": "base",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "targets": [
+                    {
+                        "expr": "max(switch_legacy_if_in{asset_id=\"$id\"})",
+                        "legend": "In",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "type": "stat",
+                "version": "3.0.0"
+            },
+            {
+                "type": "stat",
+                "id": "ad0d02bb-9eb0-47d8-8529-1ce66150e4f9",
+                "layout": {
+                    "h": 3,
+                    "i": "ad0d02bb-9eb0-47d8-8529-1ce66150e4f9",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 12,
+                    "y": 3
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "max(switch_legacy_if_out_speed_percent{asset_id=\"$id\"})",
+                        "instant": true,
+                        "legend": "Out",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "最大端口利用率(Out）",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "stat",
+                "id": "616de58a-70a7-4c0b-b0f2-5151b9f0e9c5",
+                "layout": {
+                    "h": 3,
+                    "i": "616de58a-70a7-4c0b-b0f2-5151b9f0e9c5",
+                    "isResizable": true,
+                    "w": 6,
+                    "x": 18,
+                    "y": 3
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "max(switch_legacy_if_in_speed_percent{asset_id=\"$id\"})",
+                        "instant": true,
+                        "legend": "In",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "最大端口带宽利用率(In)",
+                "links": [],
+                "description": "",
+                "maxPerRow": 4,
+                "custom": {
+                    "textMode": "value",
+                    "graphMode": "none",
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "valueField": "Value",
+                    "colSpan": 1,
+                    "textSize": {}
+                },
+                "options": {
+                    "standardOptions": {
+                        "util": "percent"
+                    },
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "barGauge",
+                "id": "a925c635-0ff8-4984-a8b0-ca99948960f0",
+                "layout": {
+                    "h": 7,
+                    "i": "a925c635-0ff8-4984-a8b0-ca99948960f0",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 0,
+                    "y": 6
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "switch_legacy_if_out{asset_id=\"$id\"}",
+                        "instant": true,
+                        "legend": "{{ifname}}",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Out (Current)",
+                "links": [],
+                "description": "Max: 10MB  \nRed Status: 9MB",
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "baseColor": "#9470FF",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {}
+                }
+            },
+            {
+                "type": "barGauge",
+                "id": "86345d37-977a-44e0-96ca-e46fe388b529",
+                "layout": {
+                    "h": 7,
+                    "i": "86345d37-977a-44e0-96ca-e46fe388b529",
+                    "isResizable": true,
+                    "w": 12,
+                    "x": 12,
+                    "y": 6
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "switch_legacy_if_in{asset_id=\"$id\"}",
+                        "instant": true,
+                        "legend": "{{ifname}}",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "In (Current)",
+                "links": [],
+                "description": "Max: 10MB  \nRed Status: 9MB",
+                "maxPerRow": 4,
+                "custom": {
+                    "calc": "lastNotNull",
+                    "baseColor": "#9470FF",
+                    "serieWidth": 20,
+                    "sortOrder": "desc"
+                },
+                "options": {
+                    "standardOptions": {}
+                }
+            },
+            {
+                "type": "timeseries",
+                "id": "4bd4c3ad-e00f-4eac-89fc-6b146f36d922",
+                "layout": {
+                    "h": 7,
+                    "i": "4bd4c3ad-e00f-4eac-89fc-6b146f36d922",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 13
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "switch_legacy_if_out{asset_id=\"$id\"}",
+                        "legend": "Out: {{ifname}} ",
+                        "refId": "A"
+                    },
+                    {
+                        "expr": "-switch_legacy_if_in{asset_id=\"$id\"}",
+                        "legend": "In: {{ifname}} ",
+                        "refId": "B"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Out / In",
+                "links": [],
+                "maxPerRow": 4,
+                "options": {
+                    "tooltip": {
+                        "mode": "all",
+                        "sort": "none"
+                    },
+                    "legend": {
+                        "displayMode": "hidden"
+                    },
+                    "standardOptions": {},
+                    "thresholds": {
+                        "steps": [
+                            {
+                                "color": "#634CD9",
+                                "value": null,
+                                "type": "base"
+                            }
+                        ]
+                    }
+                },
+                "custom": {
+                    "drawStyle": "lines",
+                    "lineInterpolation": "linear",
+                    "spanNulls": false,
+                    "lineWidth": 1,
+                    "fillOpacity": 0.5,
+                    "gradientMode": "none",
+                    "stack": "off",
+                    "scaleDistribution": {
+                        "type": "linear"
+                    }
+                }
+            },
+            {
+                "type": "table",
+                "id": "b663d53d-41a9-4e28-a60e-6ced1b9d46ce",
+                "layout": {
+                    "h": 10,
+                    "i": "b663d53d-41a9-4e28-a60e-6ced1b9d46ce",
+                    "isResizable": true,
+                    "w": 24,
+                    "x": 0,
+                    "y": 20
+                },
+                "version": "3.0.0",
+                "datasourceCate": "prometheus",
+                "datasourceValue": "${prom}",
+                "targets": [
+                    {
+                        "expr": "switch_legacy_if_oper_status{asset_id=\"$id\"}",
+                        "instant": true,
+                        "legend": "{{ifname}}",
+                        "refId": "A"
+                    }
+                ],
+                "transformations": [
+                    {
+                        "id": "organize",
+                        "options": {}
+                    }
+                ],
+                "name": "Interface Status",
+                "links": [],
+                "maxPerRow": 4,
+                "custom": {
+                    "showHeader": true,
+                    "colorMode": "value",
+                    "calc": "lastNotNull",
+                    "displayMode": "labelsOfSeriesToRows",
+                    "columns": [
+                        "ifname",
+                        "value"
+                    ],
+                    "sortColumn": "name",
+                    "sortOrder": "ascend"
+                },
+                "options": {
+                    "valueMappings": [
+                        {
+                            "match": {
+                                "special": 1
+                            },
+                            "result": {
+                                "color": "#3fc453",
+                                "text": "UP"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 2
+                            },
+                            "result": {
+                                "color": "#ce4f52",
+                                "text": "DOWN"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 3
+                            },
+                            "result": {
+                                "color": "#9470ff",
+                                "text": "TESTING"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 4
+                            },
+                            "result": {
+                                "color": "#000000",
+                                "text": "UNKNOWN"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 5
+                            },
+                            "result": {
+                                "color": "#ffae39",
+                                "text": "DORMANT"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 6
+                            },
+                            "result": {
+                                "color": "#e6c627",
+                                "text": "NotPresent"
+                            },
+                            "type": "special"
+                        },
+                        {
+                            "match": {
+                                "special": 7
+                            },
+                            "result": {
+                                "color": "#ff8286",
+                                "text": "LowerLayerDown"
+                            },
+                            "type": "special"
+                        }
+                    ],
+                    "standardOptions": {}
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "value": "A"
+                        }
+                    }
+                ]
+            }
+        ],
+        "var": [
+            {
+                "name": "prom",
+                "label": "数据源",
+                "type": "datasource",
+                "definition": "prometheus"
+            },
+            {
+                "defaultValue": "",
+                "hide": true,
+                "label": "id",
+                "name": "id",
+                "type": "textbox"
+            },
+            {
+                "datasource": {
+                    "cate": "prometheus",
+                    "value": "${prom}"
+                },
+                "definition": "label_values(asset_health{asset_id=\"$id\"}, instance)",
+                "label": "instance",
+                "multi": false,
+                "name": "instance",
+                "type": "query"
+            }
+        ],
+        "version": "3.0.0"
+    }
+}

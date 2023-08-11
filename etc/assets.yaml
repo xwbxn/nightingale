@@ -7,7 +7,6 @@ config:
         metrics: cpu_usage_active
       - name: 内存使用率
         metrics: mem_used_percent
-    optional_metrics: ["cpu_usage_active", "mem_used_percent"]
     dashboard: "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Server&id=${id}&viewMode=fullscreen"
     form: []
 
@@ -19,7 +18,6 @@ config:
         metrics: "(((count(count(node_cpu_seconds_total) by (cpu))) - avg(sum by (mode)(rate(node_cpu_seconds_total{mode='idle'}[1m])))) * 100) / count(count(node_cpu_seconds_total) by (cpu))"
       - name: 内存使用率
         metrics: "(node_memory_MemTotal_bytes - node_memory_MemFree_bytes - (node_memory_Cached_bytes + node_memory_Buffers_bytes))/node_memory_MemTotal_bytes*100"
-    optional_metrics: []
     dashboard: "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Server&id=${id}&viewMode=fullscreen"
     form:
       - label: 监控Url
@@ -35,7 +33,6 @@ config:
         metrics: mysql_global_status_threads_connected
       - name: 活动线程数
         metrics: mysql_global_status_threads_connected
-    optional_metrics: []
     dashboard: "/dashboards-built-in/detail?__built-in-cate=MySQL&__built-in-name=MySQL&id=${id}&viewMode=fullscreen"
     form:
       - label: 地址
@@ -56,7 +53,6 @@ config:
         metrics: redis_connected_clients
       - name: 内存使用率
         metrics: redis_used_memory/redis_maxmemory
-    optional_metrics: []
     dashboard: "/dashboards-built-in/detail?__built-in-cate=Redis&__built-in-name=Redis&id=${id}&viewMode=fullscreen"
     form:
       - label: 地址
@@ -75,29 +71,35 @@ config:
     metrics:
       - name: 返回状态码
         metrics: http_response_result_code
+      - name: 响应时间
+        metrics: http_response_response_time
     dashboard: "/dashboards-built-in/detail?__built-in-cate=HTTP&__built-in-name=WebAPI&id=${id}&viewMode=fullscreen"
     form:
       - label: 服务地址
         name: url
 
-  - name: 网络连通
+  - name: 网络连通(ping)
     category: "网络资产"
     plugin: ping
     metrics:
       - name: 返回状态码
         metrics: ping_result_code
-    optional_metrics: []
+      - name: 丢包率
+        metrics: ping_percent_packet_loss
+      - name: 时延
+        metrics: ping_maximum_response_ms
     form:
       - label: IP地址
         name: address
 
-  - name: 网络服务
+  - name: 服务端口监测
     category: "业务资产"
     plugin: net_response
     metrics:
-      - name: 返回状态码
+      - name: 端口状态
         metrics: net_response_result_code
-    optional_metrics: []
+      - name: 连接时长
+        metrics: net_response_response_time
     form:
       - label: 协议
         name: protocol
@@ -113,7 +115,6 @@ config:
     metrics:
       - name: 返回状态码
         metrics: elasticsearch_cluster_health_status_code
-    optional_metrics: []
 
   - name: DNS解析
     category: "业务资产"
@@ -121,7 +122,6 @@ config:
     metrics:
       - name: 返回状态码
         metrics: dns_query_result_code
-    optional_metrics: []
     form:
       - label: 域名
         name: domain
@@ -130,7 +130,6 @@ config:
     category: "业务资产"
     plugin: prometheus
     metrics: []
-    optional_metrics: []
     form:
       - label: 监控Url
         name: url
@@ -146,7 +145,6 @@ config:
       - name: 内存使用率
         metrics: switch_legacy_mem_util
     dashboard: "/dashboards-built-in/detail?__built-in-cate=SNMP&__built-in-name=Switch&id=${id}&viewMode=fullscreen"
-    optional_metrics: []
     form:
       - label: 地址
         name: address
@@ -159,7 +157,6 @@ config:
     metrics:
       - name: 在线状态
         metrics: switch_legacy_ping_up
-    optional_metrics: []
     form:
       - label: 地址
         name: address
@@ -172,7 +169,6 @@ config:
     metrics:
       - name: 在线状态
         metrics: switch_legacy_ping_up
-    optional_metrics: []
     form:
       - label: 地址
         name: address
@@ -185,7 +181,6 @@ config:
     metrics:
       - name: 在线状态
         metrics: switch_legacy_ping_up
-    optional_metrics: []
     form:
       - label: 地址
         name: address
@@ -198,7 +193,6 @@ config:
     metrics:
       - name: 在线状态
         metrics: switch_legacy_ping_up
-    optional_metrics: []
     form:
       - label: 地址
         name: address
@@ -211,7 +205,6 @@ config:
     metrics:
       - name: 在线状态
         metrics: switch_legacy_ping_up
-    optional_metrics: []
     form:
       - label: 地址
         name: address

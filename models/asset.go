@@ -35,7 +35,7 @@ type Asset struct {
 	CreateBy           string     `json:"create_by"`
 	UpdateAt           int64      `json:"update_at"`
 	UpdateBy           string     `json:"update_by"`
-	OrganizeId         int64      `json:"organize_id"`
+	OrganizationId     int64      `json:"organization_id"`
 	OptionalMetrics    string     `json:"-"`
 	OptinalMetricsJson []*Metrics `json:"optional_metrics" gorm:"-"` //巡检检查使用
 	Dashboard          string     `json:"dashboard" gorm:"-"`
@@ -152,15 +152,15 @@ func AssetGet(ctx *ctx.Context, where string, args ...interface{}) (*Asset, erro
 	return lst[0], nil
 }
 
-func AssetGets(ctx *ctx.Context, bgid int64, query string, organizeId int64) ([]*Asset, error) {
+func AssetGets(ctx *ctx.Context, bgid int64, query string, organizationId int64) ([]*Asset, error) {
 	var lst []*Asset
 	// session := DB(ctx).Where("1 = 1")
 	session := DB(ctx).Find(&lst)
 	if bgid >= 0 {
 		session = session.Where("group_id = ?", bgid)
 	}
-	if organizeId >= 0 {
-		session = session.Where("organize_id = ?", organizeId)
+	if organizationId >= 0 {
+		session = session.Where("organization_id = ?", organizationId)
 	}
 	if query != "" {
 		arr := strings.Fields(query)
@@ -335,19 +335,11 @@ func AssetSetStatus(ctx *ctx.Context, ident string, status int64) error {
 	}).Error
 }
 
-func UpdateOrganize(ctx *ctx.Context, ids []string, organize_id int64) error {
+func AssetUpdateOrganization(ctx *ctx.Context, ids []string, organize_id int64) error {
 	return DB(ctx).Model(&Asset{}).Where("id in ?", ids).Updates(map[string]interface{}{
-		"organize_id": organize_id,
-		"update_at":   time.Now().Unix(),
+		"organization_id": organize_id,
+		"update_at":       time.Now().Unix(),
 	}).Error
-}
-
-// 根据组织id查询资产
-func FindAssetByOrg(ctx *ctx.Context, organize_id int64) ([]Asset, error) {
-	session := DB(ctx).Where("organize_id = ?", organize_id)
-	var lst []Asset
-	err := session.Order("id desc").Find(&lst).Error
-	return lst, err
 }
 
 func (e *Asset) DB2FE() {
