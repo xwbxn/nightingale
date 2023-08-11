@@ -160,74 +160,74 @@ func ReadExcel(ctx *ctx.Context, xlsx *excelize.File, createdBy string) (int, er
 	return count, nil
 }
 
-//根据条件写入excel
-func WriterExcel(ctx *ctx.Context, query string) ([]map[string]string, []map[string]interface{}, error) {
-	session := DB(ctx)
+//根据条件写入excel(暂时不用)
+// func WriterExcel(ctx *ctx.Context, query string) ([]map[string]string, []map[string]interface{}, error) {
+// 	session := DB(ctx)
 
-	// 这里使用列名的硬编码构造查询参数, 避免从前台传入造成注入风险
-	if query != "" {
-		q := "%" + query + "%"
-		session = session.Where("id like ?", q)
-	}
+// 	// 这里使用列名的硬编码构造查询参数, 避免从前台传入造成注入风险
+// 	if query != "" {
+// 		q := "%" + query + "%"
+// 		session = session.Where("id like ?", q)
+// 	}
 
-	var lst []DeviceProducer
-	err := session.Find(&lst).Error
-	if err != nil {
-		return nil, nil, err
-	}
+// 	var lst []DeviceProducer
+// 	err := session.Find(&lst).Error
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
 
-	dType := reflect.ValueOf(new(DeviceProducer)).Elem()
+// 	dType := reflect.ValueOf(new(DeviceProducer)).Elem()
 
-	var firstrow [2][DOWNLOADNUM]string
-	count := 0
-	for k := 0; k < dType.NumField(); k++ {
-		fieldInfo := dType.Type().Field(k)
-		if fieldInfo.Tag.Get("cn") != "" {
-			firstrow[1][count] = fieldInfo.Tag.Get("cn")
-			firstrow[0][count] = fieldInfo.Name
-			count++
-		}
+// 	var firstrow [2][DOWNLOADNUM]string
+// 	count := 0
+// 	for k := 0; k < dType.NumField(); k++ {
+// 		fieldInfo := dType.Type().Field(k)
+// 		if fieldInfo.Tag.Get("cn") != "" {
+// 			firstrow[1][count] = fieldInfo.Tag.Get("cn")
+// 			firstrow[0][count] = fieldInfo.Name
+// 			count++
+// 		}
 
-	}
-	//定义首行标题
-	dataKey := make([]map[string]string, 0)
+// 	}
+// 	//定义首行标题
+// 	dataKey := make([]map[string]string, 0)
 
-	for i := 0; i < count; i++ {
-		dataKey = append(dataKey, map[string]string{
-			"key":    firstrow[0][i],
-			"title":  firstrow[1][i],
-			"width":  "20",
-			"is_num": "0",
-		})
-	}
+// 	for i := 0; i < count; i++ {
+// 		dataKey = append(dataKey, map[string]string{
+// 			"key":    firstrow[0][i],
+// 			"title":  firstrow[1][i],
+// 			"width":  "20",
+// 			"is_num": "0",
+// 		})
+// 	}
 
-	//填充数据
-	data := make([]map[string]interface{}, 0)
-	if len(lst) > 0 {
-		for _, v := range lst {
-			var isDomestic string
-			if v.IsDomestic == 0 {
-				isDomestic = "否"
-			} else {
-				isDomestic = "是"
-			}
-			var isDisplayChinese string
-			if v.IsDisplayChinese == 0 {
-				isDisplayChinese = "否"
-			} else {
-				isDisplayChinese = "是"
-			}
+// 	//填充数据
+// 	data := make([]map[string]interface{}, 0)
+// 	if len(lst) > 0 {
+// 		for _, v := range lst {
+// 			var isDomestic string
+// 			if v.IsDomestic == 0 {
+// 				isDomestic = "否"
+// 			} else {
+// 				isDomestic = "是"
+// 			}
+// 			var isDisplayChinese string
+// 			if v.IsDisplayChinese == 0 {
+// 				isDisplayChinese = "否"
+// 			} else {
+// 				isDisplayChinese = "是"
+// 			}
 
-			data = append(data, map[string]interface{}{
-				"Alias":            v.Alias,
-				"ChineseName":      v.ChineseName,
-				"CompanyName":      v.CompanyName,
-				"Official":         v.Official,
-				"IsDomestic":       isDomestic,
-				"IsDisplayChinese": isDisplayChinese,
-			})
-		}
-	}
-	return dataKey, data, nil
+// 			data = append(data, map[string]interface{}{
+// 				"Alias":            v.Alias,
+// 				"ChineseName":      v.ChineseName,
+// 				"CompanyName":      v.CompanyName,
+// 				"Official":         v.Official,
+// 				"IsDomestic":       isDomestic,
+// 				"IsDisplayChinese": isDisplayChinese,
+// 			})
+// 		}
+// 	}
+// 	return dataKey, data, nil
 
-}
+// }
