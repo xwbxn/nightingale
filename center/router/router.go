@@ -448,6 +448,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/device-model/:id", rt.auth(), rt.admin(), rt.deviceModelDel)
 		pages.POST("/device-model/import", rt.auth(), rt.admin(), rt.importDeviceModels)
 		pages.POST("/device-model/outport", rt.auth(), rt.admin(), rt.exportDeviceModels)
+		pages.POST("/device-model/templet", rt.auth(), rt.admin(), rt.templetDeviceModels)
 
 		//设备厂商管理
 		pages.GET("/device-producer", rt.auth(), rt.admin(), rt.deviceProducerGets)
