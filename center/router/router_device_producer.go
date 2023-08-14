@@ -134,16 +134,18 @@ func (rt *Router) importDeviceProducer(c *gin.Context) {
 func (rt *Router) dowmloadDeviceProducer(c *gin.Context) {
 
 	query := ginx.QueryStr(c, "query", "")
+	list, err := models.DeviceProducerGets(rt.Ctx, query, 0, ginx.Offset(c, 0)) //获取数据
 
-	_, err := models.DeviceProducerCount(rt.Ctx, query)
 	ginx.Dangerous(err)
 
-	dataKey, data, err := models.WriterExcel(rt.Ctx, query)
-	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, "写入excel出错")
-	}
+	datas := make([]interface{}, 0)
+	if len(list) > 0 {
+		for _, v := range list {
+			datas = append(datas, v)
 
-	excels.NewMyExcel("设备厂商").ExportToWeb(dataKey, data, c)
+		}
+	}
+	excels.NewMyExcel("设备厂商数据").ExportDataToWeb(datas, "cn", c)
 
 }
 

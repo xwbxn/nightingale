@@ -66,7 +66,7 @@ func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
 		if atype != "" && item.Type != atype {
 			continue
 		}
-		if groupId > -1 && item.OrganizeId != groupId { //这里使用orgid作为group返回查询条件
+		if groupId > -1 && item.OrganizationId != groupId { //这里使用orgid作为group返回查询条件
 			continue
 		}
 
@@ -84,7 +84,7 @@ func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
 			Category: ar.Category,
 			Type:     item.Type,
 			Metrics:  metrics,
-			GroupId:  item.OrganizeId, //这里使用orgid作为group返回查询条件
+			GroupId:  item.OrganizationId, //这里使用orgid作为group返回查询条件
 			Tags:     item.TagsJSON,
 		})
 	}
@@ -93,8 +93,8 @@ func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
 	ginx.NewRender(c).Data(data, nil)
 }
 
-func (rt *Router) getOrganizeTreeByFE(c *gin.Context) {
-	list, err := models.OrganizeTreeGetsFE(rt.Ctx)
+func (rt *Router) getOrganizationTreeByFE(c *gin.Context) {
+	list, err := models.OrganizationTreeGetsFE(rt.Ctx)
 	ginx.Dangerous(err)
 	ginx.NewRender(c).Data(list, nil)
 }
@@ -106,7 +106,7 @@ func (rt *Router) getAlertListByFE(c *gin.Context) {
 	for _, item := range list {
 		asset, has := rt.assetCache.Get(int64(item.AssetId))
 		if has {
-			item.OrganizeId = int(asset.OrganizeId)
+			item.OrganizeId = int(asset.OrganizationId)
 		}
 	}
 
