@@ -6,9 +6,12 @@ import (
 	"net/url"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
+	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -64,7 +67,6 @@ func (l *lzExcelExport) ExportDataToWeb(data []interface{}, tagName string, c *g
 
 			fieldInfo := t.Field(i)
 			_, ok := fieldInfo.Tag.Lookup(tagName)
-
 			if ok == true {
 				var is_num string = "0"
 				switch fieldType := fieldInfo.Type.Kind(); fieldType {
@@ -105,6 +107,58 @@ func (l *lzExcelExport) ExportDataToWeb(data []interface{}, tagName string, c *g
 	}
 
 	l.export(dataKey, datas)
+	buffer, _ := l.file.WriteToBuffer()
+	//设置文件类型
+	c.Header("Content-Type", "application/vnd.ms-excel;charset=utf8")
+	//设置文件名称
+	c.Header("Content-Disposition", "attachment; filename="+url.QueryEscape(createFileName()))
+	_, _ = c.Writer.Write(buffer.Bytes())
+}
+
+//导出到浏览器。此处使用的gin框架 其他框架可自行修改ctx
+func (l *lzExcelExport) ExportTempletToWeb(data []interface{}, tagName string, optionTagName string, ctx *ctx.Context, c *gin.Context) {
+
+	dataKey := make([]map[string]string, 0) //表头
+
+	if data != nil && len(data) > 0 {
+		t := reflect.TypeOf(data[0])
+		v := reflect.ValueOf(data[0])
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		// 判断是否是结构体
+		if v.Kind() != reflect.Struct {
+			fmt.Println("it is not struct")
+			return
+		}
+		for i := 0; i < t.NumField(); i++ {
+			_, ok := t.Field(i).Tag.Lookup(tagName)
+			if ok == true {
+
+			}
+		}
+		for i := 0; i < t.NumField(); i++ {
+
+			fieldInfo := t.Field(i)
+			_, headerOK := fieldInfo.Tag.Lookup(tagName)
+
+			if headerOK == true {
+				var is_num string = "0"
+				switch fieldType := fieldInfo.Type.Kind(); fieldType {
+				case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64:
+					is_num = "1"
+				}
+				dataKey = append(dataKey, map[string]string{
+					"key":    fieldInfo.Name,
+					"title":  string(fieldInfo.Tag.Get(tagName)),
+					"width":  "20",
+					"is_num": is_num,
+				})
+			}
+		}
+	}
+
+	l.exportTemplet(dataKey, data, ctx)
 	buffer, _ := l.file.WriteToBuffer()
 	//设置文件类型
 	c.Header("Content-Type", "application/vnd.ms-excel;charset=utf8")
@@ -182,9 +236,109 @@ func (l *lzExcelExport) writeData(params []map[string]string, data []map[string]
 	l.file.SetRowHeight(l.sheetName, len(data)+1, defaultHeight)
 }
 
+//写入数据
+func (l *lzExcelExport) writeTemplet(params []map[string]string, data []interface{}, ctx *ctx.Context) {
+	lineStyle, _ := l.file.NewStyle(`{"alignment":{"horizontal":"center","vertical":"center"}}`)
+	lineStyleLeft, _ := l.file.NewStyle(`{"alignment":{"horizontal":"left","vertical":"center"}}`)
+	//数据写入
+	var j int = 2 //数据开始行数
+	//设置行高
+	l.file.SetRowHeight(l.sheetName, 1, defaultHeight)
+	//逐列写入
+	var word = 'A'
+	// for i, _ := range data {
+	t := reflect.TypeOf(data[0])
+	v := reflect.ValueOf(data[0])
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	// 判断是否是结构体
+	if v.Kind() != reflect.Struct {
+		fmt.Println("it is not struct")
+		return
+	}
+	for i := 0; i < t.NumField(); i++ {
+		fieldInfo := t.Field(i)
+		_, heardOk := fieldInfo.Tag.Lookup("cn")
+		_, sourceOk := fieldInfo.Tag.Lookup("source")
+		if heardOk == true {
+			line := fmt.Sprintf("%c%v", word, j)
+			var isNum string = "0"
+			switch fieldType := fieldInfo.Type.Kind(); fieldType {
+			case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64:
+				isNum = "1"
+			}
+			if sourceOk {
+
+				var values []string
+				dv := excelize.NewDataValidation(true)
+				dv.SetSqref(fmt.Sprintf("%c%v:%c1048576", word, j, word))
+				m := make(map[string]string)
+				sources := strings.Split(fieldInfo.Tag.Get("source"), ",")
+
+				for _, pair := range sources {
+					kv := strings.Split(pair, "=")
+					m[kv[0]] = strings.Trim(kv[1], " ")
+				}
+
+				if m["type"] == "table" {
+					session := models.DB(ctx)
+					var results []string
+					session.Table(m["table"]).Pluck(m["field"], &results)
+					values = append(values, results...)
+				} else if m["type"] == "range" {
+					currentValue := m["value"][1 : len(m["value"])-1]
+					rangs := strings.Split(currentValue, ",")
+					for _, pair := range rangs {
+						starts := strings.Split(pair, "-")
+
+						start, _ := strconv.Atoi(starts[0])
+						var end int = start
+						if len(starts) > 1 {
+							val2, _ := strconv.Atoi(starts[1])
+							end = val2
+						}
+						for m := start; m <= end; m++ {
+							values = append(values, strconv.Itoa(m))
+						}
+					}
+
+				} else if m["type"] == "option" {
+					currentValue := m["value"][1 : len(m["value"])-1]
+					rangs := strings.Split(currentValue, ";")
+					for _, pair := range rangs {
+						values = append(values, pair)
+					}
+				}
+				dv.SetDropList(values)
+				l.file.AddDataValidation(l.sheetName, dv)
+			}
+			if isNum != "0" {
+				l.file.SetCellStyle(l.sheetName, line, line, lineStyle)
+			} else {
+				l.file.SetCellStyle(l.sheetName, line, line, lineStyleLeft)
+			}
+			word++
+
+		}
+	}
+
+	//设置行高 尾行
+	l.file.SetRowHeight(l.sheetName, len(data)+1, defaultHeight)
+}
+
+func DB(c *gin.Context) {
+	panic("unimplemented")
+}
+
 func (l *lzExcelExport) export(params []map[string]string, data []map[string]interface{}) {
 	l.writeTop(params)
 	l.writeData(params, data)
+}
+
+func (l *lzExcelExport) exportTemplet(params []map[string]string, data []interface{}, ctx *ctx.Context) {
+	l.writeTop(params)
+	l.writeTemplet(params, data, ctx)
 }
 
 func createFile() *excelize.File {

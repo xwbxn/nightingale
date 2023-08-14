@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 	models "github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	excels "github.com/ccfos/nightingale/v6/pkg/excel"
 
 	"github.com/gin-gonic/gin"
@@ -139,7 +141,7 @@ func (rt *Router) deviceModelDel(c *gin.Context) {
 	ginx.NewRender(c).Message(deviceModel.Del(rt.Ctx))
 }
 
-// @Summary      导入设备型号
+// @Summary      导入设备型号数据
 // @Description  导入型号
 // @Tags         设备型号
 // @Accept       multipart/form-data
@@ -161,7 +163,7 @@ func (rt *Router) importDeviceModels(c *gin.Context) {
 		return
 	}
 	//解析excel的数据
-	deviceModels, lxRrr := readExcel(xlsx)
+	deviceModels, lxRrr := readExcel(xlsx, rt.Ctx)
 	if lxRrr != nil {
 		ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
 		return
@@ -177,7 +179,7 @@ func (rt *Router) importDeviceModels(c *gin.Context) {
 }
 
 //ReadExcel .读取excel 转成切片
-func readExcel(xlsx *excelize.File) ([]models.DeviceModel, error) {
+func readExcel(xlsx *excelize.File, ctx *ctx.Context) ([]models.DeviceModel, error) {
 	//根据名字获取cells的内容，返回的是一个[][]string
 	rows := xlsx.GetRows(xlsx.GetSheetName(xlsx.GetActiveSheetIndex()))
 	//声明一个数组
@@ -197,12 +199,31 @@ func readExcel(xlsx *excelize.File) ([]models.DeviceModel, error) {
 				title := mapLit[index]
 				for i := 0; i < fields.NumField(); i++ {
 					fieldInfo := fields.Type().Field(i)
-					if fieldInfo.Tag.Get("cn") == title {
+
+					_, heardOk := fieldInfo.Tag.Lookup("cn")
+					_, sourceOk := fieldInfo.Tag.Lookup("source")
+
+					if heardOk && (fieldInfo.Tag.Get("cn") == title) {
+						var results []int64
+						var isDB = false
+						if sourceOk && fieldInfo.Tag.Get("source") == "table" {
+							isDB = true
+							value := strings.Split(fieldInfo.Tag.Get("value"), ",")
+							session := models.DB(ctx)
+							session.Table(value[0]).Where(value[1]+" = ?", colCell).Pluck("id", &results)
+						}
+
 						switch fieldType := fieldInfo.Type.Kind(); fieldType {
 						case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64:
 							{
-								s1, _ := strconv.Atoi(colCell)
-								g.FieldByName(fieldInfo.Name).SetInt(int64(s1))
+								if isDB {
+									if len(results) > 0 {
+										g.FieldByName(fieldInfo.Name).SetInt(results[0])
+									}
+								} else {
+									s1, _ := strconv.Atoi(colCell)
+									g.FieldByName(fieldInfo.Name).SetInt(int64(s1))
+								}
 							}
 						case reflect.String:
 							g.FieldByName(fieldInfo.Name).SetString(colCell)
@@ -222,7 +243,7 @@ func readExcel(xlsx *excelize.File) ([]models.DeviceModel, error) {
 	return deviceModels, nil
 }
 
-// @Summary      根据条件导出数据
+// @Summary      导出设备型号数据
 // @Description  根据条件导出数据
 // @Tags         设备型号
 // @Accept       json
@@ -246,4 +267,21 @@ func (rt *Router) exportDeviceModels(c *gin.Context) {
 	}
 	excels.NewMyExcel("设备型号数据").ExportDataToWeb(datas, "cn", c)
 
+}
+
+// @Summary      导出设备型号模板
+// @Description  导出设备型号模板
+// @Tags         设备型号
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  models.DeviceModel
+// @Router       /api/n9e/device-model/templet [post]
+// @Security     ApiKeyAuth
+func (rt *Router) templetDeviceModels(c *gin.Context) {
+
+	datas := make([]interface{}, 0)
+
+	datas = append(datas, models.DeviceModel{})
+
+	excels.NewMyExcel("设备型号模板").ExportTempletToWeb(datas, "cn", "source", rt.Ctx, c)
 }
