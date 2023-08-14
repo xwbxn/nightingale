@@ -168,10 +168,13 @@ func (rt *Router) importDeviceModels(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
 		return
 	}
+	me := c.MustGet("user").(*models.User)
 	var qty int = 0
 	for _, entity := range deviceModels {
 		// 循环体
 		var f models.DeviceModel = entity
+		f.CreatedBy = me.Username
+		f.UpdatedAt = f.CreatedAt
 		f.Add(rt.Ctx)
 		qty++
 	}
@@ -206,11 +209,28 @@ func readExcel(xlsx *excelize.File, ctx *ctx.Context) ([]models.DeviceModel, err
 					if heardOk && (fieldInfo.Tag.Get("cn") == title) {
 						var results []int64
 						var isDB = false
-						if sourceOk && fieldInfo.Tag.Get("source") == "table" {
-							isDB = true
-							value := strings.Split(fieldInfo.Tag.Get("value"), ",")
-							session := models.DB(ctx)
-							session.Table(value[0]).Where(value[1]+" = ?", colCell).Pluck("id", &results)
+
+						if sourceOk {
+							sources := strings.Split(fieldInfo.Tag.Get("source"), ",")
+							m := make(map[string]string)
+							for _, pair := range sources {
+								kv := strings.Split(pair, "=")
+								m[kv[0]] = strings.Trim(kv[1], " ")
+							}
+							if m["type"] == "table" {
+								isDB = true
+								session := models.DB(ctx)
+								session.Table(m["table"]).Where(m["field"]+" = ?", colCell).Pluck("id", &results)
+							} else if m["type"] == "option" {
+								currentValue := m["value"][1 : len(m["value"])-1]
+								rangs := strings.Split(currentValue, ";")
+								for idx := 0; idx < len(rangs); idx++ {
+									if rangs[idx] == colCell {
+										results = append(results, int64(idx))
+										break
+									}
+								}
+							}
 						}
 
 						switch fieldType := fieldInfo.Type.Kind(); fieldType {
@@ -265,7 +285,7 @@ func (rt *Router) exportDeviceModels(c *gin.Context) {
 
 		}
 	}
-	excels.NewMyExcel("设备型号数据").ExportDataToWeb(datas, "cn", c)
+	excels.NewMyExcel("设备型号数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
 
 }
 
