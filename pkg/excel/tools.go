@@ -40,10 +40,8 @@ func (l *lzExcelExport) ExportToPath(params []map[string]string, data []map[stri
 }
 
 //导出到浏览器。此处使用的gin框架 其他框架可自行修改ctx
-func (l *lzExcelExport) ExportDataToWeb(data []interface{}, tagName string, c *gin.Context) {
-
-	dataKey := make([]map[string]string, 0) //表头
-
+func (l *lzExcelExport) ExportDataInfo(data []interface{}, tagName string, ctx *ctx.Context, gtx *gin.Context) {
+	dataKey := make([]map[string]string, 0)    //表头
 	datas := make([]map[string]interface{}, 0) //数据
 
 	if data != nil && len(data) > 0 {
@@ -97,22 +95,56 @@ func (l *lzExcelExport) ExportDataToWeb(data []interface{}, tagName string, c *g
 
 			for i := 0; i < t.NumField(); i++ {
 				_, ok := t.Field(i).Tag.Lookup(tagName)
+				_, sourceOk := t.Field(i).Tag.Lookup("source")
 				if ok == true {
-					out[t.Field(i).Name] = v.Field(i).Interface()
+
+					if sourceOk {
+						m := make(map[string]string)
+						sources := strings.Split(t.Field(i).Tag.Get("source"), ",")
+						for _, pair := range sources {
+							kv := strings.Split(pair, "=")
+							m[kv[0]] = strings.Trim(kv[1], " ")
+						}
+
+						if m["type"] == "table" {
+							session := models.DB(ctx)
+							var results []string
+							session.Table(m["table"]).Where(" id = ?", v.Field(i).Interface()).Pluck(m["field"], &results)
+							if len(results) > 0 {
+								out[t.Field(i).Name] = results[0]
+							}
+						} else if m["type"] == "option" {
+							currentValue := m["value"][1 : len(m["value"])-1]
+							rangs := strings.Split(currentValue, ";")
+							for idx := 0; idx < len(rangs); idx++ {
+								currentValue := fmt.Sprintf("%d", v.Field(i).Interface())
+								if fmt.Sprintf("%d", idx) == currentValue {
+									out[t.Field(i).Name] = rangs[idx]
+									break
+								}
+							}
+						} else {
+							out[t.Field(i).Name] = v.Field(i).Interface()
+						}
+
+					} else {
+						out[t.Field(i).Name] = v.Field(i).Interface()
+					}
+
 				}
+
 			}
 			datas = append(datas, out)
 		}
-
 	}
 
 	l.export(dataKey, datas)
 	buffer, _ := l.file.WriteToBuffer()
 	//设置文件类型
-	c.Header("Content-Type", "application/vnd.ms-excel;charset=utf8")
+	gtx.Header("Content-Type", "application/vnd.ms-excel;charset=utf8")
 	//设置文件名称
-	c.Header("Content-Disposition", "attachment; filename="+url.QueryEscape(createFileName()))
-	_, _ = c.Writer.Write(buffer.Bytes())
+	gtx.Header("Content-Disposition", "attachment; filename="+url.QueryEscape(createFileName()))
+	_, _ = gtx.Writer.Write(buffer.Bytes())
 }
 
 //导出到浏览器。此处使用的gin框架 其他框架可自行修改ctx
@@ -269,13 +301,11 @@ func (l *lzExcelExport) writeTemplet(params []map[string]string, data []interfac
 				isNum = "1"
 			}
 			if sourceOk {
-
 				var values []string
 				dv := excelize.NewDataValidation(true)
 				dv.SetSqref(fmt.Sprintf("%c%v:%c1048576", word, j, word))
 				m := make(map[string]string)
 				sources := strings.Split(fieldInfo.Tag.Get("source"), ",")
-
 				for _, pair := range sources {
 					kv := strings.Split(pair, "=")
 					m[kv[0]] = strings.Trim(kv[1], " ")
@@ -288,10 +318,9 @@ func (l *lzExcelExport) writeTemplet(params []map[string]string, data []interfac
 					values = append(values, results...)
 				} else if m["type"] == "range" {
 					currentValue := m["value"][1 : len(m["value"])-1]
-					rangs := strings.Split(currentValue, ",")
+					rangs := strings.Split(currentValue, ";")
 					for _, pair := range rangs {
 						starts := strings.Split(pair, "-")
-
 						start, _ := strconv.Atoi(starts[0])
 						var end int = start
 						if len(starts) > 1 {
