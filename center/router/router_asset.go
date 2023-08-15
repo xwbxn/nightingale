@@ -28,9 +28,13 @@ func (rt *Router) assetsGets(c *gin.Context) {
 	assets, err := models.AssetGets(rt.Ctx, bgid, query, orgId)
 	ginx.Dangerous(err)
 	for _, asset := range assets {
-		atype, has := rt.assetCache.GetType(asset.Type)
-		if has {
+		atype, ok := rt.assetCache.GetType(asset.Type)
+		if ok {
 			asset.Dashboard = strings.ReplaceAll(atype.Dashboard, "${id}", fmt.Sprintf("%d", asset.Id))
+		}
+		health, ok := rt.assetCache.Get(asset.Id)
+		if ok {
+			asset.Health = health.Health
 		}
 	}
 	ginx.NewRender(c).Data(assets, err)
