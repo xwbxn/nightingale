@@ -457,8 +457,32 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/device-producer", rt.auth(), rt.admin(), rt.deviceProducerPut)
 		pages.DELETE("/device-producer/:id", rt.auth(), rt.admin(), rt.deviceProducerDel)
 		pages.POST("/device-producer/import-xls", rt.auth(), rt.admin(), rt.importDeviceProducer)
-		pages.POST("/device-producer/download-xls", rt.auth(), rt.admin(), rt.dowmloadDeviceProducer)
+		pages.POST("/device-producer/download-xls", rt.auth(), rt.admin(), rt.downloadDeviceProducer)
+		pages.POST("/device-producer/templet", rt.auth(), rt.admin(), rt.templetDeviceProducer)
 
+		//数据中心管理
+		pages.GET("/data-center", rt.auth(), rt.admin(), rt.dataCenterGets)
+		pages.GET("/data-center/:id", rt.auth(), rt.admin(), rt.dataCenterGet)
+		pages.POST("/data-center", rt.auth(), rt.admin(), rt.dataCenterAdd)
+		pages.PUT("/data-center", rt.auth(), rt.admin(), rt.dataCenterPut)
+		pages.DELETE("/data-center/:id", rt.auth(), rt.admin(), rt.dataCenterDel)
+
+		//机房信息管理
+		pages.GET("/machine-room", rt.auth(), rt.admin(), rt.machineRoomGets)
+		pages.GET("/machine-room/:id", rt.auth(), rt.admin(), rt.machineRoomGet)
+		pages.POST("/machine-room", rt.auth(), rt.admin(), rt.machineRoomAdd)
+		pages.PUT("/machine-room", rt.auth(), rt.admin(), rt.machineRoomPut)
+		pages.DELETE("/machine-room/:id", rt.auth(), rt.admin(), rt.machineRoomDel)
+
+		//机柜信息管理
+		pages.GET("/device-cabinet", rt.auth(), rt.admin(), rt.deviceCabinetGets)
+		pages.GET("/device-cabinet/:id", rt.auth(), rt.admin(), rt.deviceCabinetGet)
+		pages.POST("/device-cabinet", rt.auth(), rt.admin(), rt.deviceCabinetAdd)
+		pages.POST("/device-cabinet/import-xls", rt.auth(), rt.admin(), rt.importDeviceCabinet)
+		pages.POST("/device-cabinet/download-xls", rt.auth(), rt.admin(), rt.downloadDeviceCabinet)
+		pages.POST("/device-cabinet/templet", rt.auth(), rt.admin(), rt.templetDeviceCabinet)
+		pages.PUT("/device-cabinet", rt.auth(), rt.admin(), rt.deviceCabinetPut)
+		pages.DELETE("/device-cabinet/:id", rt.auth(), rt.admin(), rt.deviceCabinetDel)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
