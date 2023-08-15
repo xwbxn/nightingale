@@ -33,7 +33,7 @@ type DeviceModel struct {
 	RatedConsumption   float64 `gorm:"column:RATED_CONSUMPTION" json:"rated_consumption"  cn:"额定功耗"`                                                  //type:*float64   comment:额定功耗(W)                version:2023-07-08 14:55
 	PeakConsumption    float64 `gorm:"column:PEAK_CONSUMPTION" json:"peak_consumption"  cn:"峰值功耗"`                                                    //type:*float64   comment:峰值功耗(W)                version:2023-07-08 14:55
 	Weight             float64 `gorm:"column:WEIGHT" json:"weight"  cn:"设备重量"`                                                                        //type:*float64   comment:设备重量(kg)               version:2023-07-08 14:55
-	Enlistment         int64   `gorm:"column:ENLISTMENT" json:"enlistment"   cn:"服役期限" source:"type=option,value=[男;女]"  `                            //type:*int       comment:服役期限(月)               version:2023-07-08 14:55
+	Enlistment         int64   `gorm:"column:ENLISTMENT" json:"enlistment"   cn:"服役期限"  `                                                             //type:*int       comment:服役期限(月)               version:2023-07-08 14:55
 	OutBandVersion     string  `gorm:"column:OUT_BAND_VERSION" json:"out_band_version" cn:"带外版本"`                                                     //type:string     comment:带外版本                   version:2023-07-08 14:55
 	Describe           string  `gorm:"column:DESCRIBE" json:"describe" cn:"描述"`                                                                       //type:string     comment:描述                       version:2023-07-08 14:55
 }

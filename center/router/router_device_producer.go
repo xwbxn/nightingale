@@ -145,7 +145,7 @@ func (rt *Router) dowmloadDeviceProducer(c *gin.Context) {
 
 		}
 	}
-	excels.NewMyExcel("设备厂商数据").ExportDataToWeb(datas, "cn", c)
+	excels.NewMyExcel("设备厂商数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
 
 }
 

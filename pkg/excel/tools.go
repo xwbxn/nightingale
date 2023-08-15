@@ -39,7 +39,89 @@ func (l *lzExcelExport) ExportToPath(params []map[string]string, data []map[stri
 	return filePath, err
 }
 
-//导出到浏览器。此处使用的gin框架 其他框架可自行修改ctx
+func ReadExce[T any](xlsx *excelize.File, ctx *ctx.Context) ([]T, error) {
+	//根据名字获取cells的内容，返回的是一个[][]string
+	rows := xlsx.GetRows(xlsx.GetSheetName(xlsx.GetActiveSheetIndex()))
+	//声明一个数组
+	var entitys []T
+	fields := reflect.ValueOf(new(T)).Elem()
+	mapLit := make(map[int]string)
+	for i, row := range rows {
+		//去掉第一行是excel表头部分
+		if i == 0 { //取得第一行的所有数据---execel表头
+			for index, colCell := range row {
+				mapLit[index] = colCell
+			}
+		} else {
+			entity := new(T)
+			g := reflect.ValueOf(entity).Elem()
+			for index, colCell := range row {
+				title := mapLit[index]
+				for i := 0; i < fields.NumField(); i++ {
+					fieldInfo := fields.Type().Field(i)
+
+					cnTag, heardOk := fieldInfo.Tag.Lookup("cn")
+					sourceTag, sourceOk := fieldInfo.Tag.Lookup("source")
+
+					if heardOk && (cnTag == title) {
+						var results []int64
+						var isDB = false
+
+						if sourceOk {
+							sources := strings.Split(sourceTag, ",")
+							m := make(map[string]string)
+							for _, pair := range sources {
+								kv := strings.Split(pair, "=")
+								m[kv[0]] = strings.Trim(kv[1], " ")
+							}
+							if m["type"] == "table" {
+								isDB = true
+								session := models.DB(ctx)
+								session.Table(m["table"]).Where(m["field"]+" = ?", colCell).Pluck("id", &results)
+							} else if m["type"] == "option" {
+								isDB = true
+								currentValue := m["value"][1 : len(m["value"])-1]
+								rangs := strings.Split(currentValue, ";")
+								for idx := 0; idx < len(rangs); idx++ {
+									if rangs[idx] == colCell {
+										results = append(results, int64(idx))
+										break
+									}
+								}
+							}
+						}
+						switch fieldType := fieldInfo.Type.Kind(); fieldType {
+						case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64:
+							{
+								if isDB {
+									if len(results) > 0 {
+										g.FieldByName(fieldInfo.Name).SetInt(results[0])
+									}
+								} else {
+									s1, _ := strconv.Atoi(colCell)
+									g.FieldByName(fieldInfo.Name).SetInt(int64(s1))
+								}
+							}
+						case reflect.String:
+							g.FieldByName(fieldInfo.Name).SetString(colCell)
+						case reflect.Bool:
+							g.FieldByName(fieldInfo.Name).SetBool(colCell == "true")
+						default:
+							fmt.Printf("field type %s not support yet", fieldType)
+						}
+					}
+				}
+
+			}
+			entitys = append(entitys, *entity)
+		}
+
+	}
+	return entitys, nil
+
+}
+
+//导出到浏览器--本系统调用方法体。此处使用的gin框架 其他框架可自行修改ctx
 func (l *lzExcelExport) ExportDataInfo(data []interface{}, tagName string, ctx *ctx.Context, gtx *gin.Context) {
 	dataKey := make([]map[string]string, 0)    //表头
 	datas := make([]map[string]interface{}, 0) //数据
@@ -94,13 +176,13 @@ func (l *lzExcelExport) ExportDataInfo(data []interface{}, tagName string, ctx *
 			}
 
 			for i := 0; i < t.NumField(); i++ {
-				_, ok := t.Field(i).Tag.Lookup(tagName)
-				_, sourceOk := t.Field(i).Tag.Lookup("source")
-				if ok == true {
+				_, cnOk := t.Field(i).Tag.Lookup(tagName)
+				sourceTag, sourceOk := t.Field(i).Tag.Lookup("source")
+				if cnOk == true {
 
 					if sourceOk {
 						m := make(map[string]string)
-						sources := strings.Split(t.Field(i).Tag.Get("source"), ",")
+						sources := strings.Split(sourceTag, ",")
 						for _, pair := range sources {
 							kv := strings.Split(pair, "=")
 							m[kv[0]] = strings.Trim(kv[1], " ")
@@ -172,9 +254,8 @@ func (l *lzExcelExport) ExportTempletToWeb(data []interface{}, tagName string, o
 		for i := 0; i < t.NumField(); i++ {
 
 			fieldInfo := t.Field(i)
-			_, headerOK := fieldInfo.Tag.Lookup(tagName)
-
-			if headerOK == true {
+			cnTag, cnOk := fieldInfo.Tag.Lookup(tagName)
+			if cnOk == true {
 				var is_num string = "0"
 				switch fieldType := fieldInfo.Type.Kind(); fieldType {
 				case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -182,7 +263,7 @@ func (l *lzExcelExport) ExportTempletToWeb(data []interface{}, tagName string, o
 				}
 				dataKey = append(dataKey, map[string]string{
 					"key":    fieldInfo.Name,
-					"title":  string(fieldInfo.Tag.Get(tagName)),
+					"title":  string(cnTag),
 					"width":  "20",
 					"is_num": is_num,
 				})
@@ -199,10 +280,6 @@ func (l *lzExcelExport) ExportTempletToWeb(data []interface{}, tagName string, o
 	_, _ = c.Writer.Write(buffer.Bytes())
 }
 
-func length(data []interface{}) {
-	panic("unimplemented")
-}
-
 //导出到浏览器。此处使用的gin框架 其他框架可自行修改ctx
 func (l *lzExcelExport) ExportToWeb(params []map[string]string, data []map[string]interface{}, c *gin.Context) {
 	l.export(params, data)
@@ -215,22 +292,36 @@ func (l *lzExcelExport) ExportToWeb(params []map[string]string, data []map[strin
 }
 
 //设置首行
+//调整头部列数超过26列，需要调整
+
 func (l *lzExcelExport) writeTop(params []map[string]string) {
 	topStyle, _ := l.file.NewStyle(`{"font":{"bold":true},"alignment":{"horizontal":"center","vertical":"center"}}`)
 	var word = 'A'
+	var num int = 1
+	var prefixWord = ""
 	//首行写入
 	for _, conf := range params {
 		title := conf["title"]
 		width, _ := strconv.ParseFloat(conf["width"], 64)
-		line := fmt.Sprintf("%c1", word)
+
+		if num/26 == 2 {
+			prefixWord = "AA"
+		} else if num/26 == 1 {
+			prefixWord = "A"
+		}
+		line := prefixWord + fmt.Sprintf("%c1", word)
 		//设置标题
 		l.file.SetCellValue(l.sheetName, line, title)
 		//列宽
-		l.file.SetColWidth(l.sheetName, fmt.Sprintf("%c", word), fmt.Sprintf("%c", word), width)
+		l.file.SetColWidth(l.sheetName, prefixWord+fmt.Sprintf("%c", word), prefixWord+fmt.Sprintf("%c", word), width)
 		//设置样式
 		l.file.SetCellStyle(l.sheetName, line, line, topStyle)
 
 		word++
+		if num%26 == 0 {
+			word = 'A'
+		}
+		num++
 	}
 }
 
@@ -245,10 +336,18 @@ func (l *lzExcelExport) writeData(params []map[string]string, data []map[string]
 		l.file.SetRowHeight(l.sheetName, i+1, defaultHeight)
 		//逐列写入
 		var word = 'A'
+		var num int = 1
+		var prefixWord = ""
 		for _, conf := range params {
 			valKey := conf["key"]
-			line := fmt.Sprintf("%c%v", word, j)
+
 			isNum := conf["is_num"]
+			if num/26 == 2 {
+				prefixWord = "AA"
+			} else if num/26 == 1 {
+				prefixWord = "A"
+			}
+			line := prefixWord + fmt.Sprintf("%c%v", word, j)
 			//设置值
 			if isNum != "0" {
 				valNum := fmt.Sprintf("%v", val[valKey])
@@ -261,6 +360,10 @@ func (l *lzExcelExport) writeData(params []map[string]string, data []map[string]
 			}
 
 			word++
+			if num%26 == 0 {
+				word = 'A'
+			}
+			num++
 		}
 		j++
 	}
@@ -278,6 +381,8 @@ func (l *lzExcelExport) writeTemplet(params []map[string]string, data []interfac
 	l.file.SetRowHeight(l.sheetName, 1, defaultHeight)
 	//逐列写入
 	var word = 'A'
+	var num int = 1
+	var prefixWord = ""
 	// for i, _ := range data {
 	t := reflect.TypeOf(data[0])
 	v := reflect.ValueOf(data[0])
@@ -291,10 +396,15 @@ func (l *lzExcelExport) writeTemplet(params []map[string]string, data []interfac
 	}
 	for i := 0; i < t.NumField(); i++ {
 		fieldInfo := t.Field(i)
-		_, heardOk := fieldInfo.Tag.Lookup("cn")
-		_, sourceOk := fieldInfo.Tag.Lookup("source")
-		if heardOk == true {
-			line := fmt.Sprintf("%c%v", word, j)
+		_, cnOK := fieldInfo.Tag.Lookup("cn")
+		sourceTag, sourceOk := fieldInfo.Tag.Lookup("source")
+		if num/26 == 2 {
+			prefixWord = "AA"
+		} else if num/26 == 1 {
+			prefixWord = "A"
+		}
+		if cnOK == true {
+			line := prefixWord + fmt.Sprintf("%c%v", word, j)
 			var isNum string = "0"
 			switch fieldType := fieldInfo.Type.Kind(); fieldType {
 			case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64:
@@ -305,7 +415,7 @@ func (l *lzExcelExport) writeTemplet(params []map[string]string, data []interfac
 				dv := excelize.NewDataValidation(true)
 				dv.SetSqref(fmt.Sprintf("%c%v:%c1048576", word, j, word))
 				m := make(map[string]string)
-				sources := strings.Split(fieldInfo.Tag.Get("source"), ",")
+				sources := strings.Split(sourceTag, ",")
 				for _, pair := range sources {
 					kv := strings.Split(pair, "=")
 					m[kv[0]] = strings.Trim(kv[1], " ")
@@ -348,16 +458,15 @@ func (l *lzExcelExport) writeTemplet(params []map[string]string, data []interfac
 				l.file.SetCellStyle(l.sheetName, line, line, lineStyleLeft)
 			}
 			word++
-
+			if num%26 == 0 {
+				word = 'A'
+			}
+			num++
 		}
 	}
 
 	//设置行高 尾行
 	l.file.SetRowHeight(l.sheetName, len(data)+1, defaultHeight)
-}
-
-func DB(c *gin.Context) {
-	panic("unimplemented")
 }
 
 func (l *lzExcelExport) export(params []map[string]string, data []map[string]interface{}) {
@@ -384,6 +493,15 @@ func createFileName() string {
 	name := time.Now().Format("2006-01-02-15-04-05")
 	rand.Seed(time.Now().UnixNano())
 	return fmt.Sprintf("excle-%v-%v.xlsx", name, rand.Int63n(time.Now().Unix()))
+}
+
+// Letter 遍历a-z
+func Letter(length int) []string {
+	var str []string
+	for i := 0; i < length; i++ {
+		str = append(str, string(rune('A'+i)))
+	}
+	return str
 }
 
 //excel导出(数据源为Struct) []interface{}
@@ -433,13 +551,4 @@ func (l *lzExcelExport) ExportExcelByStruct(theme string, titleList []string, da
 	c.Writer.Header().Set("Content-Transfer-Encoding", "binary")
 	c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Disposition")
 	return l.file.Write(c.Writer)
-}
-
-// Letter 遍历a-z
-func Letter(length int) []string {
-	var str []string
-	for i := 0; i < length; i++ {
-		str = append(str, string(rune('A'+i)))
-	}
-	return str
 }
