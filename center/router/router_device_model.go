@@ -4,15 +4,10 @@
 package router
 
 import (
-	"log"
 	"net/http"
-	"reflect"
-	"strconv"
-	"strings"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 	models "github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	excels "github.com/ccfos/nightingale/v6/pkg/excel"
 
 	"github.com/gin-gonic/gin"
@@ -163,7 +158,7 @@ func (rt *Router) importDeviceModels(c *gin.Context) {
 		return
 	}
 	//解析excel的数据
-	deviceModels, lxRrr := readExcel(xlsx, rt.Ctx)
+	deviceModels, lxRrr := excels.ReadExce[models.DeviceModel](xlsx, rt.Ctx)
 	if lxRrr != nil {
 		ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
 		return
@@ -179,88 +174,6 @@ func (rt *Router) importDeviceModels(c *gin.Context) {
 		qty++
 	}
 	ginx.NewRender(c).Data(qty, nil)
-}
-
-//ReadExcel .读取excel 转成切片
-func readExcel(xlsx *excelize.File, ctx *ctx.Context) ([]models.DeviceModel, error) {
-	//根据名字获取cells的内容，返回的是一个[][]string
-	rows := xlsx.GetRows(xlsx.GetSheetName(xlsx.GetActiveSheetIndex()))
-	//声明一个数组
-	var deviceModels []models.DeviceModel
-	fields := reflect.ValueOf(new(models.DeviceModel)).Elem()
-	mapLit := make(map[int]string)
-	for i, row := range rows {
-		//去掉第一行是excel表头部分
-		if i == 0 { //取得第一行的所有数据---execel表头
-			for index, colCell := range row {
-				mapLit[index] = colCell
-			}
-		} else {
-			entity := &models.DeviceModel{}
-			g := reflect.ValueOf(entity).Elem()
-			for index, colCell := range row {
-				title := mapLit[index]
-				for i := 0; i < fields.NumField(); i++ {
-					fieldInfo := fields.Type().Field(i)
-
-					_, heardOk := fieldInfo.Tag.Lookup("cn")
-					_, sourceOk := fieldInfo.Tag.Lookup("source")
-
-					if heardOk && (fieldInfo.Tag.Get("cn") == title) {
-						var results []int64
-						var isDB = false
-
-						if sourceOk {
-							sources := strings.Split(fieldInfo.Tag.Get("source"), ",")
-							m := make(map[string]string)
-							for _, pair := range sources {
-								kv := strings.Split(pair, "=")
-								m[kv[0]] = strings.Trim(kv[1], " ")
-							}
-							if m["type"] == "table" {
-								isDB = true
-								session := models.DB(ctx)
-								session.Table(m["table"]).Where(m["field"]+" = ?", colCell).Pluck("id", &results)
-							} else if m["type"] == "option" {
-								currentValue := m["value"][1 : len(m["value"])-1]
-								rangs := strings.Split(currentValue, ";")
-								for idx := 0; idx < len(rangs); idx++ {
-									if rangs[idx] == colCell {
-										results = append(results, int64(idx))
-										break
-									}
-								}
-							}
-						}
-
-						switch fieldType := fieldInfo.Type.Kind(); fieldType {
-						case reflect.Int, reflect.Int16, reflect.Int32, reflect.Int64:
-							{
-								if isDB {
-									if len(results) > 0 {
-										g.FieldByName(fieldInfo.Name).SetInt(results[0])
-									}
-								} else {
-									s1, _ := strconv.Atoi(colCell)
-									g.FieldByName(fieldInfo.Name).SetInt(int64(s1))
-								}
-							}
-						case reflect.String:
-							g.FieldByName(fieldInfo.Name).SetString(colCell)
-						case reflect.Bool:
-							g.FieldByName(fieldInfo.Name).SetBool(colCell == "true")
-						default:
-							log.Printf("field type %s not support yet", fieldType)
-						}
-					}
-				}
-
-			}
-			deviceModels = append(deviceModels, *entity)
-		}
-
-	}
-	return deviceModels, nil
 }
 
 // @Summary      导出设备型号数据
