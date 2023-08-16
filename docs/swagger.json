@@ -35,6 +35,507 @@
                 }
             }
         },
+        "/api/n9e/device-model/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询设备型号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "查询设备型号",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.DeviceModel"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新设备型号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "更新设备型号",
+                "parameters": [
+                    {
+                        "description": "update deviceModel",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建设备型号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "创建设备型号",
+                "parameters": [
+                    {
+                        "description": "add deviceModel",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-model/import": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "导入型号",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "导入设备型号",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-model/outport": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件导出数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "根据条件导出数据",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceModel"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-model/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取设备型号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "获取设备型号",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceModel"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除设备型号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "删除设备型号",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-producer/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询设备厂商",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "查询设备厂商",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.DeviceProducer"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新设备厂商",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "更新设备厂商",
+                "parameters": [
+                    {
+                        "description": "update deviceProducer",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceProducer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建设备厂商",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "创建设备厂商",
+                "parameters": [
+                    {
+                        "description": "add deviceProducer",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceProducer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-producer/download-xls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "EXCEL导出设备厂商",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/msexcel"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "EXCEL导出设备厂商",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "导入查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-producer/import-xls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "EXCEL导入设备厂商",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "EXCEL导入设备厂商",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-producer/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取设备厂商",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "获取设备厂商",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceProducer"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除设备厂商",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "删除设备厂商",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/api/n9e/device-type/": {
             "get": {
                 "security": [
@@ -219,6 +720,100 @@
         }
     },
     "definitions": {
+        "models.DeviceModel": {
+            "type": "object",
+            "properties": {
+                "describe": {
+                    "type": "string"
+                },
+                "enlistment": {
+                    "description": "type:*int       comment:服役期限(月)               version:2023-07-08 14:55",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "type:*int       comment:主键                       version:2023-07-08 14:55",
+                    "type": "integer"
+                },
+                "maximum_memory": {
+                    "description": "type:*float64   comment:最大内存（M）              version:2023-07-08 14:55",
+                    "type": "number"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "out_band_version": {
+                    "type": "string"
+                },
+                "outline_structure": {
+                    "type": "string"
+                },
+                "peak_consumption": {
+                    "description": "type:*float64   comment:峰值功耗(W)                version:2023-07-08 14:55",
+                    "type": "number"
+                },
+                "producer_id": {
+                    "description": "type:*int       comment:厂商-ID;来源设备厂商信息   version:2023-07-08 14:55",
+                    "type": "integer"
+                },
+                "rated_consumption": {
+                    "description": "type:*float64   comment:额定功耗(W)                version:2023-07-08 14:55",
+                    "type": "number"
+                },
+                "series": {
+                    "type": "string"
+                },
+                "specifications": {
+                    "type": "string"
+                },
+                "subtype": {
+                    "type": "string"
+                },
+                "u_number": {
+                    "description": "type:*int       comment:U数                        version:2023-07-08 14:55",
+                    "type": "integer"
+                },
+                "weight": {
+                    "description": "type:*float64   comment:设备重量(kg)               version:2023-07-08 14:55",
+                    "type": "number"
+                },
+                "working_consumption": {
+                    "description": "type:*float64   comment:工作功耗(W)                version:2023-07-08 14:55",
+                    "type": "number"
+                }
+            }
+        },
+        "models.DeviceProducer": {
+            "type": "object",
+            "properties": {
+                "alias": {
+                    "type": "string"
+                },
+                "chinese_name": {
+                    "type": "string"
+                },
+                "company_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "type:*int     comment:主键            version:2023-07-08 14:43",
+                    "type": "integer"
+                },
+                "is_display_chinese": {
+                    "description": "type:*int     comment:是否显示中文    version:2023-07-08 14:43",
+                    "type": "integer"
+                },
+                "is_domestic": {
+                    "description": "type:*int     comment:是否国产        version:2023-07-08 14:43",
+                    "type": "integer"
+                },
+                "official": {
+                    "type": "string"
+                }
+            }
+        },
         "models.DeviceType": {
             "type": "object",
             "properties": {

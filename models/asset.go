@@ -41,7 +41,7 @@ type Asset struct {
 	Dashboard          string     `json:"dashboard" gorm:"-"`
 
 	//下面的是健康检查使用，在memsto缓存中保存
-	Health   int64                        `json:"-" gorm:"-"` //0: fail 1: ok
+	Health   int64                        `json:"health" gorm:"-"` //0: fail 1: ok
 	HealthAt int64                        `json:"-" gorm:"-"`
 	Metrics  map[string]map[string]string `json:"-" gorm:"-"`
 }

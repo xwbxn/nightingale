@@ -1,4 +1,78 @@
 definitions:
+  models.DeviceModel:
+    properties:
+      describe:
+        type: string
+      enlistment:
+        description: type:*int       comment:服役期限(月)               version:2023-07-08
+          14:55
+        type: integer
+      id:
+        description: type:*int       comment:主键                       version:2023-07-08
+          14:55
+        type: integer
+      maximum_memory:
+        description: type:*float64   comment:最大内存（M）              version:2023-07-08
+          14:55
+        type: number
+      model:
+        type: string
+      name:
+        type: string
+      out_band_version:
+        type: string
+      outline_structure:
+        type: string
+      peak_consumption:
+        description: type:*float64   comment:峰值功耗(W)                version:2023-07-08
+          14:55
+        type: number
+      producer_id:
+        description: type:*int       comment:厂商-ID;来源设备厂商信息   version:2023-07-08 14:55
+        type: integer
+      rated_consumption:
+        description: type:*float64   comment:额定功耗(W)                version:2023-07-08
+          14:55
+        type: number
+      series:
+        type: string
+      specifications:
+        type: string
+      subtype:
+        type: string
+      u_number:
+        description: type:*int       comment:U数                        version:2023-07-08
+          14:55
+        type: integer
+      weight:
+        description: type:*float64   comment:设备重量(kg)               version:2023-07-08
+          14:55
+        type: number
+      working_consumption:
+        description: type:*float64   comment:工作功耗(W)                version:2023-07-08
+          14:55
+        type: number
+    type: object
+  models.DeviceProducer:
+    properties:
+      alias:
+        type: string
+      chinese_name:
+        type: string
+      company_name:
+        type: string
+      id:
+        description: type:*int     comment:主键            version:2023-07-08 14:43
+        type: integer
+      is_display_chinese:
+        description: type:*int     comment:是否显示中文    version:2023-07-08 14:43
+        type: integer
+      is_domestic:
+        description: type:*int     comment:是否国产        version:2023-07-08 14:43
+        type: integer
+      official:
+        type: string
+    type: object
   models.DeviceType:
     properties:
       id:
@@ -40,6 +114,316 @@ paths:
       summary: 登录
       tags:
       - auth
+  /api/n9e/device-model/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询设备型号
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DeviceModel'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询设备型号
+      tags:
+      - 设备型号
+    post:
+      consumes:
+      - application/json
+      description: 创建设备型号
+      parameters:
+      - description: add deviceModel
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DeviceModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建设备型号
+      tags:
+      - 设备型号
+    put:
+      consumes:
+      - application/json
+      description: 更新设备型号
+      parameters:
+      - description: update deviceModel
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DeviceModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新设备型号
+      tags:
+      - 设备型号
+  /api/n9e/device-model/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除设备型号
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除设备型号
+      tags:
+      - 设备型号
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取设备型号
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeviceModel'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取设备型号
+      tags:
+      - 设备型号
+  /api/n9e/device-model/import:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 导入型号
+      parameters:
+      - description: file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 导入设备型号
+      tags:
+      - 设备型号
+  /api/n9e/device-model/outport:
+    post:
+      consumes:
+      - application/json
+      description: 根据条件导出数据
+      parameters:
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeviceModel'
+      security:
+      - ApiKeyAuth: []
+      summary: 根据条件导出数据
+      tags:
+      - 设备型号
+  /api/n9e/device-producer/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询设备厂商
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DeviceProducer'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询设备厂商
+      tags:
+      - 设备厂商
+    post:
+      consumes:
+      - application/json
+      description: 创建设备厂商
+      parameters:
+      - description: add deviceProducer
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DeviceProducer'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建设备厂商
+      tags:
+      - 设备厂商
+    put:
+      consumes:
+      - application/json
+      description: 更新设备厂商
+      parameters:
+      - description: update deviceProducer
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DeviceProducer'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新设备厂商
+      tags:
+      - 设备厂商
+  /api/n9e/device-producer/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除设备厂商
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除设备厂商
+      tags:
+      - 设备厂商
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取设备厂商
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeviceProducer'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取设备厂商
+      tags:
+      - 设备厂商
+  /api/n9e/device-producer/download-xls:
+    post:
+      consumes:
+      - multipart/form-data
+      description: EXCEL导出设备厂商
+      parameters:
+      - description: 导入查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/msexcel
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: EXCEL导出设备厂商
+      tags:
+      - 设备厂商
+  /api/n9e/device-producer/import-xls:
+    post:
+      consumes:
+      - multipart/form-data
+      description: EXCEL导入设备厂商
+      parameters:
+      - description: file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: EXCEL导入设备厂商
+      tags:
+      - 设备厂商
   /api/n9e/device-type/:
     get:
       consumes:
