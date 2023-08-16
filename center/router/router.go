@@ -461,18 +461,18 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/device-producer/templet", rt.auth(), rt.admin(), rt.templetDeviceProducer)
 
 		//数据中心管理
-		pages.GET("/data-center", rt.auth(), rt.admin(), rt.dataCenterGets)
-		pages.GET("/data-center/:id", rt.auth(), rt.admin(), rt.dataCenterGet)
-		pages.POST("/data-center", rt.auth(), rt.admin(), rt.dataCenterAdd)
-		pages.PUT("/data-center", rt.auth(), rt.admin(), rt.dataCenterPut)
-		pages.DELETE("/data-center/:id", rt.auth(), rt.admin(), rt.dataCenterDel)
+		pages.GET("/datacenter", rt.auth(), rt.admin(), rt.datacenterGets)
+		pages.GET("/datacenter/:id", rt.auth(), rt.admin(), rt.datacenterGet)
+		pages.POST("/datacenter", rt.auth(), rt.admin(), rt.datacenterAdd)
+		pages.PUT("/datacenter", rt.auth(), rt.admin(), rt.datacenterPut)
+		pages.DELETE("/datacenter/:id", rt.auth(), rt.admin(), rt.datacenterDel)
 
 		//机房信息管理
-		pages.GET("/machine-room", rt.auth(), rt.admin(), rt.machineRoomGets)
-		pages.GET("/machine-room/:id", rt.auth(), rt.admin(), rt.machineRoomGet)
-		pages.POST("/machine-room", rt.auth(), rt.admin(), rt.machineRoomAdd)
-		pages.PUT("/machine-room", rt.auth(), rt.admin(), rt.machineRoomPut)
-		pages.DELETE("/machine-room/:id", rt.auth(), rt.admin(), rt.machineRoomDel)
+		pages.GET("/computer-room", rt.auth(), rt.admin(), rt.computerRoomGets)
+		pages.GET("/computer-room/:id", rt.auth(), rt.admin(), rt.computerRoomGet)
+		pages.POST("/computer-room", rt.auth(), rt.admin(), rt.computerRoomAdd)
+		pages.PUT("/computer-room", rt.auth(), rt.admin(), rt.computerRoomPut)
+		pages.DELETE("/computer-room/:id", rt.auth(), rt.admin(), rt.computerRoomDel)
 
 		//机柜信息管理
 		pages.GET("/device-cabinet", rt.auth(), rt.admin(), rt.deviceCabinetGets)
@@ -483,6 +483,33 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/device-cabinet/templet", rt.auth(), rt.admin(), rt.templetDeviceCabinet)
 		pages.PUT("/device-cabinet", rt.auth(), rt.admin(), rt.deviceCabinetPut)
 		pages.DELETE("/device-cabinet/:id", rt.auth(), rt.admin(), rt.deviceCabinetDel)
+
+		//机柜组信息管理
+		pages.GET("/cabinet-group", rt.auth(), rt.admin(), rt.cabinetGroupGets)
+		pages.GET("/cabinet-group/:id", rt.auth(), rt.admin(), rt.cabinetGroupGet)
+		pages.POST("/cabinet-group", rt.auth(), rt.admin(), rt.cabinetGroupAdd)
+		pages.PUT("/cabinet-group", rt.auth(), rt.admin(), rt.cabinetGroupPut)
+		pages.DELETE("/cabinet-group/:id", rt.auth(), rt.admin(), rt.cabinetGroupDel)
+
+		//配线架信息管理
+		pages.GET("/distribution-frame", rt.auth(), rt.admin(), rt.distributionFrameGets)
+		pages.GET("/distribution-frame/:id", rt.auth(), rt.admin(), rt.distributionFrameGet)
+		pages.POST("/distribution-frame", rt.auth(), rt.admin(), rt.distributionFrameAdd)
+		pages.POST("/distribution-frame/import-xls", rt.auth(), rt.admin(), rt.importDistributionFrame)
+		pages.POST("/distribution-frame/download-xls", rt.auth(), rt.admin(), rt.downloadDistributionFrame)
+		pages.POST("/distribution-frame/templet", rt.auth(), rt.admin(), rt.templetDistributionFrame)
+		pages.PUT("/distribution-frame", rt.auth(), rt.admin(), rt.distributionFramePut)
+		pages.DELETE("/distribution-frame/:id", rt.auth(), rt.admin(), rt.distributionFrameDel)
+
+		//PDU信息管理
+		pages.GET("/pdu", rt.auth(), rt.admin(), rt.pduGets)
+		pages.GET("/pdu/:id", rt.auth(), rt.admin(), rt.pduGet)
+		pages.POST("/pdu", rt.auth(), rt.admin(), rt.pduAdd)
+		pages.POST("/pdu/import-xls", rt.auth(), rt.admin(), rt.importpdu)
+		pages.POST("/pdu/download-xls", rt.auth(), rt.admin(), rt.downloadpdu)
+		pages.POST("/pdu/templet", rt.auth(), rt.admin(), rt.templetpdu)
+		pages.PUT("/pdu", rt.auth(), rt.admin(), rt.pduPut)
+		pages.DELETE("/pdu/:id", rt.auth(), rt.admin(), rt.pduDel)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

@@ -88,6 +88,11 @@ func ReadExce[T any](xlsx *excelize.File, ctx *ctx.Context) ([]T, error) {
 										break
 									}
 								}
+							} else if m["type"] == "date" {
+								isDB = true
+								timeLayout := "2006-01-02"
+								times, _ := time.Parse(timeLayout, colCell)
+								results = append(results, int64(times.Unix()))
 							}
 						}
 						switch fieldType := fieldInfo.Type.Kind(); fieldType {
@@ -351,7 +356,14 @@ func (l *lzExcelExport) writeData(params []map[string]string, data []map[string]
 			//设置值
 			if isNum != "0" {
 				valNum := fmt.Sprintf("%v", val[valKey])
-				l.file.SetCellValue(l.sheetName, line, valNum)
+
+				if strings.HasSuffix(valKey, "At") {
+					int64Num, _ := strconv.ParseInt(valNum, 10, 64)
+					dataTimeStr := time.Unix(int64Num, 0).Format("2006-01-02")
+					l.file.SetCellValue(l.sheetName, line, dataTimeStr)
+				} else {
+					l.file.SetCellValue(l.sheetName, line, valNum)
+				}
 				l.file.SetCellStyle(l.sheetName, line, line, lineStyle)
 			} else {
 				l.file.SetCellValue(l.sheetName, line, val[valKey])
