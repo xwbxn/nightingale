@@ -45,23 +45,19 @@ func (rt *Router) deviceModelGet(c *gin.Context) {
 // @Tags         设备型号
 // @Accept       json
 // @Produce      json
-// @Param        limit query   int     false  "返回条数"
-// @Param        query query   string  false  "查询条件"
-// @Success      200  {array}  models.DeviceModel
-// @Router       /api/n9e/device-model/ [get]
+// @Param        deviceType query   int     false  "类型"
+// @Success      200  {array}  models.DeviceModelDetailsVo
+// @Router       /api/n9e/device-model/getmodel/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) deviceModelGets(c *gin.Context) {
-	limit := ginx.QueryInt(c, "limit", 20)
-	query := ginx.QueryStr(c, "query", "")
+	deviceType := ginx.QueryInt(c, "deviceType", -1)
 
-	total, err := models.DeviceModelCount(rt.Ctx, query)
-	ginx.Dangerous(err)
-	lst, err := models.DeviceModelGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
+	lst, err := models.DeviceModelGetsByType(rt.Ctx, int64(deviceType))
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
 		"list":  lst,
-		"total": total,
+		"total": len(lst),
 	}, nil)
 }
 

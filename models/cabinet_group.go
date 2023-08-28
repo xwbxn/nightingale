@@ -4,6 +4,8 @@
 package models
 
 import (
+	"errors"
+
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
 
@@ -15,7 +17,7 @@ import (
 type CabinetGroup struct {
 	Id               int64  `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键          version:2023-07-15 14:32
 	CabinetGroupCode string `gorm:"column:CABINET_GROUP_CODE" json:"cabinet_group_code" `     //type:string   comment:机柜组编号    version:2023-07-15 14:32
-	MachineRoomName  string `gorm:"column:MACHINE_ROOM_NAME" json:"machine_room_name" `       //type:string   comment:所属机房      version:2023-07-15 14:32
+	RoomId           int64  `gorm:"column:ROOM_ID" json:"room_id" `                           //type:string   comment:所属机房      version:2023-07-15 14:32
 	CabinetGroupType string `gorm:"column:CABINET_GROUP_TYPE" json:"cabinet_group_type" `     //type:string   comment:机柜组类型    version:2023-07-15 14:32
 	Row              int64  `gorm:"column:ROW" json:"row" `                                   //type:*int     comment:行            version:2023-07-15 14:32
 	StartColumn      int64  `gorm:"column:START_COLUMN" json:"start_column" `                 //type:*int     comment:开始列        version:2023-07-15 14:32
@@ -74,9 +76,25 @@ func CabinetGroupGetsAll(ctx *ctx.Context) ([]CabinetGroup, error) {
 	return lst, err
 }
 
+//根据机房名称和机柜组编号查询
+func (c *CabinetGroup) CabinetGroupGetsByCompNameAndCode(ctx *ctx.Context) (bool, error) {
+	var lst []CabinetGroup
+	err := DB(ctx).Where("ROOM_ID = ? AND CABINET_GROUP_CODE = ?", c.RoomId, c.CabinetGroupCode).Find(&lst).Error
+	return len(lst) == 0, err
+}
+
 // 增加机柜组信息
 func (c *CabinetGroup) Add(ctx *ctx.Context) error {
 	// 这里写CabinetGroup的业务逻辑，通过error返回错误
+
+	exist, err := c.CabinetGroupGetsByCompNameAndCode(ctx)
+	if err != nil {
+		return err
+	}
+
+	if !exist {
+		return errors.New("机房名称或编号已存在！")
+	}
 
 	// 实际向库中写入
 	return DB(ctx).Create(c).Error

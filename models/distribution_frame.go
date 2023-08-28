@@ -14,12 +14,12 @@ import (
 // version:2023-07-16 10:14
 type DistributionFrame struct {
 	Id              int64  `gorm:"column:ID;primaryKey" json:"id" `                                                                     //type:*int     comment:主键          version:2023-07-16 10:14
-	RoomName        string `gorm:"column:ROOM_NAME" json:"room_name" cn:"机房名称" validate:"required"`                                     //type:string   comment:机房名称      version:2023-07-16 10:14
+	RoomId          int64  `gorm:"column:ROOM_ID" json:"room_id" cn:"所属机房" validate:"required"`                                         //type:*int     comment:所属机房                             version:2023-07-25 17:23
 	CabinetCode     string `gorm:"column:CABINET_CODE" json:"cabinet_code" cn:"机柜编号" validate:"required"`                               //type:string   comment:机柜编号      version:2023-07-16 10:14
 	DisFrame        string `gorm:"column:DIS_FRAME" json:"dis_frame" cn:"配线架编号" validate:"required"`                                    //type:string   comment:配线架编号    version:2023-07-16 10:14
 	DisName         string `gorm:"column:DIS_NAME" json:"dis_name" cn:"配线架名称"`                                                          //type:string   comment:配线架名称    version:2023-07-16 10:14
-	Producer        string `gorm:"column:PRODUCER" json:"producer" cn:"厂商"`                                                             //type:string   comment:厂商          version:2023-07-16 10:14
-	Model           string `gorm:"column:MODEL" json:"model" cn:"型号"`                                                                   //type:string   comment:型号          version:2023-07-16 10:14
+	ProducerId      int64  `gorm:"column:PRODUCER_ID" json:"producer_id" cn:"厂商"`                                                       //type:*int     comment:厂商                                 version:2023-07-25 17:25
+	Model           int64  `gorm:"column:MODEL" json:"model" cn:"型号"`                                                                   //type:string   comment:型号          version:2023-07-16 10:14
 	Specification   string `gorm:"column:SPECIFICATION" json:"specification" cn:"规格"`                                                   //type:string   comment:规格          version:2023-07-16 10:14
 	DisType         int64  `gorm:"column:DIS_TYPE" json:"dis_type" cn:"配线架类型" source:"type=option,value=[双绞线;光纤配线架]"`                   //type:*int     comment:配线架类型(0:双绞线;1:光纤配线架)    version:2023-07-16 11:02
 	TotalPortNum    int64  `gorm:"column:TOTAL_PORT_NUM" json:"total_port_num" cn:"总端口数" validate:"required,gte=1"`                     //type:*int     comment:总端口数      version:2023-07-16 10:14

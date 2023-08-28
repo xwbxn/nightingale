@@ -4,7 +4,10 @@
 package models
 
 import (
+	"errors"
+
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/toolkits/pkg/logger"
 )
 
 // ComputerRoom  机房信息。
@@ -16,7 +19,7 @@ type ComputerRoom struct {
 	Id                  int64   `gorm:"column:ID;primaryKey" json:"id" `                                                      //type:*int       comment:主键            version:2023-07-11 16:11
 	RoomName            string  `gorm:"column:ROOM_NAME" json:"room_name" validate:"required"`                                //type:string     comment:名称            version:2023-07-11 16:11
 	RoomCode            string  `gorm:"column:ROOM_CODE" json:"room_code" validate:"required"`                                //type:string     comment:编码            version:2023-07-11 16:11
-	IdcLocation         string  `gorm:"column:IDC_LOCATION" json:"idc_location" validate:"omitempty"`                         //type:string     comment:所在IDC         version:2023-07-11 16:11
+	IdcLocation         int64   `gorm:"column:IDC_LOCATION" json:"idc_location" `                                             //type:*int       comment:所在IDC         version:2023-07-25 11:09
 	Subgallery          string  `gorm:"column:SUBGALLERY" json:"subgallery" validate:"omitempty"`                             //type:string     comment:所属楼座        version:2023-07-11 16:11
 	Floor               int64   `gorm:"column:FLOOR" json:"floor" validate:"omitempty"`                                       //type:*int       comment:所属楼层        version:2023-07-11 16:11
 	Voltage             int64   `gorm:"column:VOLTAGE" json:"voltage" validate:"omitempty,min=0"`                             //type:*int       comment:电压            version:2023-07-11 16:11
@@ -34,6 +37,11 @@ type ComputerRoom struct {
 	CreatedAt           int64   `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"`                             //type:*int       comment:创建时间        version:2023-07-11 16:11
 	UpdatedBy           string  `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"`                             //type:string     comment:更新人          version:2023-07-11 16:11
 	UpdatedAt           int64   `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"`                             //type:*int       comment:更新时间        version:2023-07-11 16:11
+}
+type ComputerRoomNameVo struct {
+	Id          int64  `gorm:"column:ID;primaryKey" json:"id" `                       //type:*int       comment:主键            version:2023-07-11 16:11
+	RoomName    string `gorm:"column:ROOM_NAME" json:"room_name" validate:"required"` //type:string     comment:名称            version:2023-07-11 16:11
+	IdcLocation int64  `gorm:"column:IDC_LOCATION" json:"idc_location" `              //type:*int       comment:所在IDC         version:2023-07-25 11:09
 }
 
 // TableName 表名:computer_room，机房信息。
@@ -73,6 +81,18 @@ func ComputerRoomGetById(ctx *ctx.Context, id int64) (*ComputerRoom, error) {
 	return obj, nil
 }
 
+// 按所属机房查询机房名称列表
+func ComputerRoomNameGetByIdc(ctx *ctx.Context, idc int64) ([]ComputerRoomNameVo, error) {
+	var obj []ComputerRoomNameVo
+	err := DB(ctx).Model(&ComputerRoom{}).Select("ID", "ROOM_NAME", "IDC_LOCATION").Where("IDC_LOCATION = ?", idc).Find(&obj).Error
+	if err != nil {
+		return nil, err
+	}
+	logger.Debug("---------------------------")
+	logger.Debug(obj)
+	return obj, nil
+}
+
 // 查询所有
 func ComputerRoomGetsAll(ctx *ctx.Context) ([]ComputerRoom, error) {
 	var lst []ComputerRoom
@@ -97,9 +117,25 @@ func (c *ComputerRoom) Del(ctx *ctx.Context) error {
 	return DB(ctx).Delete(c).Error
 }
 
+//根据机房名称或机房编号查询
+func (c *ComputerRoom) ComputerRoomGetsByNameOrCode(ctx *ctx.Context) (bool, error) {
+	var lst []ComputerRoom
+	err := DB(ctx).Where("ROOM_NAME", c.RoomName).Or("ROOM_CODE", c.RoomCode).Find(&lst).Error
+	return len(lst) == 0, err
+}
+
 // 更新机房信息
 func (c *ComputerRoom) Update(ctx *ctx.Context, updateFrom interface{}, selectField interface{}, selectFields ...interface{}) error {
 	// 这里写ComputerRoom的业务逻辑，通过error返回错误
+
+	exist, err := c.ComputerRoomGetsByNameOrCode(ctx)
+	if err != nil {
+		return err
+	}
+
+	if !exist {
+		return errors.New("机房名称或编号已存在！")
+	}
 
 	// 实际向库中写入
 	return DB(ctx).Model(c).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
@@ -108,4 +144,12 @@ func (c *ComputerRoom) Update(ctx *ctx.Context, updateFrom interface{}, selectFi
 // 根据条件统计个数
 func ComputerRoomCount(ctx *ctx.Context, where string, args ...interface{}) (num int64, err error) {
 	return Count(DB(ctx).Model(&ComputerRoom{}).Where(where, args...))
+}
+
+//查询所有机房名称
+func ComputerRoomGetsAllName(ctx *ctx.Context) ([]string, error) {
+	var computerRoomName []string
+	err := DB(ctx).Select("ROOM_NAME").Find(&computerRoomName).Error
+	logger.Debug(computerRoomName)
+	return computerRoomName, err
 }

@@ -40,7 +40,7 @@ func (rt *Router) cabinetGroupGet(c *gin.Context) {
 // @Param        limit query   int     false  "返回条数"
 // @Param        query query   string  false  "查询条件"
 // @Success      200  {array}  models.CabinetGroup
-// @Router       /api/n9e/cabinet-group/ [get]
+// @Router       /api/n9e/cabinet-group/list/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) cabinetGroupGets(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)

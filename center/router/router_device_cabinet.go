@@ -35,6 +35,23 @@ func (rt *Router) deviceCabinetGet(c *gin.Context) {
 	ginx.NewRender(c).Data(deviceCabinet, nil)
 }
 
+// @Summary      获取机柜名称列表
+// @Description  根据机房ID获取机柜名称列表
+// @Tags         机柜信息
+// @Accept       json
+// @Produce      json
+// @Param        roomId    query    string  true  "机房ID"
+// @Success      200  {object}  models.DeviceCabinetNameVo
+// @Router       /api/n9e/device-cabinet/getNames/ [get]
+// @Security     ApiKeyAuth
+func (rt *Router) deviceCabinetNameGet(c *gin.Context) {
+	roomId := ginx.QueryInt64(c, "roomId", -1)
+	deviceCabinet, err := models.DeviceCabinetGetByRoomId(rt.Ctx, roomId)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(deviceCabinet, nil)
+}
+
 // @Summary      查询机柜信息
 // @Description  根据条件查询机柜信息
 // @Tags         机柜信息
@@ -43,7 +60,7 @@ func (rt *Router) deviceCabinetGet(c *gin.Context) {
 // @Param        limit query   int     false  "返回条数"
 // @Param        query query   string  false  "查询条件"
 // @Success      200  {array}  models.DeviceCabinet
-// @Router       /api/n9e/device-cabinet/ [get]
+// @Router       /api/n9e/device-cabinet/list/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) deviceCabinetGets(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)

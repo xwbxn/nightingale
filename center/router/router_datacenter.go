@@ -41,7 +41,7 @@ func (rt *Router) datacenterGet(c *gin.Context) {
 // @Param        limit query   int     false  "返回条数"
 // @Param        query query   string  false  "查询条件"
 // @Success      200  {array}  models.Datacenter
-// @Router       /api/n9e/datacenter/ [get]
+// @Router       /api/n9e/datacenter/list/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) datacenterGets(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)

@@ -1,3 +1,6 @@
+// Package models  人员信息
+// date : 2023-08-25 13:56
+// desc : 人员信息
 package models
 
 import (
@@ -40,6 +43,11 @@ var (
 	DefaultChannels = []string{Dingtalk, Wecom, Feishu, Mm, Telegram, Email, FeishuCard}
 )
 
+// DeviceCabinet  人员信息
+// 说明:
+// 表名:user
+// group: User
+// version:2023-07-11 15:14
 type User struct {
 	Id         int64        `json:"id" gorm:"primaryKey"`
 	Username   string       `json:"username"`
@@ -57,6 +65,11 @@ type User struct {
 	UpdateAt   int64        `json:"update_at"`
 	UpdateBy   string       `json:"update_by"`
 	Admin      bool         `json:"admin" gorm:"-"` // 方便前端使用
+}
+
+type userNameVo struct {
+	Id       int64  `json:"id" gorm:"primaryKey"`
+	Nickname string `json:"nickname"`
 }
 
 func (u *User) TableName() string {
@@ -630,4 +643,12 @@ func (u *User) ExtractToken(key string) (string, bool) {
 	default:
 		return "", false
 	}
+}
+
+// 查询所有人名
+func UserNameGets(ctx *ctx.Context) ([]userNameVo, error) {
+	var lst []userNameVo
+	err := DB(ctx).Model(&User{}).Select("id", "nickname").Find(&lst).Error
+
+	return lst, err
 }

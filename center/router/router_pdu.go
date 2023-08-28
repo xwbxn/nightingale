@@ -42,7 +42,7 @@ func (rt *Router) pduGet(c *gin.Context) {
 // @Param        limit query   int     false  "返回条数"
 // @Param        query query   string  false  "查询条件"
 // @Success      200  {array}  models.Pdu
-// @Router       /api/n9e/pdu/ [get]
+// @Router       /api/n9e/pdu/list/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) pduGets(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)
