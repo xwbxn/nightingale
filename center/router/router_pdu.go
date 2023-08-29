@@ -182,7 +182,7 @@ func (rt *Router) importpdu(c *gin.Context) {
 func (rt *Router) downloadpdu(c *gin.Context) {
 
 	query := ginx.QueryStr(c, "query", "")
-	list, err := models.PduGets(rt.Ctx, query, 0, ginx.Offset(c, 0)) //获取数据
+	list, err := models.PduGets(rt.Ctx, query, -1, ginx.Offset(c, -1)) //获取数据
 
 	ginx.Dangerous(err)
 

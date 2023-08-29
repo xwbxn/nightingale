@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 // @Summary      获取配线架信息
@@ -198,9 +199,10 @@ func (rt *Router) importDistributionFrame(c *gin.Context) {
 func (rt *Router) downloadDistributionFrame(c *gin.Context) {
 
 	query := ginx.QueryStr(c, "query", "")
-	list, err := models.DistributionFrameGets(rt.Ctx, query, 0, ginx.Offset(c, 0)) //获取数据
-
+	list, err := models.DistributionFrameGets(rt.Ctx, query, -1, ginx.Offset(c, -1)) //获取数据
 	ginx.Dangerous(err)
+	logger.Debug("----------------------------------")
+	logger.Debug(list)
 
 	datas := make([]interface{}, 0)
 	if len(list) > 0 {

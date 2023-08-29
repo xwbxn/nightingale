@@ -111,6 +111,9 @@ func ReadExce[T any](xlsx *excelize.File, ctx *ctx.Context) ([]T, error) {
 							g.FieldByName(fieldInfo.Name).SetString(colCell)
 						case reflect.Bool:
 							g.FieldByName(fieldInfo.Name).SetBool(colCell == "true")
+						case reflect.Float64:
+							fnum, _ := strconv.ParseFloat(colCell, 64)
+							g.FieldByName(fieldInfo.Name).SetFloat(fnum)
 						default:
 							fmt.Printf("field type %s not support yet", fieldType)
 						}
