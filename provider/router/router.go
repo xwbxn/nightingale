@@ -36,12 +36,13 @@ func (rt *Router) Config(r *gin.Engine) {
 
 	registerMetrics()
 
+	provider := r.Group("/categraf")
 	if len(rt.HTTP.Provider.BasicAuth) > 0 {
-		// enable basic auth
-		auth := gin.BasicAuth(rt.HTTP.Provider.BasicAuth)
-		r.GET("/categraf/configs", auth, rt.CategrafConfigGet)
-	} else {
-		// no need basic auth
-		r.GET("/categraf/configs", rt.CategrafConfigGet)
+		provider.Use(gin.BasicAuth(rt.HTTP.Provider.BasicAuth))
 	}
+	// no need basic auth
+	provider.GET("/configs", rt.categrafConfigGet)
+	provider.GET("/upgrade", rt.targetVersionGet)
+	provider.HEAD("/upgrade", rt.targetVersionHead)
+
 }

@@ -48,7 +48,7 @@ type httpRemoteProviderResponse struct {
 //	    }
 //	  }
 //	}
-func (rt *Router) CategrafConfigGet(c *gin.Context) {
+func (rt *Router) categrafConfigGet(c *gin.Context) {
 	ident := ginx.QueryStr(c, "agent_hostname")
 	version := ginx.QueryStr(c, "version", "")
 
