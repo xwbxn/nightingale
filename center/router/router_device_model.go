@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 var (
@@ -163,6 +164,8 @@ func (rt *Router) importDeviceModels(c *gin.Context) {
 	var qty int = 0
 	for _, entity := range deviceModels {
 		// 循环体
+		logger.Debug("--------------------------")
+		logger.Debug(entity)
 		var f models.DeviceModel = entity
 		f.CreatedBy = me.Username
 		f.UpdatedAt = f.CreatedAt
@@ -184,7 +187,7 @@ func (rt *Router) importDeviceModels(c *gin.Context) {
 func (rt *Router) exportDeviceModels(c *gin.Context) {
 
 	query := ginx.QueryStr(c, "query", "")
-	list, err := models.DeviceModelGets(rt.Ctx, query, 0, ginx.Offset(c, 0)) //获取数据
+	list, err := models.DeviceModelGets(rt.Ctx, query, -1, ginx.Offset(c, -1)) //获取数据
 	ginx.Dangerous(err)
 
 	datas := make([]interface{}, 0)
