@@ -233,6 +233,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/users", rt.auth(), rt.user(), rt.perm("/users"), rt.userGets)
 		pages.POST("/users", rt.auth(), rt.admin(), rt.userAddPost)
 		pages.GET("/user/:id/profile", rt.auth(), rt.userProfileGet)
+		pages.GET("/user/getNames", rt.auth(), rt.userNameGets)
 		pages.PUT("/user/:id/profile", rt.auth(), rt.admin(), rt.userProfilePut)
 		pages.PUT("/user/:id/password", rt.auth(), rt.admin(), rt.userPasswordPut)
 		pages.DELETE("/user/:id", rt.auth(), rt.admin(), rt.userDel)
@@ -441,7 +442,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/device-type/:id", rt.auth(), rt.admin(), rt.deviceTypeDel)
 
 		//设备模型管理-
-		pages.GET("/device-model", rt.auth(), rt.admin(), rt.deviceModelGets)
+		pages.GET("/device-model/getmodel", rt.auth(), rt.admin(), rt.deviceModelGets)
 		pages.GET("/device-model/:id", rt.auth(), rt.admin(), rt.deviceModelGet)
 		pages.POST("/device-model", rt.auth(), rt.admin(), rt.deviceModelAdd)
 		pages.PUT("/device-model", rt.auth(), rt.admin(), rt.deviceModelPut)
@@ -451,8 +452,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/device-model/templet", rt.auth(), rt.admin(), rt.templetDeviceModels)
 
 		//设备厂商管理
-		pages.GET("/device-producer", rt.auth(), rt.admin(), rt.deviceProducerGets)
+		pages.GET("/device-producer/list", rt.auth(), rt.admin(), rt.deviceProducerGets)
 		pages.GET("/device-producer/:id", rt.auth(), rt.admin(), rt.deviceProducerGet)
+		pages.GET("/device-producer/getName", rt.auth(), rt.admin(), rt.deviceProducerGetNames)
 		pages.POST("/device-producer", rt.auth(), rt.admin(), rt.deviceProducerAdd)
 		pages.PUT("/device-producer", rt.auth(), rt.admin(), rt.deviceProducerPut)
 		pages.DELETE("/device-producer/:id", rt.auth(), rt.admin(), rt.deviceProducerDel)
@@ -461,22 +463,24 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/device-producer/templet", rt.auth(), rt.admin(), rt.templetDeviceProducer)
 
 		//数据中心管理
-		pages.GET("/datacenter", rt.auth(), rt.admin(), rt.datacenterGets)
+		pages.GET("/datacenter/list", rt.auth(), rt.admin(), rt.datacenterGets)
 		pages.GET("/datacenter/:id", rt.auth(), rt.admin(), rt.datacenterGet)
 		pages.POST("/datacenter", rt.auth(), rt.admin(), rt.datacenterAdd)
 		pages.PUT("/datacenter", rt.auth(), rt.admin(), rt.datacenterPut)
 		pages.DELETE("/datacenter/:id", rt.auth(), rt.admin(), rt.datacenterDel)
 
 		//机房信息管理
-		pages.GET("/computer-room", rt.auth(), rt.admin(), rt.computerRoomGets)
+		pages.GET("/computer-room/list", rt.auth(), rt.admin(), rt.computerRoomGets)
 		pages.GET("/computer-room/:id", rt.auth(), rt.admin(), rt.computerRoomGet)
+		pages.GET("/computer-room/datacenterId", rt.auth(), rt.admin(), rt.computerRoomNameGet)
 		pages.POST("/computer-room", rt.auth(), rt.admin(), rt.computerRoomAdd)
 		pages.PUT("/computer-room", rt.auth(), rt.admin(), rt.computerRoomPut)
 		pages.DELETE("/computer-room/:id", rt.auth(), rt.admin(), rt.computerRoomDel)
 
 		//机柜信息管理
-		pages.GET("/device-cabinet", rt.auth(), rt.admin(), rt.deviceCabinetGets)
+		pages.GET("/device-cabinet/list", rt.auth(), rt.admin(), rt.deviceCabinetGets)
 		pages.GET("/device-cabinet/:id", rt.auth(), rt.admin(), rt.deviceCabinetGet)
+		pages.GET("/device-cabinet/getNames", rt.auth(), rt.admin(), rt.deviceCabinetNameGet)
 		pages.POST("/device-cabinet", rt.auth(), rt.admin(), rt.deviceCabinetAdd)
 		pages.POST("/device-cabinet/import-xls", rt.auth(), rt.admin(), rt.importDeviceCabinet)
 		pages.POST("/device-cabinet/download-xls", rt.auth(), rt.admin(), rt.downloadDeviceCabinet)
@@ -485,14 +489,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/device-cabinet/:id", rt.auth(), rt.admin(), rt.deviceCabinetDel)
 
 		//机柜组信息管理
-		pages.GET("/cabinet-group", rt.auth(), rt.admin(), rt.cabinetGroupGets)
+		pages.GET("/cabinet-group/list", rt.auth(), rt.admin(), rt.cabinetGroupGets)
 		pages.GET("/cabinet-group/:id", rt.auth(), rt.admin(), rt.cabinetGroupGet)
 		pages.POST("/cabinet-group", rt.auth(), rt.admin(), rt.cabinetGroupAdd)
 		pages.PUT("/cabinet-group", rt.auth(), rt.admin(), rt.cabinetGroupPut)
 		pages.DELETE("/cabinet-group/:id", rt.auth(), rt.admin(), rt.cabinetGroupDel)
 
 		//配线架信息管理
-		pages.GET("/distribution-frame", rt.auth(), rt.admin(), rt.distributionFrameGets)
+		pages.GET("/distribution-frame/list", rt.auth(), rt.admin(), rt.distributionFrameGets)
 		pages.GET("/distribution-frame/:id", rt.auth(), rt.admin(), rt.distributionFrameGet)
 		pages.POST("/distribution-frame", rt.auth(), rt.admin(), rt.distributionFrameAdd)
 		pages.POST("/distribution-frame/import-xls", rt.auth(), rt.admin(), rt.importDistributionFrame)
@@ -502,7 +506,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/distribution-frame/:id", rt.auth(), rt.admin(), rt.distributionFrameDel)
 
 		//PDU信息管理
-		pages.GET("/pdu", rt.auth(), rt.admin(), rt.pduGets)
+		pages.GET("/pdu/list", rt.auth(), rt.admin(), rt.pduGets)
 		pages.GET("/pdu/:id", rt.auth(), rt.admin(), rt.pduGet)
 		pages.POST("/pdu", rt.auth(), rt.admin(), rt.pduAdd)
 		pages.POST("/pdu/import-xls", rt.auth(), rt.admin(), rt.importpdu)
@@ -510,6 +514,44 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/pdu/templet", rt.auth(), rt.admin(), rt.templetpdu)
 		pages.PUT("/pdu", rt.auth(), rt.admin(), rt.pduPut)
 		pages.DELETE("/pdu/:id", rt.auth(), rt.admin(), rt.pduDel)
+
+		//字典表类型管理
+		pages.GET("/dict-type/list", rt.auth(), rt.admin(), rt.dictTypeGets)
+		pages.GET("/dict-type/:id", rt.auth(), rt.admin(), rt.dictTypeGet)
+		pages.POST("/dict-type", rt.auth(), rt.admin(), rt.dictTypeAdd)
+		pages.PUT("/dict-type", rt.auth(), rt.admin(), rt.dictTypePut)
+		pages.DELETE("/dict-type/:id", rt.auth(), rt.admin(), rt.dictTypeDel)
+
+		//字典表数据管理
+		pages.GET("/dict-data/list", rt.auth(), rt.admin(), rt.dictDataGets)
+		pages.GET("/dict-data/:code", rt.auth(), rt.admin(), rt.dictDataGet)
+		pages.POST("/dict-data", rt.auth(), rt.admin(), rt.dictDataAdd)
+		pages.PUT("/dict-data", rt.auth(), rt.admin(), rt.dictDataPut)
+		pages.DELETE("/dict-data/:id", rt.auth(), rt.admin(), rt.dictDataDel)
+
+		//资产树管理
+		// pages.GET("/asset-tree/list", rt.auth(), rt.admin(), rt.assetTreeGets)
+		pages.GET("/asset-tree/data", rt.auth(), rt.admin(), rt.assetTreeGetALL)
+		// pages.GET("/asset-tree/count", rt.auth(), rt.admin(), rt.assetTreeGetCount)
+		// pages.GET("/asset-tree/:id", rt.auth(), rt.admin(), rt.assetTreeGet)
+		// pages.POST("/asset-tree", rt.auth(), rt.admin(), rt.assetTreeAdd)
+		// pages.PUT("/asset-tree", rt.auth(), rt.admin(), rt.assetTreePut)
+		// pages.DELETE("/asset-tree/:id", rt.auth(), rt.admin(), rt.assetTreeDel)
+
+		//资产详情管理
+		pages.POST("/asset-basic/list", rt.auth(), rt.admin(), rt.assetBasicGetsByTree)
+		pages.GET("/asset-basic/:id", rt.auth(), rt.admin(), rt.assetBasicGet)
+		pages.POST("/asset-basic", rt.auth(), rt.admin(), rt.assetBasicAdd)
+		pages.PUT("/asset-basic", rt.auth(), rt.admin(), rt.assetBasicPut)
+		pages.DELETE("/asset-basic/:id", rt.auth(), rt.admin(), rt.assetBasicDel)
+
+		//资产扩展管理
+		pages.GET("/asset-expansion/list", rt.auth(), rt.admin(), rt.assetExpansionGets)
+		pages.GET("/asset-expansion/:id", rt.auth(), rt.admin(), rt.assetExpansionGet)
+		pages.POST("/asset-expansion", rt.auth(), rt.admin(), rt.assetExpansionAdd)
+		pages.POST("/asset-expansion/batch", rt.auth(), rt.admin(), rt.assetExpansionBatchAdd)
+		pages.PUT("/asset-expansion", rt.auth(), rt.admin(), rt.assetExpansionPut)
+		pages.DELETE("/asset-expansion/:id", rt.auth(), rt.admin(), rt.assetExpansionDel)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

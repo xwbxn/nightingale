@@ -43,7 +43,7 @@ func (rt *Router) distributionFrameGet(c *gin.Context) {
 // @Param        limit query   int     false  "返回条数"
 // @Param        query query   string  false  "查询条件"
 // @Success      200  {array}  models.DistributionFrame
-// @Router       /api/n9e/distribution-frame/ [get]
+// @Router       /api/n9e/distribution-frame/list/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) distributionFrameGets(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)

@@ -33,6 +33,23 @@ func (rt *Router) computerRoomGet(c *gin.Context) {
 	ginx.NewRender(c).Data(computerRoom, nil)
 }
 
+// @Summary      获取机房信息
+// @Description  根据主键获取机房信息
+// @Tags         机房信息
+// @Accept       json
+// @Produce      json
+// @Param        idcLocation    query    int  true  "数据中心Id"
+// @Success      200  {object}  []models.ComputerRoomNameVo
+// @Router       /api/n9e/computer-room/datacenterId/ [get]
+// @Security     ApiKeyAuth
+func (rt *Router) computerRoomNameGet(c *gin.Context) {
+	IdcLocation := ginx.QueryInt(c, "idcLocation", -1)
+	computerRoom, err := models.ComputerRoomNameGetByIdc(rt.Ctx, int64(IdcLocation))
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(computerRoom, nil)
+}
+
 // @Summary      查询机房信息
 // @Description  根据条件查询机房信息
 // @Tags         机房信息
@@ -41,7 +58,7 @@ func (rt *Router) computerRoomGet(c *gin.Context) {
 // @Param        limit query   int     false  "返回条数"
 // @Param        query query   string  false  "查询条件"
 // @Success      200  {array}  models.ComputerRoom
-// @Router       /api/n9e/computer-room/ [get]
+// @Router       /api/n9e/computer-room/list/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) computerRoomGets(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)

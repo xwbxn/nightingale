@@ -1,3 +1,6 @@
+// Package models  人员信息
+// date : 2023-08-25 13:56
+// desc : 人员信息
 package router
 
 import (
@@ -134,4 +137,20 @@ func (rt *Router) userDel(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Message(target.Del(rt.Ctx))
+}
+
+// @Summary      查询人员列表
+// @Description  查询人员列表
+// @Tags         人员信息
+// @Accept       json
+// @Produce      json
+// @Success      200  {array}  models.userNameVo
+// @Router       /api/n9e/user/getNames/ [get]
+// @Security     ApiKeyAuth
+func (rt *Router) userNameGets(c *gin.Context) {
+
+	target, err := models.UserNameGets(rt.Ctx)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(target, nil)
 }

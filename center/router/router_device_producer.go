@@ -35,6 +35,22 @@ func (rt *Router) deviceProducerGet(c *gin.Context) {
 	ginx.NewRender(c).Data(deviceProducer, nil)
 }
 
+// @Summary      获取设备厂商名称
+// @Description  获取设备厂商名称
+// @Tags         设备厂商
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  []models.DeviceProducerNameVo
+// @Router       /api/n9e/device-producer/getName [get]
+// @Security     ApiKeyAuth
+func (rt *Router) deviceProducerGetNames(c *gin.Context) {
+
+	deviceProducerNames, err := models.FindNames(rt.Ctx)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(deviceProducerNames, nil)
+}
+
 // @Summary      查询设备厂商
 // @Description  根据条件查询设备厂商
 // @Tags         设备厂商
@@ -43,9 +59,34 @@ func (rt *Router) deviceProducerGet(c *gin.Context) {
 // @Param        limit query   int     false  "返回条数"
 // @Param        query query   string  false  "查询条件"
 // @Success      200  {array}  models.DeviceProducer
-// @Router       /api/n9e/device-producer/ [get]
+// @Router       /api/n9e/device-producer/list/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) deviceProducerGets(c *gin.Context) {
+	limit := ginx.QueryInt(c, "limit", 20)
+	query := ginx.QueryStr(c, "query", "")
+
+	total, err := models.DeviceProducerCount(rt.Ctx, query)
+	ginx.Dangerous(err)
+	lst, err := models.DeviceProducerGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(gin.H{
+		"list":  lst,
+		"total": total,
+	}, nil)
+}
+
+// @Summary      查询设备厂商
+// @Description  根据条件查询设备厂商
+// @Tags         设备厂商
+// @Accept       json
+// @Produce      json
+// @Param        limit query   int     false  "返回条数"
+// @Param        query query   string  false  "查询条件"
+// @Success      200  {array}  models.DeviceProducer
+// @Router       /api/n9e/device-producer/list/ [get]
+// @Security     ApiKeyAuth
+func (rt *Router) deviceProducerGetsName(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)
 	query := ginx.QueryStr(c, "query", "")
 

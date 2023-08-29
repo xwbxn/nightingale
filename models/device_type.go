@@ -5,6 +5,7 @@ package models
 
 import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/toolkits/pkg/logger"
 )
 
 // DeviceType  设备类型。
@@ -43,6 +44,7 @@ func DeviceTypeGets(ctx *ctx.Context, query string, limit, offset int) ([]Device
 
 	var lst []DeviceType
 	err := session.Find(&lst).Error
+	logger.Debug(session.Debug())
 
 	return lst, err
 }
@@ -57,6 +59,17 @@ func DeviceTypeGetById(ctx *ctx.Context, id int64) (*DeviceType, error) {
 
 	return obj, nil
 }
+
+// 按id查询
+// func DeviceTypeIdGetByName(ctx *ctx.Context, name string) (int, error) {
+// 	var obj *DeviceType
+// 	err := DB(ctx).Take(&obj, id).Error
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return obj, nil
+// }
 
 // 查询所有
 func DeviceTypeGetsAll(ctx *ctx.Context) ([]DeviceType, error) {

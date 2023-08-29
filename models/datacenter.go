@@ -4,6 +4,8 @@
 package models
 
 import (
+	"errors"
+
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
 
@@ -13,21 +15,21 @@ import (
 // group: Datacenter
 // version:2023-07-16 08:47
 type Datacenter struct {
-	Id                     int64   `gorm:"column:ID;primaryKey" json:"id" `                                                    //type:*int       comment:主键            version:2023-07-11 15:49
-	DatacenterName         string  `gorm:"column:DATACENTER_NAME" json:"datacenter_name" validate:"required"`                  //type:string     comment:数据中心名称    version:2023-07-11 15:49
-	DatacenterCode         string  `gorm:"column:DATACENTER_CODE" json:"datacenter_code" validate:"omitempty"`                 //type:string     comment:数据中心编码    version:2023-07-11 15:49
-	City                   string  `gorm:"column:CITY" json:"city" validate:"required"`                                        //type:string     comment:所在城市        version:2023-07-11 15:49
-	Address                string  `gorm:"column:ADDRESS" json:"address" validate:"omitempty"`                                 //type:string     comment:地址            version:2023-07-11 15:49
-	DutyPersonOne          string  `gorm:"column:DUTY_PERSON_ONE" json:"duty_person_one" validate:"omitempty"`                 //type:string     comment:责任人1         version:2023-07-11 15:49
-	DutyPersonTwo          string  `gorm:"column:DUTY_PERSON_TWO" json:"duty_person_two" validate:"omitempty"`                 //type:string     comment:责任人2         version:2023-07-11 15:49
-	LoadBearing            float64 `gorm:"column:LOAD_BEARING" json:"load_bearing" validate:"omitempty,gte=0"`                 //type:*float64   comment:承重            version:2023-07-11 15:49
-	Area                   float64 `gorm:"column:AREA" json:"area" validate:"omitempty,gte=0"`                                 //type:*float64   comment:面积            version:2023-07-11 15:49
-	AffiliatedOrganization string  `gorm:"column:AFFILIATED_ORGANIZATION" json:"affiliated_organization" validate:"omitempty"` //type:string     comment:所属组织机构    version:2023-07-11 15:49
-	Remark                 string  `gorm:"column:REMARK" json:"remark" validate:"omitempty"`                                   //type:string     comment:备注            version:2023-07-11 15:49
-	CreatedBy              string  `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"`                           //type:string     comment:创建人          version:2023-07-11 15:49
-	CreatedAt              int64   `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"`                           //type:*int       comment:创建时间        version:2023-07-11 15:49
-	UpdatedBy              string  `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"`                           //type:string     comment:更新人          version:2023-07-11 15:49
-	UpdatedAt              int64   `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"`                           //type:*int       comment:更新时间        version:2023-07-11 15:49
+	Id                 int64   `gorm:"column:ID;primaryKey" json:"id" `                                            //type:*int       comment:主键            version:2023-07-11 15:49
+	DatacenterName     string  `gorm:"column:DATACENTER_NAME" json:"datacenter_name" validate:"required"`          //type:string     comment:数据中心名称    version:2023-07-11 15:49
+	DatacenterCode     string  `gorm:"column:DATACENTER_CODE" json:"datacenter_code" validate:"omitempty"`         //type:string     comment:数据中心编码    version:2023-07-11 15:49
+	City               string  `gorm:"column:CITY" json:"city" validate:"required"`                                //type:string     comment:所在城市        version:2023-07-11 15:49
+	Address            string  `gorm:"column:ADDRESS" json:"address" validate:"omitempty"`                         //type:string     comment:地址            version:2023-07-11 15:49
+	DutyPersonOne      string  `gorm:"column:DUTY_PERSON_ONE" json:"duty_person_one" validate:"omitempty"`         //type:string     comment:责任人1         version:2023-07-11 15:49
+	DutyPersonTwo      string  `gorm:"column:DUTY_PERSON_TWO" json:"duty_person_two" validate:"omitempty"`         //type:string     comment:责任人2         version:2023-07-11 15:49
+	LoadBearing        float64 `gorm:"column:LOAD_BEARING" json:"load_bearing" validate:"omitempty,gte=0"`         //type:*float64   comment:承重            version:2023-07-11 15:49
+	Area               float64 `gorm:"column:AREA" json:"area" validate:"omitempty,gte=0"`                         //type:*float64   comment:面积            version:2023-07-11 15:49
+	BelongOrganization int64   `gorm:"column:BELONG_ORGANIZATION" json:"belong_organization" validate:"omitempty"` //type:string     comment:所属组织机构    version:2023-07-11 15:49
+	Remark             string  `gorm:"column:REMARK" json:"remark" validate:"omitempty"`                           //type:string     comment:备注            version:2023-07-11 15:49
+	CreatedBy          string  `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"`                   //type:string     comment:创建人          version:2023-07-11 15:49
+	CreatedAt          int64   `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"`                   //type:*int       comment:创建时间        version:2023-07-11 15:49
+	UpdatedBy          string  `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"`                   //type:string     comment:更新人          version:2023-07-11 15:49
+	UpdatedAt          int64   `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"`                   //type:*int       comment:更新时间        version:2023-07-11 15:49
 }
 
 // TableName 表名:datacenter，数据中心。
@@ -75,9 +77,24 @@ func DatacenterGetsAll(ctx *ctx.Context) ([]Datacenter, error) {
 	return lst, err
 }
 
+//根据数据中心名称查询
+func (d *Datacenter) DatacenterGetsByName(ctx *ctx.Context) (bool, error) {
+	var lst []Datacenter
+	err := DB(ctx).Where("DATACENTER_NAME", d.DatacenterName).Find(&lst).Error
+	return len(lst) == 0, err
+}
+
 // 增加数据中心
 func (d *Datacenter) Add(ctx *ctx.Context) error {
 	// 这里写Datacenter的业务逻辑，通过error返回错误
+	exist, err := d.DatacenterGetsByName(ctx)
+	if err != nil {
+		return err
+	}
+
+	if !exist {
+		return errors.New("数据中心名称已存在！")
+	}
 
 	// 实际向库中写入
 	return DB(ctx).Create(d).Error

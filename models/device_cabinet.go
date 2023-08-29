@@ -15,17 +15,17 @@ import (
 type DeviceCabinet struct {
 	Id                     int64   `gorm:"column:ID;primaryKey" json:"id" `                                                                                           //type:*int       comment:主键                                            version:2023-07-11 15:14
 	CabinetId              string  `gorm:"column:CABINET_ID" json:"cabinet_id" cn:"机柜ID"`                                                                             //type:string     comment:机柜ID                                          version:2023-07-11 15:14
-	EquipmentRoom          string  `gorm:"column:EQUIPMENT_ROOM" json:"equipment_room" cn:"所在机房"`                                                                     //type:string     comment:所在机房                                        version:2023-07-11 15:14
+	BelongRoom             int64   `gorm:"column:BELONG_ROOM" json:"belong_room" cn:"所在机房"`                                                                           //type:string     comment:所在机房                                        version:2023-07-11 15:14
 	CabinetCode            string  `gorm:"column:CABINET_CODE" json:"cabinet_code" cn:"机柜编号" validate:"required"`                                                     //type:string     comment:机柜编号                                        version:2023-07-11 15:14
 	CabinetName            string  `gorm:"column:CABINET_NAME" json:"cabinet_name" cn:"机柜名称"`                                                                         //type:string     comment:机柜名称                                        version:2023-07-11 15:14
-	CabinetCompanyName     string  `gorm:"column:CABINET_COMPANY_NAME" json:"cabinet_company_name" cn:"厂商"`                                                           //type:string     comment:厂商                                            version:2023-07-11 15:14
-	CabinetModel           string  `gorm:"column:CABINET_MODEL" json:"cabinet_model" cn:"型号"`                                                                         //type:string     comment:型号                                            version:2023-07-11 15:14
+	ProducerId             int64   `gorm:"column:PRODUCER_ID" json:"producer_id" cn:"厂商"`                                                                             //type:string     comment:厂商                                            version:2023-07-11 15:14
+	CabinetModel           int64   `gorm:"column:CABINET_MODEL" json:"cabinet_model" cn:"型号"`                                                                         //type:string     comment:型号                                            version:2023-07-11 15:14
 	CabinetPicture         string  `gorm:"column:CABINET_PICTURE" json:"cabinet_picture" `                                                                            //type:string     comment:机柜图片                                        version:2023-07-11 15:14
 	Unumber                int64   `gorm:"column:UNUMBER" json:"unumber" cn:"规格(U数)" validate:"required,gte=0,lte=99"`                                                //type:*int       comment:规格(U数)                                       version:2023-07-11 15:14
 	RowNumber              int64   `gorm:"column:ROW_NUMBER" json:"row_number" cn:"所在行" validate:"required,gte=1,lte=9999"`                                           //type:*int       comment:所在行                                          version:2023-07-11 15:14
 	RowName                string  `gorm:"column:ROW_NAME" json:"row_name" cn:"所在行名称"`                                                                                //type:string     comment:所在行名称                                      version:2023-07-11 15:14
 	ColumnNumber           int64   `gorm:"column:COLUMN_NUMBER" json:"column_number" cn:"所在列" validate:"required,gte=1,lte=9999"`                                     //type:*int       comment:所在列                                          version:2023-07-11 15:14
-	ColumnName             int64   `gorm:"column:COLUMN_NAME" json:"column_name" cn:"所在列名称"`                                                                          //type:*int       comment:所在列名称                                      version:2023-07-11 15:14
+	ColumnName             string  `gorm:"column:COLUMN_NAME" json:"column_name" cn:"所在列名称"`                                                                          //type:*int       comment:所在列名称                                      version:2023-07-11 15:14
 	MainPowerSupply        string  `gorm:"column:MAIN_POWER_SUPPLY" json:"main_power_supply" cn:"主要供电来源"`                                                             //type:string     comment:主要供电来源                                    version:2023-07-11 15:14
 	StandbyPowerSupply     string  `gorm:"column:STANDBY_POWER_SUPPLY" json:"standby_power_supply" cn:"备用供电来源"`                                                       //type:string     comment:临时供电来源                                    version:2023-07-11 15:14
 	PowerSupplyMode        string  `gorm:"column:POWER_SUPPLY_MODE" json:"power_supply_mode" `                                                                        //type:string     comment:供电方式                                        version:2023-07-11 15:14
@@ -46,6 +46,14 @@ type DeviceCabinet struct {
 	CreatedAt              int64   `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"`                                                                  //type:*int       comment:创建时间                                        version:2023-07-11 15:14
 	UpdatedBy              string  `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"`                                                                  //type:string     comment:更新人                                          version:2023-07-11 15:14
 	UpdatedAt              int64   `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"`                                                                  //type:*int       comment:更新时间                                        version:2023-07-11 15:14
+}
+
+type DeviceCabinetNameVo struct {
+	Id          int64  `gorm:"column:ID;primaryKey" json:"id" `                                       //type:*int       comment:主键                                            version:2023-07-11 15:14
+	CabinetId   string `gorm:"column:CABINET_ID" json:"cabinet_id" cn:"机柜ID"`                         //type:string     comment:机柜ID                                          version:2023-07-11 15:14
+	BelongRoom  int64  `gorm:"column:EQUIPMENT_ROOM" json:"equipment_room" cn:"所在机房"`                 //type:string     comment:所在机房                                        version:2023-07-11 15:14
+	CabinetName string `gorm:"column:CABINET_NAME" json:"cabinet_name" cn:"机柜名称"`                     //type:string     comment:机柜名称                                        version:2023-07-11 15:14
+	CabinetCode string `gorm:"column:CABINET_CODE" json:"cabinet_code" cn:"机柜编号" validate:"required"` //type:string     comment:机柜编号                                        version:2023-07-11 15:14
 }
 
 // TableName 表名:device_cabinet，机柜信息。
@@ -78,6 +86,17 @@ func DeviceCabinetGets(ctx *ctx.Context, query string, limit, offset int) ([]Dev
 func DeviceCabinetGetById(ctx *ctx.Context, id int64) (*DeviceCabinet, error) {
 	var obj *DeviceCabinet
 	err := DB(ctx).Take(&obj, id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
+// 按名称查询
+func DeviceCabinetGetByRoomId(ctx *ctx.Context, RoomId int64) ([]DeviceCabinetNameVo, error) {
+	var obj []DeviceCabinetNameVo
+	err := DB(ctx).Model(&DeviceCabinet{}).Select("ID", "CABINET_ID", "BELONG_ROOM", "CABINET_NAME", "CABINET_CODE").Where("BELONG_ROOM = ?", RoomId).Find(&obj).Error
 	if err != nil {
 		return nil, err
 	}

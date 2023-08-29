@@ -36,6 +36,11 @@ func (d *DeviceProducer) TableName() string {
 	return "device_producer"
 }
 
+type DeviceProducerNameVo struct {
+	Id    int64  `gorm:"column:ID;primaryKey" json:"id" `                         //type:*int     comment:主键            version:2023-07-08 14:43
+	Alias string `gorm:"column:ALIAS" json:"alias" cn:"厂商简称" validate:"required"` //type:string   comment:厂商简称        version:2023-07-08 14:43
+}
+
 // 条件查询
 func DeviceProducerGets(ctx *ctx.Context, query string, limit, offset int) ([]DeviceProducer, error) {
 	session := DB(ctx)
@@ -60,6 +65,17 @@ func DeviceProducerGets(ctx *ctx.Context, query string, limit, offset int) ([]De
 func DeviceProducerGetById(ctx *ctx.Context, id int64) (*DeviceProducer, error) {
 	var obj *DeviceProducer
 	err := DB(ctx).Take(&obj, id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
+// 查询所有厂商名称
+func FindNames(ctx *ctx.Context) ([]DeviceProducerNameVo, error) {
+	var obj []DeviceProducerNameVo
+	err := DB(ctx).Model(&DeviceProducer{}).Select("ID", "ALIAS").Find(&obj).Error
 	if err != nil {
 		return nil, err
 	}

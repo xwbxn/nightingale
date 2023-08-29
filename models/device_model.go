@@ -17,13 +17,14 @@ import (
 type DeviceModel struct {
 	Id                 int64   `gorm:"column:ID;primaryKey" json:"id" `                                                                               //type:*int       comment:主键                       version:2023-07-08 14:55
 	Name               string  `gorm:"column:NAME" json:"name" cn:"型号名称"`                                                                             //type:string     comment:型号名称                   version:2023-07-08 14:55
+	DeviceType         int64   `gorm:"column:DEVICE_TYPE" json:"device_type" `                                                                        //type:*int       comment:设备类型       version:2023-07-24 16:11
 	Subtype            string  `gorm:"column:SUBTYPE" json:"subtype"  cn:"子类型"`                                                                       //type:string     comment:子类型                     version:2023-07-08 14:55
 	CreatedBy          string  `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"`                                                      //type:string     comment:创建人                     version:2023-07-08 14:55
 	CreatedAt          int64   `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"`                                                      //type:*int       comment:创建时间                   version:2023-07-08 14:55
 	UpdatedBy          string  `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"`                                                      //type:string     comment:更新人                     version:2023-07-08 14:55
 	UpdatedAt          int64   `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"`                                                      //type:*int       comment:更新时间                   version:2023-07-08 14:55
 	ProducerId         int64   `gorm:"column:PRODUCER_ID" json:"producer_id" cn:"厂商"   source:"type=table,table=device_producer,field=chinese_name" ` //type:*int       comment:厂商-ID;来源设备厂商信息   version:2023-07-08 14:55
-	Model              string  `gorm:"column:MODEL" json:"model"  cn:"型号"`                                                                            //type:string     comment:型号                       version:2023-07-08 14:55
+	Model              int64   `gorm:"column:MODEL" json:"model"  cn:"型号"`                                                                            //type:string     comment:型号                       version:2023-07-08 14:55
 	Series             string  `gorm:"column:SERIES" json:"series"  cn:"系列"`                                                                          //type:string     comment:系列                       version:2023-07-08 14:55
 	UNumber            int64   `gorm:"column:U_NUMBER" json:"u_number"  cn:"U数" source:"type=range,value=[1-32;38]" `                                 //type:*int       comment:U数                        version:2023-07-08 14:55
 	OutlineStructure   string  `gorm:"column:OUTLINE_STRUCTURE" json:"outline_structure"  cn:"外形结构"`                                                  //type:string     comment:外形结构                   version:2023-07-08 14:55
@@ -36,6 +37,25 @@ type DeviceModel struct {
 	Enlistment         int64   `gorm:"column:ENLISTMENT" json:"enlistment"   cn:"服役期限"  `                                                             //type:*int       comment:服役期限(月)               version:2023-07-08 14:55
 	OutBandVersion     string  `gorm:"column:OUT_BAND_VERSION" json:"out_band_version" cn:"带外版本"`                                                     //type:string     comment:带外版本                   version:2023-07-08 14:55
 	Describe           string  `gorm:"column:DESCRIBE" json:"describe" cn:"描述"`                                                                       //type:string     comment:描述                       version:2023-07-08 14:55
+}
+
+type DeviceModelDetailsVo struct {
+	Id               int64  `gorm:"column:ID;primaryKey" json:"id" `                                                                               //type:*int       comment:主键                       version:2023-07-08 14:55
+	Name             string `gorm:"column:NAME" json:"name" cn:"型号名称"`                                                                             //type:string     comment:型号名称                   version:2023-07-08 14:55
+	DeviceType       int64  `gorm:"column:DEVICE_TYPE" json:"device_type" `                                                                        //type:*int       comment:设备类型       version:2023-07-24 16:11
+	Subtype          string `gorm:"column:SUBTYPE" json:"subtype"  cn:"子类型"`                                                                       //type:string     comment:子类型                     version:2023-07-08 14:55
+	OutlineStructure string `gorm:"column:OUTLINE_STRUCTURE" json:"outline_structure"  cn:"外形结构"`                                                  //type:string     comment:外形结构                   version:2023-07-08 14:55
+	Specifications   string `gorm:"column:SPECIFICATIONS" json:"specifications"  cn:"规格"`                                                          //type:string     comment:规格                       version:2023-07-08 14:55
+	ProducerId       int64  `gorm:"column:PRODUCER_ID" json:"producer_id" cn:"厂商"   source:"type=table,table=device_producer,field=chinese_name" ` //type:*int       comment:厂商-ID;来源设备厂商信息   version:2023-07-08 14:55
+	Alias            string `gorm:"column:ALIAS" json:"alias" cn:"厂商简称" validate:"required"`                                                       //type:string   comment:厂商简称        version:2023-07-08 14:43
+	Model            string `gorm:"column:MODEL" json:"model"  cn:"型号"`                                                                            //type:string     comment:型号                       version:2023-07-08 14:55
+	UNumber          int64  `gorm:"column:U_NUMBER" json:"u_number"  cn:"U数" source:"type=range,value=[1-32;38]" `                                 //type:*int       comment:U数                        version:2023-07-08 14:55
+}
+
+// TableName 表名:device_model，设备型号。
+// 说明:
+func (d *DeviceModel) TableName() string {
+	return "device_model"
 }
 
 func GetChinese() map[string]string {
@@ -51,10 +71,13 @@ func GetChinese() map[string]string {
 	return mapLit
 }
 
-// TableName 表名:device_model，设备型号。
-// 说明:
-func (d *DeviceModel) TableName() string {
-	return "device_model"
+// 条件查询
+func DeviceModelGetsByType(ctx *ctx.Context, deviceType int64) ([]DeviceModelDetailsVo, error) {
+
+	var lst []DeviceModelDetailsVo
+	err := DB(ctx).Model(&DeviceModel{}).Joins("left join device_producer on device_model.PRODUCER_ID = device_producer.ID").Select("device_model.ID", "NAME", "DEVICE_TYPE", "SUBTYPE", "OUTLINE_STRUCTURE", "SPECIFICATIONS", "PRODUCER_ID", "Alias", "MODEL", "U_NUMBER").Where("DEVICE_TYPE = ?", deviceType).Find(&lst).Error
+
+	return lst, err
 }
 
 // 条件查询
