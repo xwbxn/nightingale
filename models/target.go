@@ -13,15 +13,17 @@ import (
 )
 
 type Target struct {
-	Id       int64             `json:"id" gorm:"primaryKey"`
-	GroupId  int64             `json:"group_id"`
-	GroupObj *BusiGroup        `json:"group_obj" gorm:"-"`
-	Ident    string            `json:"ident"`
-	Note     string            `json:"note"`
-	Tags     string            `json:"-"`
-	TagsJSON []string          `json:"tags" gorm:"-"`
-	TagsMap  map[string]string `json:"tags_maps" gorm:"-"` // internal use, append tags to series
-	UpdateAt int64             `json:"update_at"`
+	Id             int64             `json:"id" gorm:"primaryKey"`
+	GroupId        int64             `json:"group_id"`
+	GroupObj       *BusiGroup        `json:"group_obj" gorm:"-"`
+	Ident          string            `json:"ident"`
+	Note           string            `json:"note"`
+	Tags           string            `json:"-"`
+	TagsJSON       []string          `json:"tags" gorm:"-"`
+	TagsMap        map[string]string `json:"tags_maps" gorm:"-"` // internal use, append tags to series
+	UpdateAt       int64             `json:"update_at"`
+	CurrentVersion string            `json:"current_version"`
+	LatestVersion  string            `json:"latest_version"`
 
 	UnixTime   int64   `json:"unixtime" gorm:"-"`
 	Offset     int64   `json:"offset" gorm:"-"`
@@ -206,6 +208,19 @@ func TargetUpdateBgid(ctx *ctx.Context, idents []string, bgid int64, clearTags b
 	fields := map[string]interface{}{
 		"group_id":  bgid,
 		"update_at": time.Now().Unix(),
+	}
+
+	if clearTags {
+		fields["tags"] = ""
+	}
+
+	return DB(ctx).Model(&Target{}).Where("ident in ?", idents).Updates(fields).Error
+}
+
+func TargetUpdateVersion(ctx *ctx.Context, idents []string, version string, clearTags bool) error {
+	fields := map[string]interface{}{
+		"current_version": version,
+		"update_at":       time.Now().Unix(),
 	}
 
 	if clearTags {

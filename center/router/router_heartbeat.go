@@ -51,11 +51,14 @@ func (rt *Router) heartbeat(c *gin.Context) {
 
 	gid := ginx.QueryInt64(c, "gid", 0)
 
-	if gid != 0 {
-		target, has := rt.TargetCache.Get(req.Hostname)
-		if has && target.GroupId != gid {
-			err = models.TargetUpdateBgid(rt.Ctx, []string{req.Hostname}, gid, false)
-		}
+	target, has := rt.TargetCache.Get(req.Hostname)
+	if has && target.GroupId != gid {
+		err = models.TargetUpdateBgid(rt.Ctx, []string{req.Hostname}, gid, false)
+	}
+	ginx.Dangerous(err)
+
+	if has && target.CurrentVersion != req.AgentVersion {
+		err = models.TargetUpdateVersion(rt.Ctx, []string{req.Hostname}, req.AgentVersion, false)
 	}
 
 	ginx.NewRender(c).Message(err)
