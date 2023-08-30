@@ -15,10 +15,11 @@ type TargetVersion struct {
 }
 
 func TargetVersionGet(ctx *ctx.Context, version string, goos string, arch string) (*TargetVersion, error) {
-	path := fmt.Sprintf("etc/client/categraf-%s-%s-%s", version, goos, arch)
+	win_ext := ""
 	if goos == "windows" {
-		path += ".exe"
+		win_ext = ".exe"
 	}
+	path := fmt.Sprintf("etc/client/categraf-%s-%s-%s%s.gz", version, goos, arch, win_ext)
 
 	_, err := os.Stat(path)
 	if err != nil {
