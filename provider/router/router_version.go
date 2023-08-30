@@ -6,12 +6,12 @@ import (
 	"github.com/toolkits/pkg/ginx"
 )
 
-func (rt *Router) targetVersionHead(c *gin.Context) {
+func (rt *Router) categrafVersionHead(c *gin.Context) {
 	new_version := getNewVersion(c, rt)
 	c.Header("Client-Version", new_version.Version)
 }
 
-func (rt *Router) targetVersionGet(c *gin.Context) {
+func (rt *Router) categrafVersionGet(c *gin.Context) {
 	new_version := getNewVersion(c, rt)
 	c.File(new_version.Path)
 }

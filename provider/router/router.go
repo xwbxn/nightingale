@@ -42,7 +42,7 @@ func (rt *Router) Config(r *gin.Engine) {
 	}
 	// no need basic auth
 	provider.GET("/configs", rt.categrafConfigGet)
-	provider.GET("/upgrade", rt.targetVersionGet)
-	provider.HEAD("/upgrade", rt.targetVersionHead)
+	provider.GET("/update", rt.categrafVersionGet)
+	provider.HEAD("/update", rt.categrafVersionHead)
 
 }
