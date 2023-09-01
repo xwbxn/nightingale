@@ -552,6 +552,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/asset-expansion/batch", rt.auth(), rt.admin(), rt.assetExpansionBatchAdd)
 		pages.PUT("/asset-expansion", rt.auth(), rt.admin(), rt.assetExpansionPut)
 		pages.DELETE("/asset-expansion/:id", rt.auth(), rt.admin(), rt.assetExpansionDel)
+
+		//探针版本管理
+		pages.POST("/target/version", rt.auth(), rt.admin(), rt.importNewVersion)
+		pages.POST("/server/update", rt.auth(), rt.admin(), rt.importUpgradePack)
+		pages.GET("/target/:ident/version", rt.auth(), rt.admin(), rt.UsableVersionGet)
+		pages.PUT("/target/:ident/version", rt.auth(), rt.admin(), rt.targetVersionPut)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
