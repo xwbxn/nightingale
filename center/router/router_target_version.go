@@ -94,8 +94,10 @@ func (rt *Router) importNewVersion(c *gin.Context) {
 // @Security     ApiKeyAuth
 func (rt *Router) UsableVersionGet(c *gin.Context) {
 	ident := ginx.UrlParamStr(c, "ident")
-	target, err := models.TargetGetByIdent(rt.Ctx, ident)
-	ginx.Dangerous(err)
+	target, has := rt.TargetCache.Get(ident)
+	if !has {
+		ginx.Bomb(404, "target not found")
+	}
 	os := target.OS
 	arch := target.Arch
 	FileInfo, err := ioutil.ReadDir("etc/client/")
@@ -210,7 +212,7 @@ func (rt *Router) importUpgradePack(c *gin.Context) {
 
 }
 
-//PathExists 判断文件夹是否存在
+// PathExists 判断文件夹是否存在
 func PathExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {

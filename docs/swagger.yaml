@@ -1,8 +1,587 @@
 definitions:
+  models.AssetBasic:
+    properties:
+      abreast:
+        description: type:*int     comment:并排放置(0:否,1:是)                      version:2023-07-21
+          08:45
+        type: integer
+      affiliated_organization:
+        type: integer
+      business_manager_one:
+        example: 业务负责人1
+        type: string
+      business_manager_two:
+        example: 业务负责人2
+        type: string
+      cabinet_location:
+        description: type:*int     comment:机柜位置                                 version:2023-07-21
+          08:45
+        type: integer
+      device_manager_one:
+        example: 设备负责人1
+        type: string
+      device_manager_two:
+        example: 设备负责人2
+        type: string
+      device_model:
+        type: integer
+      device_name:
+        example: 设备名称
+        type: string
+      device_producer:
+        description: type:*int     comment:厂商                                     version:2023-07-25
+          16:30
+        type: integer
+      device_status:
+        description: type:*int     comment:状态(1:待上线,2:已上线,3:下线,4:报废)    version:2023-07-21
+          08:45
+        type: integer
+      device_type:
+        description: type:*int   comment:设备类型                                 version:2023-07-21
+          08:45
+        type: integer
+      equipment_room:
+        type: integer
+      id:
+        description: type:*int     comment:主键                                     version:2023-07-21
+          08:45
+        type: integer
+      location_description:
+        example: 位置描述
+        type: string
+      managed_state:
+        description: type:*int     comment:纳管状态                                 version:2023-07-28
+          14:36
+        type: integer
+      management_ip:
+        example: 管理IP
+        type: string
+      operating_system:
+        example: 操作系统
+        type: string
+      outline_structure:
+        example: 外形结构
+        type: string
+      owning_cabinet:
+        type: integer
+      region:
+        example: 所在区域
+        type: string
+      remark:
+        example: 备注
+        type: string
+      serial_number:
+        example: 序列号
+        type: string
+      specifications:
+        example: 规格
+        type: string
+      subtype:
+        example: 子类型
+        type: string
+      u_number:
+        description: type:*int     comment:U数                                      version:2023-07-21
+          08:45
+        type: integer
+      use_storage:
+        example: 使用存储
+        type: string
+    type: object
+  models.AssetBasicDetailsVo:
+    properties:
+      abreast:
+        description: type:*int     comment:并排放置(0:否,1:是)                      version:2023-07-21
+          08:45
+        type: integer
+      affiliated_organization:
+        type: integer
+      business_manager_one:
+        example: 业务负责人1
+        type: string
+      business_manager_two:
+        example: 业务负责人2
+        type: string
+      cabinet_location:
+        description: type:*int     comment:机柜位置                                 version:2023-07-21
+          08:45
+        type: integer
+      cabinet_name:
+        type: string
+      device_manager_one:
+        example: 设备负责人1
+        type: string
+      device_manager_two:
+        example: 设备负责人2
+        type: string
+      device_model:
+        type: integer
+      device_model_name:
+        type: string
+      device_name:
+        example: 设备名称
+        type: string
+      device_producer:
+        description: type:*int     comment:厂商                                     version:2023-07-25
+          16:30
+        type: integer
+      device_producer_name:
+        type: string
+      device_status:
+        description: type:*int     comment:状态(1:待上线,2:已上线,3:下线,4:报废)    version:2023-07-21
+          08:45
+        type: integer
+      device_type:
+        description: type:*int   comment:设备类型                                 version:2023-07-21
+          08:45
+        type: integer
+      device_type_name:
+        type: string
+      equipment_room:
+        type: integer
+      id:
+        description: type:*int     comment:主键                                     version:2023-07-21
+          08:45
+        type: integer
+      location_description:
+        example: 位置描述
+        type: string
+      managed_state:
+        description: type:*int     comment:纳管状态                                 version:2023-07-28
+          14:36
+        type: integer
+      management_ip:
+        example: 管理IP
+        type: string
+      operating_system:
+        example: 操作系统
+        type: string
+      organization_name:
+        type: string
+      outline_structure:
+        example: 外形结构
+        type: string
+      owning_cabinet:
+        type: integer
+      region:
+        example: 所在区域
+        type: string
+      remark:
+        example: 备注
+        type: string
+      room_name:
+        type: string
+      serial_number:
+        example: 序列号
+        type: string
+      specifications:
+        example: 规格
+        type: string
+      subtype:
+        example: 子类型
+        type: string
+      u_number:
+        description: type:*int     comment:U数                                      version:2023-07-21
+          08:45
+        type: integer
+      use_storage:
+        example: 使用存储
+        type: string
+    type: object
+  models.AssetBasicFindVo:
+    properties:
+      device_producer:
+        description: type:*int     comment:厂商                                     version:2023-07-25
+          16:30
+        type: integer
+      device_status:
+        description: type:*int     comment:状态(1:待上线,2:已上线,3:下线,4:报废)    version:2023-07-21
+          08:45
+        type: integer
+      device_type:
+        description: type:*int   comment:设备类型                                 version:2023-07-21
+          08:45
+        type: integer
+      id:
+        description: type:*int     comment:主键                                     version:2023-07-21
+          08:45
+        type: integer
+    type: object
+  models.AssetExpansion:
+    properties:
+      asset_id:
+        description: type:*int     comment:资产ID                                        version:2023-07-28
+          16:17
+        type: integer
+      associated_table:
+        type: string
+      config_category:
+        description: type:*int     comment:配置类别(1:基本信息,2:硬件配置,3:网络配置)    version:2023-07-23
+          09:04
+        type: integer
+      group_id:
+        type: string
+      id:
+        description: type:*int     comment:主键                                          version:2023-07-23
+          09:04
+        type: integer
+      property_category:
+        type: string
+      property_name:
+        type: string
+      property_value:
+        type: string
+    type: object
+  models.AssetMaintenance:
+    properties:
+      finish_at:
+        description: type:*int     comment:结束日期    version:2023-07-23 09:44
+        type: integer
+      id:
+        description: type:*int     comment:主键        version:2023-07-23 09:44
+        type: integer
+      maintenance_period:
+        type: string
+      maintenance_provider:
+        type: string
+      maintenance_type:
+        type: string
+      production_at:
+        description: type:*int     comment:出厂日期    version:2023-07-23 09:44
+        type: integer
+      start_at:
+        description: type:*int     comment:开始日期    version:2023-07-23 09:44
+        type: integer
+      version:
+        description: type:*int     comment:版本号      version:2023-07-23 09:44
+        type: integer
+    type: object
+  models.AssetTree:
+    properties:
+      id:
+        description: type:*int     comment:主键        version:2023-07-21 09:50
+        type: integer
+      name:
+        type: string
+      parent_id:
+        description: type:*int     comment:父ID        version:2023-07-21 09:50
+        type: integer
+      property_id:
+        description: type:*int     comment:属性ID      version:2023-07-28 10:43
+        type: integer
+      remark:
+        type: string
+      status:
+        description: type:*int     comment:资产状态    version:2023-07-21 09:58
+        type: integer
+      type:
+        type: string
+    type: object
+  models.CabinetGroup:
+    properties:
+      cabinet_group_code:
+        type: string
+      cabinet_group_type:
+        type: string
+      column:
+        description: type:*int     comment:所在列        version:2023-07-15 14:32
+        type: integer
+      duty_person_one:
+        type: string
+      duty_person_two:
+        type: string
+      id:
+        description: type:*int     comment:主键          version:2023-07-15 14:32
+        type: integer
+      room_id:
+        type: integer
+      row:
+        description: type:*int     comment:行            version:2023-07-15 14:32
+        type: integer
+      start_column:
+        description: type:*int     comment:开始列        version:2023-07-15 14:32
+        type: integer
+      use_notes:
+        type: string
+    type: object
+  models.ComputerRoom:
+    properties:
+      cabinet_number:
+        description: type:*int       comment:可容纳机柜数    version:2023-07-11 16:11
+        maximum: 999999
+        minimum: 1
+        type: integer
+      column_max:
+        description: type:*int       comment:最大列数        version:2023-07-11 16:11
+        maximum: 9999
+        minimum: 1
+        type: integer
+      duty_person_one:
+        type: string
+      duty_person_two:
+        type: string
+      electric:
+        description: type:*int       comment:电流            version:2023-07-11 16:11
+        minimum: 0
+        type: integer
+      floor:
+        description: type:*int       comment:所属楼层        version:2023-07-11 16:11
+        type: integer
+      id:
+        description: type:*int       comment:主键            version:2023-07-11 16:11
+        type: integer
+      idc_location:
+        description: type:*int       comment:所在IDC         version:2023-07-25 11:09
+        type: integer
+      rated_power:
+        description: type:*int       comment:额定功率        version:2023-07-11 16:11
+        minimum: 0
+        type: integer
+      room_area:
+        description: type:*float64   comment:机房面积        version:2023-07-11 16:11
+        minimum: 0
+        type: number
+      room_bearing_capacity:
+        description: type:*float64   comment:机房承重        version:2023-07-11 16:11
+        minimum: 0
+        type: number
+      room_code:
+        type: string
+      room_name:
+        type: string
+      room_picture:
+        type: string
+      row_max:
+        description: type:*int       comment:最大行数        version:2023-07-11 16:11
+        maximum: 9999
+        minimum: 1
+        type: integer
+      subgallery:
+        type: string
+      voltage:
+        description: type:*int       comment:电压            version:2023-07-11 16:11
+        minimum: 0
+        type: integer
+    required:
+    - cabinet_number
+    - column_max
+    - room_code
+    - room_name
+    - row_max
+    type: object
+  models.ComputerRoomNameVo:
+    properties:
+      id:
+        description: type:*int       comment:主键            version:2023-07-11 16:11
+        type: integer
+      idc_location:
+        description: type:*int       comment:所在IDC         version:2023-07-25 11:09
+        type: integer
+      room_name:
+        type: string
+    required:
+    - room_name
+    type: object
+  models.DataCenter:
+    properties:
+      address:
+        type: string
+      affiliated_organization:
+        type: string
+      area:
+        description: type:*float64   comment:面积            version:2023-07-11 15:49
+        minimum: 0
+        type: number
+      city:
+        type: string
+      data_center_code:
+        type: string
+      data_center_name:
+        type: string
+      duty_person_one:
+        type: string
+      duty_person_two:
+        type: string
+      id:
+        description: type:*int       comment:主键            version:2023-07-11 15:49
+        type: integer
+      load_bearing:
+        description: type:*float64   comment:承重            version:2023-07-11 15:49
+        minimum: 0
+        type: number
+      remark:
+        type: string
+    required:
+    - city
+    - data_center_name
+    type: object
+  models.Datacenter:
+    properties:
+      address:
+        type: string
+      area:
+        description: type:*float64   comment:面积            version:2023-07-11 15:49
+        minimum: 0
+        type: number
+      belong_organization:
+        type: integer
+      city:
+        type: string
+      datacenter_code:
+        type: string
+      datacenter_name:
+        type: string
+      duty_person_one:
+        type: string
+      duty_person_two:
+        type: string
+      id:
+        description: type:*int       comment:主键            version:2023-07-11 15:49
+        type: integer
+      load_bearing:
+        description: type:*float64   comment:承重            version:2023-07-11 15:49
+        minimum: 0
+        type: number
+      remark:
+        type: string
+    required:
+    - city
+    - datacenter_name
+    type: object
+  models.DeviceCabinet:
+    properties:
+      belong_room:
+        type: integer
+      cabinet_area:
+        description: type:*float64   comment:机柜面积                                        version:2023-07-11
+          15:14
+        minimum: 0
+        type: number
+      cabinet_bearing_capacity:
+        description: type:*float64   comment:机柜承重                                        version:2023-07-11
+          15:14
+        minimum: 0
+        type: number
+      cabinet_code:
+        type: string
+      cabinet_id:
+        type: string
+      cabinet_model:
+        type: integer
+      cabinet_name:
+        type: string
+      cabinet_picture:
+        type: string
+      cabinet_type:
+        description: type:*int       comment:机柜类型;1:大一体机机柜;2:普通机柜;3:屏蔽机柜   version:2023-07-11
+          15:14
+        type: integer
+      column_name:
+        description: type:*int       comment:所在列名称                                      version:2023-07-11
+          15:14
+        type: string
+      column_number:
+        description: type:*int       comment:所在列                                          version:2023-07-11
+          15:14
+        maximum: 9999
+        minimum: 1
+        type: integer
+      duty_person_one:
+        type: string
+      duty_person_two:
+        type: string
+      id:
+        description: type:*int       comment:主键                                            version:2023-07-11
+          15:14
+        type: integer
+      main_power_supply:
+        type: string
+      power_consumption:
+        description: type:*int       comment:电源功耗                                        version:2023-07-11
+          15:14
+        minimum: 0
+        type: integer
+      power_plug_number:
+        description: type:*int       comment:电源插头数量                                    version:2023-07-11
+          15:14
+        minimum: 0
+        type: integer
+      power_supply_mode:
+        type: string
+      producer_id:
+        type: integer
+      rated_current:
+        description: type:*int       comment:额定电流                                        version:2023-07-11
+          15:14
+        minimum: 0
+        type: integer
+      rated_voltage:
+        description: type:*int       comment:额定电压                                        version:2023-07-11
+          15:14
+        minimum: 0
+        type: integer
+      reserved_cabinet:
+        description: type:*int       comment:预留机柜                                        version:2023-07-11
+          15:14
+        enum:
+        - 0
+        - 1
+        type: integer
+      row_name:
+        type: string
+      row_number:
+        description: type:*int       comment:所在行                                          version:2023-07-11
+          15:14
+        maximum: 9999
+        minimum: 1
+        type: integer
+      service_partition:
+        type: string
+      standby_power_supply:
+        type: string
+      unavailable_space:
+        description: type:*int       comment:不可用空间                                      version:2023-07-11
+          15:14
+        minimum: 0
+        type: integer
+      unumber:
+        description: type:*int       comment:规格(U数)                                       version:2023-07-11
+          15:14
+        maximum: 99
+        minimum: 0
+        type: integer
+      use:
+        type: string
+    required:
+    - cabinet_code
+    - column_number
+    - power_consumption
+    - row_number
+    - unumber
+    type: object
+  models.DeviceCabinetNameVo:
+    properties:
+      cabinet_code:
+        type: string
+      cabinet_id:
+        type: string
+      cabinet_name:
+        type: string
+      equipment_room:
+        type: integer
+      id:
+        description: type:*int       comment:主键                                            version:2023-07-11
+          15:14
+        type: integer
+    required:
+    - cabinet_code
+    type: object
   models.DeviceModel:
     properties:
       describe:
         type: string
+      device_type:
+        description: type:*int       comment:设备类型       version:2023-07-24 16:11
+        type: integer
       enlistment:
         description: type:*int       comment:服役期限(月)               version:2023-07-08
           14:55
@@ -53,6 +632,37 @@ definitions:
           14:55
         type: number
     type: object
+  models.DeviceModelDetailsVo:
+    properties:
+      alias:
+        type: string
+      device_type:
+        description: type:*int       comment:设备类型       version:2023-07-24 16:11
+        type: integer
+      id:
+        description: type:*int       comment:主键                       version:2023-07-08
+          14:55
+        type: integer
+      model:
+        type: string
+      name:
+        type: string
+      outline_structure:
+        type: string
+      producer_id:
+        description: type:*int       comment:厂商-ID;来源设备厂商信息   version:2023-07-08 14:55
+        type: integer
+      specifications:
+        type: string
+      subtype:
+        type: string
+      u_number:
+        description: type:*int       comment:U数                        version:2023-07-08
+          14:55
+        type: integer
+    required:
+    - alias
+    type: object
   models.DeviceProducer:
     properties:
       alias:
@@ -66,12 +676,31 @@ definitions:
         type: integer
       is_display_chinese:
         description: type:*int     comment:是否显示中文    version:2023-07-08 14:43
+        enum:
+        - 0
+        - 1
         type: integer
       is_domestic:
         description: type:*int     comment:是否国产        version:2023-07-08 14:43
+        enum:
+        - 0
+        - 1
         type: integer
       official:
         type: string
+    required:
+    - alias
+    - company_name
+    type: object
+  models.DeviceProducerNameVo:
+    properties:
+      alias:
+        type: string
+      id:
+        description: type:*int     comment:主键            version:2023-07-08 14:43
+        type: integer
+    required:
+    - alias
     type: object
   models.DeviceType:
     properties:
@@ -79,6 +708,232 @@ definitions:
         description: type:*int     comment:主键        version:2023-07-08 11:44
         type: integer
       name:
+        type: string
+    type: object
+  models.DictData:
+    properties:
+      dict_code:
+        type: string
+      dict_key:
+        type: string
+      dict_value:
+        type: string
+      id:
+        description: type:*int     comment:主键        version:2023-07-21 08:50
+        type: integer
+      remark:
+        type: string
+    type: object
+  models.DictType:
+    properties:
+      dict_code:
+        type: string
+      dict_name:
+        type: string
+      id:
+        description: type:*int     comment:主键        version:2023-07-21 08:48
+        type: integer
+      remark:
+        type: string
+    type: object
+  models.DistributionFrame:
+    properties:
+      cabinet_id:
+        description: type:*int     comment:所属机柜                             version:2023-07-29
+          15:08
+        type: integer
+      cabinet_location:
+        description: type:*int     comment:机柜位置(U)   version:2023-07-16 10:14
+        minimum: 0
+        type: integer
+      dis_frame:
+        type: string
+      dis_name:
+        type: string
+      dis_picture:
+        type: string
+      dis_type:
+        description: type:*int     comment:配线架类型(0:双绞线;1:光纤配线架)    version:2023-07-16
+          11:02
+        type: integer
+      duty_person_one:
+        type: string
+      duty_person_two:
+        type: string
+      id:
+        description: type:*int     comment:主键          version:2023-07-16 10:14
+        type: integer
+      model:
+        type: integer
+      port_prefix:
+        type: string
+      producer_id:
+        description: type:*int     comment:厂商                                 version:2023-07-25
+          17:25
+        type: integer
+      purchase_at:
+        description: type:*int     comment:采购日期      version:2023-07-16 10:14
+        type: integer
+      room_id:
+        description: type:*int     comment:所属机房                             version:2023-07-25
+          17:23
+        type: integer
+      specification:
+        type: string
+      total_port_num:
+        description: type:*int     comment:总端口数      version:2023-07-16 10:14
+        minimum: 1
+        type: integer
+      unumber:
+        description: type:*int     comment:U数           version:2023-07-16 10:14
+        minimum: 0
+        type: integer
+      use:
+        type: string
+      used_port_num:
+        description: type:*int     comment:已用端口数    version:2023-07-16 10:14
+        minimum: 0
+        type: integer
+    required:
+    - cabinet_id
+    - dis_frame
+    - duty_person_one
+    - room_id
+    - total_port_num
+    type: object
+  models.MachineRoom:
+    properties:
+      cabinet_number:
+        description: type:*int       comment:可容纳机柜数    version:2023-07-11 16:11
+        maximum: 999999
+        minimum: 1
+        type: integer
+      column_max:
+        description: type:*int       comment:最大列数        version:2023-07-11 16:11
+        maximum: 9999
+        minimum: 1
+        type: integer
+      duty_person_one:
+        type: string
+      duty_person_two:
+        type: string
+      electric:
+        description: type:*int       comment:电流            version:2023-07-11 16:11
+        minimum: 0
+        type: integer
+      floor:
+        description: type:*int       comment:所属楼层        version:2023-07-11 16:11
+        type: integer
+      id:
+        description: type:*int       comment:主键            version:2023-07-11 16:11
+        type: integer
+      idc_location:
+        type: string
+      machine_room_picture:
+        type: string
+      rated_power:
+        description: type:*int       comment:额定功率        version:2023-07-11 16:11
+        minimum: 0
+        type: integer
+      room_area:
+        description: type:*float64   comment:机房面积        version:2023-07-11 16:11
+        minimum: 0
+        type: number
+      room_bearing_capacity:
+        description: type:*float64   comment:机房承重        version:2023-07-11 16:11
+        minimum: 0
+        type: number
+      room_code:
+        type: string
+      room_name:
+        type: string
+      row_max:
+        description: type:*int       comment:最大行数        version:2023-07-11 16:11
+        maximum: 9999
+        minimum: 1
+        type: integer
+      subgallery:
+        type: string
+      voltage:
+        description: type:*int       comment:电压            version:2023-07-11 16:11
+        minimum: 0
+        type: integer
+    required:
+    - cabinet_number
+    - column_max
+    - room_code
+    - room_name
+    - row_max
+    type: object
+  models.Pdu:
+    properties:
+      assets_code:
+        type: string
+      belong_room:
+        description: type:*int       comment:所在机房                 version:2023-07-29
+          15:22
+        type: integer
+      brand:
+        type: integer
+      cabinet_id:
+        description: type:*int       comment:所在机柜编号             version:2023-07-29
+          15:22
+        type: integer
+      duty_person_one:
+        type: string
+      duty_person_two:
+        type: string
+      id:
+        description: type:*int       comment:主键                  version:2023-07-16
+          10:13
+        type: integer
+      jack_num:
+        description: type:*int       comment:插孔数                version:2023-07-16
+          10:13
+        minimum: 1
+        type: integer
+      limit_voltage:
+        description: type:*float64   comment:限制电压(V)           version:2023-07-16
+          10:13
+        type: number
+      max_electric:
+        description: type:*float64   comment:最大耐冲击电压(KA)    version:2023-07-16 10:13
+        type: number
+      model:
+        type: integer
+      name:
+        type: string
+      power:
+        description: type:*float64   comment:功率                  version:2023-07-16
+          10:13
+        type: number
+      purchase_at:
+        description: type:*int       comment:采购日期              version:2023-07-16
+          10:13
+        type: integer
+      standard:
+        description: type:*int       comment:标准(1:新国标;2:国标)    version:2023-07-16
+          11:05
+        type: integer
+      unit_price:
+        description: type:*float64   comment:单价                  version:2023-07-16
+          10:13
+        type: number
+      use:
+        type: string
+    required:
+    - assets_code
+    - belong_room
+    - cabinet_id
+    - duty_person_one
+    - jack_num
+    - standard
+    type: object
+  models.userNameVo:
+    properties:
+      id:
+        type: integer
+      nickname:
         type: string
     type: object
   router.loginForm:
@@ -94,6 +949,560 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/n9e/asset-basic/:
+    post:
+      consumes:
+      - application/json
+      description: 创建资产详情
+      parameters:
+      - description: add assetBasic
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetBasic'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建资产详情
+      tags:
+      - 资产详情
+    put:
+      consumes:
+      - application/json
+      description: 更新资产详情
+      parameters:
+      - description: update assetBasic
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetBasic'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新资产详情
+      tags:
+      - 资产详情
+  /api/n9e/asset-basic/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除资产详情
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除资产详情
+      tags:
+      - 资产详情
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取资产详情
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AssetBasic'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取资产详情
+      tags:
+      - 资产详情
+  /api/n9e/asset-basic/list/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询资产详情
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.AssetBasic'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询资产详情
+      tags:
+      - 资产详情
+    post:
+      consumes:
+      - application/json
+      description: 根据条件查询资产详情
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: add AssetBasicFindVo
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetBasicFindVo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              items:
+                $ref: '#/definitions/models.AssetBasicDetailsVo'
+              type: array
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询资产详情
+      tags:
+      - 资产详情
+  /api/n9e/asset-expansion/:
+    post:
+      consumes:
+      - application/json
+      description: 创建资产扩展
+      parameters:
+      - description: add assetExpansion
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetExpansion'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建资产扩展
+      tags:
+      - 资产扩展
+    put:
+      consumes:
+      - application/json
+      description: 更新资产扩展
+      parameters:
+      - description: update assetExpansion
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetExpansion'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新资产扩展
+      tags:
+      - 资产扩展
+  /api/n9e/asset-expansion/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除资产扩展
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除资产扩展
+      tags:
+      - 资产扩展
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取资产扩展
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AssetExpansion'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取资产扩展
+      tags:
+      - 资产扩展
+  /api/n9e/asset-expansion/batch:
+    post:
+      consumes:
+      - application/json
+      description: 批量创建资产扩展
+      parameters:
+      - description: add assetExpansion
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/models.AssetExpansion'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 批量创建资产扩展
+      tags:
+      - 资产扩展
+  /api/n9e/asset-expansion/list/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询资产扩展
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.AssetExpansion'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询资产扩展
+      tags:
+      - 资产扩展
+  /api/n9e/asset-maintenance/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询资产维保
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.AssetMaintenance'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询资产维保
+      tags:
+      - 资产维保
+    post:
+      consumes:
+      - application/json
+      description: 创建资产维保
+      parameters:
+      - description: add assetMaintenance
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetMaintenance'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建资产维保
+      tags:
+      - 资产维保
+    put:
+      consumes:
+      - application/json
+      description: 更新资产维保
+      parameters:
+      - description: update assetMaintenance
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetMaintenance'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新资产维保
+      tags:
+      - 资产维保
+  /api/n9e/asset-maintenance/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除资产维保
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除资产维保
+      tags:
+      - 资产维保
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取资产维保
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AssetMaintenance'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取资产维保
+      tags:
+      - 资产维保
+  /api/n9e/asset-tree/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询资产树
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.AssetTree'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询资产树
+      tags:
+      - 资产树
+    post:
+      consumes:
+      - application/json
+      description: 创建资产树
+      parameters:
+      - description: add assetTree
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetTree'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建资产树
+      tags:
+      - 资产树
+  /api/n9e/asset-tree/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除资产树
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除资产树
+      tags:
+      - 资产树
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取资产树
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AssetTree'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取资产树
+      tags:
+      - 资产树
+  /api/n9e/asset-tree/count:
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取资产数量
+      parameters:
+      - description: 主键
+        in: query
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AssetTree'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取资产数量
+      tags:
+      - 资产树
+  /api/n9e/asset-tree/data:
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取资产树数据
+      parameters:
+      - description: 设备状态
+        in: query
+        name: status
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AssetTree'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取资产树数据
+      tags:
+      - 资产树
+  /api/n9e/asset-tree/list/:
+    put:
+      consumes:
+      - application/json
+      description: 更新资产树
+      parameters:
+      - description: update assetTree
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetTree'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新资产树
+      tags:
+      - 资产树
   /api/n9e/auth/login:
     post:
       consumes:
@@ -114,11 +1523,97 @@ paths:
       summary: 登录
       tags:
       - auth
-  /api/n9e/device-model/:
+  /api/n9e/cabinet-group/:
+    post:
+      consumes:
+      - application/json
+      description: 创建机柜组信息
+      parameters:
+      - description: add cabinetGroup
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CabinetGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建机柜组信息
+      tags:
+      - 机柜组信息
+    put:
+      consumes:
+      - application/json
+      description: 更新机柜组信息
+      parameters:
+      - description: update cabinetGroup
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CabinetGroup'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新机柜组信息
+      tags:
+      - 机柜组信息
+  /api/n9e/cabinet-group/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除机柜组信息
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除机柜组信息
+      tags:
+      - 机柜组信息
     get:
       consumes:
       - application/json
-      description: 根据条件查询设备型号
+      description: 根据主键获取机柜组信息
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.CabinetGroup'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取机柜组信息
+      tags:
+      - 机柜组信息
+  /api/n9e/cabinet-group/list/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询机柜组信息
       parameters:
       - description: 返回条数
         in: query
@@ -135,13 +1630,575 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.DeviceModel'
+              $ref: '#/definitions/models.CabinetGroup'
             type: array
       security:
       - ApiKeyAuth: []
-      summary: 查询设备型号
+      summary: 查询机柜组信息
       tags:
-      - 设备型号
+      - 机柜组信息
+  /api/n9e/computer-room/:
+    post:
+      consumes:
+      - application/json
+      description: 创建机房信息
+      parameters:
+      - description: add computerRoom
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ComputerRoom'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建机房信息
+      tags:
+      - 机房信息
+    put:
+      consumes:
+      - application/json
+      description: 更新机房信息
+      parameters:
+      - description: update computerRoom
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ComputerRoom'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新机房信息
+      tags:
+      - 机房信息
+  /api/n9e/computer-room/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除机房信息
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除机房信息
+      tags:
+      - 机房信息
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取机房信息
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ComputerRoom'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取机房信息
+      tags:
+      - 机房信息
+  /api/n9e/computer-room/datacenterId/:
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取机房信息
+      parameters:
+      - description: 数据中心Id
+        in: query
+        name: idcLocation
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ComputerRoomNameVo'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 获取机房信息
+      tags:
+      - 机房信息
+  /api/n9e/computer-room/list/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询机房信息
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ComputerRoom'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询机房信息
+      tags:
+      - 机房信息
+  /api/n9e/data-center/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询数据中心
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DataCenter'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询数据中心
+      tags:
+      - 数据中心
+    post:
+      consumes:
+      - application/json
+      description: 创建数据中心
+      parameters:
+      - description: add dataCenter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DataCenter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建数据中心
+      tags:
+      - 数据中心
+    put:
+      consumes:
+      - application/json
+      description: 更新数据中心
+      parameters:
+      - description: update dataCenter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DataCenter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新数据中心
+      tags:
+      - 数据中心
+  /api/n9e/data-center/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除数据中心
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除数据中心
+      tags:
+      - 数据中心
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取数据中心
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DataCenter'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取数据中心
+      tags:
+      - 数据中心
+  /api/n9e/datacenter/:
+    post:
+      consumes:
+      - application/json
+      description: 创建数据中心
+      parameters:
+      - description: add datacenter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Datacenter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建数据中心
+      tags:
+      - 数据中心
+    put:
+      consumes:
+      - application/json
+      description: 更新数据中心
+      parameters:
+      - description: update datacenter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Datacenter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新数据中心
+      tags:
+      - 数据中心
+  /api/n9e/datacenter/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除数据中心
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除数据中心
+      tags:
+      - 数据中心
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取数据中心
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Datacenter'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取数据中心
+      tags:
+      - 数据中心
+  /api/n9e/datacenter/list/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询数据中心
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Datacenter'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询数据中心
+      tags:
+      - 数据中心
+  /api/n9e/device-cabinet/:
+    post:
+      consumes:
+      - application/json
+      description: 创建机柜信息
+      parameters:
+      - description: add deviceCabinet
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DeviceCabinet'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建机柜信息
+      tags:
+      - 机柜信息
+    put:
+      consumes:
+      - application/json
+      description: 更新机柜信息
+      parameters:
+      - description: update deviceCabinet
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DeviceCabinet'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新机柜信息
+      tags:
+      - 机柜信息
+  /api/n9e/device-cabinet/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除机柜信息
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除机柜信息
+      tags:
+      - 机柜信息
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取机柜信息
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeviceCabinet'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取机柜信息
+      tags:
+      - 机柜信息
+  /api/n9e/device-cabinet/download-xls:
+    post:
+      consumes:
+      - multipart/form-data
+      description: EXCEL导出机柜信息
+      parameters:
+      - description: 导入查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/msexcel
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: EXCEL导出机柜信息
+      tags:
+      - 机柜信息
+  /api/n9e/device-cabinet/getNames/:
+    get:
+      consumes:
+      - application/json
+      description: 根据机房ID获取机柜名称列表
+      parameters:
+      - description: 机房ID
+        in: query
+        name: roomId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeviceCabinetNameVo'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取机柜名称列表
+      tags:
+      - 机柜信息
+  /api/n9e/device-cabinet/import-xls:
+    post:
+      consumes:
+      - multipart/form-data
+      description: EXCEL导入机柜信息
+      parameters:
+      - description: file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: EXCEL导入机柜信息
+      tags:
+      - 机柜信息
+  /api/n9e/device-cabinet/list/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询机柜信息
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DeviceCabinet'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询机柜信息
+      tags:
+      - 机柜信息
+  /api/n9e/device-cabinet/templet:
+    post:
+      consumes:
+      - application/json
+      description: 导出机柜信息模板
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeviceCabinet'
+      security:
+      - ApiKeyAuth: []
+      summary: 导出机柜信息模板
+      tags:
+      - 机柜信息
+  /api/n9e/device-model/:
     post:
       consumes:
       - application/json
@@ -227,6 +2284,30 @@ paths:
       summary: 获取设备型号
       tags:
       - 设备型号
+  /api/n9e/device-model/getmodel/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询设备型号
+      parameters:
+      - description: 类型
+        in: query
+        name: deviceType
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DeviceModelDetailsVo'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询设备型号
+      tags:
+      - 设备型号
   /api/n9e/device-model/import:
     post:
       consumes:
@@ -245,7 +2326,7 @@ paths:
           description: OK
       security:
       - ApiKeyAuth: []
-      summary: 导入设备型号
+      summary: 导入设备型号数据
       tags:
       - 设备型号
   /api/n9e/device-model/outport:
@@ -267,37 +2348,27 @@ paths:
             $ref: '#/definitions/models.DeviceModel'
       security:
       - ApiKeyAuth: []
-      summary: 根据条件导出数据
+      summary: 导出设备型号数据
       tags:
       - 设备型号
-  /api/n9e/device-producer/:
-    get:
+  /api/n9e/device-model/templet:
+    post:
       consumes:
       - application/json
-      description: 根据条件查询设备厂商
-      parameters:
-      - description: 返回条数
-        in: query
-        name: limit
-        type: integer
-      - description: 查询条件
-        in: query
-        name: query
-        type: string
+      description: 导出设备型号模板
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/models.DeviceProducer'
-            type: array
+            $ref: '#/definitions/models.DeviceModel'
       security:
       - ApiKeyAuth: []
-      summary: 查询设备厂商
+      summary: 导出设备型号模板
       tags:
-      - 设备厂商
+      - 设备型号
+  /api/n9e/device-producer/:
     post:
       consumes:
       - application/json
@@ -403,6 +2474,25 @@ paths:
       summary: EXCEL导出设备厂商
       tags:
       - 设备厂商
+  /api/n9e/device-producer/getName:
+    get:
+      consumes:
+      - application/json
+      description: 获取设备厂商名称
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DeviceProducerNameVo'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 获取设备厂商名称
+      tags:
+      - 设备厂商
   /api/n9e/device-producer/import-xls:
     post:
       consumes:
@@ -422,6 +2512,51 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: EXCEL导入设备厂商
+      tags:
+      - 设备厂商
+  /api/n9e/device-producer/list/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询设备厂商
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DeviceProducer'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询设备厂商
+      tags:
+      - 设备厂商
+  /api/n9e/device-producer/templet:
+    post:
+      consumes:
+      - application/json
+      description: 导出设备厂商模板
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DeviceProducer'
+      security:
+      - ApiKeyAuth: []
+      summary: 导出设备厂商模板
       tags:
       - 设备厂商
   /api/n9e/device-type/:
@@ -537,6 +2672,813 @@ paths:
       summary: 获取设备类型
       tags:
       - 设备类型
+  /api/n9e/dict-data/:
+    post:
+      consumes:
+      - application/json
+      description: 创建字典数据表
+      parameters:
+      - description: add dictData
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/models.DictData'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建字典数据表
+      tags:
+      - 字典数据表
+    put:
+      consumes:
+      - application/json
+      description: 更新字典数据表
+      parameters:
+      - description: 编码
+        in: query
+        name: dictCode
+        required: true
+        type: string
+      - description: update dictData
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/models.DictData'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新字典数据表
+      tags:
+      - 字典数据表
+  /api/n9e/dict-data/{code}:
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取字典数据表
+      parameters:
+      - description: 编码
+        in: path
+        name: code
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DictData'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取字典数据表
+      tags:
+      - 字典数据表
+  /api/n9e/dict-data/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除字典数据表
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除字典数据表
+      tags:
+      - 字典数据表
+  /api/n9e/dict-data/list/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询字典数据表
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DictData'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询字典数据表
+      tags:
+      - 字典数据表
+  /api/n9e/dict-type/:
+    post:
+      consumes:
+      - application/json
+      description: 创建字典类别表
+      parameters:
+      - description: add dictType
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DictType'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建字典类别表
+      tags:
+      - 字典类别表
+    put:
+      consumes:
+      - application/json
+      description: 更新字典类别表
+      parameters:
+      - description: update dictType
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DictType'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新字典类别表
+      tags:
+      - 字典类别表
+  /api/n9e/dict-type/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除字典类别表
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除字典类别表
+      tags:
+      - 字典类别表
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取字典类别表
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DictType'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取字典类别表
+      tags:
+      - 字典类别表
+  /api/n9e/dict-type/list/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询字典类别表
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DictType'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询字典类别表
+      tags:
+      - 字典类别表
+  /api/n9e/distribution-frame/:
+    post:
+      consumes:
+      - application/json
+      description: 创建配线架信息
+      parameters:
+      - description: add distributionFrame
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DistributionFrame'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建配线架信息
+      tags:
+      - 配线架信息
+    put:
+      consumes:
+      - application/json
+      description: 更新配线架信息
+      parameters:
+      - description: update distributionFrame
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.DistributionFrame'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新配线架信息
+      tags:
+      - 配线架信息
+  /api/n9e/distribution-frame/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除配线架信息
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除配线架信息
+      tags:
+      - 配线架信息
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取配线架信息
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DistributionFrame'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取配线架信息
+      tags:
+      - 配线架信息
+  /api/n9e/distribution-frame/download-xls:
+    post:
+      consumes:
+      - multipart/form-data
+      description: EXCEL导出配线架信息
+      parameters:
+      - description: 导入查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/msexcel
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: EXCEL导出配线架信息
+      tags:
+      - 配线架信息
+  /api/n9e/distribution-frame/import-xls:
+    post:
+      consumes:
+      - multipart/form-data
+      description: EXCEL导入配线架信息
+      parameters:
+      - description: file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: EXCEL导入配线架信息
+      tags:
+      - 配线架信息
+  /api/n9e/distribution-frame/list/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询配线架信息
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DistributionFrame'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询配线架信息
+      tags:
+      - 配线架信息
+  /api/n9e/distribution-frame/templet:
+    post:
+      consumes:
+      - application/json
+      description: 导出配线架信息模板
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DistributionFrame'
+      security:
+      - ApiKeyAuth: []
+      summary: 导出配线架信息模板
+      tags:
+      - 配线架信息
+  /api/n9e/machine-room/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询机房信息
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.MachineRoom'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询机房信息
+      tags:
+      - 机房信息
+    post:
+      consumes:
+      - application/json
+      description: 创建机房信息
+      parameters:
+      - description: add machineRoom
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.MachineRoom'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建机房信息
+      tags:
+      - 机房信息
+    put:
+      consumes:
+      - application/json
+      description: 更新机房信息
+      parameters:
+      - description: update machineRoom
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.MachineRoom'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新机房信息
+      tags:
+      - 机房信息
+  /api/n9e/machine-room/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除机房信息
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除机房信息
+      tags:
+      - 机房信息
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取机房信息
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.MachineRoom'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取机房信息
+      tags:
+      - 机房信息
+  /api/n9e/pdu/:
+    post:
+      consumes:
+      - application/json
+      description: 创建PDU
+      parameters:
+      - description: add pdu
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Pdu'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建PDU
+      tags:
+      - PDU
+    put:
+      consumes:
+      - application/json
+      description: 更新PDU
+      parameters:
+      - description: update pdu
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Pdu'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新PDU
+      tags:
+      - PDU
+  /api/n9e/pdu/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除PDU
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除PDU
+      tags:
+      - PDU
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取PDU
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Pdu'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取PDU
+      tags:
+      - PDU
+  /api/n9e/pdu/download-xls:
+    post:
+      consumes:
+      - multipart/form-data
+      description: EXCEL导出PDU
+      parameters:
+      - description: 导入查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/msexcel
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: EXCEL导出PDU
+      tags:
+      - PDU
+  /api/n9e/pdu/import-xls:
+    post:
+      consumes:
+      - multipart/form-data
+      description: EXCEL导入PDU
+      parameters:
+      - description: file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: EXCEL导入PDU
+      tags:
+      - PDU
+  /api/n9e/pdu/list/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询PDU
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Pdu'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询PDU
+      tags:
+      - PDU
+  /api/n9e/pdu/templet:
+    post:
+      consumes:
+      - application/json
+      description: 导出PDU模板
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Pdu'
+      security:
+      - ApiKeyAuth: []
+      summary: 导出PDU模板
+      tags:
+      - PDU
+  /api/n9e/server/update/:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 导入升级包
+      parameters:
+      - description: file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 导入升级包
+      tags:
+      - 探针版本
+  /api/n9e/target/{ident}/version:
+    get:
+      consumes:
+      - application/json
+      description: 根据ident获取可用探针版本
+      parameters:
+      - description: ident
+        in: path
+        name: ident
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: array
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 获取可用探针版本
+      tags:
+      - 探针版本
+    put:
+      consumes:
+      - application/json
+      description: 更新所选探针
+      parameters:
+      - description: ident
+        in: path
+        name: ident
+        required: true
+        type: string
+      - description: update map
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新所选探针
+      tags:
+      - 探针版本
+  /api/n9e/target/version/:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 导入最新探针
+      parameters:
+      - description: file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 导入最新探针
+      tags:
+      - 探针版本
+  /api/n9e/user/getNames/:
+    get:
+      consumes:
+      - application/json
+      description: 查询人员列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.userNameVo'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询人员列表
+      tags:
+      - 人员信息
 securityDefinitions:
   ApiKeyAuth:
     in: header
