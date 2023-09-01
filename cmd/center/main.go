@@ -11,6 +11,8 @@ import (
 	"github.com/ccfos/nightingale/v6/center"
 	"github.com/ccfos/nightingale/v6/pkg/osx"
 	"github.com/ccfos/nightingale/v6/pkg/version"
+	"github.com/jpillora/overseer/fetcher"
+	"github.com/xwbxn/overseer"
 
 	"github.com/toolkits/pkg/runner"
 )
@@ -21,6 +23,8 @@ var (
 	cryptoKey   = flag.String("crypto-key", "", "Specify the secret key for configuration file field encryption.")
 )
 
+// create another main() to run the overseer process
+// and then convert your old main() into a 'prog(state)'
 func main() {
 	flag.Parse()
 
@@ -28,6 +32,22 @@ func main() {
 		fmt.Println(version.Version)
 		os.Exit(0)
 	}
+
+	overseer.Run(overseer.Config{
+		Program: startLauncher,
+		Fetcher: &fetcher.File{
+			Path: "etc/update/n9e",
+		},
+		Debug: true,
+	})
+}
+
+func startLauncher(state overseer.State) {
+	program()
+}
+
+func program() {
+	flag.Parse()
 
 	printEnv()
 
