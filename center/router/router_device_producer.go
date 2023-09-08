@@ -76,31 +76,6 @@ func (rt *Router) deviceProducerGets(c *gin.Context) {
 	}, nil)
 }
 
-// @Summary      查询设备厂商
-// @Description  根据条件查询设备厂商
-// @Tags         设备厂商
-// @Accept       json
-// @Produce      json
-// @Param        limit query   int     false  "返回条数"
-// @Param        query query   string  false  "查询条件"
-// @Success      200  {array}  models.DeviceProducer
-// @Router       /api/n9e/device-producer/list/ [get]
-// @Security     ApiKeyAuth
-func (rt *Router) deviceProducerGetsName(c *gin.Context) {
-	limit := ginx.QueryInt(c, "limit", 20)
-	query := ginx.QueryStr(c, "query", "")
-
-	total, err := models.DeviceProducerCount(rt.Ctx, query)
-	ginx.Dangerous(err)
-	lst, err := models.DeviceProducerGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
-	ginx.Dangerous(err)
-
-	ginx.NewRender(c).Data(gin.H{
-		"list":  lst,
-		"total": total,
-	}, nil)
-}
-
 // @Summary      创建设备厂商
 // @Description  创建设备厂商
 // @Tags         设备厂商

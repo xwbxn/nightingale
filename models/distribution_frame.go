@@ -64,6 +64,20 @@ func DistributionFrameGets(ctx *ctx.Context, query string, limit, offset int) ([
 	return lst, err
 }
 
+// 根据配线架类型/编号、机柜编号条件查询
+func DistributionFrameQuery(ctx *ctx.Context, query map[string]interface{}, limit, offset int) ([]DistributionFrame, error) {
+	session := DB(ctx)
+	// 分页
+	if limit > -1 {
+		session = session.Limit(limit).Offset(offset).Order("id")
+	}
+
+	var lst []DistributionFrame
+	err := session.Where(query).Find(&lst).Error
+
+	return lst, err
+}
+
 // 按id查询
 func DistributionFrameGetById(ctx *ctx.Context, id int64) (*DistributionFrame, error) {
 	var obj *DistributionFrame
@@ -110,4 +124,9 @@ func (d *DistributionFrame) Update(ctx *ctx.Context, updateFrom interface{}, sel
 // 根据条件统计个数
 func DistributionFrameCount(ctx *ctx.Context, where string, args ...interface{}) (num int64, err error) {
 	return Count(DB(ctx).Model(&DistributionFrame{}).Where(where, args...))
+}
+
+// 根据map条件统计个数
+func DistributionFrameMapCount(ctx *ctx.Context, where map[string]interface{}) (num int64, err error) {
+	return Count(DB(ctx).Model(&DistributionFrame{}).Where(where))
 }

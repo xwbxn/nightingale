@@ -5,6 +5,8 @@ package models
 
 import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/toolkits/pkg/logger"
+	"gorm.io/gorm"
 )
 
 // AssetExpansion  资产扩展。
@@ -15,10 +17,11 @@ import (
 type AssetExpansion struct {
 	Id               int64  `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键                                          version:2023-07-23 09:04
 	AssetId          int64  `gorm:"column:ASSET_ID" json:"asset_id" `                         //type:*int     comment:资产ID                                        version:2023-07-28 16:17
-	ConfigCategory   int64  `gorm:"column:CONFIG_CATEGORY" json:"config_category" `           //type:*int     comment:配置类别(1:基本信息,2:硬件配置,3:网络配置)    version:2023-07-23 09:04
+	ConfigCategory   string `gorm:"column:CONFIG_CATEGORY" json:"config_category" `           //type:string   comment:配置类别(1:基本信息,2:硬件配置,3:网络配置)    version:2023-08-05 14:41
 	PropertyCategory string `gorm:"column:PROPERTY_CATEGORY" json:"property_category" `       //type:string   comment:属性类别                                      version:2023-07-23 09:04
 	GroupId          string `gorm:"column:GROUP_ID" json:"group_id" `                         //type:string   comment:分组ID                                        version:2023-07-23 09:04
-	PropertyName     string `gorm:"column:PROPERTY_NAME" json:"property_name" `               //type:string   comment:属性名称                                      version:2023-07-23 09:04
+	PropertyNameCn   string `gorm:"column:PROPERTY_NAME_CN" json:"property_name_cn" `         //type:string   comment:属性名称                                      version:2023-07-28 17:32
+	PropertyName     string `gorm:"column:PROPERTY_NAME" json:"property_name" `               //type:string   comment:英文名称                                      version:2023-07-28 17:32
 	PropertyValue    string `gorm:"column:PROPERTY_VALUE" json:"property_value" `             //type:string   comment:属性值                                        version:2023-07-23 09:04
 	AssociatedTable  string `gorm:"column:ASSOCIATED_TABLE" json:"associated_table" `         //type:string   comment:关联表名                                      version:2023-07-23 09:04
 	CreatedBy        string `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人                                        version:2023-07-23 09:04
@@ -64,6 +67,28 @@ func AssetExpansionGetById(ctx *ctx.Context, id int64) (*AssetExpansion, error) 
 	return obj, nil
 }
 
+// 按map查询
+func AssetExpansionGetByMap(ctx *ctx.Context, query map[string]interface{}) ([]AssetExpansion, error) {
+	var lst []AssetExpansion
+	err := DB(ctx).Debug().Where(query).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return lst, nil
+}
+
+// 按map查询GroupId
+func GroupIdGetByMap(ctx *ctx.Context, query map[string]interface{}) ([]string, error) {
+	var lst []string
+	err := DB(ctx).Debug().Model(&AssetExpansion{}).Select("GROUP_ID").Where(query).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return lst, nil
+}
+
 // 查询所有
 func AssetExpansionGetsAll(ctx *ctx.Context) ([]AssetExpansion, error) {
 	var lst []AssetExpansion
@@ -93,18 +118,137 @@ func (a *AssetExpansion) Del(ctx *ctx.Context) error {
 	// 这里写AssetExpansion的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
-	return DB(ctx).Delete(a).Error
+	return DB(ctx).Debug().Delete(a).Error
 }
 
-// 更新资产扩展
-func (a *AssetExpansion) Update(ctx *ctx.Context, updateFrom interface{}, selectField interface{}, selectFields ...interface{}) error {
+// 根据groupId删除资产扩展
+func Del(ctx *ctx.Context, groupId string) error {
 	// 这里写AssetExpansion的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
-	return DB(ctx).Model(a).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
+	return DB(ctx).Where("GROUP_ID = ?", groupId).Delete(AssetExpansion{}).Error
+}
+
+// 更新资产扩展
+func (a *AssetExpansion) Update(tx *gorm.DB, updateFrom interface{}, selectField interface{}, selectFields ...interface{}) error {
+	// 这里写AssetExpansion的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	return tx.Debug().Model(a).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
 }
 
 // 根据条件统计个数
 func AssetExpansionCount(ctx *ctx.Context, where string, args ...interface{}) (num int64, err error) {
 	return Count(DB(ctx).Model(&AssetExpansion{}).Where(where, args...))
+}
+
+//以group处理新数据
+func UpdateAssetExpansionGroup(ctx *ctx.Context, m map[string]interface{}, f []AssetExpansion, name string) error {
+	//查询具体的group
+	groupIds, err := GroupIdGetByMap(ctx, m)
+	if err != nil {
+		return err
+	}
+	logger.Debug(groupIds)
+
+	mdata := make(map[string][]AssetExpansion)
+	mNewdata := make(map[string][]AssetExpansion)
+
+	for index, val := range f {
+		//将新数据单独存储（id=0）
+		if val.Id == 0 {
+			f[index].CreatedBy = name
+			assetExpansions := mNewdata[val.GroupId]
+			assetExpansions = append(assetExpansions, f[index])
+			mNewdata[val.GroupId] = assetExpansions
+		} else {
+			//将需更新或删除的数据存储
+			assetExpansions := mdata[val.GroupId]
+			assetExpansions = append(assetExpansions, val)
+			mdata[val.GroupId] = assetExpansions
+		}
+
+	}
+
+	//启动事务
+	tx := DB(ctx).Begin()
+
+	for _, groupId := range groupIds {
+		//判断旧数据是否依然存在
+		assetExpansions, ok := mdata[groupId]
+		if ok {
+			//旧数据存在，更新数据
+			for index := range assetExpansions {
+				assetExpansions[index].UpdatedBy = name
+			}
+			err = UpdateAssetExpansion(tx, ctx, assetExpansions, name)
+			if err != nil {
+				tx.Rollback()
+			}
+		} else {
+			//旧数据不存在，删除旧数据
+			err = tx.Debug().Where("GROUP_ID = ?", groupId).Delete(AssetExpansion{}).Error
+			if err != nil {
+				tx.Rollback()
+			}
+		}
+	}
+
+	//将新数据插入表中
+	for groupId := range mNewdata {
+
+		assetExp := mNewdata[groupId]
+		logger.Debug(assetExp)
+		err = tx.Debug().Create(&assetExp).Error
+		if err != nil {
+			tx.Rollback()
+		}
+	}
+	tx.Commit()
+	return err
+}
+
+//以属性处理数据
+func UpdateAssetExpansion(tx *gorm.DB, ctx *ctx.Context, f []AssetExpansion, name string) error {
+
+	//通过groupId查询一组扩展数据
+	old, err := AssetExpansionGetByMap(ctx, map[string]interface{}{"GROUP_ID": f[0].GroupId})
+	if err != nil {
+		return err
+	}
+
+	for _, oldVal := range old {
+		var tag = false
+		for index := range f {
+			//新旧数据id匹配，更新数据
+			if f[index].Id == oldVal.Id {
+				f[index].UpdatedBy = name
+				err = oldVal.Update(tx, f[index], "*")
+				if err != nil {
+					tx.Rollback()
+				}
+				tag = true
+				break
+			}
+		}
+		//新数据不存在，旧数据存在，删除该记录
+		if !tag {
+			err = tx.Debug().Delete(&oldVal).Error
+			if err != nil {
+				tx.Rollback()
+			}
+		}
+	}
+	//新数据存在，原数据不存在，新增该记录
+	for index := range f {
+		if f[index].Id == 0 {
+			f[index].CreatedBy = name
+			assetExp := f[index]
+			err = tx.Debug().Create(&assetExp).Error
+			if err != nil {
+				tx.Rollback()
+			}
+		}
+	}
+	return err
 }

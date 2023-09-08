@@ -14,7 +14,7 @@ import (
 // version:2023-07-21 08:50
 type DictData struct {
 	Id        int64  `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键        version:2023-07-21 08:50
-	DictCode  string `gorm:"column:DICT_CODE" json:"dict_code" `                       //type:string   comment:字典编码    version:2023-07-21 08:50
+	TypeCode  string `gorm:"column:TYPE_CODE" json:"type_code" `                       //type:string   comment:字典编码    version:2023-08-01 14:10
 	DictKey   string `gorm:"column:DICT_KEY" json:"dict_key" `                         //type:string   comment:字典标签    version:2023-07-21 08:50
 	DictValue string `gorm:"column:DICT_VALUE" json:"dict_value" `                     //type:string   comment:字典键值    version:2023-07-21 08:50
 	Remark    string `gorm:"column:REMARK" json:"remark" `                             //type:string   comment:备注        version:2023-07-21 08:50
@@ -62,9 +62,9 @@ func DictDataGetById(ctx *ctx.Context, id int64) (*DictData, error) {
 }
 
 // 按dict_code查询
-func DictDataGetByDictCode(ctx *ctx.Context, dictCode string) ([]*DictData, error) {
+func DictDataGetByTypeCode(ctx *ctx.Context, typeCode string) ([]*DictData, error) {
 	var obj []*DictData
-	err := DB(ctx).Where("DICT_CODE = ?", dictCode).Find(&obj).Error
+	err := DB(ctx).Where("TYPE_CODE = ?", typeCode).Find(&obj).Error
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +73,8 @@ func DictDataGetByDictCode(ctx *ctx.Context, dictCode string) ([]*DictData, erro
 }
 
 // 按dict_code删除
-func DictDataDelByDictCode(ctx *ctx.Context, dictCode string) error {
-	err := DB(ctx).Where("DICT_CODE = ?", dictCode).Delete(&DictData{}).Error
+func DictDataDelByTypeCode(ctx *ctx.Context, typeCode string) error {
+	err := DB(ctx).Where("TYPE_CODE = ?", typeCode).Delete(&DictData{}).Error
 	if err != nil {
 		return err
 	}

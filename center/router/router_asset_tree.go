@@ -136,7 +136,7 @@ func (rt *Router) assetTreeDel(c *gin.Context) {
 }
 
 // @Summary      获取资产树数据
-// @Description  根据主键获取资产树数据
+// @Description  根据资产状态获取资产树数据
 // @Tags         资产树
 // @Accept       json
 // @Produce      json
@@ -145,13 +145,32 @@ func (rt *Router) assetTreeDel(c *gin.Context) {
 // @Router       /api/n9e/asset-tree/data [get]
 // @Security     ApiKeyAuth
 func (rt *Router) assetTreeGetALL(c *gin.Context) {
+
 	status := ginx.QueryInt64(c, "status", 1)
-	assetTree, err := models.BuildAssetTree(rt.Ctx, status)
+	query := make(map[string]interface{})
+	query["status"] = status
+	assetTree, err := models.BuildAssetTree(rt.Ctx, query)
 	ginx.Dangerous(err)
 
-	if assetTree == nil {
-		ginx.Bomb(404, "No such asset_tree")
-	}
+	ginx.NewRender(c).Data(assetTree, nil)
+}
+
+// @Summary      获取资产树数据（存储）
+// @Description  根据资产状态获取资产树数据
+// @Tags         资产树
+// @Accept       json
+// @Produce      json
+// @Param        status query   int64     false  "设备状态"
+// @Success      200  {object}  models.AssetTree
+// @Router       /api/n9e/asset-tree/memory [get]
+// @Security     ApiKeyAuth
+func (rt *Router) assetTreeGetMemory(c *gin.Context) {
+	status := ginx.QueryInt64(c, "status", 1)
+	query := make(map[string]interface{})
+	query["status"] = status
+	query["name"] = "存储"
+	assetTree, err := models.BuildPartAssetTree(rt.Ctx, query)
+	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(assetTree, nil)
 }

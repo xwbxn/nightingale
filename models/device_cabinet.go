@@ -104,6 +104,17 @@ func DeviceCabinetGetByRoomId(ctx *ctx.Context, RoomId int64) ([]DeviceCabinetNa
 	return obj, nil
 }
 
+// 按机柜编号查询
+func DeviceCabinetGetByCabinetCode(ctx *ctx.Context, cabinetCode string) (DeviceCabinet, error) {
+	var obj DeviceCabinet
+	err := DB(ctx).Where("CABINET_CODE = ?", cabinetCode).Find(&obj).Error
+	if err != nil {
+		return obj, err
+	}
+
+	return obj, nil
+}
+
 // 查询所有
 func DeviceCabinetGetsAll(ctx *ctx.Context) ([]DeviceCabinet, error) {
 	var lst []DeviceCabinet

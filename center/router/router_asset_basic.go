@@ -5,13 +5,10 @@ package router
 
 import (
 	"net/http"
-	"strconv"
-	"strings"
 
 	models "github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/logger"
 )
 
 // @Summary      获取资产详情
@@ -40,35 +37,21 @@ func (rt *Router) assetBasicGet(c *gin.Context) {
 // @Tags         资产详情
 // @Accept       json
 // @Produce      json
-// @Param        limit query   int     false  "返回条数"
+// @Param        page query   int     false  "页码"
+// @Param        limit query   int     false  "条数"
 // @Param        query query   string  false  "查询条件"
 // @Success      200  {array}  models.AssetBasic
 // @Router       /api/n9e/asset-basic/list/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) assetBasicGets(c *gin.Context) {
 
-	var f models.AssetBasic
-	ginx.BindJSON(c, &f)
-
+	page := ginx.QueryInt(c, "page", 1)
 	limit := ginx.QueryInt(c, "limit", 20)
 	query := ginx.QueryStr(c, "query", "")
 
-	str := strings.Split(query, ";")
-	m := make(map[string]interface{})
-	for _, val := range str {
-		keyAndVal := strings.Split(val, ":")
-		if keyAndVal[0] == "STATUS" {
-			statusVal, _ := strconv.ParseInt(keyAndVal[1], 10, 64)
-			m[keyAndVal[0]] = statusVal
-		} else {
-			m[keyAndVal[0]] = keyAndVal[1]
-		}
-	}
-	logger.Debug(m)
-
-	total, err := models.AssetCountByMap(rt.Ctx, m)
+	total, err := models.AssetBasicCount(rt.Ctx, query)
 	ginx.Dangerous(err)
-	lst, err := models.AssetBasicGetsByMap(rt.Ctx, m, limit, ginx.Offset(c, limit))
+	lst, err := models.AssetBasicGets(rt.Ctx, query, limit, (page-1)*limit)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
@@ -77,18 +60,20 @@ func (rt *Router) assetBasicGets(c *gin.Context) {
 	}, nil)
 }
 
-// @Summary      查询资产详情
-// @Description  根据条件查询资产详情
+// @Summary      查询资产详情（资产树）
+// @Description  根据条件查询资产详情（资产树）
 // @Tags         资产详情
 // @Accept       json
 // @Produce      json
-// @Param        limit query   int     false  "返回条数"
+// @Param        page query   int     false  "页码"
+// @Param        limit query   int     false  "条数"
 // @Param        body  body   models.AssetBasicFindVo true "add AssetBasicFindVo"
 // @Success      200  {array}  []models.AssetBasicDetailsVo
 // @Router       /api/n9e/asset-basic/list/ [post]
 // @Security     ApiKeyAuth
 func (rt *Router) assetBasicGetsByTree(c *gin.Context) {
 
+	page := ginx.QueryInt(c, "page", 1)
 	limit := ginx.QueryInt(c, "limit", 20)
 
 	m := make(map[string]interface{})
@@ -96,7 +81,7 @@ func (rt *Router) assetBasicGetsByTree(c *gin.Context) {
 
 	total, err := models.AssetCountByMap(rt.Ctx, m)
 	ginx.Dangerous(err)
-	lst, err := models.AssetBasicGetsByMap(rt.Ctx, m, limit, ginx.Offset(c, limit))
+	lst, err := models.AssetBasicGetsByMap(rt.Ctx, m, limit, (page-1)*limit)
 	ginx.Dangerous(err)
 
 	for index := range lst {
@@ -112,11 +97,16 @@ func (rt *Router) assetBasicGetsByTree(c *gin.Context) {
 		//TODO 回填所属组织(不清楚)
 
 		//回填所在机房
-		computerRoom, _ := models.ComputerRoomGetById(rt.Ctx, lst[index].EquipmentRoom)
-		lst[index].RoomName = computerRoom.RoomName
+		if lst[index].EquipmentRoom != 0 {
+			computerRoom, _ := models.ComputerRoomGetById(rt.Ctx, lst[index].EquipmentRoom)
+			lst[index].RoomName = computerRoom.RoomName
+		}
+
 		//回填所在机柜
-		deviceCabinet, _ := models.DeviceCabinetGetById(rt.Ctx, lst[index].OwningCabinet)
-		lst[index].CabinetName = deviceCabinet.CabinetName
+		if lst[index].OwningCabinet != 0 {
+			deviceCabinet, _ := models.DeviceCabinetGetById(rt.Ctx, lst[index].OwningCabinet)
+			lst[index].CabinetName = deviceCabinet.CabinetName
+		}
 	}
 
 	ginx.NewRender(c).Data(gin.H{
@@ -197,4 +187,44 @@ func (rt *Router) assetBasicDel(c *gin.Context) {
 		return
 	}
 	ginx.NewRender(c).Message(assetBasic.Del(rt.Ctx))
+}
+
+// @Summary      查询资产详情(表名、字段)
+// @Description  根据表名查询资产详情
+// @Tags         资产详情
+// @Accept       json
+// @Produce      json
+// @Param        query    query   string     true  "表名"
+// @Param        body  body   []string true "add array"
+// @Success      200  {array} map[string]interface{}
+// @Router       /api/n9e/asset-basic/table/ [post]
+// @Security     ApiKeyAuth
+func (rt *Router) assetFieldGetsByTableName(c *gin.Context) {
+
+	var a []string
+	ginx.BindJSON(c, &a)
+
+	tableName := ginx.QueryStr(c, "query", "")
+	//校验表名是否存在
+	exist := models.HasTableByName(rt.Ctx, tableName)
+	if !exist {
+		ginx.Bomb(http.StatusOK, "table_name not found")
+	}
+	//校验该表中传入字段是否存在
+	for _, val := range a {
+		count, err := models.HasTableFieldByName(rt.Ctx, tableName, val)
+		ginx.Dangerous(err)
+		if count == 0 {
+			ginx.Bomb(http.StatusOK, "field not found")
+		}
+	}
+
+	//查询数据
+	data, err := models.TableGetsByName(rt.Ctx, tableName, a)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(gin.H{
+		"list":  data,
+		"total": len(data),
+	}, nil)
 }

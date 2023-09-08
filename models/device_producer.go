@@ -7,10 +7,6 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 )
 
-const DOWNLOADNUM = 6
-
-var defaultHeight = 25.0
-
 // DeviceProducer  设备厂商。
 // 说明:
 // 表名:device_producer

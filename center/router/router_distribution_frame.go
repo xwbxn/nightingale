@@ -231,3 +231,48 @@ func (rt *Router) templetDistributionFrame(c *gin.Context) {
 
 	excels.NewMyExcel("设备厂商模板").ExportTempletToWeb(datas, "cn", "source", rt.Ctx, c)
 }
+
+// @Summary      查询连接配线架信息（配线架类型/编号、机柜编号）
+// @Description  根据条件查询配线架信息
+// @Tags         配线架信息
+// @Accept       json
+// @Produce      json
+// @Param        type query   int     false  "配线架类型"
+// @Param        code query   string  false  "配线架编号/机柜编号"
+// @Param        page query   int     false  "页码"
+// @Param        limit query   int     false  "条数"
+// @Success      200  {array}  models.DistributionFrame
+// @Router       /api/n9e/distribution-frame/query/ [get]
+// @Security     ApiKeyAuth
+func (rt *Router) distributionFrameQuery(c *gin.Context) {
+	page := ginx.QueryInt(c, "page", 1)
+	limit := ginx.QueryInt(c, "limit", 20)
+
+	disType := ginx.QueryInt64(c, "type", -1)
+	code := ginx.QueryStr(c, "code", "")
+
+	m := make(map[string]interface{})
+
+	if disType != -1 {
+		m["DIS_TYPE"] = disType
+	}
+	if code != "" {
+		deviceCabinet, err := models.DeviceCabinetGetByCabinetCode(rt.Ctx, code)
+		ginx.Dangerous(err)
+		if (models.DeviceCabinet{} == deviceCabinet) {
+			m["CABINET_ID"] = deviceCabinet.Id
+		} else {
+			m["DIS_FRAME"] = code
+		}
+	}
+
+	total, err := models.DistributionFrameMapCount(rt.Ctx, m)
+	ginx.Dangerous(err)
+	lst, err := models.DistributionFrameQuery(rt.Ctx, m, limit, (page-1)*limit)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(gin.H{
+		"list":  lst,
+		"total": total,
+	}, nil)
+}

@@ -37,18 +37,20 @@ func (rt *Router) assetMaintenanceGet(c *gin.Context) {
 // @Tags         资产维保
 // @Accept       json
 // @Produce      json
-// @Param        limit query   int     false  "返回条数"
+// @Param        page query   int     false  "页码"
+// @Param        limit query   int     false  "条数"
 // @Param        query query   string  false  "查询条件"
 // @Success      200  {array}  models.AssetMaintenance
 // @Router       /api/n9e/asset-maintenance/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) assetMaintenanceGets(c *gin.Context) {
+	page := ginx.QueryInt(c, "page", 1)
 	limit := ginx.QueryInt(c, "limit", 20)
 	query := ginx.QueryStr(c, "query", "")
 
 	total, err := models.AssetMaintenanceCount(rt.Ctx, query)
 	ginx.Dangerous(err)
-	lst, err := models.AssetMaintenanceGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
+	lst, err := models.AssetMaintenanceGets(rt.Ctx, query, limit, (page-1)*limit)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
@@ -62,20 +64,19 @@ func (rt *Router) assetMaintenanceGets(c *gin.Context) {
 // @Tags         资产维保
 // @Accept       json
 // @Produce      json
-// @Param        body  body   models.AssetMaintenance true "add assetMaintenance"
+// @Param        body  body   models.AssetMaintenanceVo true "add AssetMaintenanceVo"
 // @Success      200
 // @Router       /api/n9e/asset-maintenance/ [post]
 // @Security     ApiKeyAuth
 func (rt *Router) assetMaintenanceAdd(c *gin.Context) {
-	var f models.AssetMaintenance
-	ginx.BindJSON(c, &f)
+	var fVo models.AssetMaintenanceVo
+	ginx.BindJSON(c, &fVo)
 
 	// 添加审计信息
 	me := c.MustGet("user").(*models.User)
-	f.CreatedBy = me.Username
 
-	// 更新模型
-	err := f.Add(rt.Ctx)
+	err := fVo.AddConfig(rt.Ctx, me.Username)
+
 	ginx.NewRender(c).Message(err)
 }
 
@@ -97,11 +98,6 @@ func (rt *Router) assetMaintenancePut(c *gin.Context) {
 	if old == nil {
 		ginx.Bomb(http.StatusOK, "asset_maintenance not found")
 	}
-	if old.Version != f.Version {
-		ginx.Bomb(http.StatusOK, "version inconsistency")
-	}
-
-	f.Version++
 
 	// 添加审计信息
 	me := c.MustGet("user").(*models.User)

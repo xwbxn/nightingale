@@ -17,7 +17,7 @@ import (
 type DeviceModel struct {
 	Id                 int64   `gorm:"column:ID;primaryKey" json:"id" `                                                                      //type:*int       comment:主键                       version:2023-07-08 14:55
 	Name               string  `gorm:"column:NAME" json:"name" cn:"型号名称"`                                                                    //type:string     comment:型号名称                   version:2023-07-08 14:55
-	DeviceType         int64   `gorm:"column:DEVICE_TYPE" json:"device_type" `                                                               //type:*int       comment:设备类型       version:2023-07-24 16:11
+	DeviceType         int64   `gorm:"column:DEVICE_TYPE" json:"device_type" cn:"设备类型" source:"type=table,table=device_type,field=name"`     //type:*int       comment:设备类型       version:2023-07-24 16:11
 	Subtype            string  `gorm:"column:SUBTYPE" json:"subtype"  cn:"子类型"`                                                              //type:string     comment:子类型                     version:2023-07-08 14:55
 	CreatedBy          string  `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"`                                             //type:string     comment:创建人                     version:2023-07-08 14:55
 	CreatedAt          int64   `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"`                                             //type:*int       comment:创建时间                   version:2023-07-08 14:55
@@ -61,7 +61,7 @@ func (d *DeviceModel) TableName() string {
 func GetChinese() map[string]string {
 	var d DeviceModel
 	dType := reflect.TypeOf(d)
-	var mapLit map[string]string
+	mapLit := make(map[string]string)
 	for i := 0; i < dType.NumField(); i++ {
 		fieldType := dType.Field(i)
 		if fieldType.Tag.Get("cn") != "" {

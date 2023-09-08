@@ -5,6 +5,7 @@ package models
 
 import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	optlock "gorm.io/plugin/optimisticlock"
 )
 
 // AssetMaintenance  资产维保。
@@ -13,18 +14,30 @@ import (
 // group: AssetMaintenance
 // version:2023-07-23 09:44
 type AssetMaintenance struct {
-	Id                  int64  `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键        version:2023-07-23 09:44
-	MaintenanceType     string `gorm:"column:MAINTENANCE_TYPE" json:"maintenance_type" `         //type:string   comment:维保类型    version:2023-07-23 09:44
-	MaintenanceProvider string `gorm:"column:MAINTENANCE_PROVIDER" json:"maintenance_provider" ` //type:string   comment:维保商      version:2023-07-23 09:44
-	StartAt             int64  `gorm:"column:START_AT" json:"start_at" `                         //type:*int     comment:开始日期    version:2023-07-23 09:44
-	FinishAt            int64  `gorm:"column:FINISH_AT" json:"finish_at" `                       //type:*int     comment:结束日期    version:2023-07-23 09:44
-	MaintenancePeriod   string `gorm:"column:MAINTENANCE_PERIOD" json:"maintenance_period" `     //type:string   comment:维保期限    version:2023-07-23 09:44
-	ProductionAt        int64  `gorm:"column:PRODUCTION_AT" json:"production_at" `               //type:*int     comment:出厂日期    version:2023-07-23 09:44
-	Version             int64  `gorm:"column:VERSION" json:"version" `                           //type:*int     comment:版本号      version:2023-07-23 09:44
-	CreatedBy           string `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人      version:2023-07-23 09:44
-	CreatedAt           int64  `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间    version:2023-07-23 09:44
-	UpdatedBy           string `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人      version:2023-07-23 09:44
-	UpdatedAt           int64  `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间    version:2023-07-23 09:44
+	Id                  int64           `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键        version:2023-07-30 10:01
+	AssetId             int64           `gorm:"column:ASSET_ID" json:"asset_id" `                         //type:*int     comment:资产ID      version:2023-07-30 10:01
+	MaintenanceType     int64           `gorm:"column:MAINTENANCE_TYPE" json:"maintenance_type" `         //type:*int     comment:维保类型（数据字典）    version:2023-07-30 10:09
+	MaintenanceProvider int64           `gorm:"column:MAINTENANCE_PROVIDER" json:"maintenance_provider" ` //type:*int     comment:维保商      version:2023-07-30 10:01
+	StartAt             int64           `gorm:"column:START_AT" json:"start_at" `                         //type:*int     comment:开始日期    version:2023-07-30 10:01
+	FinishAt            int64           `gorm:"column:FINISH_AT" json:"finish_at" `                       //type:*int     comment:结束日期    version:2023-07-30 10:01
+	MaintenancePeriod   string          `gorm:"column:MAINTENANCE_PERIOD" json:"maintenance_period" `     //type:string   comment:维保期限    version:2023-07-30 10:01
+	ProductionAt        int64           `gorm:"column:PRODUCTION_AT" json:"production_at" `               //type:*int     comment:出厂日期    version:2023-07-30 10:01
+	Version             optlock.Version `gorm:"column:VERSION" json:"version" swaggerignore:"true"`       //type:*int     comment:版本号      version:2023-07-30 10:01
+	CreatedBy           string          `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人      version:2023-07-30 10:01
+	CreatedAt           int64           `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间    version:2023-07-30 10:01
+	UpdatedBy           string          `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人      version:2023-07-30 10:01
+	UpdatedAt           int64           `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间    version:2023-07-30 10:01
+}
+
+type AssetMaintenanceVo struct {
+	AssetId             int64                      `gorm:"column:ASSET_ID" json:"asset_id" `                                   //type:*int     comment:资产ID      version:2023-07-30 10:01
+	MaintenanceType     int64                      `gorm:"column:MAINTENANCE_TYPE" json:"maintenance_type" `                   //type:*int     comment:维保类型（数据字典）    version:2023-07-30 10:09
+	MaintenanceProvider int64                      `gorm:"column:MAINTENANCE_PROVIDER" json:"maintenance_provider" `           //type:*int     comment:维保商      version:2023-07-30 10:01
+	StartAt             int64                      `gorm:"column:START_AT" json:"start_at" `                                   //type:*int     comment:开始日期    version:2023-07-30 10:01
+	FinishAt            int64                      `gorm:"column:FINISH_AT" json:"finish_at" `                                 //type:*int     comment:结束日期    version:2023-07-30 10:01
+	MaintenancePeriod   string                     `gorm:"column:MAINTENANCE_PERIOD" json:"maintenance_period" example:"维保期限"` //type:string   comment:维保期限    version:2023-07-30 10:01
+	ProductionAt        int64                      `gorm:"column:PRODUCTION_AT" json:"production_at" `                         //type:*int     comment:出厂日期    version:2023-07-30 10:01
+	ServiceConfig       []MaintenanceServiceConfig `gorm:"column:-" json:"service_config" `
 }
 
 // TableName 表名:asset_maintenance，资产维保。
@@ -77,7 +90,65 @@ func (a *AssetMaintenance) Add(ctx *ctx.Context) error {
 	// 这里写AssetMaintenance的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
-	return DB(ctx).Create(a).Error
+	return DB(ctx).Debug().Create(a).Error
+}
+
+// 增加资产维保及配置记录
+func (fVo *AssetMaintenanceVo) AddConfig(ctx *ctx.Context, name string) error {
+	// 这里写AssetMaintenance的业务逻辑，通过error返回错误
+
+	var f AssetMaintenance
+
+	f.AssetId = fVo.AssetId
+	f.MaintenanceType = fVo.MaintenanceType
+	f.MaintenanceProvider = fVo.MaintenanceProvider
+	f.MaintenancePeriod = fVo.MaintenancePeriod
+
+	// timeLayout := "2006-01-02"
+
+	// timetemp, err := time.Parse(timeLayout, fVo.StartAt)
+	// if err != nil {
+	// 	return err
+	// }
+	// f.StartAt = timetemp.Unix()
+
+	// timetemp, err = time.Parse(timeLayout, fVo.FinishAt)
+	// if err != nil {
+	// 	return err
+	// }
+	// f.FinishAt = timetemp.Unix()
+	// timetemp, err = time.Parse(timeLayout, fVo.ProductionAt)
+	// if err != nil {
+	// 	return err
+	// }
+	// f.ProductionAt = timetemp.Unix()
+
+	// 添加审计信息
+	f.CreatedBy = name
+
+	//启动事务
+	tx := DB(ctx).Begin()
+
+	// 更新模型
+	err := tx.Create(&f).Error
+	if err != nil {
+		tx.Rollback()
+	}
+
+	//更新服务配置表
+	config := fVo.ServiceConfig
+	// 添加审计信息及维保ID
+	for index := range config {
+		config[index].MaintenanceId = f.Id
+		config[index].CreatedBy = name
+	}
+	// 写入维保配置表
+	err = tx.Create(&config).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	tx.Commit()
+	return err
 }
 
 // 删除资产维保
@@ -93,7 +164,7 @@ func (a *AssetMaintenance) Update(ctx *ctx.Context, updateFrom interface{}, sele
 	// 这里写AssetMaintenance的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
-	return DB(ctx).Model(a).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
+	return DB(ctx).Debug().Model(a).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
 }
 
 // 根据条件统计个数

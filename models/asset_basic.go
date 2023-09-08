@@ -185,6 +185,8 @@ func (a *AssetBasic) Add(ctx *ctx.Context) (int64, error) {
 			tx.Rollback()
 		}
 		wTree = BuildObj(a.DeviceName, a.CreatedBy, "asset", wTree.Id, a.DeviceStatus, a.Id)
+		wTree.ManagementIp = a.ManagementIp
+		wTree.SerialNumber = a.SerialNumber
 		err = tx.Create(wTree).Error
 		if err != nil {
 			tx.Rollback()
@@ -194,7 +196,9 @@ func (a *AssetBasic) Add(ctx *ctx.Context) (int64, error) {
 		var menuTree1 *AssetTree
 		deviceProducer, _ := DeviceProducerGetById(ctx, a.DeviceProducer)
 		err = tx.Where("NAME = ? AND STATUS = ? AND PARENT_ID = ?", deviceProducer.Alias, menuTree.Status, menuTree.Id).Find(&menuTree1).Error
-
+		if err != nil {
+			tx.Rollback()
+		}
 		//设备厂商不存在，插入设备厂商、设备名称
 		if menuTree1.Id == 0 {
 			wTree = BuildObj(deviceProducer.Alias, a.CreatedBy, "producer", menuTree.Id, a.DeviceStatus, a.DeviceProducer)
@@ -203,13 +207,18 @@ func (a *AssetBasic) Add(ctx *ctx.Context) (int64, error) {
 				tx.Rollback()
 			}
 			wTree = BuildObj(a.DeviceName, a.CreatedBy, "asset", wTree.Id, a.DeviceStatus, a.Id)
+			wTree.ManagementIp = a.ManagementIp
+			wTree.SerialNumber = a.SerialNumber
 			err = tx.Create(wTree).Error
 			if err != nil {
 				tx.Rollback()
 			}
 		} else {
 			//设备厂商存在，插入设备名称
-			err = tx.Create(BuildObj(a.DeviceName, a.CreatedBy, "asset", menuTree1.Id, a.DeviceStatus, a.Id)).Error
+			wTree = BuildObj(a.DeviceName, a.CreatedBy, "asset", menuTree1.Id, a.DeviceStatus, a.Id)
+			wTree.ManagementIp = a.ManagementIp
+			wTree.SerialNumber = a.SerialNumber
+			err = tx.Create(wTree).Error
 			if err != nil {
 				tx.Rollback()
 			}
@@ -283,4 +292,20 @@ func AssetBasicCount(ctx *ctx.Context, where string, args ...interface{}) (num i
 // 根据传入条件统计个数
 func AssetCountByMap(ctx *ctx.Context, where map[string]interface{}) (num int64, err error) {
 	return Count(DB(ctx).Model(&AssetBasic{}).Where(where))
+}
+
+//判断表是否存在
+func HasTableByName(ctx *ctx.Context, name string) bool {
+	return DB(ctx).Migrator().HasTable(name)
+}
+
+//判断表中是否存在字段
+func HasTableFieldByName(ctx *ctx.Context, name, field string) (num int64, err error) {
+	return Count(DB(ctx).Where("table_name = ? AND column_name = ?", name, field).Table("information_schema.columns"))
+}
+
+//查询数据
+func TableGetsByName(ctx *ctx.Context, name string, fields []string) (m []map[string]interface{}, err error) {
+	err = DB(ctx).Select(fields).Table(name).Find(&m).Error
+	return m, err
 }

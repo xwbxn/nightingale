@@ -15,11 +15,6 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-var (
-	defaultSheetName = "Sheet1" //默认Sheet名称
-	defaultHeight    = 25.0     //默认行高度
-)
-
 // @Summary      获取设备型号
 // @Description  根据主键获取设备型号
 // @Tags         设备型号

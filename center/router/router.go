@@ -498,6 +498,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		//配线架信息管理
 		pages.GET("/distribution-frame/list", rt.auth(), rt.admin(), rt.distributionFrameGets)
 		pages.GET("/distribution-frame/:id", rt.auth(), rt.admin(), rt.distributionFrameGet)
+		pages.GET("/distribution-frame/query", rt.auth(), rt.admin(), rt.distributionFrameQuery)
 		pages.POST("/distribution-frame", rt.auth(), rt.admin(), rt.distributionFrameAdd)
 		pages.POST("/distribution-frame/import-xls", rt.auth(), rt.admin(), rt.importDistributionFrame)
 		pages.POST("/distribution-frame/download-xls", rt.auth(), rt.admin(), rt.downloadDistributionFrame)
@@ -530,18 +531,21 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/dict-data/:id", rt.auth(), rt.admin(), rt.dictDataDel)
 
 		//资产树管理
-		// pages.GET("/asset-tree/list", rt.auth(), rt.admin(), rt.assetTreeGets)
+		pages.GET("/asset-tree/list", rt.auth(), rt.admin(), rt.assetTreeGets)
 		pages.GET("/asset-tree/data", rt.auth(), rt.admin(), rt.assetTreeGetALL)
-		// pages.GET("/asset-tree/count", rt.auth(), rt.admin(), rt.assetTreeGetCount)
-		// pages.GET("/asset-tree/:id", rt.auth(), rt.admin(), rt.assetTreeGet)
-		// pages.POST("/asset-tree", rt.auth(), rt.admin(), rt.assetTreeAdd)
-		// pages.PUT("/asset-tree", rt.auth(), rt.admin(), rt.assetTreePut)
-		// pages.DELETE("/asset-tree/:id", rt.auth(), rt.admin(), rt.assetTreeDel)
+		pages.GET("/asset-tree/memory", rt.auth(), rt.admin(), rt.assetTreeGetMemory)
+		pages.GET("/asset-tree/count", rt.auth(), rt.admin(), rt.assetTreeGetCount)
+		pages.GET("/asset-tree/:id", rt.auth(), rt.admin(), rt.assetTreeGet)
+		pages.POST("/asset-tree", rt.auth(), rt.admin(), rt.assetTreeAdd)
+		pages.PUT("/asset-tree", rt.auth(), rt.admin(), rt.assetTreePut)
+		pages.DELETE("/asset-tree/:id", rt.auth(), rt.admin(), rt.assetTreeDel)
 
 		//资产详情管理
 		pages.POST("/asset-basic/list", rt.auth(), rt.admin(), rt.assetBasicGetsByTree)
+		pages.GET("/asset-basic/list", rt.auth(), rt.admin(), rt.assetBasicGets)
 		pages.GET("/asset-basic/:id", rt.auth(), rt.admin(), rt.assetBasicGet)
 		pages.POST("/asset-basic", rt.auth(), rt.admin(), rt.assetBasicAdd)
+		pages.POST("/asset-basic/table", rt.auth(), rt.admin(), rt.assetFieldGetsByTableName)
 		pages.PUT("/asset-basic", rt.auth(), rt.admin(), rt.assetBasicPut)
 		pages.DELETE("/asset-basic/:id", rt.auth(), rt.admin(), rt.assetBasicDel)
 
@@ -550,14 +554,46 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/asset-expansion/:id", rt.auth(), rt.admin(), rt.assetExpansionGet)
 		pages.POST("/asset-expansion", rt.auth(), rt.admin(), rt.assetExpansionAdd)
 		pages.POST("/asset-expansion/batch", rt.auth(), rt.admin(), rt.assetExpansionBatchAdd)
+		pages.POST("/asset-expansion/map", rt.auth(), rt.admin(), rt.assetExpansionGetByMap)
 		pages.PUT("/asset-expansion", rt.auth(), rt.admin(), rt.assetExpansionPut)
 		pages.DELETE("/asset-expansion/:id", rt.auth(), rt.admin(), rt.assetExpansionDel)
 
+		//资产维保管理
+		pages.GET("/asset-maintenance", rt.auth(), rt.admin(), rt.assetMaintenanceGets)
+		pages.GET("/asset-maintenance/:id", rt.auth(), rt.admin(), rt.assetMaintenanceGet)
+		pages.POST("/asset-maintenance", rt.auth(), rt.admin(), rt.assetMaintenanceAdd)
+		pages.PUT("/asset-maintenance", rt.auth(), rt.admin(), rt.assetMaintenancePut)
+		pages.DELETE("/asset-maintenance/:id", rt.auth(), rt.admin(), rt.assetMaintenanceDel)
+
+		//资产管理
+		pages.GET("/asset-management", rt.auth(), rt.admin(), rt.assetManagementGets)
+		pages.GET("/asset-management/:id", rt.auth(), rt.admin(), rt.assetManagementGet)
+		pages.POST("/asset-management", rt.auth(), rt.admin(), rt.assetManagementAdd)
+		pages.PUT("/asset-management", rt.auth(), rt.admin(), rt.assetManagementPut)
+		pages.DELETE("/asset-management/:id", rt.auth(), rt.admin(), rt.assetManagementDel)
+
+		//资产变更管理
+		pages.GET("/asset-alter", rt.auth(), rt.admin(), rt.assetAlterGets)
+		pages.GET("/asset-alter/:id", rt.auth(), rt.admin(), rt.assetAlterGet)
+		pages.GET("/asset-alter/asset", rt.auth(), rt.admin(), rt.assetAlterGetByAssetId)
+		pages.POST("/asset-alter", rt.auth(), rt.admin(), rt.assetAlterAdd)
+		pages.PUT("/asset-alter", rt.auth(), rt.admin(), rt.assetAlterPut)
+		pages.DELETE("/asset-alter/:id", rt.auth(), rt.admin(), rt.assetAlterDel)
+
 		//探针版本管理
 		pages.POST("/target/version", rt.auth(), rt.admin(), rt.importNewVersion)
-		pages.POST("/server/update", rt.auth(), rt.admin(), rt.importUpgradePack)
+
 		pages.GET("/target/:ident/version", rt.auth(), rt.admin(), rt.UsableVersionGet)
 		pages.PUT("/target/:ident/version", rt.auth(), rt.admin(), rt.targetVersionPut)
+		//更新包管理
+		pages.POST("/server/update", rt.auth(), rt.admin(), rt.importUpgradePack)
+
+		//设备类型表单配置表管理
+		pages.GET("/device-type_config", rt.auth(), rt.admin(), rt.deviceTypeConfigGets)
+		pages.GET("/device-type_config/:id", rt.auth(), rt.admin(), rt.deviceTypeConfigGet)
+		pages.POST("/device-type_config", rt.auth(), rt.admin(), rt.deviceTypeConfigAdd)
+		pages.PUT("/device-type_config", rt.auth(), rt.admin(), rt.deviceTypeConfigPut)
+		pages.DELETE("/device-type_config/:id", rt.auth(), rt.admin(), rt.deviceTypeConfigDel)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

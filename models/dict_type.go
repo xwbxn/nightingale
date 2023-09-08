@@ -15,7 +15,7 @@ import (
 // version:2023-07-21 08:48
 type DictType struct {
 	Id        int64  `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键        version:2023-07-21 08:48
-	DictCode  string `gorm:"column:DICT_CODE" json:"dict_code" `                       //type:string   comment:字典编码    version:2023-07-21 08:48
+	TypeCode  string `gorm:"column:TYPE_CODE" json:"type_code" `                       //type:string   comment:字典编码    version:2023-08-01 14:10
 	DictName  string `gorm:"column:DICT_NAME" json:"dict_name" `                       //type:string   comment:字典名称    version:2023-07-21 08:48
 	Remark    string `gorm:"column:REMARK" json:"remark" `                             //type:string   comment:备注        version:2023-07-21 08:48
 	CreatedBy string `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人      version:2023-07-21 08:48
@@ -51,9 +51,9 @@ func DictTypeGets(ctx *ctx.Context, query string, limit, offset int) ([]DictType
 }
 
 // 按id查询
-func DictTypeGetByDictCode(ctx *ctx.Context, dictCode string) (bool, error) {
+func DictTypeGetByTypeCodeCode(ctx *ctx.Context, typeCode string) (bool, error) {
 	var dictType *DictType
-	err := DB(ctx).Where("DICT_CODE = ?", dictCode).Find(&dictType).Error
+	err := DB(ctx).Where("TYPE_CODE = ?", typeCode).Find(&dictType).Error
 	logger.Debug(dictType)
 	if err != nil || dictType.Id == 0 {
 		return false, err

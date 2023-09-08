@@ -77,13 +77,13 @@ func (rt *Router) dictTypeAdd(c *gin.Context) {
 	// rt.Redis.Set(rt.Ctx.Ctx, f.DictCode, f)
 
 	//校验编码是否存在
-	exist, err := models.DictTypeGetByDictCode(rt.Ctx, f.DictCode)
+	exist, err := models.DictTypeGetByTypeCodeCode(rt.Ctx, f.TypeCode)
 	logger.Debug("-========================")
 	logger.Debug(exist)
-	logger.Debug(f.DictCode)
+	logger.Debug(f.TypeCode)
 	ginx.Dangerous(err)
 	if exist {
-		ginx.Bomb(http.StatusOK, "dictCode exist")
+		ginx.Bomb(http.StatusOK, "typeCode exist")
 	}
 
 	// 添加审计信息
@@ -114,7 +114,7 @@ func (rt *Router) dictTypePut(c *gin.Context) {
 		ginx.Bomb(http.StatusOK, "dict_type not found")
 	}
 	//校验编码是否存在
-	exist, err := models.DictTypeGetByDictCode(rt.Ctx, f.DictCode)
+	exist, err := models.DictTypeGetByTypeCodeCode(rt.Ctx, f.TypeCode)
 	ginx.Dangerous(err)
 	if exist {
 		ginx.Bomb(http.StatusOK, "dictCode exist")
@@ -148,7 +148,7 @@ func (rt *Router) dictTypeDel(c *gin.Context) {
 		return
 	}
 	//删除字典数据
-	err = models.DictDataDelByDictCode(rt.Ctx, dictType.DictCode)
+	err = models.DictDataDelByTypeCode(rt.Ctx, dictType.TypeCode)
 	// 有错则跳出，无错则继续
 	ginx.Dangerous(err)
 

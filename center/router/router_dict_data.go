@@ -20,8 +20,8 @@ import (
 // @Router       /api/n9e/dict-data/{code} [get]
 // @Security     ApiKeyAuth
 func (rt *Router) dictDataGet(c *gin.Context) {
-	dictCode := ginx.UrlParamStr(c, "code")
-	dictData, err := models.DictDataGetByDictCode(rt.Ctx, dictCode)
+	typeCode := ginx.UrlParamStr(c, "code")
+	dictData, err := models.DictDataGetByTypeCode(rt.Ctx, typeCode)
 	ginx.Dangerous(err)
 	logger.Debug(dictData)
 	if dictData == nil {
@@ -85,17 +85,15 @@ func (rt *Router) dictDataAdd(c *gin.Context) {
 // @Tags         字典数据表
 // @Accept       json
 // @Produce      json
-// @Param        dictCode    query    string  true  "编码"
+// @Param        typeCode    query    string  true  "编码"
 // @Param        body  body   []models.DictData true "update dictData"
 // @Success      200
 // @Router       /api/n9e/dict-data/ [put]
 // @Security     ApiKeyAuth
 func (rt *Router) dictDataPut(c *gin.Context) {
-	dictCode := ginx.QueryStr(c, "dictCode", "")
+	typeCode := ginx.QueryStr(c, "typeCode", "")
 
-	logger.Debug("---------------")
-	logger.Debug(dictCode)
-	err := models.DictDataDelByDictCode(rt.Ctx, dictCode)
+	err := models.DictDataDelByTypeCode(rt.Ctx, typeCode)
 	ginx.Dangerous(err)
 
 	var f []*models.DictData

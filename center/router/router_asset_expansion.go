@@ -32,23 +32,45 @@ func (rt *Router) assetExpansionGet(c *gin.Context) {
 	ginx.NewRender(c).Data(assetExpansion, nil)
 }
 
+// @Summary      根据资产ID、类别或属性获取资产扩展
+// @Description  根据资产ID、类别或属性获取资产扩展
+// @Tags         资产扩展
+// @Accept       json
+// @Produce      json
+// @Param        body  body   models.AssetExpansion true "add AssetExpansion"
+// @Success      200  {array}  []models.AssetExpansion
+// @Router       /api/n9e/asset-expansion/map [post]
+// @Security     ApiKeyAuth
+func (rt *Router) assetExpansionGetByMap(c *gin.Context) {
+
+	m := make(map[string]interface{})
+	ginx.BindJSON(c, &m)
+
+	lst, err := models.AssetExpansionGetByMap(rt.Ctx, m)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(lst, nil)
+}
+
 // @Summary      查询资产扩展
 // @Description  根据条件查询资产扩展
 // @Tags         资产扩展
 // @Accept       json
 // @Produce      json
-// @Param        limit query   int     false  "返回条数"
+// @Param        page query   int     false  "页码"
+// @Param        limit query   int     false  "条数"
 // @Param        query query   string  false  "查询条件"
 // @Success      200  {array}  models.AssetExpansion
 // @Router       /api/n9e/asset-expansion/list/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) assetExpansionGets(c *gin.Context) {
+	page := ginx.QueryInt(c, "page", 1)
 	limit := ginx.QueryInt(c, "limit", 20)
 	query := ginx.QueryStr(c, "query", "")
 
 	total, err := models.AssetExpansionCount(rt.Ctx, query)
 	ginx.Dangerous(err)
-	lst, err := models.AssetExpansionGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
+	lst, err := models.AssetExpansionGets(rt.Ctx, query, limit, (page-1)*limit)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
@@ -86,7 +108,7 @@ func (rt *Router) assetExpansionAdd(c *gin.Context) {
 // @Produce      json
 // @Param        body  body   []models.AssetExpansion true "add assetExpansion"
 // @Success      200
-// @Router       /api/n9e/asset-expansion/batch [post]
+// @Router       /api/n9e/asset-expansion/batch/ [post]
 // @Security     ApiKeyAuth
 func (rt *Router) assetExpansionBatchAdd(c *gin.Context) {
 	var f []models.AssetExpansion
@@ -108,26 +130,47 @@ func (rt *Router) assetExpansionBatchAdd(c *gin.Context) {
 // @Tags         资产扩展
 // @Accept       json
 // @Produce      json
-// @Param        body  body   models.AssetExpansion true "update assetExpansion"
+// @Param        body  body   []models.AssetExpansion true "update assetExpansion"
 // @Success      200
 // @Router       /api/n9e/asset-expansion/ [put]
 // @Security     ApiKeyAuth
 func (rt *Router) assetExpansionPut(c *gin.Context) {
-	var f models.AssetExpansion
-	ginx.BindJSON(c, &f)
 
-	old, err := models.AssetExpansionGetById(rt.Ctx, f.Id)
-	ginx.Dangerous(err)
-	if old == nil {
-		ginx.Bomb(http.StatusOK, "asset_expansion not found")
+	var f []models.AssetExpansion
+	ginx.BindJSON(c, &f)
+	if len(f) == 0 {
+		ginx.Bomb(http.StatusOK, "Not update asset_expansion")
 	}
 
 	// 添加审计信息
 	me := c.MustGet("user").(*models.User)
-	f.UpdatedBy = me.Username
+	name := me.Username
+
+	var err error
+	m := make(map[string]interface{})
+
+	//确定更新位置为硬件配置
+	if f[0].ConfigCategory == "form-hardware-cfg" {
+
+		//通过资产id、属性等查询
+		m["ASSET_ID"] = f[0].AssetId
+		m["CONFIG_CATEGORY"] = f[0].ConfigCategory
+		m["PROPERTY_CATEGORY"] = f[0].PropertyCategory
+
+		err = models.UpdateAssetExpansionGroup(rt.Ctx, m, f, name)
+		ginx.Dangerous(err)
+
+	} else if f[0].ConfigCategory == "form-netconfig" {
+
+		m["ASSET_ID"] = f[0].AssetId
+		m["CONFIG_CATEGORY"] = f[0].ConfigCategory
+
+		err = models.UpdateAssetExpansionGroup(rt.Ctx, m, f, name)
+		ginx.Dangerous(err)
+	}
 
 	// 可修改"*"为字段名称，实现更新部分字段功能
-	ginx.NewRender(c).Message(old.Update(rt.Ctx, f, "*"))
+	ginx.NewRender(c).Message(err)
 }
 
 // @Summary      删除资产扩展

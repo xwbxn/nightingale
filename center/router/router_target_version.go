@@ -180,6 +180,7 @@ func (rt *Router) importUpgradePack(c *gin.Context) {
 	path := "etc/update/"
 
 	_, err = PathExists(path)
+	ginx.Dangerous(err)
 
 	//判断当前文件夹是否存在“n9e”
 	now := time.Now()
