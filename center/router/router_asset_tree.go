@@ -293,7 +293,7 @@ func (rt *Router) assetTreeTransfer(c *gin.Context) {
 			ginx.Dangerous(err)
 		}
 
-		err = models.UpdateTxTree(tx, val, map[string]interface{}{"parent_id": parentId, "updated_by": me.Username})
+		err = models.UpdateTxTree(tx, map[string]interface{}{"id": val}, map[string]interface{}{"parent_id": parentId, "updated_by": me.Username})
 		if err != nil {
 			tx.Rollback()
 			ginx.Dangerous(err)

@@ -39,7 +39,7 @@ type AssetMaintenanceVo struct {
 	FinishAt            int64                      `gorm:"column:FINISH_AT" json:"finish_at" `                                 //type:*int     comment:结束日期    version:2023-07-30 10:01
 	MaintenancePeriod   string                     `gorm:"column:MAINTENANCE_PERIOD" json:"maintenance_period" example:"维保期限"` //type:string   comment:维保期限    version:2023-07-30 10:01
 	ProductionAt        int64                      `gorm:"column:PRODUCTION_AT" json:"production_at" `                         //type:*int     comment:出厂日期    version:2023-07-30 10:01
-	ServiceConfig       []MaintenanceServiceConfig `gorm:"column:-" json:"service_config" `
+	ServiceConfig       []MaintenanceServiceConfig `gorm:"-" json:"service_config" `
 }
 
 // TableName 表名:asset_maintenance，资产维保。
@@ -87,11 +87,14 @@ func AssetMaintenanceVoGetByAssetId(ctx *ctx.Context, assetId int64) (*AssetMain
 		return nil, err
 	}
 
-	configLst, err := MaintenanceServiceConfigGetByMaintId(ctx, obj.Id)
-	if err != nil {
-		return nil, err
+	if (&AssetMaintenanceVo{} != obj) {
+		configLst, err := MaintenanceServiceConfigGetByMaintId(ctx, obj.Id)
+		if err != nil {
+			return nil, err
+		}
+		obj.ServiceConfig = configLst
 	}
-	obj.ServiceConfig = configLst
+
 	return obj, nil
 }
 
@@ -173,11 +176,14 @@ func AssetMaintenanceBatchDel(ctx *ctx.Context, tx *gorm.DB, ids []int64) error 
 	//删除资产维保
 	maint := make([]int64, 0)
 	for _, val := range ids {
-		assetMaint, err := AssetMaintenanceGetById(ctx, val)
+		assetMaint, err := AssetMaintenanceVoGetByAssetId(ctx, val)
 		if err != nil {
 			tx.Rollback()
 		}
-		maint = append(maint, assetMaint.Id)
+		if (&AssetMaintenanceVo{} == assetMaint) {
+			continue
+		}
+		maint = append(maint, (*assetMaint).Id)
 	}
 
 	err := tx.Where("ASSET_ID IN ?", ids).Delete(&AssetMaintenance{}).Error

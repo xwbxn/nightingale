@@ -295,11 +295,11 @@ func UpdateTree(ctx *ctx.Context, ids []int64, m map[string]interface{}) error {
 }
 
 // 更新资产树
-func UpdateTxTree(tx *gorm.DB, id int64, m map[string]interface{}) error {
+func UpdateTxTree(tx *gorm.DB, where map[string]interface{}, m map[string]interface{}) error {
 	// 这里写AssetTree的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
-	err := tx.Debug().Model(&AssetTree{}).Where("ID = ?", id).Updates(m).Error
+	err := tx.Debug().Model(&AssetTree{}).Where(where).Updates(m).Error
 	if err != nil {
 		tx.Rollback()
 	}

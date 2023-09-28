@@ -5,7 +5,6 @@ package router
 
 import (
 	"net/http"
-	"time"
 
 	models "github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
@@ -75,8 +74,14 @@ func (rt *Router) deviceOnlineAdd(c *gin.Context) {
 	assetBasics := make([]map[string]interface{}, 0)
 	var ids []int64
 	var onLines []models.DeviceOnline
-	dep := f["description"].(string)
+	des, ok := f["description"]
+	var dep string
+	if ok {
+		dep = des.(string)
+	}
+
 	status := int64(f["device_status"].(float64))
+	deviceTime := int64(f["device_time"].(float64))
 	assetsInterface := f["asset"].([]interface{})
 	var directory, clearConfig int64
 	resourceFree := make([]string, 0)
@@ -127,8 +132,11 @@ func (rt *Router) deviceOnlineAdd(c *gin.Context) {
 
 		onLine.DeviceStatus = status
 		onLine.AssetId = int64(val["id"].(float64))
-		onLine.LineAt = time.Now().Unix()
-		onLine.Description = dep
+		onLine.LineAt = deviceTime
+		if ok {
+			onLine.Description = dep
+		}
+
 		if status == 2 {
 			onLine.LineDirectory = int64(val["directory"].(float64))
 		} else {
@@ -149,12 +157,32 @@ func (rt *Router) deviceOnlineAdd(c *gin.Context) {
 		if status == 1 || status == 2 {
 			err = models.UpdateBasicTxMap(tx, ids[index], assetBasics[index])
 			ginx.Dangerous(err)
-		}
-		// else {
-		// 	for
-		// }
+		} else {
+			for _, resVal := range resourceFree {
+				err = models.UpdateBasicTxMap(tx, ids[index], map[string]interface{}{"device_status": status, "updated_by": me.Username})
+				ginx.Dangerous(err)
+				if resVal == "chear_business" {
+					err = models.UpdateBasicTxMap(tx, ids[index], map[string]interface{}{"related_service": "", "updated_by": me.Username})
+					ginx.Dangerous(err)
+					//TODO 接触检测、清除告警信息（暂未开发）
+				} else if resVal == "clear_managment_ip" {
+					err = models.UpdateBasicTxMap(tx, ids[index], map[string]interface{}{"management_ip": "", "updated_by": me.Username})
+					ginx.Dangerous(err)
+				} else if resVal == "clear_manage_ip" {
+					err = models.UpdateAssetExpansionMap(tx, map[string]interface{}{"asset_id": ids[index], "property_name": "production_ip"}, map[string]interface{}{"property_value": "", "updated_by": me.Username})
+					ginx.Dangerous(err)
+				} else if resVal == "clear_cabinet" {
+					err = models.UpdateBasicTxMap(tx, ids[index], map[string]interface{}{"equipment_room": "", "updated_by": me.Username})
+					ginx.Dangerous(err)
+				} else if resVal == "clear_room" {
+					err = models.UpdateBasicTxMap(tx, ids[index], map[string]interface{}{"owning_cabinet": "", "updated_by": me.Username})
+					ginx.Dangerous(err)
 
-		err = models.UpdateTxTree(tx, assetTree.Id, map[string]interface{}{"status": status, "parent_id": directory, "updated_by": me.Username})
+				}
+			}
+		}
+
+		err = models.UpdateTxTree(tx, map[string]interface{}{"id": assetTree.Id}, map[string]interface{}{"status": status, "parent_id": directory, "updated_by": me.Username})
 		ginx.Dangerous(err)
 	}
 	err := models.DeviceOnlineTxBatchAdd(tx, onLines)

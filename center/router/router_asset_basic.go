@@ -285,6 +285,10 @@ func (rt *Router) assetBasicPut(c *gin.Context) {
 	err = old.Update(rt.Ctx, tx, me.Username, f, "*")
 	ginx.Dangerous(err)
 
+	//更新资产树
+	models.UpdateTxTree(tx, map[string]interface{}{"property_id": old.Id, "type": "asset"}, map[string]interface{}{"management_ip": f.ManagedState, "serial_number": f.SerialNumber, "name": f.DeviceName})
+	ginx.Dangerous(err)
+
 	for _, newAssetExpansion := range f.BasicExpansion {
 		if newAssetExpansion.Id == 0 {
 			err = newAssetExpansion.AddTx(tx)

@@ -432,35 +432,35 @@ func (a *AssetBasic) Del(ctx *ctx.Context) error {
 // 更新资产详情
 func (a *AssetBasicExpansionVo) Update(ctx *ctx.Context, tx *gorm.DB, name string, updateFrom interface{}, selectField interface{}, selectFields ...interface{}) error {
 	// 这里写AssetBasic的业务逻辑，通过error返回错误
-	var oldAssetBasic *AssetBasic
-	var err error
+	// var oldAssetBasic *AssetBasic
+	// var err error
 	//更新资产树
-	oldAssetBasic, err = AssetBasicGetById[AssetBasic](ctx, a.Id)
-	if err != nil {
-		return err
-	}
+	// oldAssetBasic, err = AssetBasicGetById[AssetBasic](ctx, a.Id)
+	// if err != nil {
+	// 	return err
+	// }
 
-	if oldAssetBasic.DeviceName != a.DeviceName {
-		err = tx.Model(&AssetTree{}).Where("NAME = ?", oldAssetBasic.DeviceName).Updates(map[string]interface{}{"NAME": a.DeviceName, "UPDATED_BY": name}).Error
-		if err != nil {
-			tx.Rollback()
-		}
-	}
-	if oldAssetBasic.DeviceProducer != a.DeviceProducer {
-		err = tx.Model(&AssetTree{}).Where("NAME = ?", oldAssetBasic.DeviceProducer).Updates(map[string]interface{}{"NAME": a.DeviceProducer, "UPDATED_BY": name}).Error
-		if err != nil {
-			tx.Rollback()
-		}
-	}
-	if oldAssetBasic.DeviceType != a.DeviceType {
-		err = tx.Model(&AssetTree{}).Where("NAME = ?", oldAssetBasic.DeviceType).Updates(map[string]interface{}{"NAME": a.DeviceType, "UPDATED_BY": name}).Error
-		if err != nil {
-			tx.Rollback()
-		}
-	}
+	// if oldAssetBasic.DeviceName != a.DeviceName {
+	// 	err = tx.Model(&AssetTree{}).Where("NAME = ?", oldAssetBasic.DeviceName).Updates(map[string]interface{}{"NAME": a.DeviceName, "UPDATED_BY": name}).Error
+	// 	if err != nil {
+	// 		tx.Rollback()
+	// 	}
+	// }
+	// if oldAssetBasic.DeviceProducer != a.DeviceProducer {
+	// 	err = tx.Model(&AssetTree{}).Where("NAME = ?", oldAssetBasic.DeviceProducer).Updates(map[string]interface{}{"NAME": a.DeviceProducer, "UPDATED_BY": name}).Error
+	// 	if err != nil {
+	// 		tx.Rollback()
+	// 	}
+	// }
+	// if oldAssetBasic.DeviceType != a.DeviceType {
+	// 	err = tx.Model(&AssetTree{}).Where("NAME = ?", oldAssetBasic.DeviceType).Updates(map[string]interface{}{"NAME": a.DeviceType, "UPDATED_BY": name}).Error
+	// 	if err != nil {
+	// 		tx.Rollback()
+	// 	}
+	// }
 
 	// 实际向库中写入
-	err = tx.Model(a).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
+	err := tx.Model(&AssetBasic{}).Where("ID = ?", a.Id).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
 	if err != nil {
 		tx.Rollback()
 	}

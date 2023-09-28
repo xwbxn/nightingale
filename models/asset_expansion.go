@@ -200,6 +200,18 @@ func (a *AssetExpansion) Update(tx *gorm.DB, updateFrom interface{}, selectField
 	return err
 }
 
+// 更新资产扩展
+func UpdateAssetExpansionMap(tx *gorm.DB, where map[string]interface{}, m map[string]interface{}) error {
+	// 这里写AssetExpansion的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	err := tx.Model(&AssetExpansion{}).Where(where).Updates(m).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
+}
+
 // 根据条件统计个数
 func AssetExpansionCount(ctx *ctx.Context, where string, args ...interface{}) (num int64, err error) {
 	return Count(DB(ctx).Model(&AssetExpansion{}).Where(where, args...))
