@@ -76,3 +76,22 @@ func (rt *Router) organizationAdd(c *gin.Context) {
 
 	ginx.NewRender(c).Message(u.Add(rt.Ctx))
 }
+
+// @Summary      根据Ids获取组织树
+// @Description  根据Ids获取组织树
+// @Tags         组织树管理
+// @Accept       json
+// @Produce      json
+// @Param        body  body   []int64 true "add ids"
+// @Success      200 {array}  models.Organization
+// @Router       /api/n9e/organization/name/ [post]
+// @Security     ApiKeyAuth
+func (rt *Router) organizationGetsByIds(c *gin.Context) {
+	var f []int64
+	ginx.BindJSON(c, &f)
+
+	organizations, err := models.OrganizationGetsByIds(rt.Ctx, f)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(organizations, err)
+}

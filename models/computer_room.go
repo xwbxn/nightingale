@@ -81,6 +81,17 @@ func ComputerRoomGetById(ctx *ctx.Context, id int64) (*ComputerRoom, error) {
 	return obj, nil
 }
 
+// 按RoomName查询
+func ComputerRoomGetByRoomName(ctx *ctx.Context, name string) (*ComputerRoom, error) {
+	var obj *ComputerRoom
+	err := DB(ctx).Where("ROOM_NAME = ?", name).Find(&obj).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
 // 按所属机房查询机房名称列表
 func ComputerRoomNameGetByIdc(ctx *ctx.Context, idc int64) ([]ComputerRoomNameVo, error) {
 	var obj []ComputerRoomNameVo

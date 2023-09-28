@@ -32,6 +32,26 @@ func (rt *Router) assetExpansionGet(c *gin.Context) {
 	ginx.NewRender(c).Data(assetExpansion, nil)
 }
 
+// @Summary      根据资产ID获取资产扩展
+// @Description  根据资产ID获取资产扩展
+// @Tags         资产扩展
+// @Accept       json
+// @Produce      json
+// @Param        asset    query    int  true  "资产ID"
+// @Success      200  {array}  []models.AssetExpansion
+// @Router       /api/n9e/asset-expansion/asset [get]
+// @Security     ApiKeyAuth
+func (rt *Router) assetExpansionGetByAssetId(c *gin.Context) {
+	assetId := ginx.QueryInt64(c, "asset", -1)
+	m := make(map[string]interface{})
+	m["asset_id"] = assetId
+
+	lst, err := models.AssetExpansionGetByMap(rt.Ctx, m)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(lst, nil)
+}
+
 // @Summary      根据资产ID、类别或属性获取资产扩展
 // @Description  根据资产ID、类别或属性获取资产扩展
 // @Tags         资产扩展
@@ -121,7 +141,7 @@ func (rt *Router) assetExpansionBatchAdd(c *gin.Context) {
 	}
 
 	// 更新模型
-	err := models.BatchAdd(rt.Ctx, f)
+	err := models.AssetExpansionBatchAdd(rt.Ctx, f)
 	ginx.NewRender(c).Message(err)
 }
 

@@ -102,6 +102,15 @@ func OrganizationGets(ctx *ctx.Context) ([]Organization, error) {
 	return lst, err
 }
 
+func OrganizationGetsByIds(ctx *ctx.Context, ids []int64) ([]Organization, error) {
+	session := DB(ctx)
+
+	var lst []Organization
+	err := session.Where("ID IN ?", ids).Find(&lst).Error
+
+	return lst, err
+}
+
 func OrganizationGetById(ctx *ctx.Context, id int64) (*Organization, error) {
 	return OrganizationGet(ctx, "id=?", id)
 }

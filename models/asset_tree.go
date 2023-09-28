@@ -5,6 +5,7 @@ package models
 
 import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"gorm.io/gorm"
 )
 
 // AssetTree  资产树。
@@ -125,7 +126,29 @@ func AssetTreeGets(ctx *ctx.Context, query string, limit, offset int) ([]AssetTr
 // 按id查询
 func AssetTreeGetById(ctx *ctx.Context, id int64) (*AssetTree, error) {
 	var obj *AssetTree
-	err := DB(ctx).Take(&obj, id).Error
+	err := DB(ctx).Debug().Take(&obj, id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
+// 按id批量查询
+func AssetTreeBatchGetById(ctx *ctx.Context, ids []int64) ([]AssetTree, error) {
+	var obj []AssetTree
+	err := DB(ctx).Debug().Where("PROPERTY_ID IN ? AND TYPE = ?", ids, "asset").Find(&obj).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
+// 按type和assetId查询
+func AssetTreeGetByMap(ctx *ctx.Context, m map[string]interface{}) (*AssetTree, error) {
+	var obj *AssetTree
+	err := DB(ctx).Debug().Where(m).Find(&obj).Error
 	if err != nil {
 		return nil, err
 	}
@@ -150,25 +173,28 @@ func (a *AssetTree) Add(ctx *ctx.Context) error {
 }
 
 // 删除资产树
-func (a *AssetTree) Del(ctx *ctx.Context) error {
+func (a *AssetTree) Del(tx *gorm.DB) error {
 	// 这里写AssetTree的业务逻辑，通过error返回错误
 
 	var tree []*AssetTree
-	err := DB(ctx).Where("PARENT_ID = ?", a.Id).Find(&tree).Error
+	err := tx.Debug().Where("PARENT_ID = ?", a.Id).Find(&tree).Error
 	if err != nil {
-		return err
+		tx.Rollback()
 	}
 
 	if len(tree) != 0 {
 		for _, val := range tree {
-			err = val.Del(ctx)
+			err = val.Del(tx)
 			if err != nil {
-				return err
+				tx.Rollback()
 			}
 		}
 
 	}
-	err = DB(ctx).Delete(&AssetTree{}, a.Id).Error
+	err = tx.Debug().Delete(&AssetTree{}, a.Id).Error
+	if err != nil {
+		tx.Rollback()
+	}
 	return err
 }
 
@@ -258,4 +284,55 @@ func PackagingFrontTree(tree []*AssetTree, status int64) []*FrontTree {
 		})
 	}
 	return frontTree
+}
+
+// 更新资产树
+func UpdateTree(ctx *ctx.Context, ids []int64, m map[string]interface{}) error {
+	// 这里写AssetTree的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	return DB(ctx).Model(&AssetTree{}).Where("ID IN ?", ids).Updates(m).Error
+}
+
+// 更新资产树
+func UpdateTxTree(tx *gorm.DB, id int64, m map[string]interface{}) error {
+	// 这里写AssetTree的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	err := tx.Debug().Model(&AssetTree{}).Where("ID = ?", id).Updates(m).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
+}
+
+//判断存在几个子节点
+func ChildrenNum(ctx *ctx.Context, parent int64) (num int64, err error) {
+	err = DB(ctx).Debug().Model(&AssetTree{}).Where("PARENT_ID = ?", parent).Count(&num).Error
+	return num, err
+}
+
+//根据目录清除树
+func AssetTreeDelById(ctx *ctx.Context, id int64) error {
+
+	flog := true
+	for flog {
+		childrenNum, err := ChildrenNum(ctx, id)
+		if err != nil {
+			return err
+		}
+		if childrenNum > 0 || id == 0 {
+			return err
+		}
+		assetTree, err := AssetTreeGetById(ctx, id)
+		if err != nil {
+			return err
+		}
+		id = assetTree.ParentId
+		err = DB(ctx).Debug().Where("ID = ?", assetTree.Id).Delete(&AssetTree{}).Error
+		if id == 0 {
+			return err
+		}
+	}
+	return nil
 }

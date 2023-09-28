@@ -5,6 +5,7 @@ package router
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 	models "github.com/ccfos/nightingale/v6/models"
@@ -40,12 +41,15 @@ func (rt *Router) deviceProducerGet(c *gin.Context) {
 // @Tags         设备厂商
 // @Accept       json
 // @Produce      json
+// @Param        type query   string  false  "厂商类型"
 // @Success      200  {object}  []models.DeviceProducerNameVo
 // @Router       /api/n9e/device-producer/getName [get]
 // @Security     ApiKeyAuth
 func (rt *Router) deviceProducerGetNames(c *gin.Context) {
 
-	deviceProducerNames, err := models.FindNames(rt.Ctx)
+	prodType := ginx.QueryStr(c, "type", "")
+
+	deviceProducerNames, err := models.FindNames(rt.Ctx, prodType)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(deviceProducerNames, nil)
@@ -56,18 +60,33 @@ func (rt *Router) deviceProducerGetNames(c *gin.Context) {
 // @Tags         设备厂商
 // @Accept       json
 // @Produce      json
-// @Param        limit query   int     false  "返回条数"
-// @Param        query query   string  false  "查询条件"
+// @Param        type query   string  false  "厂商类型"
+// @Param        query query   string  false  "简称/全称/中文名称/联系人"
+// @Param        page query   int     false  "页码"
+// @Param        limit query   int     false  "条数"
 // @Success      200  {array}  models.DeviceProducer
 // @Router       /api/n9e/device-producer/list/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) deviceProducerGets(c *gin.Context) {
+	page := ginx.QueryInt(c, "page", 1)
 	limit := ginx.QueryInt(c, "limit", 20)
+	prodType := ginx.QueryStr(c, "type", "")
 	query := ginx.QueryStr(c, "query", "")
 
-	total, err := models.DeviceProducerCount(rt.Ctx, query)
+	if prodType == "" {
+		ginx.Bomb(http.StatusOK, "厂商类型为空,查询失败!")
+		return
+	}
+
+	m := make(map[string]interface{})
+	m["producer_type"] = prodType
+	if query != "" {
+		m["query"] = query
+	}
+
+	total, err := models.DeviceProducerCountMap(rt.Ctx, m)
 	ginx.Dangerous(err)
-	lst, err := models.DeviceProducerGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
+	lst, err := models.DeviceProducerGetByPage[models.DeviceProducer](rt.Ctx, m, limit, (page-1)*limit)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
@@ -101,7 +120,7 @@ func (rt *Router) deviceProducerAdd(c *gin.Context) {
 	f.CreatedBy = me.Username
 
 	// 更新模型
-	err := f.Add(rt.Ctx)
+	err := models.AddProd[models.DeviceProducer](rt.Ctx, f)
 	ginx.NewRender(c).Message(err)
 }
 
@@ -110,11 +129,14 @@ func (rt *Router) deviceProducerAdd(c *gin.Context) {
 // @Tags         设备厂商
 // @Accept       multipart/form-data
 // @Produce      json
+// @Param        type query   string  false  "厂商类型"
 // @Param        file formData file true "file"
 // @Success      200
 // @Router       /api/n9e/device-producer/import-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) importDeviceProducer(c *gin.Context) {
+
+	prodType := ginx.QueryStr(c, "type", "")
 
 	file, _, err := c.Request.FormFile("file")
 	if err != nil {
@@ -127,22 +149,70 @@ func (rt *Router) importDeviceProducer(c *gin.Context) {
 	}
 	//解析excel的数据
 
-	deviceProducers, lxRrr := excels.ReadExce[models.DeviceProducer](xlsx, rt.Ctx)
-	if lxRrr != nil {
-		ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
-		return
-	}
 	me := c.MustGet("user").(*models.User)
 	var qty int = 0
-	for _, entity := range deviceProducers {
-		// 循环体
-		var f models.DeviceProducer = entity
-		f.CreatedBy = me.Username
-		f.UpdatedAt = f.CreatedAt
-		f.Add(rt.Ctx)
-		qty++
+	if prodType == "producer" {
+		produceroVo, _, lxRrr := excels.ReadExce[models.ProduceroVo](xlsx, rt.Ctx)
+		if lxRrr != nil {
+			ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
+			return
+		}
+
+		for _, entity := range produceroVo {
+			// 循环体
+			var f models.ProduceroVo = entity
+			f.CreatedBy = me.Username
+			f.UpdatedAt = f.CreatedAt
+			err = models.AddProd[models.ProduceroVo](rt.Ctx, f)
+			qty++
+		}
+	} else if prodType == "third_party_maintenance" {
+		maintenanceVo, _, lxRrr := excels.ReadExce[models.MaintenanceVo](xlsx, rt.Ctx)
+		if lxRrr != nil {
+			ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
+			return
+		}
+
+		for _, entity := range maintenanceVo {
+			// 循环体
+			var f models.MaintenanceVo = entity
+			f.CreatedBy = me.Username
+			f.UpdatedAt = f.CreatedAt
+			err = models.AddProd[models.MaintenanceVo](rt.Ctx, f)
+			qty++
+		}
+	} else if prodType == "supplier" {
+		supplierVo, _, lxRrr := excels.ReadExce[models.SupplierVo](xlsx, rt.Ctx)
+		if lxRrr != nil {
+			ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
+			return
+		}
+
+		for _, entity := range supplierVo {
+			// 循环体
+			var f models.SupplierVo = entity
+			f.CreatedBy = me.Username
+			f.UpdatedAt = f.CreatedAt
+			err = models.AddProd[models.SupplierVo](rt.Ctx, f)
+			qty++
+		}
+	} else if prodType == "component_brand" {
+		partVo, _, lxRrr := excels.ReadExce[models.PartVo](xlsx, rt.Ctx)
+		if lxRrr != nil {
+			ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
+			return
+		}
+
+		for _, entity := range partVo {
+			// 循环体
+			var f models.PartVo = entity
+			f.CreatedBy = me.Username
+			f.UpdatedAt = f.CreatedAt
+			err = models.AddProd[models.PartVo](rt.Ctx, f)
+			qty++
+		}
 	}
-	ginx.NewRender(c).Data(qty, nil)
+	ginx.NewRender(c).Data(qty, err)
 }
 
 // @Summary      EXCEL导出设备厂商
@@ -150,25 +220,71 @@ func (rt *Router) importDeviceProducer(c *gin.Context) {
 // @Tags         设备厂商
 // @Accept       multipart/form-data
 // @Produce      application/msexcel
-// @Param        query query   string  false  "导入查询条件"
+// @Param        type query   string  false  "厂商类型"
+// @Param        query query   string  false  "简称/全称/中文名称/联系人"
 // @Success      200
 // @Router       /api/n9e/device-producer/download-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) downloadDeviceProducer(c *gin.Context) {
 
+	prodType := ginx.QueryStr(c, "type", "")
 	query := ginx.QueryStr(c, "query", "")
-	list, err := models.DeviceProducerGets(rt.Ctx, query, -1, ginx.Offset(c, -1)) //获取数据
 
-	ginx.Dangerous(err)
+	if prodType == "" {
+		ginx.Bomb(http.StatusOK, "厂商类型为空,查询失败!")
+		return
+	}
+
+	m := make(map[string]interface{})
+	m["producer_type"] = prodType
+	if query != "" {
+		m["query"] = query
+	}
 
 	datas := make([]interface{}, 0)
-	if len(list) > 0 {
-		for _, v := range list {
-			datas = append(datas, v)
 
+	if prodType == "producer" {
+		lst, err := models.DeviceProducerGetByMap[models.ProduceroVo](rt.Ctx, m)
+		ginx.Dangerous(err)
+
+		if len(lst) > 0 {
+			for _, v := range lst {
+				datas = append(datas, v)
+
+			}
+		}
+	} else if prodType == "third_party_maintenance" {
+		lst, err := models.DeviceProducerGetByMap[models.MaintenanceVo](rt.Ctx, m)
+		ginx.Dangerous(err)
+
+		if len(lst) > 0 {
+			for _, v := range lst {
+				datas = append(datas, v)
+
+			}
+		}
+	} else if prodType == "supplier" {
+		lst, err := models.DeviceProducerGetByMap[models.SupplierVo](rt.Ctx, m)
+		ginx.Dangerous(err)
+
+		if len(lst) > 0 {
+			for _, v := range lst {
+				datas = append(datas, v)
+
+			}
+		}
+	} else if prodType == "component_brand" {
+		lst, err := models.DeviceProducerGetByMap[models.PartVo](rt.Ctx, m)
+		ginx.Dangerous(err)
+
+		if len(lst) > 0 {
+			for _, v := range lst {
+				datas = append(datas, v)
+
+			}
 		}
 	}
-	excels.NewMyExcel("设备厂商数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
+	excels.NewMyExcel(prodType+"数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
 
 }
 
@@ -177,16 +293,32 @@ func (rt *Router) downloadDeviceProducer(c *gin.Context) {
 // @Tags         设备厂商
 // @Accept       json
 // @Produce      json
-// @Success      200  {object}  models.DeviceProducer
-// @Router       /api/n9e/device-producer/templet [post]
+// @Param        type query   string  false  "厂商类型"
+// @Success      200
+// @Router       /api/n9e/device-producer/templet/ [post]
 // @Security     ApiKeyAuth
 func (rt *Router) templetDeviceProducer(c *gin.Context) {
 
+	prodType := ginx.QueryStr(c, "type", "")
+
 	datas := make([]interface{}, 0)
 
-	datas = append(datas, models.DeviceProducer{})
+	if prodType == "producer" {
+		datas = append(datas, models.ProduceroVo{})
+	} else if prodType == "third_party_maintenance" {
+		datas = append(datas, models.MaintenanceVo{})
+	} else if prodType == "supplier" {
+		datas = append(datas, models.SupplierVo{})
+	} else if prodType == "component_brand" {
+		datas = append(datas, models.PartVo{})
+	}
+	m := make(map[string]string)
+	m["producer"] = "厂商"
+	m["third_party_maintenance"] = "第三方维保服务商"
+	m["supplier"] = "供应商"
+	m["component_brand"] = "部件品牌"
 
-	excels.NewMyExcel("设备厂商模板").ExportTempletToWeb(datas, "cn", "source", rt.Ctx, c)
+	excels.NewMyExcel(m[prodType]+"模板").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
 }
 
 // @Summary      更新设备厂商
@@ -243,4 +375,38 @@ func (rt *Router) deviceProducerDel(c *gin.Context) {
 		return
 	}
 	ginx.NewRender(c).Message(deviceProducer.Del(rt.Ctx))
+}
+
+// @Summary      批量删除设备厂商
+// @Description  批量删除设备厂商
+// @Tags         设备厂商
+// @Accept       json
+// @Produce      json
+// @Param        body  body   []int64 true "batch delete deviceProducer"
+// @Success      200
+// @Router       /api/n9e/device-producer/batch-del/ [post]
+// @Security     ApiKeyAuth
+func (rt *Router) deviceProducerBatchDel(c *gin.Context) {
+
+	var f []int64
+	ginx.BindJSON(c, &f)
+
+	deviceModels, err := models.DeviceModelGetByPros(rt.Ctx, f)
+	ginx.Dangerous(err)
+	if len(deviceModels) > 0 {
+		var builder strings.Builder
+		builder.WriteString("存在该厂商的设备，设备型号为")
+		for index, val := range deviceModels {
+			if index == len(deviceModels)-1 {
+				builder.WriteString(val.Model)
+				break
+			}
+			builder.WriteString(val.Model)
+			builder.WriteString("、")
+		}
+		ginx.Bomb(http.StatusOK, builder.String())
+		return
+	}
+
+	ginx.NewRender(c).Message(models.DeviceProducerBatchDel(rt.Ctx, f))
 }

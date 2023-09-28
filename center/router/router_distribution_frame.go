@@ -12,7 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/logger"
 )
 
 // @Summary      获取配线架信息
@@ -168,7 +167,7 @@ func (rt *Router) importDistributionFrame(c *gin.Context) {
 	}
 
 	//解析excel的数据
-	distributionFrames, lxRrr := excels.ReadExce[models.DistributionFrame](xlsx, rt.Ctx)
+	distributionFrames, _, lxRrr := excels.ReadExce[models.DistributionFrame](xlsx, rt.Ctx)
 	if lxRrr != nil {
 		ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
 		return
@@ -201,8 +200,6 @@ func (rt *Router) downloadDistributionFrame(c *gin.Context) {
 	query := ginx.QueryStr(c, "query", "")
 	list, err := models.DistributionFrameGets(rt.Ctx, query, -1, ginx.Offset(c, -1)) //获取数据
 	ginx.Dangerous(err)
-	logger.Debug("----------------------------------")
-	logger.Debug(list)
 
 	datas := make([]interface{}, 0)
 	if len(list) > 0 {
@@ -229,7 +226,7 @@ func (rt *Router) templetDistributionFrame(c *gin.Context) {
 
 	datas = append(datas, models.DistributionFrame{})
 
-	excels.NewMyExcel("设备厂商模板").ExportTempletToWeb(datas, "cn", "source", rt.Ctx, c)
+	excels.NewMyExcel("设备厂商模板").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
 }
 
 // @Summary      查询连接配线架信息（配线架类型/编号、机柜编号）

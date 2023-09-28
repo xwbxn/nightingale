@@ -52,6 +52,17 @@ func MaintenanceServiceConfigGets(ctx *ctx.Context, query string, limit, offset 
 	return lst, err
 }
 
+// 按maintenance_id查询
+func MaintenanceServiceConfigGetByMaintId(ctx *ctx.Context, maintId int64) ([]MaintenanceServiceConfig, error) {
+	var lst []MaintenanceServiceConfig
+	err := DB(ctx).Where("MAINTENANCE_ID = ?", maintId).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return lst, nil
+}
+
 // 按id查询
 func MaintenanceServiceConfigGetById(ctx *ctx.Context, id int64) (*MaintenanceServiceConfig, error) {
 	var obj *MaintenanceServiceConfig

@@ -32,6 +32,23 @@ func (rt *Router) assetManagementGet(c *gin.Context) {
 	ginx.NewRender(c).Data(assetManagement, nil)
 }
 
+// @Summary      根据资产ID获取资产管理
+// @Description  根据资产ID获取资产管理
+// @Tags         资产管理
+// @Accept       json
+// @Produce      json
+// @Param        asset    query    int  true  "资产ID"
+// @Success      200  {object}  models.AssetManagement
+// @Router       /api/n9e/asset-management/asset [get]
+// @Security     ApiKeyAuth
+func (rt *Router) assetManagementGetAI(c *gin.Context) {
+	assetId := ginx.QueryInt64(c, "asset", -1)
+	assetManagement, err := models.AssetManagementGetByAssetId(rt.Ctx, assetId)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(assetManagement, nil)
+}
+
 // @Summary      查询资产管理
 // @Description  根据条件查询资产管理
 // @Tags         资产管理

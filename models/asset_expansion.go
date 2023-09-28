@@ -70,7 +70,7 @@ func AssetExpansionGetById(ctx *ctx.Context, id int64) (*AssetExpansion, error) 
 // 按map查询
 func AssetExpansionGetByMap(ctx *ctx.Context, query map[string]interface{}) ([]AssetExpansion, error) {
 	var lst []AssetExpansion
-	err := DB(ctx).Debug().Where(query).Find(&lst).Error
+	err := DB(ctx).Where(query).Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func AssetExpansionGetByMap(ctx *ctx.Context, query map[string]interface{}) ([]A
 // 按map查询GroupId
 func GroupIdGetByMap(ctx *ctx.Context, query map[string]interface{}) ([]string, error) {
 	var lst []string
-	err := DB(ctx).Debug().Model(&AssetExpansion{}).Select("GROUP_ID").Where(query).Find(&lst).Error
+	err := DB(ctx).Model(&AssetExpansion{}).Select("GROUP_ID").Where(query).Find(&lst).Error
 	if err != nil {
 		return nil, err
 	}
@@ -105,8 +105,33 @@ func (a *AssetExpansion) Add(ctx *ctx.Context) error {
 	return DB(ctx).Create(a).Error
 }
 
+// 增加资产扩展
+func (a *AssetExpansion) AddTx(tx *gorm.DB) error {
+	// 这里写AssetExpansion的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	logger.Debug(a)
+	err := tx.Create(&a).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
+}
+
 // 批量增加资产扩展
-func BatchAdd(ctx *ctx.Context, a []AssetExpansion) error {
+func AssetExpansionTxBatchAdd(tx *gorm.DB, a []AssetExpansion) error {
+	// 这里写AssetExpansion的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	err := tx.Create(&a).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
+}
+
+// 批量增加资产扩展
+func AssetExpansionBatchAdd(ctx *ctx.Context, a []AssetExpansion) error {
 	// 这里写AssetExpansion的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
@@ -118,7 +143,41 @@ func (a *AssetExpansion) Del(ctx *ctx.Context) error {
 	// 这里写AssetExpansion的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
-	return DB(ctx).Debug().Delete(a).Error
+	return DB(ctx).Delete(a).Error
+}
+
+// 删除资产扩展Tx
+func (a *AssetExpansion) TxDel(tx *gorm.DB) error {
+	// 这里写AssetExpansion的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	err := tx.Delete(a).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
+}
+
+// 批量删除资产扩展
+func AssetExpansionBatchDel(tx *gorm.DB, ids []int64) error {
+	//删除资产扩展
+	err := tx.Where("ASSET_ID IN ?", ids).Delete(&AssetExpansion{}).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
+}
+
+// 根据map删除资产扩展Tx
+func MapTxDel(tx *gorm.DB, m map[string]interface{}) error {
+	// 这里写AssetExpansion的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	err := tx.Where(m).Delete(&AssetExpansion{}).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
 }
 
 // 根据groupId删除资产扩展
@@ -134,7 +193,11 @@ func (a *AssetExpansion) Update(tx *gorm.DB, updateFrom interface{}, selectField
 	// 这里写AssetExpansion的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
-	return tx.Debug().Model(a).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
+	err := tx.Model(a).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
 }
 
 // 根据条件统计个数
@@ -149,7 +212,6 @@ func UpdateAssetExpansionGroup(ctx *ctx.Context, m map[string]interface{}, f []A
 	if err != nil {
 		return err
 	}
-	logger.Debug(groupIds)
 
 	mdata := make(map[string][]AssetExpansion)
 	mNewdata := make(map[string][]AssetExpansion)
@@ -178,16 +240,13 @@ func UpdateAssetExpansionGroup(ctx *ctx.Context, m map[string]interface{}, f []A
 		assetExpansions, ok := mdata[groupId]
 		if ok {
 			//旧数据存在，更新数据
-			for index := range assetExpansions {
-				assetExpansions[index].UpdatedBy = name
-			}
 			err = UpdateAssetExpansion(tx, ctx, assetExpansions, name)
 			if err != nil {
 				tx.Rollback()
 			}
 		} else {
 			//旧数据不存在，删除旧数据
-			err = tx.Debug().Where("GROUP_ID = ?", groupId).Delete(AssetExpansion{}).Error
+			err = tx.Where("GROUP_ID = ?", groupId).Delete(AssetExpansion{}).Error
 			if err != nil {
 				tx.Rollback()
 			}
@@ -198,8 +257,7 @@ func UpdateAssetExpansionGroup(ctx *ctx.Context, m map[string]interface{}, f []A
 	for groupId := range mNewdata {
 
 		assetExp := mNewdata[groupId]
-		logger.Debug(assetExp)
-		err = tx.Debug().Create(&assetExp).Error
+		err = tx.Create(&assetExp).Error
 		if err != nil {
 			tx.Rollback()
 		}
@@ -233,7 +291,7 @@ func UpdateAssetExpansion(tx *gorm.DB, ctx *ctx.Context, f []AssetExpansion, nam
 		}
 		//新数据不存在，旧数据存在，删除该记录
 		if !tag {
-			err = tx.Debug().Delete(&oldVal).Error
+			err = tx.Delete(&oldVal).Error
 			if err != nil {
 				tx.Rollback()
 			}
@@ -244,7 +302,7 @@ func UpdateAssetExpansion(tx *gorm.DB, ctx *ctx.Context, f []AssetExpansion, nam
 		if f[index].Id == 0 {
 			f[index].CreatedBy = name
 			assetExp := f[index]
-			err = tx.Debug().Create(&assetExp).Error
+			err = tx.Create(&assetExp).Error
 			if err != nil {
 				tx.Rollback()
 			}

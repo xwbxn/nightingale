@@ -7,9 +7,9 @@ import (
 	"net/http"
 
 	models "github.com/ccfos/nightingale/v6/models"
+	excels "github.com/ccfos/nightingale/v6/pkg/excel"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/logger"
 )
 
 // @Summary      获取资产变更
@@ -39,6 +39,9 @@ func (rt *Router) assetAlterGet(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        asset    query    int  true  "资产ID"
+// @Param        start    query    int  false  "变更开始日期"
+// @Param        end    query    int  false  "变更结束日期"
+// @Param        event    query    string  false  "变更事项"
 // @Param        page query   int     false  "页码"
 // @Param        limit query   int     false  "条数"
 // @Success      200  {array}  models.AssetAlterVo
@@ -48,18 +51,39 @@ func (rt *Router) assetAlterGetByAssetId(c *gin.Context) {
 	assetId := ginx.QueryInt64(c, "asset", -1)
 	limit := ginx.QueryInt(c, "limit", 20)
 	page := ginx.QueryInt(c, "page", 1)
+	start := ginx.QueryInt64(c, "start", -1)
+	end := ginx.QueryInt64(c, "end", -1)
+	event := ginx.QueryStr(c, "event", "")
 
-	assetBasic, err := models.AssetBasicGetById(rt.Ctx, assetId)
+	m := make(map[string]interface{})
+	if start != -1 {
+		m["start"] = start
+
+		//开始时间不大于结束时间
+		if end < start && end != -1 {
+			ginx.Bomb(http.StatusOK, "Wrong date range selection")
+		}
+	}
+	if end != -1 {
+		m["end"] = end
+	}
+	m["asset_id"] = assetId
+	if event != "" {
+		m["alter_event_key"] = event
+	}
+
+	//查询资产详情
+	assetBasic, err := models.AssetBasicGetById[models.AssetBasic](rt.Ctx, assetId)
 	ginx.Dangerous(err)
 	if assetBasic == nil {
 		ginx.Bomb(404, "No such asset")
 	}
 
-	assetAlterVo, err := models.AssetAlterGetByAssetId(rt.Ctx, assetId, limit, (page-1)*limit)
+	total, err := models.AssetAlterCountByMap(rt.Ctx, m)
 	ginx.Dangerous(err)
-	if assetAlterVo == nil {
-		ginx.Bomb(404, "No such asset_alter")
-	}
+
+	assetAlterVo, err := models.AssetAlterGetByMap(rt.Ctx, m, limit, (page-1)*limit)
+	ginx.Dangerous(err)
 
 	for index := range assetAlterVo {
 		assetAlterVo[index].ManagementIp = assetBasic.ManagementIp
@@ -86,12 +110,9 @@ func (rt *Router) assetAlterGetByAssetId(c *gin.Context) {
 		}
 		assetAlterVo[index].UNumber = assetBasic.UNumber
 	}
-	logger.Debug("----------------------------")
-	logger.Debug(assetAlterVo)
-	logger.Debug("----------------------------")
 	ginx.NewRender(c).Data(gin.H{
 		"list":  assetAlterVo,
-		"total": len(assetAlterVo),
+		"total": total,
 	}, nil)
 }
 
@@ -191,4 +212,33 @@ func (rt *Router) assetAlterDel(c *gin.Context) {
 		return
 	}
 	ginx.NewRender(c).Message(assetAlter.Del(rt.Ctx))
+}
+
+// @Summary      EXCEL导出资产变更记录
+// @Description  EXCEL导出资产变更记录
+// @Tags         资产变更
+// @Accept       multipart/form-data
+// @Produce      application/msexcel
+// @Param        query query   int  true  "资产ID"
+// @Success      200
+// @Router       /api/n9e/asset-alter/download-xls [post]
+// @Security     ApiKeyAuth
+func (rt *Router) downloadAssetAlter(c *gin.Context) {
+
+	assetId := ginx.QueryInt64(c, "query", -1)
+	//获取数据
+	where := make(map[string]interface{})
+	where["ASSET_ID"] = assetId
+	lst, err := models.AssetAlterGetByMap(rt.Ctx, where, -1, -1)
+	ginx.Dangerous(err)
+
+	datas := make([]interface{}, 0)
+	if len(lst) > 0 {
+		for _, v := range lst {
+			datas = append(datas, v)
+
+		}
+	}
+	excels.NewMyExcel("资产变更数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
+
 }

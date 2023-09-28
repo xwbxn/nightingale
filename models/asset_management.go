@@ -5,6 +5,7 @@ package models
 
 import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"gorm.io/gorm"
 	optlock "gorm.io/plugin/optimisticlock"
 )
 
@@ -15,9 +16,11 @@ import (
 // version:2023-08-04 09:45
 type AssetManagement struct {
 	Id             int64           `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键        version:2023-08-04 09:45
+	AssetId        int64           `gorm:"column:ASSET_ID" json:"asset_id" `                         //type:*int     comment:资产ID      version:2023-08-12 08:57
 	AssetCode      string          `gorm:"column:ASSET_CODE" json:"asset_code" `                     //type:string   comment:资产编号    version:2023-08-04 09:45
 	ShutdownLevel  int64           `gorm:"column:SHUTDOWN_LEVEL" json:"shutdown_level" `             //type:*int     comment:关机级别    version:2023-08-04 09:45
-	ServiceLevel   int64           `gorm:"column:SERVICE_LEVEL" json:"service_level" `               //type:*int     comment:服务级别    version:2023-08-04 09:45
+	ServiceLevel   string          `gorm:"column:SERVICE_LEVEL" json:"service_level" `               //type:string   comment:服务级别    version:2023-08-13 09:46
+	ServiceCode    string          `gorm:"column:SERVICE_CODE" json:"service_code" `                 //type:string   comment:服务代码    version:2023-08-13 09:18
 	BelongDept     int64           `gorm:"column:BELONG_DEPT" json:"belong_dept" `                   //type:*int     comment:所属部门    version:2023-08-04 09:45
 	EquipmentUse   string          `gorm:"column:EQUIPMENT_USE" json:"equipment_use" `               //type:string   comment:设备用途    version:2023-08-04 09:45
 	UserDepartment int64           `gorm:"column:USER_DEPARTMENT" json:"user_department" `           //type:*int     comment:使用部门    version:2023-08-04 09:45
@@ -66,6 +69,17 @@ func AssetManagementGetById(ctx *ctx.Context, id int64) (*AssetManagement, error
 	return obj, nil
 }
 
+// 按assetId查询
+func AssetManagementGetByAssetId(ctx *ctx.Context, assetId int64) (*AssetManagement, error) {
+	var obj *AssetManagement
+	err := DB(ctx).Where("ASSET_ID = ?", assetId).Find(&obj).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
 // 查询所有
 func AssetManagementGetsAll(ctx *ctx.Context) ([]AssetManagement, error) {
 	var lst []AssetManagement
@@ -82,6 +96,18 @@ func (a *AssetManagement) Add(ctx *ctx.Context) error {
 	return DB(ctx).Create(a).Error
 }
 
+// 增加资产管理
+func (a *AssetManagement) AssetManagementAddTx(tx *gorm.DB) error {
+	// 这里写AssetManagement的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	err := tx.Create(a).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
+}
+
 // 删除资产管理
 func (a *AssetManagement) Del(ctx *ctx.Context) error {
 	// 这里写AssetManagement的业务逻辑，通过error返回错误
@@ -90,12 +116,30 @@ func (a *AssetManagement) Del(ctx *ctx.Context) error {
 	return DB(ctx).Delete(a).Error
 }
 
+// 批量删除资产管理
+func AssetManagementBatchDel(tx *gorm.DB, ids []int64) error {
+	//删除资产扩展
+	err := tx.Where("ASSET_ID IN ?", ids).Delete(&AssetManagement{}).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
+}
+
 // 更新资产管理
 func (a *AssetManagement) Update(ctx *ctx.Context, updateFrom interface{}, selectField interface{}, selectFields ...interface{}) error {
 	// 这里写AssetManagement的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
 	return DB(ctx).Model(a).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
+}
+
+// 更新资产管理(map)
+func UpdateManagMap(ctx *ctx.Context, ids []int64, m map[string]interface{}) error {
+	// 这里写AssetManagement的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	return DB(ctx).Model(&AssetManagement{}).Where("ASSET_ID IN ?", ids).Updates(m).Error
 }
 
 // 根据条件统计个数

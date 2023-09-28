@@ -32,6 +32,23 @@ func (rt *Router) assetMaintenanceGet(c *gin.Context) {
 	ginx.NewRender(c).Data(assetMaintenance, nil)
 }
 
+// @Summary      根据资产ID获取资产维保
+// @Description  根据资产ID获取资产维保
+// @Tags         资产维保
+// @Accept       json
+// @Produce      json
+// @Param        asset    query    int  true  "资产ID"
+// @Success      200  {object}  models.AssetMaintenanceVo
+// @Router       /api/n9e/asset-maintenance/asset [get]
+// @Security     ApiKeyAuth
+func (rt *Router) assetMaintenanceGetAssetId(c *gin.Context) {
+	assetId := ginx.QueryInt64(c, "asset", -1)
+	assetMaintenanceVo, err := models.AssetMaintenanceVoGetByAssetId(rt.Ctx, assetId)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(assetMaintenanceVo, nil)
+}
+
 // @Summary      查询资产维保
 // @Description  根据条件查询资产维保
 // @Tags         资产维保
@@ -75,7 +92,14 @@ func (rt *Router) assetMaintenanceAdd(c *gin.Context) {
 	// 添加审计信息
 	me := c.MustGet("user").(*models.User)
 
-	err := fVo.AddConfig(rt.Ctx, me.Username)
+	//启动事务
+	tx := models.DB(rt.Ctx).Begin()
+
+	err := fVo.AddConfig(tx, me.Username)
+	if err != nil {
+		tx.Rollback()
+	}
+	tx.Commit()
 
 	ginx.NewRender(c).Message(err)
 }

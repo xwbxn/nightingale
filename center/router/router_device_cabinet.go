@@ -199,7 +199,7 @@ func (rt *Router) importDeviceCabinet(c *gin.Context) {
 	}
 	//解析excel的数据
 
-	deviceCabinets, lxRrr := excels.ReadExce[models.DeviceCabinet](xlsx, rt.Ctx)
+	deviceCabinets, _, lxRrr := excels.ReadExce[models.DeviceCabinet](xlsx, rt.Ctx)
 	if lxRrr != nil {
 		ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
 		return
@@ -257,5 +257,5 @@ func (rt *Router) templetDeviceCabinet(c *gin.Context) {
 
 	datas = append(datas, models.DeviceCabinet{})
 
-	excels.NewMyExcel("设备厂商模板").ExportTempletToWeb(datas, "cn", "source", rt.Ctx, c)
+	excels.NewMyExcel("设备厂商模板").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
 }

@@ -152,7 +152,7 @@ func (rt *Router) importpdu(c *gin.Context) {
 	}
 	//解析excel的数据
 
-	pdus, lxRrr := excels.ReadExce[models.Pdu](xlsx, rt.Ctx)
+	pdus, _, lxRrr := excels.ReadExce[models.Pdu](xlsx, rt.Ctx)
 	if lxRrr != nil {
 		ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
 		return
@@ -211,5 +211,5 @@ func (rt *Router) templetpdu(c *gin.Context) {
 
 	datas = append(datas, models.Pdu{})
 
-	excels.NewMyExcel("PDU模板").ExportTempletToWeb(datas, "cn", "source", rt.Ctx, c)
+	excels.NewMyExcel("PDU模板").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
 }
