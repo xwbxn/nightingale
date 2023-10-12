@@ -14,16 +14,17 @@ import (
 // group: DictData
 // version:2023-07-21 08:50
 type DictData struct {
-	Id        int64  `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键        version:2023-07-21 08:50
-	TypeCode  string `gorm:"column:TYPE_CODE" json:"type_code" `                       //type:string   comment:字典编码    version:2023-08-01 14:10
-	DictKey   string `gorm:"column:DICT_KEY" json:"dict_key" `                         //type:string   comment:字典标签    version:2023-07-21 08:50
-	DictValue string `gorm:"column:DICT_VALUE" json:"dict_value" `                     //type:string   comment:字典键值    version:2023-07-21 08:50
-	Sn        int64  `gorm:"column:SN" json:"sn" `                                     //type:*int     comment:序号        version:2023-08-25 10:06
-	Remark    string `gorm:"column:REMARK" json:"remark" `                             //type:string   comment:备注        version:2023-07-21 08:50
-	CreatedBy string `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人      version:2023-07-21 08:50
-	CreatedAt int64  `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间    version:2023-07-21 08:50
-	UpdatedBy string `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人      version:2023-07-21 08:50
-	UpdatedAt int64  `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间    version:2023-07-21 08:50
+	Id        int64          `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键        version:2023-07-21 08:50
+	TypeCode  string         `gorm:"column:TYPE_CODE" json:"type_code" `                       //type:string   comment:字典编码    version:2023-08-01 14:10
+	DictKey   string         `gorm:"column:DICT_KEY" json:"dict_key" `                         //type:string   comment:字典标签    version:2023-07-21 08:50
+	DictValue string         `gorm:"column:DICT_VALUE" json:"dict_value" `                     //type:string   comment:字典键值    version:2023-07-21 08:50
+	Sn        int64          `gorm:"column:SN" json:"sn" `                                     //type:*int     comment:序号        version:2023-08-25 10:06
+	Remark    string         `gorm:"column:REMARK" json:"remark" `                             //type:string   comment:备注        version:2023-07-21 08:50
+	CreatedBy string         `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人      version:2023-07-21 08:50
+	CreatedAt int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间    version:2023-07-21 08:50
+	UpdatedBy string         `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人      version:2023-07-21 08:50
+	UpdatedAt int64          `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间    version:2023-07-21 08:50
+	DeletedAt gorm.DeletedAt `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"` //type:*int       comment:删除时间        version:2023-9-08 16:39
 }
 
 // TableName 表名:dict_data，字典数据表。

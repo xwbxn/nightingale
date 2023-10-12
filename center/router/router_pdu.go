@@ -177,7 +177,7 @@ func (rt *Router) importpdu(c *gin.Context) {
 // @Produce      application/msexcel
 // @Param        query query   string  false  "导入查询条件"
 // @Success      200
-// @Router       /api/n9e/pdu/download-xls [post]
+// @Router       /api/n9e/pdu/export-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) downloadpdu(c *gin.Context) {
 

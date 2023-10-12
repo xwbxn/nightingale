@@ -30,6 +30,7 @@ type AssetManagement struct {
 	CreatedAt      int64           `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间    version:2023-08-04 09:45
 	UpdatedBy      string          `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人      version:2023-08-04 09:45
 	UpdatedAt      int64           `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间    version:2023-08-04 09:45
+	DeletedAt      gorm.DeletedAt  `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"` //type:*int       comment:删除时间        version:2023-9-08 16:39
 }
 
 // TableName 表名:asset_management，资产管理。

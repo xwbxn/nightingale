@@ -171,6 +171,27 @@ func (rt *Router) assetTreeGetALL(c *gin.Context) {
 	assetTree, err := models.BuildAssetTree(rt.Ctx, query)
 	ginx.Dangerous(err)
 
+	//TODO 资产树存redis
+	// 将结构体数组转换为JSON字符串
+	// data, err := json.Marshal(assetTree)
+	// if err != nil {
+	// 	logger.Error(err)
+	// }
+	// err = rt.Redis.Set(rt.Ctx.Ctx, "assetTree", data, 0).Err()
+	// if err != nil {
+	// 	logger.Error(err)
+	// }
+	// jsonData, err := rt.Redis.Get(rt.Ctx.Ctx, "assetTree").Bytes()
+	// if err != nil {
+	// 	logger.Fatal(err)
+	// }
+	// // 将JSON字符串转换为结构体数组
+	// var assetTreeCopy []models.FrontTree
+	// err = json.Unmarshal(jsonData, &assetTreeCopy)
+	// if err != nil {
+	// 	logger.Fatal(err)
+	// }
+
 	ginx.NewRender(c).Data(assetTree, nil)
 }
 

@@ -6,13 +6,12 @@ package router
 import (
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 	models "github.com/ccfos/nightingale/v6/models"
 	excels "github.com/ccfos/nightingale/v6/pkg/excel"
+	picture "github.com/ccfos/nightingale/v6/pkg/picture"
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
@@ -77,16 +76,39 @@ func (rt *Router) deviceModelGets(c *gin.Context) {
 	lst, err := models.DeviceModelGetsByType(rt.Ctx, m, limit, (page-1)*limit)
 	ginx.Dangerous(err)
 
-	for index := range lst {
-		deviceProducer, err := models.DeviceProducerGetById(rt.Ctx, lst[index].ProducerId)
-		ginx.Dangerous(err)
-		lst[index].Alias = deviceProducer.Alias
-	}
+	// for index := range lst {
+	// 	deviceProducer, err := models.DeviceProducerGetById(rt.Ctx, lst[index].ProducerId)
+	// 	ginx.Dangerous(err)
+	// 	lst[index].Alias = deviceProducer.Alias
+	// }
 
 	ginx.NewRender(c).Data(gin.H{
 		"list":  lst,
 		"total": total,
 	}, nil)
+}
+
+// @Summary      查询设备型号
+// @Description  根据条件查询设备型号
+// @Tags         设备型号
+// @Accept       json
+// @Produce      json
+// @Param        body  body   []int64 true "add ids"
+// @Success      200  {array}  models.DeviceModelDetailsVo
+// @Router       /api/n9e/device-model/batch/ [post]
+// @Security     ApiKeyAuth
+func (rt *Router) deviceModelBatchGets(c *gin.Context) {
+	ids := make([]int64, 0)
+	ginx.BindJSON(c, &ids)
+
+	if len(ids) == 0 {
+		ginx.NewRender(c).Data(nil, nil)
+	}
+
+	lst, err := models.DeviceModelGetsByIds(rt.Ctx, ids)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(lst, nil)
 }
 
 // @Summary      创建设备型号
@@ -120,30 +142,22 @@ func (rt *Router) deviceModelAdd(c *gin.Context) {
 // @Success      200
 // @Router       /api/n9e/device-model/picture/ [post]
 // @Security     ApiKeyAuth
-func (rt *Router) pictureAdd(c *gin.Context) {
+func (rt *Router) DeviceModelpictureAdd(c *gin.Context) {
 	_, fileHeader, err := c.Request.FormFile("file")
 	if err != nil {
 		ginx.Bomb(http.StatusBadRequest, "文件上传失败")
 	}
 
-	if fileHeader.Size > 1024*1024*5 {
-		ginx.Bomb(http.StatusBadRequest, "文件超5MB")
-	}
-	fileName := strings.Split(fileHeader.Filename, ".")
-	if fileName[len(fileName)-1] != "bmp" && fileName[len(fileName)-1] != "jpeg" && fileName[len(fileName)-1] != "jpg" && fileName[len(fileName)-1] != "png" {
-		ginx.Bomb(http.StatusBadRequest, "文件格式错误")
-	}
+	suffix, err := picture.VerifyPicture(fileHeader)
+	ginx.Dangerous(err)
+
 	// 设置路径,保存文件
+	filePath, err := picture.GeneratePictureName("device-model", suffix)
+	ginx.Dangerous(err)
 
-	path := "etc/picture/"
-	name := "device-model-" + strconv.FormatInt(time.Now().Unix(), 10) + "." + fileName[len(fileName)-1]
+	c.SaveUploadedFile(fileHeader, filePath)
 
-	_, err = PathExists(path)
-
-	file_path := path + name
-	c.SaveUploadedFile(fileHeader, file_path)
-
-	ginx.NewRender(c).Data(file_path, err)
+	ginx.NewRender(c).Data(filePath, err)
 }
 
 // @Summary      更新设备型号
@@ -235,7 +249,7 @@ func (rt *Router) deviceModelBatchDel(c *gin.Context) {
 // @Param        file formData file true "file"
 // @Produce      json
 // @Success      200
-// @Router       /api/n9e/device-model/import [post]
+// @Router       /api/n9e/device-model/import-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) importDeviceModels(c *gin.Context) {
 	file, _, err := c.Request.FormFile("file")
@@ -275,40 +289,57 @@ func (rt *Router) importDeviceModels(c *gin.Context) {
 // @Tags         设备型号
 // @Accept       json
 // @Produce      json
-// @Param        deviceType query   int     false  "类型"
-// @Param        producer query   int     false  "厂商"
-// @Param        query query   string     false  "型号/带外版本/描述"
+// @Param        body  body   map[string]interface{} true "add query"
 // @Success      200  {object}  models.DeviceModel
-// @Router       /api/n9e/device-model/outport [post]
+// @Router       /api/n9e/device-model/export-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) exportDeviceModels(c *gin.Context) {
 
-	deviceType := ginx.QueryInt64(c, "deviceType", -1)
-	producer := ginx.QueryInt64(c, "producer", -1)
-	query := ginx.QueryStr(c, "query", "")
+	// deviceType := ginx.QueryInt64(c, "deviceType", -1)
+	// producer := ginx.QueryInt64(c, "producer", -1)
+	// query := ginx.QueryStr(c, "query", "")
 
-	m := make(map[string]interface{})
-	if deviceType != -1 {
-		m["device_type"] = deviceType
-	}
-	if producer != -1 {
-		m["PRODUCER_ID"] = producer
-	}
-	if query != "" {
-		m["query"] = query
-	}
+	f := make(map[string]interface{})
+	ginx.BindJSON(c, &f)
+	idsTemp, idsOk := f["ids"]
+	ids := make([]int64, 0)
+	var lst []models.DeviceModel
+	var err error
+	if idsOk {
+		for _, val := range idsTemp.([]interface{}) {
+			ids = append(ids, int64(val.(float64)))
+		}
+		lst, err = models.DeviceModelGetsByIds(rt.Ctx, ids)
+		ginx.Dangerous(err)
+	} else {
+		// m := make(map[string]interface{})
+		// deviceType, deviceTypeOk := f["deviceType"]
+		// if deviceTypeOk {
+		// 	m["device_type"] = int64(deviceType.(float64))
+		// }
+		// producer, producerOk := f["producer"]
+		// if producerOk {
+		// 	m["producer_id"] = int64(producer.(float64))
+		// }
+		// query, queryOk := f["query"]
+		// if queryOk {
+		// 	m["query"] = query
+		// }
 
-	lst, err := models.DeviceModelGetsByType(rt.Ctx, m, -1, -1)
-	ginx.Dangerous(err)
+		lst, err = models.DeviceModelGetsByType(rt.Ctx, f, -1, -1)
+		ginx.Dangerous(err)
+	}
 
 	datas := make([]interface{}, 0)
 	if len(lst) > 0 {
 		for _, v := range lst {
 			datas = append(datas, v)
-
 		}
+		excels.NewMyExcel("设备型号数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
+	} else {
+		datas = append(datas, models.DeviceModel{})
+		excels.NewMyExcel("设备型号数据").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
 	}
-	excels.NewMyExcel("设备型号数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
 
 }
 

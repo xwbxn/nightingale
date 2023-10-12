@@ -5,6 +5,7 @@ package models
 
 import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 	optlock "gorm.io/plugin/optimisticlock"
 )
@@ -28,6 +29,7 @@ type AssetMaintenance struct {
 	CreatedAt           int64           `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间    version:2023-07-30 10:01
 	UpdatedBy           string          `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人      version:2023-07-30 10:01
 	UpdatedAt           int64           `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间    version:2023-07-30 10:01
+	DeletedAt           gorm.DeletedAt  `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"` //type:*int       comment:删除时间        version:2023-9-08 16:39
 }
 
 type AssetMaintenanceVo struct {
@@ -69,9 +71,9 @@ func AssetMaintenanceGets(ctx *ctx.Context, query string, limit, offset int) ([]
 }
 
 // 按id查询
-func AssetMaintenanceGetById(ctx *ctx.Context, id int64) (*AssetMaintenance, error) {
-	var obj *AssetMaintenance
-	err := DB(ctx).Take(&obj, id).Error
+func AssetMaintenanceGetById(ctx *ctx.Context, id int64) (*AssetMaintenanceVo, error) {
+	var obj *AssetMaintenanceVo
+	err := DB(ctx).Model(&AssetMaintenance{}).Where("ID = ?", id).Find(&obj).Error
 	if err != nil {
 		return nil, err
 	}
@@ -140,21 +142,21 @@ func (fVo *AssetMaintenanceVo) AddConfig(tx *gorm.DB, name string) error {
 	f.CreatedBy = name
 
 	// 更新模型
-	err := tx.Create(&f).Error
+	err := tx.Debug().Create(&f).Error
 	if err != nil {
 		tx.Rollback()
 	}
 
 	//更新服务配置表
 	config := fVo.ServiceConfig
-	if config != nil {
+	if len(config) != 0 {
 		// 添加审计信息及维保ID
 		for index := range config {
 			config[index].MaintenanceId = f.Id
 			config[index].CreatedBy = name
 		}
 		// 写入维保配置表
-		err = tx.Create(&config).Error
+		err = tx.Debug().Create(&config).Error
 		if err != nil {
 			tx.Rollback()
 		}
@@ -163,11 +165,20 @@ func (fVo *AssetMaintenanceVo) AddConfig(tx *gorm.DB, name string) error {
 }
 
 // 删除资产维保
-func (a *AssetMaintenance) Del(ctx *ctx.Context) error {
+func (a *AssetMaintenanceVo) DelTx(ctx *ctx.Context) error {
 	// 这里写AssetMaintenance的业务逻辑，通过error返回错误
+	tx := DB(ctx).Begin()
 
-	// 实际向库中写入
-	return DB(ctx).Delete(a).Error
+	err := tx.Where("ID = ?", a.Id).Delete(&AssetMaintenance{}).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	err = tx.Where("MAINTENANCE_ID = ?", a.Id).Delete(&MaintenanceServiceConfig{}).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	tx.Commit()
+	return err
 }
 
 // 批量删除资产维保
@@ -198,16 +209,67 @@ func AssetMaintenanceBatchDel(ctx *ctx.Context, tx *gorm.DB, ids []int64) error 
 }
 
 // 更新资产维保
-func (a *AssetMaintenance) Update(ctx *ctx.Context, updateFrom interface{}, selectField interface{}, selectFields ...interface{}) error {
+func MaintenanceUpdate(ctx *ctx.Context, id int64, name string, updateFrom AssetMaintenanceVo) error {
 	// 这里写AssetMaintenance的业务逻辑，通过error返回错误
+	tx := DB(ctx).Begin()
+
+	oldConfigs, err := MaintenanceServiceConfigGetByMaintId(ctx, id)
+	if err != nil {
+		tx.Rollback()
+	}
+	configs := updateFrom.ServiceConfig
+	updateFrom.ServiceConfig = nil
 
 	// 实际向库中写入
-	return DB(ctx).Model(a).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
+	err = tx.Debug().Model(&AssetMaintenance{}).Where("ID = ?", id).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
+	if err != nil {
+		tx.Rollback()
+	}
+
+	logger.Debug(configs)
+	for _, val := range configs {
+		//新增
+		if val.Id == 0 {
+			val.MaintenanceId = updateFrom.Id
+			err := val.AddTx(tx)
+			if err != nil {
+				return err
+			}
+		} else {
+			//更新
+			for _, oldVal := range oldConfigs {
+				if oldVal.Id == val.Id {
+					err := oldVal.UpdateTx(tx, val, "*")
+					if err != nil {
+						return err
+					}
+					oldVal.Id = 0
+					break
+				}
+			}
+		}
+	}
+	for _, oldVal := range oldConfigs {
+		if oldVal.Id == 0 {
+			err := oldVal.DelTx(tx)
+			if err != nil {
+				return err
+			}
+			break
+		}
+	}
+	tx.Commit()
+	return err
 }
 
 // 根据条件统计个数
 func AssetMaintenanceCount(ctx *ctx.Context, where string, args ...interface{}) (num int64, err error) {
 	return Count(DB(ctx).Model(&AssetMaintenance{}).Where(where, args...))
+}
+
+// 根据条件统计个数
+func AssetMaintenanceCountMap(ctx *ctx.Context, where map[string]interface{}) (num int64, err error) {
+	return Count(DB(ctx).Model(&AssetMaintenance{}).Where(where))
 }
 
 // 删除资产维保

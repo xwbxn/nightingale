@@ -5,6 +5,7 @@ package models
 
 import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"gorm.io/gorm"
 )
 
 // MaintenanceServiceConfig  维保服务项配置。
@@ -13,17 +14,17 @@ import (
 // group: MaintenanceServiceConfig
 // version:2023-08-01 14:17
 type MaintenanceServiceConfig struct {
-	Id                int64  `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键            version:2023-08-01 14:17
-	MaintenanceId     int64  `gorm:"column:MAINTENANCE_ID" json:"maintenance_id" `             //type:*int     comment:维保ID          version:2023-08-01 14:17
-	ServiceOptionCode string `gorm:"column:SERVICE_OPTION_CODE" json:"service_option_code" `   //type:string   comment:服务选项编码    version:2023-08-01 14:17
-	ServiceOptionKey  string `gorm:"column:SERVICE_OPTION_KEY" json:"service_option_key" `     //type:string   comment:服务选项标签    version:2023-08-01 14:17
-	ServiceObjCode    string `gorm:"column:SERVICE_OBJ_CODE" json:"service_obj_code" `         //type:string   comment:服务对象编码    version:2023-08-01 14:17
-	ServiceObjKey     string `gorm:"column:SERVICE_OBJ_KEY" json:"service_obj_key" `           //type:string   comment:服务对象标签    version:2023-08-01 14:17
-	Deadline          int64  `gorm:"column:DEADLINE" json:"deadline" `                         //type:*int   comment:服务截止时间    version:2023-08-01 14:17
-	CreatedBy         string `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人          version:2023-08-01 14:17
-	CreatedAt         int64  `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间        version:2023-08-01 14:17
-	UpdatedBy         string `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人          version:2023-08-01 14:17
-	UpdatedAt         int64  `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间        version:2023-08-01 14:17
+	Id                int64          `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键            version:2023-08-01 14:17
+	MaintenanceId     int64          `gorm:"column:MAINTENANCE_ID" json:"maintenance_id" `             //type:*int     comment:维保ID          version:2023-08-01 14:17
+	ServiceOptionCode string         `gorm:"column:SERVICE_OPTION_CODE" json:"service_option_code" `   //type:string   comment:服务选项编码    version:2023-9-12 09:17
+	ServiceObjKey     string         `gorm:"column:SERVICE_OBJ_KEY" json:"service_obj_key" `           //type:string   comment:服务对象标签    version:2023-9-12 09:17
+	ServiceObjValue   string         `gorm:"column:SERVICE_OBJ_VALUE" json:"service_obj_value" `       //type:string   comment:服务对象值      version:2023-9-12 09:25
+	Deadline          int64          `gorm:"column:DEADLINE" json:"deadline" `                         //type:*int   comment:服务截止时间    version:2023-08-01 14:17
+	CreatedBy         string         `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人          version:2023-08-01 14:17
+	CreatedAt         int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间        version:2023-08-01 14:17
+	UpdatedBy         string         `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人          version:2023-08-01 14:17
+	UpdatedAt         int64          `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间        version:2023-08-01 14:17
+	DeletedAt         gorm.DeletedAt `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"` //type:*int       comment:删除时间        version:2023-9-08 16:39
 }
 
 // TableName 表名:maintenance_service_config，维保服务项配置。
@@ -90,6 +91,18 @@ func (m *MaintenanceServiceConfig) Add(ctx *ctx.Context) error {
 	return DB(ctx).Create(m).Error
 }
 
+// 增加维保服务项配置
+func (m *MaintenanceServiceConfig) AddTx(tx *gorm.DB) error {
+	// 这里写MaintenanceServiceConfig的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	err := tx.Debug().Create(m).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
+}
+
 // 删除维保服务项配置
 func (m *MaintenanceServiceConfig) Del(ctx *ctx.Context) error {
 	// 这里写MaintenanceServiceConfig的业务逻辑，通过error返回错误
@@ -98,12 +111,36 @@ func (m *MaintenanceServiceConfig) Del(ctx *ctx.Context) error {
 	return DB(ctx).Delete(m).Error
 }
 
+// 删除维保服务项配置
+func (m *MaintenanceServiceConfig) DelTx(tx *gorm.DB) error {
+	// 这里写MaintenanceServiceConfig的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	err := tx.Debug().Delete(m).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
+}
+
 // 更新维保服务项配置
 func (m *MaintenanceServiceConfig) Update(ctx *ctx.Context, updateFrom interface{}, selectField interface{}, selectFields ...interface{}) error {
 	// 这里写MaintenanceServiceConfig的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
 	return DB(ctx).Model(m).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
+}
+
+// 更新维保服务项配置
+func (m *MaintenanceServiceConfig) UpdateTx(tx *gorm.DB, updateFrom interface{}, selectField interface{}, selectFields ...interface{}) error {
+	// 这里写MaintenanceServiceConfig的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	err := tx.Debug().Model(m).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
 }
 
 // 根据条件统计个数

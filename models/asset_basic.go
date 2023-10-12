@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
 
@@ -17,41 +18,42 @@ import (
 // group: AssetBasic
 // version:2023-07-21 08:45
 type AssetBasic struct {
-	Id                     int64  `gorm:"column:ID;primaryKey" json:"id" `                                          //type:*int     comment:主键                                     version:2023-07-21 08:45
-	DeviceType             int64  `gorm:"column:DEVICE_TYPE" json:"device_type" `                                   //type:*int   comment:设备类型                                 version:2023-07-21 08:45
-	ManagementIp           string `gorm:"column:MANAGEMENT_IP" json:"management_ip" example:"管理IP"`                 //type:string   comment:管理IP                                   version:2023-07-21 08:45
-	DeviceName             string `gorm:"column:DEVICE_NAME" json:"device_name" example:"设备名称"`                     //type:string   comment:设备名称                                 version:2023-07-21 08:45
-	SerialNumber           string `gorm:"column:SERIAL_NUMBER" json:"serial_number" example:"序列号"`                  //type:string   comment:序列号                                   version:2023-07-21 08:45
-	DeviceStatus           int64  `gorm:"column:DEVICE_STATUS" json:"device_status" `                               //type:*int     comment:状态(1:待上线,2:已上线,3:下线,4:报废)    version:2023-07-21 08:45
-	ManagedState           int64  `gorm:"column:MANAGED_STATE" json:"managed_state" `                               //type:*int     comment:纳管状态                                 version:2023-07-28 14:36
-	DeviceProducer         int64  `gorm:"column:DEVICE_PRODUCER" json:"device_producer" `                           //type:*int     comment:厂商                                     version:2023-07-25 16:30
-	DeviceModel            int64  `gorm:"column:DEVICE_MODEL" json:"device_model" `                                 //type:string   comment:型号                                     version:2023-07-21 08:45
-	Subtype                string `gorm:"column:SUBTYPE" json:"subtype" example:"子类型"`                              //type:string   comment:子类型                                   version:2023-07-21 08:45
-	OutlineStructure       string `gorm:"column:OUTLINE_STRUCTURE" json:"outline_structure" example:"外形结构"`         //type:string   comment:外形结构                                 version:2023-07-21 08:45
-	Specifications         string `gorm:"column:SPECIFICATIONS" json:"specifications" example:"规格"`                 //type:string   comment:规格                                     version:2023-07-21 08:45
-	UNumber                int64  `gorm:"column:U_NUMBER" json:"u_number" `                                         //type:*int     comment:U数                                      version:2023-07-21 08:45
-	UseStorage             string `gorm:"column:USE_STORAGE" json:"use_storage" example:"使用存储"`                     //type:string   comment:使用存储                                 version:2023-07-21 08:45
-	DatacenterId           int64  `gorm:"column:DATACENTER_ID" json:"datacenter_id" `                               //type:*int     comment:数据中心                                 version:2023-08-15 09:23
-	RelatedService         string `gorm:"column:RELATED_SERVICE" json:"related_service" `                           //type:string   comment:关联业务                                 version:2023-08-15 09:23
-	ServicePath            string `gorm:"column:SERVICE_PATH" json:"service_path" `                                 //type:string   comment:业务路径                                 version:2023-08-15 09:23
-	DeviceManagerOne       string `gorm:"column:DEVICE_MANAGER_ONE" json:"device_manager_one" example:"设备负责人1"`     //type:string   comment:设备负责人1                              version:2023-07-21 08:45
-	DeviceManagerTwo       string `gorm:"column:DEVICE_MANAGER_TWO" json:"device_manager_two" example:"设备负责人2"`     //type:string   comment:设备负责人2                              version:2023-07-21 08:45
-	BusinessManagerOne     string `gorm:"column:BUSINESS_MANAGER_ONE" json:"business_manager_one" example:"业务负责人1"` //type:string   comment:业务负责人1                              version:2023-07-21 08:45
-	BusinessManagerTwo     string `gorm:"column:BUSINESS_MANAGER_TWO" json:"business_manager_two" example:"业务负责人2"` //type:string   comment:业务负责人2                              version:2023-07-21 08:45
-	OperatingSystem        string `gorm:"column:OPERATING_SYSTEM" json:"operating_system" example:"操作系统"`           //type:string   comment:操作系统                                 version:2023-07-21 08:45
-	Remark                 string `gorm:"column:REMARK" json:"remark" example:"备注"`                                 //type:string   comment:备注                                     version:2023-07-21 08:45
-	AffiliatedOrganization int64  `gorm:"column:AFFILIATED_ORGANIZATION" json:"affiliated_organization" `           //type:string   comment:所属组织机构                             version:2023-07-21 08:45
-	EquipmentRoom          int64  `gorm:"column:EQUIPMENT_ROOM" json:"equipment_room" `                             //type:string   comment:所在机房                                 version:2023-07-21 08:45
-	OwningCabinet          int64  `gorm:"column:OWNING_CABINET" json:"owning_cabinet" `                             //type:string   comment:所在机柜                                 version:2023-07-21 08:45
-	Region                 string `gorm:"column:REGION" json:"region" example:"所在区域"`                               //type:string   comment:所在区域                                 version:2023-07-21 08:45
-	CabinetLocation        int64  `gorm:"column:CABINET_LOCATION" json:"cabinet_location" `                         //type:*int     comment:机柜位置                                 version:2023-07-21 08:45
-	Abreast                int64  `gorm:"column:ABREAST" json:"abreast" `                                           //type:*int     comment:并排放置(0:否,1:是)                      version:2023-07-21 08:45
-	LocationDescription    string `gorm:"column:LOCATION_DESCRIPTION" json:"location_description" example:"位置描述"`   //type:string   comment:位置描述                                 version:2023-07-21 08:45
-	ExtensionTest          string `gorm:"column:EXTENSION_TEST" json:"extension_test" `                             //type:string   comment:扩展测试                                 version:2023-08-18 09:14
-	CreatedBy              string `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"`                 //type:string   comment:创建人                                   version:2023-07-21 08:45
-	CreatedAt              int64  `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"`                 //type:*int     comment:创建时间                                 version:2023-07-21 08:45
-	UpdatedBy              string `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"`                 //type:string   comment:更新人                                   version:2023-07-21 08:45
-	UpdatedAt              int64  `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"`                 //type:*int     comment:更新时间                                 version:2023-07-21 08:45
+	Id                     int64          `gorm:"column:ID;primaryKey" json:"id" `                                          //type:*int     comment:主键                                     version:2023-07-21 08:45
+	DeviceType             int64          `gorm:"column:DEVICE_TYPE" json:"device_type" `                                   //type:*int   comment:设备类型                                 version:2023-07-21 08:45
+	ManagementIp           string         `gorm:"column:MANAGEMENT_IP" json:"management_ip" example:"管理IP"`                 //type:string   comment:管理IP                                   version:2023-07-21 08:45
+	DeviceName             string         `gorm:"column:DEVICE_NAME" json:"device_name" example:"设备名称"`                     //type:string   comment:设备名称                                 version:2023-07-21 08:45
+	SerialNumber           string         `gorm:"column:SERIAL_NUMBER" json:"serial_number" example:"序列号"`                  //type:string   comment:序列号                                   version:2023-07-21 08:45
+	DeviceStatus           int64          `gorm:"column:DEVICE_STATUS" json:"device_status" `                               //type:*int     comment:状态(1:待上线,2:已上线,3:下线,4:报废)    version:2023-07-21 08:45
+	ManagedState           int64          `gorm:"column:MANAGED_STATE" json:"managed_state" `                               //type:*int     comment:纳管状态                                 version:2023-07-28 14:36
+	DeviceProducer         int64          `gorm:"column:DEVICE_PRODUCER" json:"device_producer" `                           //type:*int     comment:厂商                                     version:2023-07-25 16:30
+	DeviceModel            int64          `gorm:"column:DEVICE_MODEL" json:"device_model" `                                 //type:string   comment:型号                                     version:2023-07-21 08:45
+	Subtype                string         `gorm:"column:SUBTYPE" json:"subtype" example:"子类型"`                              //type:string   comment:子类型                                   version:2023-07-21 08:45
+	OutlineStructure       string         `gorm:"column:OUTLINE_STRUCTURE" json:"outline_structure" example:"外形结构"`         //type:string   comment:外形结构                                 version:2023-07-21 08:45
+	Specifications         string         `gorm:"column:SPECIFICATIONS" json:"specifications" example:"规格"`                 //type:string   comment:规格                                     version:2023-07-21 08:45
+	UNumber                int64          `gorm:"column:U_NUMBER" json:"u_number" `                                         //type:*int     comment:U数                                      version:2023-07-21 08:45
+	UseStorage             string         `gorm:"column:USE_STORAGE" json:"use_storage" example:"使用存储"`                     //type:string   comment:使用存储                                 version:2023-07-21 08:45
+	DatacenterId           int64          `gorm:"column:DATACENTER_ID" json:"datacenter_id" `                               //type:*int     comment:数据中心                                 version:2023-08-15 09:23
+	RelatedService         string         `gorm:"column:RELATED_SERVICE" json:"related_service" `                           //type:string   comment:关联业务                                 version:2023-08-15 09:23
+	ServicePath            string         `gorm:"column:SERVICE_PATH" json:"service_path" `                                 //type:string   comment:业务路径                                 version:2023-08-15 09:23
+	DeviceManagerOne       string         `gorm:"column:DEVICE_MANAGER_ONE" json:"device_manager_one" example:"设备负责人1"`     //type:string   comment:设备负责人1                              version:2023-07-21 08:45
+	DeviceManagerTwo       string         `gorm:"column:DEVICE_MANAGER_TWO" json:"device_manager_two" example:"设备负责人2"`     //type:string   comment:设备负责人2                              version:2023-07-21 08:45
+	BusinessManagerOne     string         `gorm:"column:BUSINESS_MANAGER_ONE" json:"business_manager_one" example:"业务负责人1"` //type:string   comment:业务负责人1                              version:2023-07-21 08:45
+	BusinessManagerTwo     string         `gorm:"column:BUSINESS_MANAGER_TWO" json:"business_manager_two" example:"业务负责人2"` //type:string   comment:业务负责人2                              version:2023-07-21 08:45
+	OperatingSystem        string         `gorm:"column:OPERATING_SYSTEM" json:"operating_system" example:"操作系统"`           //type:string   comment:操作系统                                 version:2023-07-21 08:45
+	Remark                 string         `gorm:"column:REMARK" json:"remark" example:"备注"`                                 //type:string   comment:备注                                     version:2023-07-21 08:45
+	AffiliatedOrganization int64          `gorm:"column:AFFILIATED_ORGANIZATION" json:"affiliated_organization" `           //type:string   comment:所属组织机构                             version:2023-07-21 08:45
+	EquipmentRoom          int64          `gorm:"column:EQUIPMENT_ROOM" json:"equipment_room" `                             //type:string   comment:所在机房                                 version:2023-07-21 08:45
+	OwningCabinet          int64          `gorm:"column:OWNING_CABINET" json:"owning_cabinet" `                             //type:string   comment:所在机柜                                 version:2023-07-21 08:45
+	Region                 string         `gorm:"column:REGION" json:"region" example:"所在区域"`                               //type:string   comment:所在区域                                 version:2023-07-21 08:45
+	CabinetLocation        int64          `gorm:"column:CABINET_LOCATION" json:"cabinet_location" `                         //type:*int     comment:机柜位置                                 version:2023-07-21 08:45
+	Abreast                int64          `gorm:"column:ABREAST" json:"abreast" `                                           //type:*int     comment:并排放置(0:否,1:是)                      version:2023-07-21 08:45
+	LocationDescription    string         `gorm:"column:LOCATION_DESCRIPTION" json:"location_description" example:"位置描述"`   //type:string   comment:位置描述                                 version:2023-07-21 08:45
+	ExtensionTest          string         `gorm:"column:EXTENSION_TEST" json:"extension_test" `                             //type:string   comment:扩展测试                                 version:2023-08-18 09:14
+	CreatedBy              string         `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"`                 //type:string   comment:创建人                                   version:2023-07-21 08:45
+	CreatedAt              int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"`                 //type:*int     comment:创建时间                                 version:2023-07-21 08:45
+	UpdatedBy              string         `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"`                 //type:string   comment:更新人                                   version:2023-07-21 08:45
+	UpdatedAt              int64          `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"`                 //type:*int     comment:更新时间                                 version:2023-07-21 08:45
+	DeletedAt              gorm.DeletedAt `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"`                 //type:*int       comment:删除时间        version:2023-9-08 16:39
 }
 type AssetBasicExpansionVo struct {
 	Id                     int64            `gorm:"column:ID;primaryKey" json:"id" `                                          //type:*int     comment:主键                                     version:2023-07-21 08:45
@@ -89,6 +91,7 @@ type AssetBasicExpansionVo struct {
 	CreatedAt              int64            `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"`                 //type:*int     comment:创建时间                                 version:2023-07-21 08:45
 	UpdatedBy              string           `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"`                 //type:string   comment:更新人                                   version:2023-07-21 08:45
 	UpdatedAt              int64            `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"`                 //type:*int     comment:更新时间                                 version:2023-07-21 08:45
+	DeletedAt              gorm.DeletedAt   `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"`                 //type:*int       comment:删除时间        version:2023-9-08 16:39
 	BasicExpansion         []AssetExpansion `gorm:"-" json:"basic_expansion" swaggerignore:"true"`
 }
 
@@ -136,7 +139,8 @@ type AssetBasicDetailsVo struct {
 	Remark                 string           `gorm:"column:REMARK" json:"remark" example:"备注"`                                 //type:string   comment:备注                                     version:2023-07-21 08:45
 	AffiliatedOrganization int64            `gorm:"column:AFFILIATED_ORGANIZATION" json:"affiliated_organization" `           //type:string   comment:所属组织机构                             version:2023-07-21 08:45
 	OrganizationName       string           `gorm:"-" json:"organization_name" `
-	EquipmentRoom          int64            `gorm:"column:EQUIPMENT_ROOM" json:"equipment_room" ` //type:string   comment:所在机房                                 version:2023-07-21 08:45
+	DatacenterId           int64            `gorm:"column:DATACENTER_ID" json:"datacenter_id" cn:"数据中心" ` //type:*int     comment:数据中心                                 version:2023-08-15 09:23
+	EquipmentRoom          int64            `gorm:"column:EQUIPMENT_ROOM" json:"equipment_room" `         //type:string   comment:所在机房                                 version:2023-07-21 08:45
 	RoomName               string           `gorm:"-" json:"room_name" `
 	OwningCabinet          int64            `gorm:"column:OWNING_CABINET" json:"owning_cabinet" ` //type:string   comment:所在机柜                                 version:2023-07-21 08:45
 	CabinetName            string           `gorm:"-" json:"cabinet_name" `
@@ -149,22 +153,22 @@ type AssetBasicDetailsVo struct {
 }
 
 type AssetBasicImport struct {
-	Id                     int64            `gorm:"column:ID;primaryKey" json:"id" `                                                                                                                     //type:*int     comment:主键                                     version:2023-07-21 08:45
-	DeviceType             int64            `gorm:"column:DEVICE_TYPE" json:"device_type" cn:"设备类型" source:"type=table,table=device_type,property=id;types,field=name,val=1"`                            //type:*int   comment:设备类型                                 version:2023-07-21 08:45
-	AssetCode              string           `gorm:"column:ASSET_CODE" json:"asset_code" cn:"资产编号"`                                                                                                       //type:string   comment:资产编号    version:2023-08-04 09:45
-	DeviceName             string           `gorm:"column:DEVICE_NAME" json:"device_name" cn:"设备名称"`                                                                                                     //type:string   comment:设备名称                                 version:2023-07-21 08:45
-	SerialNumber           string           `gorm:"column:SERIAL_NUMBER" json:"serial_number" cn:"序列号"`                                                                                                  //type:string   comment:序列号                                   version:2023-07-21 08:45
-	ManagementIp           string           `gorm:"column:MANAGEMENT_IP" json:"management_ip" cn:"管理IP"`                                                                                                 //type:string   comment:管理IP                                   version:2023-07-21 08:45
-	DeviceStatus           int64            `gorm:"column:DEVICE_STATUS" json:"device_status" `                                                                                                          //type:*int     comment:状态(1:待上线,2:已上线,3:下线,4:报废)    version:2023-07-21 08:45
-	ManagedState           int64            `gorm:"column:MANAGED_STATE" json:"managed_state" `                                                                                                          //type:*int     comment:纳管状态                                 version:2023-07-28 14:36
-	DeviceProducer         int64            `gorm:"column:DEVICE_PRODUCER" json:"device_producer" cn:"厂商" source:"type=table,table=device_producer,property=id;producer_type,field=alias,val=producer" ` //type:*int     comment:厂商                                     version:2023-07-25 16:30
-	DeviceModel            string           `gorm:"column:DEVICE_MODEL" json:"device_model" cn:"型号"`                                                                                                     //type:string   comment:型号                                     version:2023-07-21 08:45
-	Subtype                string           `gorm:"column:SUBTYPE" json:"subtype" `                                                                                                                      //type:string   comment:子类型                                   version:2023-07-21 08:45
-	OutlineStructure       string           `gorm:"column:OUTLINE_STRUCTURE" json:"outline_structure" `                                                                                                  //type:string   comment:外形结构                                 version:2023-07-21 08:45
-	Specifications         string           `gorm:"column:SPECIFICATIONS" json:"specifications" `                                                                                                        //type:string   comment:规格                                     version:2023-07-21 08:45
-	UNumber                int64            `gorm:"column:U_NUMBER" json:"u_number" `                                                                                                                    //type:*int     comment:U数                                      version:2023-07-21 08:45
-	UseStorage             string           `gorm:"column:USE_STORAGE" json:"use_storage" `                                                                                                              //type:string   comment:使用存储                                 version:2023-07-21 08:45
-	OperatingSystem        string           `gorm:"column:OPERATING_SYSTEM" json:"operating_system" cn:"操作系统"`                                                                                           //type:string   comment:操作系统                                 version:2023-07-21 08:45
+	Id                     int64            `gorm:"column:ID;primaryKey" json:"id" `                                                                                                                               //type:*int     comment:主键                                     version:2023-07-21 08:45
+	DeviceType             int64            `gorm:"column:DEVICE_TYPE" json:"device_type" cn:"设备类型" source:"type=table,table=device_type,property=id;types,field=name,val=1"`                                      //type:*int   comment:设备类型                                 version:2023-07-21 08:45
+	AssetCode              string           `gorm:"column:ASSET_CODE" json:"asset_code" cn:"资产编号"`                                                                                                                 //type:string   comment:资产编号    version:2023-08-04 09:45
+	DeviceName             string           `gorm:"column:DEVICE_NAME" json:"device_name" cn:"设备名称"`                                                                                                               //type:string   comment:设备名称                                 version:2023-07-21 08:45
+	SerialNumber           string           `gorm:"column:SERIAL_NUMBER" json:"serial_number" cn:"序列号"`                                                                                                            //type:string   comment:序列号                                   version:2023-07-21 08:45
+	ManagementIp           string           `gorm:"column:MANAGEMENT_IP" json:"management_ip" cn:"管理IP"`                                                                                                           //type:string   comment:管理IP                                   version:2023-07-21 08:45
+	DeviceStatus           int64            `gorm:"column:DEVICE_STATUS" json:"device_status" `                                                                                                                    //type:*int     comment:状态(1:待上线,2:已上线,3:下线,4:报废)    version:2023-07-21 08:45
+	ManagedState           int64            `gorm:"column:MANAGED_STATE" json:"managed_state" `                                                                                                                    //type:*int     comment:纳管状态                                 version:2023-07-28 14:36
+	DeviceProducer         int64            `gorm:"column:DEVICE_PRODUCER" json:"device_producer" cn:"厂商" source:"type=table,table=device_producer,property=id;producer_type,field=alias,val=producer" `           //type:*int     comment:厂商                                     version:2023-07-25 16:30
+	DeviceModel            string           `gorm:"column:DEVICE_MODEL" json:"device_model" cn:"型号"`                                                                                                               //type:string   comment:型号                                     version:2023-07-21 08:45
+	Subtype                string           `gorm:"column:SUBTYPE" json:"subtype" `                                                                                                                                //type:string   comment:子类型                                   version:2023-07-21 08:45
+	OutlineStructure       string           `gorm:"column:OUTLINE_STRUCTURE" json:"outline_structure" `                                                                                                            //type:string   comment:外形结构                                 version:2023-07-21 08:45
+	Specifications         string           `gorm:"column:SPECIFICATIONS" json:"specifications" `                                                                                                                  //type:string   comment:规格                                     version:2023-07-21 08:45
+	UNumber                int64            `gorm:"column:U_NUMBER" json:"u_number" `                                                                                                                              //type:*int     comment:U数                                      version:2023-07-21 08:45
+	UseStorage             string           `gorm:"column:USE_STORAGE" json:"use_storage" `                                                                                                                        //type:string   comment:使用存储                                 version:2023-07-21 08:45
+	OperatingSystem        string           `gorm:"column:OPERATING_SYSTEM" json:"operating_system" cn:"操作系统" source:"type=table,table=dict_data,property=dict_key;type_code,field=dict_value,val=operate_system"` //type:string   comment:操作系统                                 version:2023-07-21 08:45
 	ProductionIp           string           `gorm:"-" json:"production_ip" cn:"生产IP"`
 	RelatedService         string           `gorm:"column:RELATED_SERVICE" json:"related_service" cn:"关联业务"`                                                                                                                      //type:string   comment:关联业务                                 version:2023-08-15 09:23
 	ServicePath            string           `gorm:"column:SERVICE_PATH" json:"service_path" cn:"业务路径"`                                                                                                                            //type:string   comment:业务路径                                 version:2023-08-15 09:23
@@ -180,7 +184,7 @@ type AssetBasicImport struct {
 	BusinessManagerOne     string           `gorm:"column:BUSINESS_MANAGER_ONE" json:"business_manager_one" cn:"业务负责人1"`                                                                                                          //type:string   comment:业务负责人1                              version:2023-07-21 08:45
 	BusinessManagerTwo     string           `gorm:"column:BUSINESS_MANAGER_TWO" json:"business_manager_two" cn:"业务负责人2"`                                                                                                          //type:string   comment:业务负责人2                              version:2023-07-21 08:45
 	Remark                 string           `gorm:"column:REMARK" json:"remark"  `                                                                                                                                                //type:string   comment:备注                                     version:2023-07-21 08:45
-	AffiliatedOrganization int64            `gorm:"column:AFFILIATED_ORGANIZATION" json:"affiliated_organization" `                                                                                                               //type:string   comment:所属组织机构                             version:2023-07-21 08:45
+	AffiliatedOrganization int64            `gorm:"column:AFFILIATED_ORGANIZATION" json:"affiliated_organization" source:"type=table,table=organization,property=id,field=name"`                                                  //type:string   comment:所属组织机构                             version:2023-07-21 08:45
 	LocationDescription    string           `gorm:"column:LOCATION_DESCRIPTION" json:"location_description" `                                                                                                                     //type:string   comment:位置描述                                 version:2023-07-21 08:45
 	MaintenanceType        string           `gorm:"column:MAINTENANCE_TYPE" json:"maintenance_type" cn:"维保类型" source:"type=table,table=dict_data,property=dict_key;type_code,field=dict_value,val=maintenance_type" `             //type:*int     comment:维保类型（数据字典）    version:2023-07-30 10:09
 	MaintenanceProvider    int64            `gorm:"column:MAINTENANCE_PROVIDER" json:"maintenance_provider" cn:"维保商" source:"type=table,table=device_producer,property=id;producer_type,field=alias,val=third_party_maintenance"` //type:*int     comment:维保商      version:2023-07-30 10:01
@@ -231,7 +235,23 @@ func AssetBasicGetsByMap(ctx *ctx.Context, query map[string]interface{}, limit, 
 		session = session.Limit(limit).Offset(offset).Order("ID")
 	}
 
-	session = session.Where(query)
+	session = session.Where(query).Where("DEVICE_STATUS != ?", 4)
+
+	var lst []AssetBasicDetailsVo
+	err := session.Debug().Model(&AssetBasic{}).Find(&lst).Error
+
+	return lst, err
+}
+
+// 根据ids条件查询
+func AssetBasicGetsByIds(ctx *ctx.Context, query []int64, limit, offset int) ([]AssetBasicDetailsVo, error) {
+	session := DB(ctx)
+	// 分页
+	if limit > -1 {
+		session = session.Limit(limit).Offset(offset).Order("ID")
+	}
+
+	session = session.Where("ID IN ?", query)
 
 	var lst []AssetBasicDetailsVo
 	err := session.Model(&AssetBasic{}).Find(&lst).Error
@@ -271,6 +291,11 @@ func AssetByMap(ctx *ctx.Context, query map[string]interface{}, limit, offset in
 		session = session.Where("asset_maintenance.FINISH_AT = ?", finishAt)
 	}
 	session = session.Where(query)
+	_, statusOk := query["DEVICE_STATUS"]
+	if !statusOk {
+		session = session.Where("asset_basic.DEVICE_STATUS != ?", 4)
+	}
+	logger.Debug(query)
 
 	var err error
 	var ids []int64
@@ -469,12 +494,17 @@ func (a *AssetBasicExpansionVo) Update(ctx *ctx.Context, tx *gorm.DB, name strin
 
 // 根据条件统计个数
 func AssetBasicCount(ctx *ctx.Context, where string, args ...interface{}) (num int64, err error) {
-	return Count(DB(ctx).Model(&AssetBasic{}).Where(where, args...))
+	return Count(DB(ctx).Model(&AssetBasic{}).Where(where, args...).Where("DEVICE_STATUS != ?", 4))
 }
 
 // 根据传入条件统计个数
 func AssetCountByMap(ctx *ctx.Context, where map[string]interface{}) (num int64, err error) {
-	return Count(DB(ctx).Model(&AssetBasic{}).Where(where))
+	return Count(DB(ctx).Model(&AssetBasic{}).Where(where).Where("DEVICE_STATUS != ?", 4))
+}
+
+// 根据传入条件统计个数
+func AssetCountByIds(ctx *ctx.Context, where []int64) (num int64, err error) {
+	return Count(DB(ctx).Model(&AssetBasic{}).Where("ID IN ?", where))
 }
 
 // 根据map条件查询(全局过滤器)
@@ -505,6 +535,10 @@ func AssetCountMap(ctx *ctx.Context, query map[string]interface{}) (num int64, e
 		session = session.Where("asset_maintenance.FINISH_AT = ?", finishAt)
 	}
 	session = session.Where(query)
+	_, statusOk := query["DEVICE_STATUS"]
+	if !statusOk {
+		session = session.Where("asset_basic.DEVICE_STATUS != ?", 4)
+	}
 
 	if ok {
 		findQuery = "%" + findQuery.(string) + "%"
@@ -557,6 +591,11 @@ func AssetBasicBatchDel(tx *gorm.DB, ids []int64) error {
 //更新状态
 func UpdateStatus(ctx *ctx.Context, assetIds []int64, status int64, name string) error {
 	return DB(ctx).Model(&AssetBasic{}).Where("ID IN ?", assetIds).Updates(map[string]interface{}{"DEVICE_STATUS": status, "UPDATED_BY": name}).Error
+}
+
+//更新状态
+func UpdateTxStatus(tx *gorm.DB, assetIds []int64, status int64, name string) error {
+	return tx.Model(&AssetBasic{}).Where("ID IN ?", assetIds).Updates(map[string]interface{}{"DEVICE_STATUS": status, "UPDATED_BY": name}).Error
 }
 
 // 更新资产详情(map)

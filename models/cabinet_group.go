@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"gorm.io/gorm"
 )
 
 // CabinetGroup  机柜组信息。
@@ -15,20 +16,21 @@ import (
 // group: CabinetGroup
 // version:2023-07-15 14:32
 type CabinetGroup struct {
-	Id               int64  `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键          version:2023-07-15 14:32
-	CabinetGroupCode string `gorm:"column:CABINET_GROUP_CODE" json:"cabinet_group_code" `     //type:string   comment:机柜组编号    version:2023-07-15 14:32
-	RoomId           int64  `gorm:"column:ROOM_ID" json:"room_id" `                           //type:string   comment:所属机房      version:2023-07-15 14:32
-	CabinetGroupType string `gorm:"column:CABINET_GROUP_TYPE" json:"cabinet_group_type" `     //type:string   comment:机柜组类型    version:2023-07-15 14:32
-	Row              int64  `gorm:"column:ROW" json:"row" `                                   //type:*int     comment:行            version:2023-07-15 14:32
-	StartColumn      int64  `gorm:"column:START_COLUMN" json:"start_column" `                 //type:*int     comment:开始列        version:2023-07-15 14:32
-	Column           int64  `gorm:"column:COLUMN" json:"column" `                             //type:*int     comment:所在列        version:2023-07-15 14:32
-	DutyPersonOne    string `gorm:"column:DUTY_PERSON_ONE" json:"duty_person_one" `           //type:string   comment:责任人1       version:2023-07-15 14:32
-	DutyPersonTwo    string `gorm:"column:DUTY_PERSON_TWO" json:"duty_person_two" `           //type:string   comment:责任人2       version:2023-07-15 14:32
-	UseNotes         string `gorm:"column:USE_NOTES" json:"use_notes" `                       //type:string   comment:用途说明      version:2023-07-15 14:32
-	CreatedBy        string `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人        version:2023-07-15 14:32
-	CreatedAt        int64  `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间      version:2023-07-15 14:32
-	UpdatedBy        string `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人        version:2023-07-15 14:32
-	UpdatedAt        int64  `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间      version:2023-07-15 14:32
+	Id               int64          `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键          version:2023-07-15 14:32
+	CabinetGroupCode string         `gorm:"column:CABINET_GROUP_CODE" json:"cabinet_group_code" `     //type:string   comment:机柜组编号    version:2023-07-15 14:32
+	RoomId           int64          `gorm:"column:ROOM_ID" json:"room_id" `                           //type:string   comment:所属机房      version:2023-07-15 14:32
+	CabinetGroupType string         `gorm:"column:CABINET_GROUP_TYPE" json:"cabinet_group_type" `     //type:string   comment:机柜组类型    version:2023-07-15 14:32
+	Row              int64          `gorm:"column:ROW" json:"row" `                                   //type:*int     comment:行            version:2023-07-15 14:32
+	StartColumn      int64          `gorm:"column:START_COLUMN" json:"start_column" `                 //type:*int     comment:开始列        version:2023-07-15 14:32
+	Column           int64          `gorm:"column:COLUMN" json:"column" `                             //type:*int     comment:所在列        version:2023-07-15 14:32
+	DutyPersonOne    string         `gorm:"column:DUTY_PERSON_ONE" json:"duty_person_one" `           //type:string   comment:责任人1       version:2023-07-15 14:32
+	DutyPersonTwo    string         `gorm:"column:DUTY_PERSON_TWO" json:"duty_person_two" `           //type:string   comment:责任人2       version:2023-07-15 14:32
+	UseNotes         string         `gorm:"column:USE_NOTES" json:"use_notes" `                       //type:string   comment:用途说明      version:2023-07-15 14:32
+	CreatedBy        string         `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人        version:2023-07-15 14:32
+	CreatedAt        int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间      version:2023-07-15 14:32
+	UpdatedBy        string         `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人        version:2023-07-15 14:32
+	UpdatedAt        int64          `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间      version:2023-07-15 14:32
+	DeletedAt        gorm.DeletedAt `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"` //type:*int       comment:删除时间        version:2023-9-08 16:39
 }
 
 // TableName 表名:cabinet_group，机柜组信息。

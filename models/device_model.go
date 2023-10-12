@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"gorm.io/gorm"
 )
 
 // DeviceModel  设备型号。
@@ -15,29 +16,30 @@ import (
 // group: DeviceModel
 // version:2023-07-08 14:55
 type DeviceModel struct {
-	Id                 int64   `gorm:"column:ID;primaryKey" json:"id" `                                                                                                                                     //type:*int       comment:主键                       version:2023-07-08 14:55
-	Name               string  `gorm:"column:NAME" json:"name" cn:"型号名称"`                                                                                                                                   //type:string     comment:型号名称                   version:2023-07-08 14:55
-	DeviceType         int64   `gorm:"column:DEVICE_TYPE" json:"device_type" cn:"设备类型" source:"type=table,table=device_type,property=id;types,field=name,val=1" `                                           //type:*int       comment:设备类型       version:2023-07-24 16:11
-	Subtype            string  `gorm:"column:SUBTYPE" json:"subtype"  cn:"子类型" source:"type=table,table=dict_data,property=dict_key;type_code,field=dict_value,val=sub_type" `                              //type:string     comment:子类型                     version:2023-07-08 14:55
-	CreatedBy          string  `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"`                                                                                                            //type:string     comment:创建人                     version:2023-07-08 14:55
-	CreatedAt          int64   `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"`                                                                                                            //type:*int       comment:创建时间                   version:2023-07-08 14:55
-	UpdatedBy          string  `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"`                                                                                                            //type:string     comment:更新人                     version:2023-07-08 14:55
-	UpdatedAt          int64   `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"`                                                                                                            //type:*int       comment:更新时间                   version:2023-07-08 14:55
-	ProducerId         int64   `gorm:"column:PRODUCER_ID" json:"producer_id" cn:"厂商" source:"type=table,table=device_producer,property=id;producer_type,field=alias,val=producer"`                          //type:*int       comment:厂商-ID;来源设备厂商信息   version:2023-07-08 14:55
-	Model              string  `gorm:"column:MODEL" json:"model"  cn:"型号"`                                                                                                                                  //type:string     comment:型号                       version:2023-07-08 14:55
-	Series             string  `gorm:"column:SERIES" json:"series"  cn:"系列"`                                                                                                                                //type:string     comment:系列                       version:2023-07-08 14:55
-	UNumber            int64   `gorm:"column:U_NUMBER" json:"u_number"  cn:"U数" `                                                                                                                           //type:*int       comment:U数                        version:2023-07-08 14:55
-	OutlineStructure   string  `gorm:"column:OUTLINE_STRUCTURE" json:"outline_structure"  cn:"外形结构" source:"type=table,table=dict_data,property=dict_key;type_code,field=dict_value,val=outline_structure"` //type:string     comment:外形结构                   version:2023-07-08 14:55
-	Specifications     string  `gorm:"column:SPECIFICATIONS" json:"specifications"  cn:"规格"`                                                                                                                //type:string     comment:规格                       version:2023-07-08 14:55
-	MaximumMemory      float64 `gorm:"column:MAXIMUM_MEMORY" json:"maximum_memory"  cn:"最大内存" `                                                                                                             //type:*float64   comment:最大内存（M）              version:2023-07-08 14:55
-	WorkingConsumption float64 `gorm:"column:WORKING_CONSUMPTION" json:"working_consumption"  cn:"工作功耗"`                                                                                                    //type:*float64   comment:工作功耗(W)                version:2023-07-08 14:55
-	RatedConsumption   float64 `gorm:"column:RATED_CONSUMPTION" json:"rated_consumption"  cn:"额定功耗"`                                                                                                        //type:*float64   comment:额定功耗(W)                version:2023-07-08 14:55
-	PeakConsumption    float64 `gorm:"column:PEAK_CONSUMPTION" json:"peak_consumption"  cn:"峰值功耗"`                                                                                                          //type:*float64   comment:峰值功耗(W)                version:2023-07-08 14:55
-	Weight             float64 `gorm:"column:WEIGHT" json:"weight"  cn:"设备重量"`                                                                                                                              //type:*float64   comment:设备重量(kg)               version:2023-07-08 14:55
-	Enlistment         int64   `gorm:"column:ENLISTMENT" json:"enlistment"   cn:"服役期限"  `                                                                                                                   //type:*int       comment:服役期限(月)               version:2023-07-08 14:55
-	OutBandVersion     string  `gorm:"column:OUT_BAND_VERSION" json:"out_band_version" cn:"带外版本" source:"type=table,table=dict_data,property=dict_key;type_code,field=dict_value,val=out_band_version"`     //type:string     comment:带外版本                   version:2023-07-08 14:55
-	Describe           string  `gorm:"column:DESCRIBE" json:"describe" cn:"描述"`                                                                                                                             //type:string     comment:描述                       version:2023-07-08 14:55
-	Picture            string  `gorm:"column:PICTURE" json:"picture" `                                                                                                                                      //type:string     comment:上传照片       version:2023-08-19 16:15
+	Id                 int64          `gorm:"column:ID;primaryKey" json:"id" `                                                                                                                                     //type:*int       comment:主键                       version:2023-07-08 14:55
+	Name               string         `gorm:"column:NAME" json:"name" cn:"型号名称"`                                                                                                                                   //type:string     comment:型号名称                   version:2023-07-08 14:55
+	DeviceType         int64          `gorm:"column:DEVICE_TYPE" json:"device_type" cn:"设备类型" source:"type=table,table=device_type,property=id;types,field=name,val=1" `                                           //type:*int       comment:设备类型       version:2023-07-24 16:11
+	Subtype            string         `gorm:"column:SUBTYPE" json:"subtype"  cn:"子类型" source:"type=table,table=dict_data,property=dict_key;type_code,field=dict_value,val=sub_type" `                              //type:string     comment:子类型                     version:2023-07-08 14:55
+	CreatedBy          string         `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"`                                                                                                            //type:string     comment:创建人                     version:2023-07-08 14:55
+	CreatedAt          int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"`                                                                                                            //type:*int       comment:创建时间                   version:2023-07-08 14:55
+	UpdatedBy          string         `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"`                                                                                                            //type:string     comment:更新人                     version:2023-07-08 14:55
+	UpdatedAt          int64          `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"`                                                                                                            //type:*int       comment:更新时间                   version:2023-07-08 14:55
+	ProducerId         int64          `gorm:"column:PRODUCER_ID" json:"producer_id" cn:"厂商" source:"type=table,table=device_producer,property=id;producer_type,field=alias,val=producer"`                          //type:*int       comment:厂商-ID;来源设备厂商信息   version:2023-07-08 14:55
+	Model              string         `gorm:"column:MODEL" json:"model"  cn:"型号"`                                                                                                                                  //type:string     comment:型号                       version:2023-07-08 14:55
+	Series             string         `gorm:"column:SERIES" json:"series"  cn:"系列"`                                                                                                                                //type:string     comment:系列                       version:2023-07-08 14:55
+	UNumber            int64          `gorm:"column:U_NUMBER" json:"u_number"  cn:"U数" `                                                                                                                           //type:*int       comment:U数                        version:2023-07-08 14:55
+	OutlineStructure   string         `gorm:"column:OUTLINE_STRUCTURE" json:"outline_structure"  cn:"外形结构" source:"type=table,table=dict_data,property=dict_key;type_code,field=dict_value,val=outline_structure"` //type:string     comment:外形结构                   version:2023-07-08 14:55
+	Specifications     string         `gorm:"column:SPECIFICATIONS" json:"specifications"  cn:"规格"`                                                                                                                //type:string     comment:规格                       version:2023-07-08 14:55
+	MaximumMemory      float64        `gorm:"column:MAXIMUM_MEMORY" json:"maximum_memory"  cn:"最大内存" `                                                                                                             //type:*float64   comment:最大内存（M）              version:2023-07-08 14:55
+	WorkingConsumption float64        `gorm:"column:WORKING_CONSUMPTION" json:"working_consumption"  cn:"工作功耗"`                                                                                                    //type:*float64   comment:工作功耗(W)                version:2023-07-08 14:55
+	RatedConsumption   float64        `gorm:"column:RATED_CONSUMPTION" json:"rated_consumption"  cn:"额定功耗"`                                                                                                        //type:*float64   comment:额定功耗(W)                version:2023-07-08 14:55
+	PeakConsumption    float64        `gorm:"column:PEAK_CONSUMPTION" json:"peak_consumption"  cn:"峰值功耗"`                                                                                                          //type:*float64   comment:峰值功耗(W)                version:2023-07-08 14:55
+	Weight             float64        `gorm:"column:WEIGHT" json:"weight"  cn:"设备重量"`                                                                                                                              //type:*float64   comment:设备重量(kg)               version:2023-07-08 14:55
+	Enlistment         int64          `gorm:"column:ENLISTMENT" json:"enlistment"   cn:"服役期限"  `                                                                                                                   //type:*int       comment:服役期限(月)               version:2023-07-08 14:55
+	OutBandVersion     string         `gorm:"column:OUT_BAND_VERSION" json:"out_band_version" cn:"带外版本" source:"type=table,table=dict_data,property=dict_key;type_code,field=dict_value,val=out_band_version"`     //type:string     comment:带外版本                   version:2023-07-08 14:55
+	Describe           string         `gorm:"column:DESCRIBE" json:"describe" cn:"描述"`                                                                                                                             //type:string     comment:描述                       version:2023-07-08 14:55
+	Picture            string         `gorm:"column:PICTURE" json:"picture" `                                                                                                                                      //type:string     comment:上传照片       version:2023-08-19 16:15
+	DeletedAt          gorm.DeletedAt `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"`                                                                                                            //type:*int       comment:删除时间        version:2023-9-08 16:39
 }
 
 type DeviceModelDetailsVo struct {
@@ -83,14 +85,14 @@ func GetChinese() map[string]string {
 }
 
 // 条件查询
-func DeviceModelGetsByType(ctx *ctx.Context, m map[string]interface{}, limit, offset int) ([]DeviceModelDetailsVo, error) {
+func DeviceModelGetsByType(ctx *ctx.Context, m map[string]interface{}, limit, offset int) ([]DeviceModel, error) {
 
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
 		session = session.Limit(limit).Offset(offset).Order("id")
 	}
-	var lst []DeviceModelDetailsVo
+	var lst []DeviceModel
 	var err error
 	query, queryOk := m["query"]
 	if queryOk {
@@ -128,6 +130,17 @@ func DeviceModelGets(ctx *ctx.Context, query string, limit, offset int) ([]Devic
 func DeviceModelGetById(ctx *ctx.Context, id int64) (*DeviceModel, error) {
 	var obj *DeviceModel
 	err := DB(ctx).Take(&obj, id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
+// 按id批量查询
+func DeviceModelGetsByIds(ctx *ctx.Context, ids []int64) ([]DeviceModel, error) {
+	var obj []DeviceModel
+	err := DB(ctx).Model(&DeviceModel{}).Where("ID IN ?", ids).Find(&obj).Error
 	if err != nil {
 		return nil, err
 	}

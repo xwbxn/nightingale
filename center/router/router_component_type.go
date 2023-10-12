@@ -6,11 +6,9 @@ package router
 import (
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
-	"time"
 
 	models "github.com/ccfos/nightingale/v6/models"
+	picture "github.com/ccfos/nightingale/v6/pkg/picture"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 )
@@ -161,22 +159,13 @@ func (rt *Router) componentTypePictureAdd(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "文件上传失败")
 	}
 
-	if fileHeader.Size > 1024*1024*5 {
-		ginx.Bomb(http.StatusBadRequest, "文件超5MB")
-	}
-	fileName := strings.Split(fileHeader.Filename, ".")
-	if fileName[len(fileName)-1] != "bmp" && fileName[len(fileName)-1] != "jpeg" && fileName[len(fileName)-1] != "jpg" && fileName[len(fileName)-1] != "png" {
-		ginx.Bomb(http.StatusBadRequest, "文件格式错误")
-	}
-	// 设置路径,保存文件
+	suffix, err := picture.VerifyPicture(fileHeader)
+	ginx.Dangerous(err)
 
-	path := "etc/picture/"
-	name := "component-type-" + strconv.FormatInt(time.Now().Unix(), 10) + "." + fileName[len(fileName)-1]
+	filePath, err := picture.GeneratePictureName("component-type", suffix)
+	ginx.Dangerous(err)
 
-	_, err = PathExists(path)
+	c.SaveUploadedFile(fileHeader, filePath)
 
-	file_path := path + name
-	c.SaveUploadedFile(fileHeader, file_path)
-
-	ginx.NewRender(c).Data(file_path, err)
+	ginx.NewRender(c).Data(filePath, err)
 }

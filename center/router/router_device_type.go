@@ -141,7 +141,7 @@ func (rt *Router) deviceTypeBatchDel(c *gin.Context) {
 // @Param        file formData file true "file"
 // @Produce      json
 // @Success      200
-// @Router       /api/n9e/device-type/import [post]
+// @Router       /api/n9e/device-type/import-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) importsDeviceType(c *gin.Context) {
 	file, _, err := c.Request.FormFile("file")

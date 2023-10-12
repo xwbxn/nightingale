@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	models "github.com/ccfos/nightingale/v6/models"
+	picture "github.com/ccfos/nightingale/v6/pkg/picture"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/toolkits/pkg/ginx"
@@ -102,6 +103,33 @@ func (rt *Router) computerRoomAdd(c *gin.Context) {
 	// 更新模型
 	err := f.Add(rt.Ctx)
 	ginx.NewRender(c).Message(err)
+}
+
+// @Summary      导入机房照片
+// @Description  导入机房照片
+// @Tags         机房信息
+// @Accept       json
+// @Produce      json
+// @Param        file formData file true "file"
+// @Success      200
+// @Router       /api/n9e/computer-room/picture/ [post]
+// @Security     ApiKeyAuth
+func (rt *Router) computerRoompictureAdd(c *gin.Context) {
+	_, fileHeader, err := c.Request.FormFile("file")
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, "文件上传失败")
+	}
+
+	suffix, err := picture.VerifyPicture(fileHeader)
+	ginx.Dangerous(err)
+
+	// 设置路径,保存文件
+	filePath, err := picture.GeneratePictureName("computer-room", suffix)
+	ginx.Dangerous(err)
+
+	c.SaveUploadedFile(fileHeader, filePath)
+
+	ginx.NewRender(c).Data(filePath, err)
 }
 
 // @Summary      更新机房信息

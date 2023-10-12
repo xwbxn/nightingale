@@ -5,6 +5,7 @@ package models
 
 import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"gorm.io/gorm"
 )
 
 // DeviceTypeConfig  设备类型表单配置表。
@@ -13,15 +14,16 @@ import (
 // group: DeviceTypeConfig
 // version:2023-08-04 08:47
 type DeviceTypeConfig struct {
-	Id        int64  `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键            version:2023-08-04 08:47
-	Name      string `gorm:"column:NAME" json:"name" `                                 //type:string   comment:名称            version:2023-08-04 08:47
-	Type      int64  `gorm:"column:TYPE" json:"type" `                                 //type:*int     comment:设备类型        version:2023-08-04 08:47
-	TypeName  string `gorm:"column:TYPE_NAME" json:"type_name" `                       //type:string   comment:设备类型名称    version:2023-08-04 08:47
-	Config    string `gorm:"column:CONFIG" json:"config" `                             //type:string   comment:表单属性配置    version:2023-08-04 08:47
-	CreatedBy string `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人          version:2023-08-04 08:47
-	CreatedAt int64  `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间        version:2023-08-04 08:47
-	UpdatedBy string `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人          version:2023-08-04 08:47
-	UpdatedAt int64  `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间        version:2023-08-04 08:47
+	Id        int64          `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键            version:2023-08-04 08:47
+	Name      string         `gorm:"column:NAME" json:"name" `                                 //type:string   comment:名称            version:2023-08-04 08:47
+	Type      int64          `gorm:"column:TYPE" json:"type" `                                 //type:*int     comment:设备类型        version:2023-08-04 08:47
+	TypeName  string         `gorm:"column:TYPE_NAME" json:"type_name" `                       //type:string   comment:设备类型名称    version:2023-08-04 08:47
+	Config    string         `gorm:"column:CONFIG" json:"config" `                             //type:string   comment:表单属性配置    version:2023-08-04 08:47
+	CreatedBy string         `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人          version:2023-08-04 08:47
+	CreatedAt int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间        version:2023-08-04 08:47
+	UpdatedBy string         `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人          version:2023-08-04 08:47
+	UpdatedAt int64          `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间        version:2023-08-04 08:47
+	DeletedAt gorm.DeletedAt `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"` //type:*int       comment:删除时间        version:2023-9-08 16:39
 }
 
 // TableName 表名:device_type_config，设备类型表单配置表。

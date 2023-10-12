@@ -5,7 +5,6 @@ package models
 
 import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
 
@@ -15,19 +14,44 @@ import (
 // group: AssetExpansion
 // version:2023-07-23 09:04
 type AssetExpansion struct {
-	Id               int64  `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键                                          version:2023-07-23 09:04
-	AssetId          int64  `gorm:"column:ASSET_ID" json:"asset_id" `                         //type:*int     comment:资产ID                                        version:2023-07-28 16:17
-	ConfigCategory   string `gorm:"column:CONFIG_CATEGORY" json:"config_category" `           //type:string   comment:配置类别(1:基本信息,2:硬件配置,3:网络配置)    version:2023-08-05 14:41
-	PropertyCategory string `gorm:"column:PROPERTY_CATEGORY" json:"property_category" `       //type:string   comment:属性类别                                      version:2023-07-23 09:04
-	GroupId          string `gorm:"column:GROUP_ID" json:"group_id" `                         //type:string   comment:分组ID                                        version:2023-07-23 09:04
-	PropertyNameCn   string `gorm:"column:PROPERTY_NAME_CN" json:"property_name_cn" `         //type:string   comment:属性名称                                      version:2023-07-28 17:32
-	PropertyName     string `gorm:"column:PROPERTY_NAME" json:"property_name" `               //type:string   comment:英文名称                                      version:2023-07-28 17:32
-	PropertyValue    string `gorm:"column:PROPERTY_VALUE" json:"property_value" `             //type:string   comment:属性值                                        version:2023-07-23 09:04
-	AssociatedTable  string `gorm:"column:ASSOCIATED_TABLE" json:"associated_table" `         //type:string   comment:关联表名                                      version:2023-07-23 09:04
-	CreatedBy        string `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人                                        version:2023-07-23 09:04
-	CreatedAt        int64  `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间                                      version:2023-07-23 09:04
-	UpdatedBy        string `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人                                        version:2023-07-23 09:04
-	UpdatedAt        int64  `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间                                      version:2023-07-23 09:04
+	Id               int64          `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键                                          version:2023-07-23 09:04
+	AssetId          int64          `gorm:"column:ASSET_ID" json:"asset_id" `                         //type:*int     comment:资产ID                                        version:2023-07-28 16:17
+	ConfigCategory   string         `gorm:"column:CONFIG_CATEGORY" json:"config_category" `           //type:string   comment:配置类别(1:基本信息,2:硬件配置,3:网络配置)    version:2023-08-05 14:41
+	PropertyCategory string         `gorm:"column:PROPERTY_CATEGORY" json:"property_category" `       //type:string   comment:属性类别                                      version:2023-07-23 09:04
+	GroupId          string         `gorm:"column:GROUP_ID" json:"group_id" `                         //type:string   comment:分组ID                                        version:2023-07-23 09:04
+	PropertyNameCn   string         `gorm:"column:PROPERTY_NAME_CN" json:"property_name_cn" `         //type:string   comment:属性名称                                      version:2023-07-28 17:32
+	PropertyName     string         `gorm:"column:PROPERTY_NAME" json:"property_name" `               //type:string   comment:英文名称                                      version:2023-07-28 17:32
+	PropertyValue    string         `gorm:"column:PROPERTY_VALUE" json:"property_value" `             //type:string   comment:属性值                                        version:2023-07-23 09:04
+	AssociatedTable  string         `gorm:"column:ASSOCIATED_TABLE" json:"associated_table" `         //type:string   comment:关联表名                                      version:2023-07-23 09:04
+	CreatedBy        string         `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人                                        version:2023-07-23 09:04
+	CreatedAt        int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间                                      version:2023-07-23 09:04
+	UpdatedBy        string         `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人                                        version:2023-07-23 09:04
+	UpdatedAt        int64          `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间                                      version:2023-07-23 09:04
+	DeletedAt        gorm.DeletedAt `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"` //type:*int       comment:删除时间        version:2023-9-08 16:39
+}
+
+type AssetNetWork struct {
+	ManagementIp     string `gorm:"-" json:"management_ip" cn:"设备IP"`  //type:string   comment:管理IP                                   version:2023-07-21 08:45
+	SerialNumber     string `gorm:"-" json:"serial_number" cn:"设备序列号"` //type:string   comment:序列号                                   version:2023-07-21 08:45
+	DeviceName       string `gorm:"-" json:"device_name" cn:"设备名称"`    //type:string   comment:设备名称                                 version:2023-07-21 08:45
+	Type             int64  `gorm:"-" json:"type" cn:"类型" validate:"omitempty,oneof=0 1" source:"type=option,value=[带外IP;生产IP]"`
+	IP               string `gorm:"-" json:"ip" cn:"IP" `
+	SubnetMask       string `gorm:"-" json:"subnet_mask" cn:"子网掩码" prop:"ext_mask"`
+	Gateway          string `gorm:"-" json:"gateway" cn:"网关" prop:"ext_gateway"`
+	MacAddress       string `gorm:"-" json:"mac_address" cn:"MAC地址" prop:"ext_mac"`
+	SwitchIp         string `gorm:"-" json:"switch_ip" cn:"交换机IP" prop:"ext_switch_ip"`
+	SwitchName       string `gorm:"-" json:"switch_name" cn:"交换机名称" prop:"ext_switch_name"`
+	SwitchPort       string `gorm:"-" json:"switch_port" cn:"交换机端口" prop:"ext_corres_port"`
+	SwitchMacAddress string `gorm:"-" json:"switch_mac_address" cn:"交换机MAC地址" prop:"ext_switch_mac"`
+	DisName          string `gorm:"-" json:"dis_name" cn:"配线架名称" prop:"ext_distr_frame"`  //type:string   comment:配线架名称    version:2023-07-16 10:14
+	DisPort          string `gorm:"-" json:"dis_port" cn:"配线架端口" prop:"ext_docking_port"` //type:string   comment:配线架名称    version:2023-07-16 10:14
+	OS               string `gorm:"-" json:"os" cn:"操作系统" prop:"ext_operate_system"`
+	ConnectionName   string `gorm:"-" json:"connection_name" cn:"连接用户名" prop:"ext_username"`
+	ConnectionPwd    string `gorm:"-" json:"connection_pwd" cn:"连接密码" prop:"ext_password"`
+	ConnectionMode   string `gorm:"-" json:"connection_mode" cn:"连接方式" prop:"ext_link_method"`
+	ConnectionPort   string `gorm:"-" json:"connection_port" cn:"连接端口" prop:"ext_link_port"`
+	RemoteDesktop    string `gorm:"-" json:"Remote_desktop" cn:"远程桌面" prop:"ext_remote_desktop"`
+	RemotePort       string `gorm:"-" json:"Remote_port" cn:"远程端口" prop:"ext_port"`
 }
 
 // TableName 表名:asset_expansion，资产扩展。
@@ -78,6 +102,17 @@ func AssetExpansionGetByMap(ctx *ctx.Context, query map[string]interface{}) ([]A
 	return lst, nil
 }
 
+// 查询网络配置
+func AssetNetConfigGetByAssetId(ctx *ctx.Context, assetIds []int64) ([]AssetExpansion, error) {
+	var lst []AssetExpansion
+	err := DB(ctx).Debug().Where("ASSET_ID IN ? AND config_category = ? AND (property_category = ? OR property_category = ?)", assetIds, "form-netconfig", "group_management", "group_ip").Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return lst, nil
+}
+
 // 按map查询GroupId
 func GroupIdGetByMap(ctx *ctx.Context, query map[string]interface{}) ([]string, error) {
 	var lst []string
@@ -110,7 +145,7 @@ func (a *AssetExpansion) AddTx(tx *gorm.DB) error {
 	// 这里写AssetExpansion的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
-	logger.Debug(a)
+	// logger.Debug(a)
 	err := tx.Create(&a).Error
 	if err != nil {
 		tx.Rollback()

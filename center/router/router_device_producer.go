@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 // @Summary      获取设备厂商
@@ -115,12 +116,18 @@ func (rt *Router) deviceProducerAdd(c *gin.Context) {
 		ginx.Bomb(http.StatusOK, errValidate.Error())
 	}
 
+	num, err := models.DeviceProducerCountMap(rt.Ctx, map[string]interface{}{"company_name": f.CompanyName})
+	ginx.Dangerous(err)
+	if num != 0 {
+		ginx.Bomb(http.StatusOK, "厂商已存在")
+	}
+
 	// 添加审计信息
 	me := c.MustGet("user").(*models.User)
 	f.CreatedBy = me.Username
 
 	// 更新模型
-	err := models.AddProd[models.DeviceProducer](rt.Ctx, f)
+	err = models.AddProd[models.DeviceProducer](rt.Ctx, f)
 	ginx.NewRender(c).Message(err)
 }
 
@@ -129,16 +136,23 @@ func (rt *Router) deviceProducerAdd(c *gin.Context) {
 // @Tags         设备厂商
 // @Accept       multipart/form-data
 // @Produce      json
-// @Param        type query   string  false  "厂商类型"
+// @Param        type  formData   string true "add query"
 // @Param        file formData file true "file"
 // @Success      200
 // @Router       /api/n9e/device-producer/import-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) importDeviceProducer(c *gin.Context) {
-
-	prodType := ginx.QueryStr(c, "type", "")
+	prodType := c.Request.FormValue("type")
+	logger.Debug(prodType)
+	// prodTypeTemp, prodTypeOk := f["type"]
+	// var prodType string
+	if prodType == "" {
+		ginx.Bomb(http.StatusOK, "厂商类型为空,数据导入失败!")
+		return
+	}
 
 	file, _, err := c.Request.FormFile("file")
+	c.Request.FormValue("")
 	if err != nil {
 		ginx.Bomb(http.StatusBadRequest, "上传文件出错")
 	}
@@ -151,6 +165,7 @@ func (rt *Router) importDeviceProducer(c *gin.Context) {
 
 	me := c.MustGet("user").(*models.User)
 	var qty int = 0
+	DeviceProducerLst := make([]models.DeviceProducer, 0)
 	if prodType == "producer" {
 		produceroVo, _, lxRrr := excels.ReadExce[models.ProduceroVo](xlsx, rt.Ctx)
 		if lxRrr != nil {
@@ -159,11 +174,24 @@ func (rt *Router) importDeviceProducer(c *gin.Context) {
 		}
 
 		for _, entity := range produceroVo {
+
+			num, err := models.DeviceProducerCountMap(rt.Ctx, map[string]interface{}{"company_name": entity.CompanyName})
+			ginx.Dangerous(err)
+			if num != 0 {
+				ginx.Bomb(http.StatusOK, "厂商已存在")
+
+			}
 			// 循环体
-			var f models.ProduceroVo = entity
+			var f models.DeviceProducer
+			f.ProducerType = prodType
+			f.Alias = entity.Alias
+			f.ChineseName = entity.ChineseName
+			f.CompanyName = entity.CompanyName
+			f.Official = entity.Official
+			f.IsDomestic = entity.IsDomestic
+			f.IsDisplayChinese = entity.IsDisplayChinese
 			f.CreatedBy = me.Username
-			f.UpdatedAt = f.CreatedAt
-			err = models.AddProd[models.ProduceroVo](rt.Ctx, f)
+			DeviceProducerLst = append(DeviceProducerLst, f)
 			qty++
 		}
 	} else if prodType == "third_party_maintenance" {
@@ -174,11 +202,23 @@ func (rt *Router) importDeviceProducer(c *gin.Context) {
 		}
 
 		for _, entity := range maintenanceVo {
+			num, err := models.DeviceProducerCountMap(rt.Ctx, map[string]interface{}{"company_name": entity.CompanyName})
+			ginx.Dangerous(err)
+			if num != 0 {
+				ginx.Bomb(http.StatusOK, "厂商已存在")
+
+			}
 			// 循环体
-			var f models.MaintenanceVo = entity
+			var f models.DeviceProducer
+			f.ProducerType = prodType
+			f.Alias = entity.Alias
+			f.ChineseName = entity.ChineseName
+			f.CompanyName = entity.CompanyName
+			f.Official = entity.Official
+			f.IsDomestic = entity.IsDomestic
+			f.IsDisplayChinese = entity.IsDisplayChinese
 			f.CreatedBy = me.Username
-			f.UpdatedAt = f.CreatedAt
-			err = models.AddProd[models.MaintenanceVo](rt.Ctx, f)
+			DeviceProducerLst = append(DeviceProducerLst, f)
 			qty++
 		}
 	} else if prodType == "supplier" {
@@ -189,11 +229,23 @@ func (rt *Router) importDeviceProducer(c *gin.Context) {
 		}
 
 		for _, entity := range supplierVo {
+			num, err := models.DeviceProducerCountMap(rt.Ctx, map[string]interface{}{"company_name": entity.CompanyName})
+			ginx.Dangerous(err)
+			if num != 0 {
+				ginx.Bomb(http.StatusOK, "厂商已存在")
+
+			}
 			// 循环体
-			var f models.SupplierVo = entity
+			var f models.DeviceProducer
+			f.ProducerType = prodType
+			f.Alias = entity.Alias
+			f.ChineseName = entity.ChineseName
+			f.CompanyName = entity.CompanyName
+			f.Official = entity.Official
+			f.IsDomestic = entity.IsDomestic
+			f.IsDisplayChinese = entity.IsDisplayChinese
 			f.CreatedBy = me.Username
-			f.UpdatedAt = f.CreatedAt
-			err = models.AddProd[models.SupplierVo](rt.Ctx, f)
+			DeviceProducerLst = append(DeviceProducerLst, f)
 			qty++
 		}
 	} else if prodType == "component_brand" {
@@ -204,14 +256,27 @@ func (rt *Router) importDeviceProducer(c *gin.Context) {
 		}
 
 		for _, entity := range partVo {
+			num, err := models.DeviceProducerCountMap(rt.Ctx, map[string]interface{}{"company_name": entity.CompanyName})
+			ginx.Dangerous(err)
+			if num != 0 {
+				ginx.Bomb(http.StatusOK, "厂商已存在")
+
+			}
 			// 循环体
-			var f models.PartVo = entity
+			var f models.DeviceProducer
+			f.ProducerType = prodType
+			f.Alias = entity.Alias
+			f.ChineseName = entity.ChineseName
+			f.CompanyName = entity.CompanyName
+			f.Official = entity.Official
+			f.IsDomestic = entity.IsDomestic
+			f.IsDisplayChinese = entity.IsDisplayChinese
 			f.CreatedBy = me.Username
-			f.UpdatedAt = f.CreatedAt
-			err = models.AddProd[models.PartVo](rt.Ctx, f)
+			DeviceProducerLst = append(DeviceProducerLst, f)
 			qty++
 		}
 	}
+	err = models.BatchAddProd(rt.Ctx, DeviceProducerLst)
 	ginx.NewRender(c).Data(qty, err)
 }
 
@@ -220,72 +285,112 @@ func (rt *Router) importDeviceProducer(c *gin.Context) {
 // @Tags         设备厂商
 // @Accept       multipart/form-data
 // @Produce      application/msexcel
-// @Param        type query   string  false  "厂商类型"
-// @Param        query query   string  false  "简称/全称/中文名称/联系人"
+// @Param        body  body   map[string]interface{} true "add query"
 // @Success      200
-// @Router       /api/n9e/device-producer/download-xls [post]
+// @Router       /api/n9e/device-producer/export-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) downloadDeviceProducer(c *gin.Context) {
 
-	prodType := ginx.QueryStr(c, "type", "")
-	query := ginx.QueryStr(c, "query", "")
+	f := make(map[string]interface{})
+	ginx.BindJSON(c, &f)
 
-	if prodType == "" {
-		ginx.Bomb(http.StatusOK, "厂商类型为空,查询失败!")
+	prodTypeTemp, prodTypeOk := f["type"]
+	var prodType string
+	if prodTypeOk {
+		prodType = prodTypeTemp.(string)
+		delete(f, "type")
+		f["producer_type"] = prodType
+	} else {
+		ginx.Bomb(http.StatusOK, "厂商类型为空,数据导出失败!")
 		return
 	}
 
-	m := make(map[string]interface{})
-	m["producer_type"] = prodType
-	if query != "" {
-		m["query"] = query
+	idsTemp, idsOk := f["ids"]
+	ids := make([]int64, 0)
+	// var err error
+	if idsOk {
+		for _, val := range idsTemp.([]interface{}) {
+			ids = append(ids, int64(val.(float64)))
+		}
+		delete(f, "ids")
 	}
 
 	datas := make([]interface{}, 0)
+	var err error
 
 	if prodType == "producer" {
-		lst, err := models.DeviceProducerGetByMap[models.ProduceroVo](rt.Ctx, m)
+		var lst []models.ProduceroVo
+		if idsOk {
+			lst, err = models.DeviceProducerGetByIds[models.ProduceroVo](rt.Ctx, ids)
+		} else {
+			lst, err = models.DeviceProducerGetByPage[models.ProduceroVo](rt.Ctx, f, -1, -1)
+		}
 		ginx.Dangerous(err)
 
 		if len(lst) > 0 {
 			for _, v := range lst {
 				datas = append(datas, v)
-
 			}
+			excels.NewMyExcel(prodType+"数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
+		} else {
+			datas = append(datas, models.ProduceroVo{})
+			excels.NewMyExcel(prodType+"数据").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
 		}
 	} else if prodType == "third_party_maintenance" {
-		lst, err := models.DeviceProducerGetByMap[models.MaintenanceVo](rt.Ctx, m)
+		var lst []models.MaintenanceVo
+		if idsOk {
+			lst, err = models.DeviceProducerGetByIds[models.MaintenanceVo](rt.Ctx, ids)
+		} else {
+			lst, err = models.DeviceProducerGetByPage[models.MaintenanceVo](rt.Ctx, f, -1, -1)
+		}
 		ginx.Dangerous(err)
 
 		if len(lst) > 0 {
 			for _, v := range lst {
 				datas = append(datas, v)
-
 			}
+			excels.NewMyExcel(prodType+"数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
+		} else {
+			datas = append(datas, models.MaintenanceVo{})
+			excels.NewMyExcel(prodType+"数据").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
 		}
 	} else if prodType == "supplier" {
-		lst, err := models.DeviceProducerGetByMap[models.SupplierVo](rt.Ctx, m)
+		var lst []models.SupplierVo
+		if idsOk {
+			lst, err = models.DeviceProducerGetByIds[models.SupplierVo](rt.Ctx, ids)
+		} else {
+			lst, err = models.DeviceProducerGetByPage[models.SupplierVo](rt.Ctx, f, -1, -1)
+		}
 		ginx.Dangerous(err)
 
 		if len(lst) > 0 {
 			for _, v := range lst {
 				datas = append(datas, v)
-
 			}
+			excels.NewMyExcel(prodType+"数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
+		} else {
+			datas = append(datas, models.SupplierVo{})
+			excels.NewMyExcel(prodType+"数据").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
 		}
 	} else if prodType == "component_brand" {
-		lst, err := models.DeviceProducerGetByMap[models.PartVo](rt.Ctx, m)
+		var lst []models.PartVo
+		if idsOk {
+			lst, err = models.DeviceProducerGetByIds[models.PartVo](rt.Ctx, ids)
+		} else {
+			lst, err = models.DeviceProducerGetByPage[models.PartVo](rt.Ctx, f, -1, -1)
+		}
 		ginx.Dangerous(err)
 
 		if len(lst) > 0 {
 			for _, v := range lst {
 				datas = append(datas, v)
-
 			}
+			excels.NewMyExcel(prodType+"数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
+		} else {
+			datas = append(datas, models.PartVo{})
+			excels.NewMyExcel(prodType+"数据").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
 		}
 	}
-	excels.NewMyExcel(prodType+"数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
-
 }
 
 // @Summary      导出设备厂商模板
@@ -293,13 +398,23 @@ func (rt *Router) downloadDeviceProducer(c *gin.Context) {
 // @Tags         设备厂商
 // @Accept       json
 // @Produce      json
-// @Param        type query   string  false  "厂商类型"
+// @Param        body  body   map[string]interface{} true "add query"
 // @Success      200
 // @Router       /api/n9e/device-producer/templet/ [post]
 // @Security     ApiKeyAuth
 func (rt *Router) templetDeviceProducer(c *gin.Context) {
 
-	prodType := ginx.QueryStr(c, "type", "")
+	f := make(map[string]interface{})
+	ginx.BindJSON(c, &f)
+
+	prodTypeTemp, prodTypeOk := f["type"]
+	var prodType string
+	if prodTypeOk {
+		prodType = prodTypeTemp.(string)
+	} else {
+		ginx.Bomb(http.StatusOK, "厂商类型为空,模板下载失败!")
+		return
+	}
 
 	datas := make([]interface{}, 0)
 
@@ -339,6 +454,13 @@ func (rt *Router) deviceProducerPut(c *gin.Context) {
 	errValidate := validate.Struct(f)
 	if errValidate != nil {
 		ginx.Bomb(http.StatusOK, errValidate.Error())
+	}
+
+	num, err := models.DeviceProducerCountMap(rt.Ctx, map[string]interface{}{"company_name": f.CompanyName})
+	ginx.Dangerous(err)
+	if num != 0 {
+		ginx.Bomb(http.StatusOK, "厂商已存在")
+
 	}
 
 	old, err := models.DeviceProducerGetById(rt.Ctx, f.Id)

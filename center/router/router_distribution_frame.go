@@ -193,7 +193,7 @@ func (rt *Router) importDistributionFrame(c *gin.Context) {
 // @Produce      application/msexcel
 // @Param        query query   string  false  "导入查询条件"
 // @Success      200
-// @Router       /api/n9e/distribution-frame/download-xls [post]
+// @Router       /api/n9e/distribution-frame/export-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) downloadDistributionFrame(c *gin.Context) {
 

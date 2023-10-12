@@ -440,7 +440,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/device-type", rt.auth(), rt.admin(), rt.deviceTypeGets)
 		pages.GET("/device-type/:id", rt.auth(), rt.admin(), rt.deviceTypeGet)
 		pages.POST("/device-type", rt.auth(), rt.admin(), rt.deviceTypeAdd)
-		pages.POST("/device-type/import", rt.auth(), rt.admin(), rt.importsDeviceType)
+		pages.POST("/device-type/import-xls", rt.auth(), rt.admin(), rt.importsDeviceType)
 		pages.POST("/device-type/templet", rt.auth(), rt.admin(), rt.templetDeviceType)
 		pages.PUT("/device-type", rt.auth(), rt.admin(), rt.deviceTypePut)
 		pages.POST("/device-type/batch-del", rt.auth(), rt.admin(), rt.deviceTypeBatchDel)
@@ -451,9 +451,10 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/device-model", rt.auth(), rt.admin(), rt.deviceModelAdd)
 		pages.PUT("/device-model", rt.auth(), rt.admin(), rt.deviceModelPut)
 		pages.POST("/device-model/batch-del", rt.auth(), rt.admin(), rt.deviceModelBatchDel)
-		pages.POST("/device-model/import", rt.auth(), rt.admin(), rt.importDeviceModels)
-		pages.POST("/device-model/outport", rt.auth(), rt.admin(), rt.exportDeviceModels)
-		pages.POST("/device-model/picture", rt.auth(), rt.admin(), rt.pictureAdd)
+		pages.POST("/device-model/batch", rt.auth(), rt.admin(), rt.deviceModelBatchGets)
+		pages.POST("/device-model/import-xls", rt.auth(), rt.admin(), rt.importDeviceModels)
+		pages.POST("/device-model/export-xls", rt.auth(), rt.admin(), rt.exportDeviceModels)
+		pages.POST("/device-model/picture", rt.auth(), rt.admin(), rt.DeviceModelpictureAdd)
 		pages.POST("/device-model/templet", rt.auth(), rt.admin(), rt.templetDeviceModels)
 
 		//设备厂商管理
@@ -465,7 +466,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/device-producer/:id", rt.auth(), rt.admin(), rt.deviceProducerDel)
 		pages.POST("/device-producer/batch-del", rt.auth(), rt.admin(), rt.deviceProducerBatchDel)
 		pages.POST("/device-producer/import-xls", rt.auth(), rt.admin(), rt.importDeviceProducer)
-		pages.POST("/device-producer/download-xls", rt.auth(), rt.admin(), rt.downloadDeviceProducer)
+		pages.POST("/device-producer/export-xls", rt.auth(), rt.admin(), rt.downloadDeviceProducer)
 		pages.POST("/device-producer/templet", rt.auth(), rt.admin(), rt.templetDeviceProducer)
 
 		//数据中心管理
@@ -480,8 +481,17 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/computer-room/:id", rt.auth(), rt.admin(), rt.computerRoomGet)
 		pages.GET("/computer-room/datacenterId", rt.auth(), rt.admin(), rt.computerRoomNameGet)
 		pages.POST("/computer-room", rt.auth(), rt.admin(), rt.computerRoomAdd)
+		pages.POST("/computer-room/picture", rt.auth(), rt.admin(), rt.computerRoompictureAdd)
 		pages.PUT("/computer-room", rt.auth(), rt.admin(), rt.computerRoomPut)
 		pages.DELETE("/computer-room/:id", rt.auth(), rt.admin(), rt.computerRoomDel)
+
+		//机房分区管理
+		pages.GET("/room-partition/room-id", rt.auth(), rt.admin(), rt.roomPartitionGets)
+		// pages.GET("/room-partition", rt.auth(), rt.admin(), rt.roomPartitionGets)
+		pages.GET("/room-partition/:id", rt.auth(), rt.admin(), rt.roomPartitionGet)
+		pages.POST("/room-partition", rt.auth(), rt.admin(), rt.roomPartitionAdd)
+		pages.PUT("/room-partition", rt.auth(), rt.admin(), rt.roomPartitionPut)
+		pages.DELETE("/room-partition/:id", rt.auth(), rt.admin(), rt.roomPartitionDel)
 
 		//机柜信息管理
 		pages.GET("/device-cabinet/list", rt.auth(), rt.admin(), rt.deviceCabinetGets)
@@ -489,7 +499,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/device-cabinet/getNames", rt.auth(), rt.admin(), rt.deviceCabinetNameGet)
 		pages.POST("/device-cabinet", rt.auth(), rt.admin(), rt.deviceCabinetAdd)
 		pages.POST("/device-cabinet/import-xls", rt.auth(), rt.admin(), rt.importDeviceCabinet)
-		pages.POST("/device-cabinet/download-xls", rt.auth(), rt.admin(), rt.downloadDeviceCabinet)
+		pages.POST("/device-cabinet/export-xls", rt.auth(), rt.admin(), rt.downloadDeviceCabinet)
 		pages.POST("/device-cabinet/templet", rt.auth(), rt.admin(), rt.templetDeviceCabinet)
 		pages.PUT("/device-cabinet", rt.auth(), rt.admin(), rt.deviceCabinetPut)
 		pages.DELETE("/device-cabinet/:id", rt.auth(), rt.admin(), rt.deviceCabinetDel)
@@ -507,7 +517,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/distribution-frame/query", rt.auth(), rt.admin(), rt.distributionFrameQuery)
 		pages.POST("/distribution-frame", rt.auth(), rt.admin(), rt.distributionFrameAdd)
 		pages.POST("/distribution-frame/import-xls", rt.auth(), rt.admin(), rt.importDistributionFrame)
-		pages.POST("/distribution-frame/download-xls", rt.auth(), rt.admin(), rt.downloadDistributionFrame)
+		pages.POST("/distribution-frame/export-xls", rt.auth(), rt.admin(), rt.downloadDistributionFrame)
 		pages.POST("/distribution-frame/templet", rt.auth(), rt.admin(), rt.templetDistributionFrame)
 		pages.PUT("/distribution-frame", rt.auth(), rt.admin(), rt.distributionFramePut)
 		pages.DELETE("/distribution-frame/:id", rt.auth(), rt.admin(), rt.distributionFrameDel)
@@ -517,7 +527,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/pdu/:id", rt.auth(), rt.admin(), rt.pduGet)
 		pages.POST("/pdu", rt.auth(), rt.admin(), rt.pduAdd)
 		pages.POST("/pdu/import-xls", rt.auth(), rt.admin(), rt.importpdu)
-		pages.POST("/pdu/download-xls", rt.auth(), rt.admin(), rt.downloadpdu)
+		pages.POST("/pdu/export-xls", rt.auth(), rt.admin(), rt.downloadpdu)
 		pages.POST("/pdu/templet", rt.auth(), rt.admin(), rt.templetpdu)
 		pages.PUT("/pdu", rt.auth(), rt.admin(), rt.pduPut)
 		pages.DELETE("/pdu/:id", rt.auth(), rt.admin(), rt.pduDel)
@@ -554,11 +564,11 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/asset-tree/:id", rt.auth(), rt.admin(), rt.assetTreeDel)
 
 		//资产详情管理
-		pages.POST("/asset-basic/list", rt.auth(), rt.admin(), rt.assetBasicGetsByTree)
+		// pages.POST("/asset-basic/list", rt.auth(), rt.admin(), rt.assetBasicGetsByTree)
 		pages.GET("/asset-basic/list", rt.auth(), rt.admin(), rt.assetBasicGets)
 		pages.GET("/asset-basic/copy", rt.auth(), rt.admin(), rt.assetCopyGetsByAssetId)
 		pages.GET("/asset-basic/:id", rt.auth(), rt.admin(), rt.assetBasicGet)
-		pages.GET("/asset-basic/statistics", rt.auth(), rt.admin(), rt.assetStatisticsAll)
+		// pages.GET("/asset-basic/statistics", rt.auth(), rt.admin(), rt.assetStatisticsAll)
 		pages.POST("/asset-basic", rt.auth(), rt.admin(), rt.assetBasicAdd)
 		pages.POST("/asset-basic/copy", rt.auth(), rt.admin(), rt.assetCopyAdd)
 		pages.POST("/asset-basic/table", rt.auth(), rt.admin(), rt.assetFieldGetsByTableName)
@@ -579,6 +589,9 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/asset-expansion", rt.auth(), rt.admin(), rt.assetExpansionAdd)
 		pages.POST("/asset-expansion/batch", rt.auth(), rt.admin(), rt.assetExpansionBatchAdd)
 		pages.POST("/asset-expansion/map", rt.auth(), rt.admin(), rt.assetExpansionGetByMap)
+		pages.POST("/asset-expansion/netconfig/templet", rt.auth(), rt.admin(), rt.templeAssetNetWork)
+		pages.POST("/asset-expansion/netconfig/import-xls", rt.auth(), rt.admin(), rt.importAssetNetWork)
+		pages.POST("/asset-expansion/netconfig/export-xls", rt.auth(), rt.admin(), rt.exportAssetNetWork)
 		pages.PUT("/asset-expansion", rt.auth(), rt.admin(), rt.assetExpansionPut)
 		pages.DELETE("/asset-expansion/:id", rt.auth(), rt.admin(), rt.assetExpansionDel)
 
@@ -603,7 +616,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/asset-alter/:id", rt.auth(), rt.admin(), rt.assetAlterGet)
 		pages.GET("/asset-alter/asset", rt.auth(), rt.admin(), rt.assetAlterGetByAssetId)
 		pages.POST("/asset-alter", rt.auth(), rt.admin(), rt.assetAlterAdd)
-		pages.POST("/asset-alter/download-xls", rt.auth(), rt.admin(), rt.downloadAssetAlter)
+		pages.POST("/asset-alter/export-xls", rt.auth(), rt.admin(), rt.downloadAssetAlter)
 		pages.PUT("/asset-alter", rt.auth(), rt.admin(), rt.assetAlterPut)
 		pages.DELETE("/asset-alter/:id", rt.auth(), rt.admin(), rt.assetAlterDel)
 
@@ -627,8 +640,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/spare-part_basic/:id", rt.auth(), rt.admin(), rt.sparePartBasicGet)
 		pages.POST("/spare-part_basic", rt.auth(), rt.admin(), rt.sparePartBasicAdd)
 		pages.POST("/spare-part_basic/picture", rt.auth(), rt.admin(), rt.sparePartBasicPictureAdd)
-		pages.POST("/spare-part_basic/import", rt.auth(), rt.admin(), rt.importsSparePartBasic)
-		pages.POST("/spare-part_basic/outport", rt.auth(), rt.admin(), rt.exportSparePartBasic)
+		pages.POST("/spare-part_basic/import-xls", rt.auth(), rt.admin(), rt.importsSparePartBasic)
+		pages.POST("/spare-part_basic/export-xls", rt.auth(), rt.admin(), rt.exportSparePartBasic)
 		pages.POST("/spare-part_basic/templet", rt.auth(), rt.admin(), rt.templetSparePartBasic)
 		pages.PUT("/spare-part_basic", rt.auth(), rt.admin(), rt.sparePartBasicPut)
 		pages.POST("/spare-part_basic/batch-del", rt.auth(), rt.admin(), rt.sparePartBasicBatchDel)
@@ -645,7 +658,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/storeroom-management", rt.auth(), rt.admin(), rt.storeroomManagementGets)
 		pages.GET("/storeroom-management/:id", rt.auth(), rt.admin(), rt.storeroomManagementGet)
 		pages.POST("/storeroom-management", rt.auth(), rt.admin(), rt.storeroomManagementAdd)
-		pages.POST("/storeroom-management/import", rt.auth(), rt.admin(), rt.importsStoreroomManagement)
+		pages.POST("/storeroom-management/import-xls", rt.auth(), rt.admin(), rt.importsStoreroomManagement)
 		pages.POST("/storeroom-management/templet", rt.auth(), rt.admin(), rt.templetStoreroomManagement)
 		pages.PUT("/storeroom-management", rt.auth(), rt.admin(), rt.storeroomManagementPut)
 		pages.POST("/storeroom-management/batch-del", rt.auth(), rt.admin(), rt.storeroomManagementBatchDel)
@@ -656,6 +669,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/device-online", rt.auth(), rt.admin(), rt.deviceOnlineAdd)
 		pages.PUT("/device-online", rt.auth(), rt.admin(), rt.deviceOnlinePut)
 		pages.DELETE("/device-online/:id", rt.auth(), rt.admin(), rt.deviceOnlineDel)
+
+		//设备报废管理
+		pages.GET("/device-scrap", rt.auth(), rt.admin(), rt.deviceScrapGets)
+		pages.GET("/device-scrap/:id", rt.auth(), rt.admin(), rt.deviceScrapGet)
+		pages.POST("/device-scrap", rt.auth(), rt.admin(), rt.deviceScrapAdd)
+		pages.POST("/device-scrap/export-xls", rt.auth(), rt.admin(), rt.exportDeviceScraps)
+		// pages.PUT("/device-scrap", rt.auth(), rt.admin(), rt.deviceScrapPut)
+		pages.POST("/device-scrap/batch", rt.auth(), rt.admin(), rt.deviceScrapBatchDel)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

@@ -14,19 +14,20 @@ import (
 // group: AssetTree
 // version:2023-07-21 09:50
 type AssetTree struct {
-	Id           int64  `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键        version:2023-07-21 09:50
-	Status       int64  `gorm:"column:STATUS" json:"status" `                             //type:*int     comment:资产状态    version:2023-07-21 09:58
-	Name         string `gorm:"column:NAME" json:"name" `                                 //type:string   comment:名称        version:2023-07-21 09:50
-	ManagementIp string `gorm:"column:MANAGEMENT_IP" json:"management_ip" `               //type:string   comment:管理IP      version:2023-08-07 09:40
-	SerialNumber string `gorm:"column:SERIAL_NUMBER" json:"serial_number" `               //type:string   comment:序列号      version:2023-08-07 09:40
-	PropertyId   int64  `gorm:"column:PROPERTY_ID" json:"property_id" `                   //type:*int     comment:属性ID      version:2023-07-28 10:43
-	ParentId     int64  `gorm:"column:PARENT_ID" json:"parent_id" `                       //type:*int     comment:父ID        version:2023-07-21 09:50
-	Type         string `gorm:"column:TYPE" json:"type" `                                 //type:string   comment:类型        version:2023-07-24 09:35
-	Remark       string `gorm:"column:REMARK" json:"remark" `                             //type:string   comment:备注        version:2023-07-21 09:50
-	CreatedBy    string `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人      version:2023-07-21 09:50
-	CreatedAt    int64  `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间    version:2023-07-21 09:50
-	UpdatedBy    string `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人      version:2023-07-21 09:50
-	UpdatedAt    int64  `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间    version:2023-07-21 09:50
+	Id           int64          `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键        version:2023-07-21 09:50
+	Status       int64          `gorm:"column:STATUS" json:"status" `                             //type:*int     comment:资产状态    version:2023-07-21 09:58
+	Name         string         `gorm:"column:NAME" json:"name" `                                 //type:string   comment:名称        version:2023-07-21 09:50
+	ManagementIp string         `gorm:"column:MANAGEMENT_IP" json:"management_ip" `               //type:string   comment:管理IP      version:2023-08-07 09:40
+	SerialNumber string         `gorm:"column:SERIAL_NUMBER" json:"serial_number" `               //type:string   comment:序列号      version:2023-08-07 09:40
+	PropertyId   int64          `gorm:"column:PROPERTY_ID" json:"property_id" `                   //type:*int     comment:属性ID      version:2023-07-28 10:43
+	ParentId     int64          `gorm:"column:PARENT_ID" json:"parent_id" `                       //type:*int     comment:父ID        version:2023-07-21 09:50
+	Type         string         `gorm:"column:TYPE" json:"type" `                                 //type:string   comment:类型        version:2023-07-24 09:35
+	Remark       string         `gorm:"column:REMARK" json:"remark" `                             //type:string   comment:备注        version:2023-07-21 09:50
+	CreatedBy    string         `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人      version:2023-07-21 09:50
+	CreatedAt    int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间    version:2023-07-21 09:50
+	UpdatedBy    string         `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人      version:2023-07-21 09:50
+	UpdatedAt    int64          `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间    version:2023-07-21 09:50
+	DeletedAt    gorm.DeletedAt `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"` //type:*int       comment:删除时间        version:2023-9-08 16:39
 }
 
 // FrontTree  资产树。
@@ -146,8 +147,8 @@ func AssetTreeBatchGetById(ctx *ctx.Context, ids []int64) ([]AssetTree, error) {
 }
 
 // 按type和assetId查询
-func AssetTreeGetByMap(ctx *ctx.Context, m map[string]interface{}) (*AssetTree, error) {
-	var obj *AssetTree
+func AssetTreeGetByMap(ctx *ctx.Context, m map[string]interface{}) ([]AssetTree, error) {
+	var obj []AssetTree
 	err := DB(ctx).Debug().Where(m).Find(&obj).Error
 	if err != nil {
 		return nil, err
@@ -192,6 +193,18 @@ func (a *AssetTree) Del(tx *gorm.DB) error {
 
 	}
 	err = tx.Debug().Delete(&AssetTree{}, a.Id).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
+}
+
+// 删除资产详情
+func AssetTreeBatchDel(tx *gorm.DB, ids []int64) error {
+	// 这里写AssetTree的业务逻辑，通过error返回错误
+
+	//删除资产详情
+	err := tx.Where("PROPERTY_ID IN ? AND TYPE = ?", ids, "asset").Delete(&AssetTree{}).Error
 	if err != nil {
 		tx.Rollback()
 	}

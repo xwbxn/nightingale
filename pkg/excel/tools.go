@@ -13,6 +13,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/logger"
 )
 
 var (
@@ -274,8 +275,13 @@ func (l *lzExcelExport) ExportDataInfo(data []interface{}, tagName string, ctx *
 						} else if m["type"] == "option" {
 							currentValue := m["value"][1 : len(m["value"])-1]
 							rangs := strings.Split(currentValue, ";")
+							logger.Debug("--------------------------")
+							logger.Debug(rangs)
 							for idx := 0; idx < len(rangs); idx++ {
+								logger.Debug(v.Field(i).Interface())
 								currentValue := fmt.Sprintf("%d", v.Field(i).Interface())
+								logger.Debug(currentValue)
+								logger.Debug(idx)
 								if fmt.Sprintf("%d", idx) == currentValue {
 									out[t.Field(i).Name] = rangs[idx]
 									break
@@ -671,7 +677,7 @@ func (l *lzExcelExport) writeTemplet(params []map[string]string, data []interfac
 						for index := range strVal {
 							val = append(val, strVal[index])
 						}
-						session.Table(m["table"]).Where(prop, val...).Pluck(m["field"], &results)
+						session.Debug().Table(m["table"]).Where(prop, val...).Where("DELETED_AT IS NULL").Pluck(m["field"], &results)
 					} else {
 						session.Table(m["table"]).Pluck(m["field"], &results)
 					}

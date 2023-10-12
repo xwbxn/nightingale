@@ -57,18 +57,40 @@ func (rt *Router) deviceCabinetNameGet(c *gin.Context) {
 // @Tags         机柜信息
 // @Accept       json
 // @Produce      json
-// @Param        limit query   int     false  "返回条数"
-// @Param        query query   string  false  "查询条件"
+// @Param        body  body   models.DeviceCabinet true "add deviceCabinet"
 // @Success      200  {array}  models.DeviceCabinet
 // @Router       /api/n9e/device-cabinet/list/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) deviceCabinetGets(c *gin.Context) {
-	limit := ginx.QueryInt(c, "limit", 20)
-	query := ginx.QueryStr(c, "query", "")
+	// limit := ginx.QueryInt(c, "limit", 20)
+	// query := ginx.QueryStr(c, "query", "")
+	f := make(map[string]interface{})
+	ginx.BindJSON(c, &f)
+	var limit, page int
+	limitTemp, limitOk := f["limit"]
+	if !limitOk {
+		limit = -1
+	} else {
+		limit = int(limitTemp.(float64))
+	}
+	pageTemp, pageOk := f["page"]
+	if !pageOk {
+		page = -1
+	} else {
+		page = int(pageTemp.(float64))
+	}
 
-	total, err := models.DeviceCabinetCount(rt.Ctx, query)
+	//TODO 满载机柜未判定
+	// var spaceStatus string
+	// status, statusOk := f["space_status"]
+	// if statusOk {
+	// 	spaceStatus = status.(string)
+	// 	delete(f, "space_status")
+	// }
+
+	total, err := models.DeviceCabinetCountByMap(rt.Ctx, f)
 	ginx.Dangerous(err)
-	lst, err := models.DeviceCabinetGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
+	lst, err := models.DeviceCabinetGetByMap(rt.Ctx, f, limit, (page-1)*limit)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
@@ -224,7 +246,7 @@ func (rt *Router) importDeviceCabinet(c *gin.Context) {
 // @Produce      application/msexcel
 // @Param        query query   string  false  "导入查询条件"
 // @Success      200
-// @Router       /api/n9e/device-cabinet/download-xls [post]
+// @Router       /api/n9e/device-cabinet/export-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) downloadDeviceCabinet(c *gin.Context) {
 

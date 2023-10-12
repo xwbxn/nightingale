@@ -110,7 +110,7 @@ func (rt *Router) datacenterPut(c *gin.Context) {
 	old, err := models.DatacenterGetById(rt.Ctx, f.Id)
 	ginx.Dangerous(err)
 	if old == nil {
-		ginx.Bomb(http.StatusOK, "datacenter not found")
+		ginx.Bomb(http.StatusOK, "数据中心不存在!")
 	}
 
 	// 添加审计信息
@@ -136,9 +136,87 @@ func (rt *Router) datacenterDel(c *gin.Context) {
 	// 有错则跳出，无错则继续
 	ginx.Dangerous(err)
 
+	//资产校验
+	num, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"datacenter_id": id})
+	ginx.Dangerous(err)
+	if num > 0 {
+		ginx.Bomb(http.StatusOK, "该数据中心存在资产!")
+	}
+	//机房校验
+	num, err = models.ComputerRoomByMap(rt.Ctx, map[string]interface{}{"idc_location": id})
+	ginx.Dangerous(err)
+	if num > 0 {
+		ginx.Bomb(http.StatusOK, "该数据中心存在机房!")
+	}
+	//库房校验
+	num, err = models.StoreroomManagementByMap(rt.Ctx, map[string]interface{}{"belong_idc": id})
+	ginx.Dangerous(err)
+	if num > 0 {
+		ginx.Bomb(http.StatusOK, "该数据中心存在库房!")
+	}
+	//报废设备校验
+	num, err = models.DeviceScrapByMap(rt.Ctx, map[string]interface{}{"old_datacenter": id})
+	ginx.Dangerous(err)
+	if num > 0 {
+		ginx.Bomb(http.StatusOK, "该数据中心存在报废设备!")
+	}
+
 	if datacenter == nil {
 		ginx.NewRender(c).Message(nil)
 		return
 	}
 	ginx.NewRender(c).Message(datacenter.Del(rt.Ctx))
+}
+
+// @Summary      查询数据中心
+// @Description  根据条件查询数据中心
+// @Tags         数据中心
+// @Accept       json
+// @Produce      json
+// @Param        id query   int     false  "数据中心ID"
+// @Success      200  {array}  models.Datacenter
+// @Router       /api/n9e/datacenter/statistics/ [get]
+// @Security     ApiKeyAuth
+func (rt *Router) datacenterIndexStatistics(c *gin.Context) {
+	id := ginx.QueryInt64(c, "id", -1)
+	if id == -1 {
+		ginx.Bomb(http.StatusOK, "参数错误!")
+	}
+	ans := make(map[string]interface{}, 0)
+	ans["room_num"] = 0
+	ans["device_total"] = 0
+	ans["nanotube_num"] = 0 //纳管开发未完成
+	ans["online_num"] = 0
+	ans["cabinet_num"] = 0
+
+	//查询机房
+	rooms, err := models.ComputerRoomGetByMap(rt.Ctx, map[string]interface{}{"idc_location": id})
+	ginx.Dangerous(err)
+	if len(rooms) == 0 {
+		ginx.NewRender(c).Data(ans, nil)
+	}
+	ans["room_num"] = len(rooms)
+
+	//查询机柜
+	for _, room := range rooms {
+		roomAns := make(map[string]interface{})
+		//查询该机房全部设备数
+		deviceNum, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"equipment_room": room.Id})
+		ginx.Dangerous(err)
+		roomAns["device_num"] = deviceNum
+		cabinetNum, err := models.DeviceCabinetCountByMap(rt.Ctx, map[string]interface{}{"belong_room": room.Id})
+		ginx.Dangerous(err)
+		roomAns["cabinet_num"] = cabinetNum
+
+	}
+
+	// total, err := models.DatacenterCount(rt.Ctx, query)
+	// ginx.Dangerous(err)
+	// lst, err := models.DatacenterGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
+	// ginx.Dangerous(err)
+
+	// ginx.NewRender(c).Data(gin.H{
+	// 	"list":  lst,
+	// 	"total": total,
+	// }, nil)
 }

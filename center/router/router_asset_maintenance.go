@@ -89,13 +89,19 @@ func (rt *Router) assetMaintenanceAdd(c *gin.Context) {
 	var fVo models.AssetMaintenanceVo
 	ginx.BindJSON(c, &fVo)
 
+	num, err := models.AssetMaintenanceCountMap(rt.Ctx, map[string]interface{}{"asset_id": fVo.AssetId})
+	ginx.Dangerous(err)
+	if num > 0 {
+		ginx.Bomb(http.StatusOK, "该资产存在维保信息")
+	}
+
 	// 添加审计信息
 	me := c.MustGet("user").(*models.User)
 
 	//启动事务
 	tx := models.DB(rt.Ctx).Begin()
 
-	err := fVo.AddConfig(tx, me.Username)
+	err = fVo.AddConfig(tx, me.Username)
 	if err != nil {
 		tx.Rollback()
 	}
@@ -109,15 +115,15 @@ func (rt *Router) assetMaintenanceAdd(c *gin.Context) {
 // @Tags         资产维保
 // @Accept       json
 // @Produce      json
-// @Param        body  body   models.AssetMaintenance true "update assetMaintenance"
+// @Param        body  body   models.AssetMaintenanceVo true "update AssetMaintenanceVo"
 // @Success      200
 // @Router       /api/n9e/asset-maintenance/ [put]
 // @Security     ApiKeyAuth
 func (rt *Router) assetMaintenancePut(c *gin.Context) {
-	var f models.AssetMaintenance
-	ginx.BindJSON(c, &f)
+	var fVo models.AssetMaintenanceVo
+	ginx.BindJSON(c, &fVo)
 
-	old, err := models.AssetMaintenanceGetById(rt.Ctx, f.Id)
+	old, err := models.AssetMaintenanceGetById(rt.Ctx, fVo.Id)
 	ginx.Dangerous(err)
 	if old == nil {
 		ginx.Bomb(http.StatusOK, "asset_maintenance not found")
@@ -125,10 +131,10 @@ func (rt *Router) assetMaintenancePut(c *gin.Context) {
 
 	// 添加审计信息
 	me := c.MustGet("user").(*models.User)
-	f.UpdatedBy = me.Username
+	// fVo.UpdatedBy = me.Username
 
 	// 可修改"*"为字段名称，实现更新部分字段功能
-	ginx.NewRender(c).Message(old.Update(rt.Ctx, f, "*"))
+	ginx.NewRender(c).Message(models.MaintenanceUpdate(rt.Ctx, fVo.Id, me.Username, fVo))
 }
 
 // @Summary      删除资产维保
@@ -150,5 +156,5 @@ func (rt *Router) assetMaintenanceDel(c *gin.Context) {
 		ginx.NewRender(c).Message(nil)
 		return
 	}
-	ginx.NewRender(c).Message(assetMaintenance.Del(rt.Ctx))
+	ginx.NewRender(c).Message(assetMaintenance.DelTx(rt.Ctx))
 }

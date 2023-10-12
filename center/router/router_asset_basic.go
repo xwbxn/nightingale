@@ -92,28 +92,92 @@ func (rt *Router) assetBasicBatchGets(c *gin.Context) {
 	query := make(map[string]interface{})
 	ginx.BindJSON(c, &query)
 	logger.Debug(query)
+	treeIdTemp, treeIdOk := query["tree_id"]
 
-	manager, managerOk := query["manager"]
-	if managerOk {
-		delete(query, "manager")
-		query["device_manager_one"] = manager
-		query["device_manager_two"] = manager
-		query["business_manager_one"] = manager
-		query["business_manager_two"] = manager
-	}
-	queryCopy := make(map[string]interface{})
-	for key := range query {
-		queryCopy[key] = query[key]
-	}
-	total, err := models.AssetCountMap(rt.Ctx, query)
-	ginx.Dangerous(err)
+	var total int64
+	var stayOnline, online, offline int64
+	statistics := make(map[int64]int64)
+	var lst []models.AssetBasicDetailsVo
+	if treeIdOk {
+		treeId := int64(treeIdTemp.(float64))
+		ids := make([]int64, 0)
+		idTemp := make([]int64, 0)
 
-	lst, err := models.AssetByMap(rt.Ctx, queryCopy, limit, (page-1)*limit)
-	ginx.Dangerous(err)
+		if treeId < 1 {
+			ginx.Bomb(http.StatusOK, "id不存在!")
+		}
+
+		assetTree, err := models.AssetTreeGetById(rt.Ctx, treeId)
+		ginx.Dangerous(err)
+		if assetTree.Type == "asset" {
+			ids = append(ids, assetTree.PropertyId)
+		} else {
+			idTemp = append(idTemp, assetTree.Id)
+		}
+
+		for index := 0; index < len(idTemp); index++ {
+			assetTrees, err := models.AssetTreeGetByMap(rt.Ctx, map[string]interface{}{"parent_id": idTemp[index]})
+			ginx.Dangerous(err)
+			for _, val := range assetTrees {
+				if val.Type == "asset" {
+					ids = append(ids, val.PropertyId)
+				} else {
+					idTemp = append(idTemp, val.Id)
+				}
+			}
+		}
+
+		total, err = models.AssetCountByIds(rt.Ctx, ids)
+		ginx.Dangerous(err)
+		lst, err = models.AssetBasicGetsByIds(rt.Ctx, ids, limit, (page-1)*limit)
+		ginx.Dangerous(err)
+	} else {
+		var err error
+		manager, managerOk := query["manager"]
+		if managerOk {
+			delete(query, "manager")
+			query["device_manager_one"] = manager
+			query["device_manager_two"] = manager
+			query["business_manager_one"] = manager
+			query["business_manager_two"] = manager
+		}
+		_, statusOk := query["DEVICE_STATUS"]
+		queryCopy := make(map[string]interface{})
+		queryTotal := make(map[string]interface{})
+		for key := range query {
+			queryCopy[key] = query[key]
+			if !statusOk {
+				queryTotal[key] = query[key]
+			}
+		}
+		total, err = models.AssetCountMap(rt.Ctx, query)
+		ginx.Dangerous(err)
+
+		lst, err = models.AssetByMap(rt.Ctx, queryCopy, limit, (page-1)*limit)
+		ginx.Dangerous(err)
+
+		if !statusOk {
+			allLst, err := models.AssetByMap(rt.Ctx, queryCopy, -1, -1)
+			ginx.Dangerous(err)
+			for _, val := range allLst {
+				if val.DeviceStatus == 1 {
+					stayOnline++
+				} else if val.DeviceStatus == 2 {
+					online++
+				} else if val.DeviceStatus == 3 {
+					offline++
+				}
+			}
+			statistics[1] = stayOnline
+			statistics[2] = online
+			statistics[3] = offline
+		}
+	}
 
 	ginx.NewRender(c).Data(gin.H{
-		"list":  lst,
-		"total": total,
+		"list":       lst,
+		"total":      total,
+		"statistics": statistics,
 	}, nil)
 }
 
@@ -128,58 +192,58 @@ func (rt *Router) assetBasicBatchGets(c *gin.Context) {
 // @Success      200  {array}  []models.AssetBasicDetailsVo
 // @Router       /api/n9e/asset-basic/list/ [post]
 // @Security     ApiKeyAuth
-func (rt *Router) assetBasicGetsByTree(c *gin.Context) {
+// func (rt *Router) assetBasicGetsByTree(c *gin.Context) {
 
-	page := ginx.QueryInt(c, "page", 1)
-	limit := ginx.QueryInt(c, "limit", 20)
+// 	page := ginx.QueryInt(c, "page", 1)
+// 	limit := ginx.QueryInt(c, "limit", 20)
 
-	m := make(map[string]interface{})
-	ginx.BindJSON(c, &m)
+// 	m := make(map[string]interface{})
+// 	ginx.BindJSON(c, &m)
 
-	total, err := models.AssetCountByMap(rt.Ctx, m)
-	ginx.Dangerous(err)
-	lst, err := models.AssetBasicGetsByMap(rt.Ctx, m, limit, (page-1)*limit)
-	ginx.Dangerous(err)
+// 	total, err := models.AssetCountByMap(rt.Ctx, m)
+// 	ginx.Dangerous(err)
+// 	lst, err := models.AssetBasicGetsByMap(rt.Ctx, m, limit, (page-1)*limit)
+// 	ginx.Dangerous(err)
 
-	for index := range lst {
-		//回填设备类型
-		deviceType, err := models.DeviceTypeGetById(rt.Ctx, lst[index].DeviceType)
-		ginx.Dangerous(err)
-		lst[index].DeviceTypeName = deviceType.Name
-		//回填设备厂商
-		deviceProducer, err := models.DeviceProducerGetById(rt.Ctx, lst[index].DeviceProducer)
-		ginx.Dangerous(err)
-		lst[index].DeviceProducerName = deviceProducer.Alias
-		//回填设备型号
-		deviceModel, err := models.DeviceModelGetById(rt.Ctx, lst[index].DeviceModel)
-		ginx.Dangerous(err)
-		lst[index].DeviceModelName = deviceModel.Name
-		//TODO 回填所属组织(不清楚)
+// 	for index := range lst {
+// 		//回填设备类型
+// 		deviceType, err := models.DeviceTypeGetById(rt.Ctx, lst[index].DeviceType)
+// 		ginx.Dangerous(err)
+// 		lst[index].DeviceTypeName = deviceType.Name
+// 		//回填设备厂商
+// 		deviceProducer, err := models.DeviceProducerGetById(rt.Ctx, lst[index].DeviceProducer)
+// 		ginx.Dangerous(err)
+// 		lst[index].DeviceProducerName = deviceProducer.Alias
+// 		//回填设备型号
+// 		deviceModel, err := models.DeviceModelGetById(rt.Ctx, lst[index].DeviceModel)
+// 		ginx.Dangerous(err)
+// 		lst[index].DeviceModelName = deviceModel.Name
+// 		//TODO 回填所属组织(不清楚)
 
-		//回填所在机房
-		if lst[index].EquipmentRoom != 0 {
-			computerRoom, err := models.ComputerRoomGetById(rt.Ctx, lst[index].EquipmentRoom)
-			ginx.Dangerous(err)
-			lst[index].RoomName = computerRoom.RoomName
-		}
+// 		//回填所在机房
+// 		if lst[index].EquipmentRoom != 0 {
+// 			computerRoom, err := models.ComputerRoomGetById(rt.Ctx, lst[index].EquipmentRoom)
+// 			ginx.Dangerous(err)
+// 			lst[index].RoomName = computerRoom.RoomName
+// 		}
 
-		//回填所在机柜
-		if lst[index].OwningCabinet != 0 {
-			deviceCabinet, err := models.DeviceCabinetGetById(rt.Ctx, lst[index].OwningCabinet)
-			ginx.Dangerous(err)
-			lst[index].CabinetName = deviceCabinet.CabinetName
-		}
-		//补充扩展字段
-		assetExpansions, err := models.AssetExpansionGetByMap(rt.Ctx, map[string]interface{}{"asset_id": lst[index].Id, "config_category": "form-basic"})
-		ginx.Dangerous(err)
-		lst[index].BasicExpansion = assetExpansions
-	}
+// 		//回填所在机柜
+// 		if lst[index].OwningCabinet != 0 {
+// 			deviceCabinet, err := models.DeviceCabinetGetById(rt.Ctx, lst[index].OwningCabinet)
+// 			ginx.Dangerous(err)
+// 			lst[index].CabinetName = deviceCabinet.CabinetName
+// 		}
+// 		//补充扩展字段
+// 		assetExpansions, err := models.AssetExpansionGetByMap(rt.Ctx, map[string]interface{}{"asset_id": lst[index].Id, "config_category": "form-basic"})
+// 		ginx.Dangerous(err)
+// 		lst[index].BasicExpansion = assetExpansions
+// 	}
 
-	ginx.NewRender(c).Data(gin.H{
-		"list":  lst,
-		"total": total,
-	}, nil)
-}
+// 	ginx.NewRender(c).Data(gin.H{
+// 		"list":  lst,
+// 		"total": total,
+// 	}, nil)
+// }
 
 // @Summary      创建资产详情
 // @Description  创建资产详情
@@ -234,6 +298,26 @@ func (rt *Router) assetBasicAdd(c *gin.Context) {
 		ginx.Bomb(http.StatusOK, "管理IP和序列号不能同时为空!")
 	}
 
+	if basic.ManagementIp != "" {
+		num, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"management_ip": basic.ManagementIp})
+		ginx.Dangerous(err)
+		if num > 0 {
+			ginx.Bomb(http.StatusOK, "管理IP已存在!")
+		}
+	}
+	if basic.SerialNumber != "" {
+		num, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"serial_number": basic.SerialNumber})
+		ginx.Dangerous(err)
+		if num > 0 {
+			ginx.Bomb(http.StatusOK, "序列号已存在!")
+		}
+	}
+	if basic.EquipmentRoom != 0 {
+		computerRoom, err := models.ComputerRoomGetById(rt.Ctx, basic.EquipmentRoom)
+		ginx.Dangerous(err)
+		basic.DatacenterId = computerRoom.Id
+	}
+
 	// 更新模型
 	//启动事务
 	tx := models.DB(rt.Ctx).Begin()
@@ -264,11 +348,30 @@ func (rt *Router) assetBasicAdd(c *gin.Context) {
 func (rt *Router) assetBasicPut(c *gin.Context) {
 	var f models.AssetBasicExpansionVo
 	ginx.BindJSON(c, &f)
+	if f.ManagementIp != "" {
+		num, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"management_ip": f.ManagementIp})
+		ginx.Dangerous(err)
+		if num > 0 {
+			ginx.Bomb(http.StatusOK, "管理IP已存在!")
+		}
+	}
+	if f.SerialNumber != "" {
+		num, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"serial_number": f.SerialNumber})
+		ginx.Dangerous(err)
+		if num > 0 {
+			ginx.Bomb(http.StatusOK, "序列号已存在!")
+		}
+	}
 
 	old, err := models.AssetBasicGetById[models.AssetBasicExpansionVo](rt.Ctx, f.Id)
 	ginx.Dangerous(err)
 	if old == nil {
 		ginx.Bomb(http.StatusOK, "asset_basic not found")
+	}
+	if old.EquipmentRoom != f.EquipmentRoom {
+		computerRoom, err := models.ComputerRoomGetById(rt.Ctx, f.EquipmentRoom)
+		ginx.Dangerous(err)
+		f.DatacenterId = computerRoom.Id
 	}
 
 	// 添加审计信息
@@ -420,6 +523,27 @@ func (rt *Router) assetCopyAdd(c *gin.Context) {
 	var f models.AssetBasicMainMang
 	ginx.BindJSON(c, &f)
 
+	if f.AssetBasicCopy.ManagementIp != "" {
+		num, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"management_ip": f.AssetBasicCopy.ManagementIp})
+		ginx.Dangerous(err)
+		if num > 0 {
+			ginx.Bomb(http.StatusOK, "管理IP已存在!")
+		}
+	}
+	if f.AssetBasicCopy.SerialNumber != "" {
+		num, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"serial_number": f.AssetBasicCopy.SerialNumber})
+		ginx.Dangerous(err)
+		if num > 0 {
+			ginx.Bomb(http.StatusOK, "序列号已存在!")
+		}
+	}
+
+	if f.AssetBasicCopy.EquipmentRoom != 0 {
+		computerRoom, err := models.ComputerRoomGetById(rt.Ctx, f.AssetBasicCopy.EquipmentRoom)
+		ginx.Dangerous(err)
+		f.AssetBasicCopy.DatacenterId = computerRoom.Id
+	}
+
 	//新增资产详情
 	assetBasicExpansionVo := f.AssetBasicCopy
 	if assetBasicExpansionVo.ManagementIp == "" && assetBasicExpansionVo.SerialNumber == "" {
@@ -511,6 +635,10 @@ func (rt *Router) assetBatchDel(c *gin.Context) {
 	err := models.AssetBasicBatchDel(tx, assetId)
 	ginx.Dangerous(err)
 
+	//删除资产树数据
+	err = models.AssetTreeBatchDel(tx, assetId)
+	ginx.Dangerous(err)
+
 	//删除资产扩展
 	err = models.AssetExpansionBatchDel(tx, assetId)
 	ginx.Dangerous(err)
@@ -559,19 +687,22 @@ func (rt *Router) assetBasicStatusUpdateByAssetId(c *gin.Context) {
 // @Success      200
 // @Router       /api/n9e/asset-basic/statistics/ [get]
 // @Security     ApiKeyAuth
-func (rt *Router) assetStatisticsAll(c *gin.Context) {
+// func (rt *Router) assetStatisticsAll(c *gin.Context) {
 
-	total, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{})
-	ginx.Dangerous(err)
+// 	total, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{})
+// 	ginx.Dangerous(err)
 
-	m, err := models.AssetStatusCount(rt.Ctx)
-	ginx.Dangerous(err)
+// 	scrapTotal, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"device_status": 4})
+// 	ginx.Dangerous(err)
 
-	ginx.NewRender(c).Data(gin.H{
-		"list":  m,
-		"total": total,
-	}, nil)
-}
+// 	m, err := models.AssetStatusCount(rt.Ctx)
+// 	ginx.Dangerous(err)
+
+// 	ginx.NewRender(c).Data(gin.H{
+// 		"list":  m,
+// 		"total": total - scrapTotal,
+// 	}, nil)
+// }
 
 // @Summary      导出资产模板
 // @Description  导出资产模板
@@ -637,6 +768,22 @@ func (rt *Router) importAsset(c *gin.Context) {
 	tx := models.DB(rt.Ctx).Begin()
 
 	for index, val := range assetBasicImport {
+
+		if val.ManagementIp != "" {
+			num, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"management_ip": val.ManagementIp})
+			ginx.Dangerous(err)
+			if num > 0 {
+				ginx.Bomb(http.StatusOK, "管理IP已存在!")
+			}
+		}
+		if val.SerialNumber != "" {
+			num, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"serial_number": val.SerialNumber})
+			ginx.Dangerous(err)
+			if num > 0 {
+				ginx.Bomb(http.StatusOK, "序列号已存在!")
+			}
+		}
+
 		var assetBasic models.AssetBasic
 		var assetMaintenance models.AssetMaintenance
 		var assetExpansion models.AssetExpansion
@@ -660,14 +807,18 @@ func (rt *Router) importAsset(c *gin.Context) {
 		assetBasic.OperatingSystem = val.OperatingSystem
 		assetBasic.RelatedService = val.RelatedService
 		assetBasic.ServicePath = val.ServicePath
-		assetBasic.DatacenterId = val.DatacenterId
+
 		//查询机房
 		computerRoom, err := models.ComputerRoomGetByRoomName(rt.Ctx, val.EquipmentRoom)
 		ginx.Dangerous(err)
 		if (models.ComputerRoom{} == *computerRoom) {
 			ginx.Bomb(http.StatusOK, fmt.Sprintf("第%d行数据,机房不存在!", index))
 		}
+		if computerRoom.IdcLocation != val.DatacenterId {
+			ginx.Bomb(http.StatusOK, fmt.Sprintf("第%d行数据,机房与数据中心不匹配!", index))
+		}
 		assetBasic.EquipmentRoom = computerRoom.Id
+		assetBasic.DatacenterId = val.DatacenterId
 		//查询机柜
 		deviceCabinet, err := models.DeviceCabinetGetByCabinetName(rt.Ctx, val.OwningCabinet)
 		ginx.Dangerous(err)
@@ -788,6 +939,37 @@ func (rt *Router) exportAsset(c *gin.Context) {
 func (rt *Router) assetBasicsUpdate(c *gin.Context) {
 	var f map[string]interface{}
 	ginx.BindJSON(c, &f)
+
+	managementIp, managementIpOk := f["management_ip"]
+	if managementIpOk {
+		if managementIp != "" {
+			num, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"management_ip": managementIp.(string)})
+			ginx.Dangerous(err)
+			if num > 0 {
+				ginx.Bomb(http.StatusOK, "管理IP已存在!")
+			}
+		}
+
+	}
+	serialNumber, serialNumberOk := f["serial_number"]
+	if serialNumberOk {
+		if serialNumber != "" {
+			num, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"serial_number": serialNumber.(string)})
+			ginx.Dangerous(err)
+			if num > 0 {
+				ginx.Bomb(http.StatusOK, "序列号已存在!")
+			}
+		}
+	}
+
+	equipmentRoom, equipmentRoomOk := f["equipment_room"]
+	if equipmentRoomOk {
+		if equipmentRoom != 0 {
+			computerRoom, err := models.ComputerRoomGetById(rt.Ctx, int64(equipmentRoom.(float64)))
+			ginx.Dangerous(err)
+			f["datacenter_id"] = computerRoom.Id
+		}
+	}
 
 	ids := f["assetIds"].([]interface{})
 	delete(f, "assetIds")

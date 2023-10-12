@@ -5,6 +5,7 @@ package router
 
 import (
 	"net/http"
+	"time"
 
 	models "github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
@@ -81,7 +82,7 @@ func (rt *Router) deviceOnlineAdd(c *gin.Context) {
 	}
 
 	status := int64(f["device_status"].(float64))
-	deviceTime := int64(f["device_time"].(float64))
+	deviceTime := time.Now().Unix()
 	assetsInterface := f["asset"].([]interface{})
 	var directory, clearConfig int64
 	resourceFree := make([]string, 0)
@@ -149,7 +150,8 @@ func (rt *Router) deviceOnlineAdd(c *gin.Context) {
 	tx := models.DB(rt.Ctx).Begin()
 
 	for index, val := range ids {
-		assetTree, err := models.AssetTreeGetByMap(rt.Ctx, map[string]interface{}{"type": "asset", "property_id": val})
+		logger.Debug(val)
+		assetTrees, err := models.AssetTreeGetByMap(rt.Ctx, map[string]interface{}{"type": "asset", "property_id": val})
 		if err != nil {
 			tx.Rollback()
 			ginx.Dangerous(err)
@@ -182,7 +184,8 @@ func (rt *Router) deviceOnlineAdd(c *gin.Context) {
 			}
 		}
 
-		err = models.UpdateTxTree(tx, map[string]interface{}{"id": assetTree.Id}, map[string]interface{}{"status": status, "parent_id": directory, "updated_by": me.Username})
+		logger.Debug(assetTrees)
+		err = models.UpdateTxTree(tx, map[string]interface{}{"id": assetTrees[0].Id}, map[string]interface{}{"status": status, "parent_id": directory, "updated_by": me.Username})
 		ginx.Dangerous(err)
 	}
 	err := models.DeviceOnlineTxBatchAdd(tx, onLines)

@@ -221,7 +221,7 @@ func (rt *Router) assetAlterDel(c *gin.Context) {
 // @Produce      application/msexcel
 // @Param        query query   int  true  "资产ID"
 // @Success      200
-// @Router       /api/n9e/asset-alter/download-xls [post]
+// @Router       /api/n9e/asset-alter/export-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) downloadAssetAlter(c *gin.Context) {
 

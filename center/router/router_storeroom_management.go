@@ -133,7 +133,7 @@ func (rt *Router) storeroomManagementBatchDel(c *gin.Context) {
 // @Param        file formData file true "file"
 // @Produce      json
 // @Success      200
-// @Router       /api/n9e/storeroom-management/import [post]
+// @Router       /api/n9e/storeroom-management/import-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) importsStoreroomManagement(c *gin.Context) {
 	file, _, err := c.Request.FormFile("file")

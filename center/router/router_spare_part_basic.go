@@ -6,13 +6,11 @@ package router
 import (
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/360EntSecGroup-Skylar/excelize"
 	models "github.com/ccfos/nightingale/v6/models"
 	excels "github.com/ccfos/nightingale/v6/pkg/excel"
+	picture "github.com/ccfos/nightingale/v6/pkg/picture"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
@@ -163,24 +161,15 @@ func (rt *Router) sparePartBasicPictureAdd(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "文件上传失败")
 	}
 
-	if fileHeader.Size > 1024*1024*5 {
-		ginx.Bomb(http.StatusBadRequest, "文件超5MB")
-	}
-	fileName := strings.Split(fileHeader.Filename, ".")
-	if fileName[len(fileName)-1] != "bmp" && fileName[len(fileName)-1] != "jpeg" && fileName[len(fileName)-1] != "jpg" && fileName[len(fileName)-1] != "png" {
-		ginx.Bomb(http.StatusBadRequest, "文件格式错误")
-	}
-	// 设置路径,保存文件
+	suffix, err := picture.VerifyPicture(fileHeader)
+	ginx.Dangerous(err)
 
-	path := "etc/picture/"
-	name := "spare-part-" + strconv.FormatInt(time.Now().Unix(), 10) + "." + fileName[len(fileName)-1]
+	filePath, err := picture.GeneratePictureName("spare-part", suffix)
+	ginx.Dangerous(err)
 
-	_, err = PathExists(path)
+	c.SaveUploadedFile(fileHeader, filePath)
 
-	file_path := path + name
-	c.SaveUploadedFile(fileHeader, file_path)
-
-	ginx.NewRender(c).Data(file_path, err)
+	ginx.NewRender(c).Data(filePath, err)
 }
 
 // @Summary      导入备件基础信息数据
@@ -190,7 +179,7 @@ func (rt *Router) sparePartBasicPictureAdd(c *gin.Context) {
 // @Param        file formData file true "file"
 // @Produce      json
 // @Success      200
-// @Router       /api/n9e/spare-part_basic/import [post]
+// @Router       /api/n9e/spare-part_basic/import-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) importsSparePartBasic(c *gin.Context) {
 	file, _, err := c.Request.FormFile("file")
@@ -231,7 +220,7 @@ func (rt *Router) importsSparePartBasic(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Success      200  {object}  models.SparePartBasic
-// @Router       /api/n9e/spare-part_basic/outport [post]
+// @Router       /api/n9e/spare-part_basic/export-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) exportSparePartBasic(c *gin.Context) {
 

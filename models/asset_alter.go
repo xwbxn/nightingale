@@ -14,23 +14,24 @@ import (
 // group: AssetAlter
 // version:2023-08-04 14:49
 type AssetAlter struct {
-	Id               int64  `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键                                          version:2023-08-04 14:49
-	AssetId          int64  `gorm:"column:ASSET_ID" json:"asset_id" `                         //type:*int     comment:资产ID                                        version:2023-08-04 14:49
-	AlterAt          int64  `gorm:"column:ALTER_AT" json:"alter_at" `                         //type:*int     comment:变更日期                                      version:2023-08-04 15:30
-	AlterEventCode   string `gorm:"column:ALTER_EVENT_CODE" json:"alter_event_code" `         //type:string   comment:变更事项编码                                  version:2023-08-04 14:49
-	AlterEventKey    string `gorm:"column:ALTER_EVENT_KEY" json:"alter_event_key" `           //type:string   comment:变更事项标签                                  version:2023-08-04 14:49
-	BeforeAlter      string `gorm:"column:BEFORE_ALTER" json:"before_alter" `                 //type:string   comment:变更前                                        version:2023-08-04 14:49
-	AfterAlter       string `gorm:"column:AFTER_ALTER" json:"after_alter" `                   //type:string   comment:变更后                                        version:2023-08-04 14:49
-	AlterSponsor     string `gorm:"column:ALTER_SPONSOR" json:"alter_sponsor" `               //type:string   comment:变更发起人                                    version:2023-08-04 14:49
-	AlterStatus      int64  `gorm:"column:ALTER_STATUS" json:"alter_status" `                 //type:*int     comment:确认状态(0:未确认;1:确认)                     version:2023-08-04 14:49
-	AlterInstruction string `gorm:"column:ALTER_INSTRUCTION" json:"alter_instruction" `       //type:string   comment:变更说明                                      version:2023-08-04 14:49
-	ConfirmBy        string `gorm:"column:CONFIRM_BY" json:"confirm_by" `                     //type:string   comment:确认人                                        version:2023-08-11 14:23
-	ConfirmOpinion   string `gorm:"column:CONFIRM_OPINION" json:"confirm_opinion" `           //type:string   comment:确认意见                                      version:2023-08-04 14:49
-	CreationMode     int64  `gorm:"column:CREATION_MODE" json:"creation_mode" `               //type:*int     comment:创建方式(1:人工录入;2:系统产生;3:信息修改)    version:2023-08-04 14:49
-	CreatedBy        string `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人                                        version:2023-08-04 14:49
-	CreatedAt        int64  `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间                                      version:2023-08-04 14:49
-	UpdatedBy        string `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人                                        version:2023-08-04 14:49
-	UpdatedAt        int64  `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间                                      version:2023-08-04 14:49
+	Id               int64          `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键                                          version:2023-08-04 14:49
+	AssetId          int64          `gorm:"column:ASSET_ID" json:"asset_id" `                         //type:*int     comment:资产ID                                        version:2023-08-04 14:49
+	AlterAt          int64          `gorm:"column:ALTER_AT" json:"alter_at" `                         //type:*int     comment:变更日期                                      version:2023-08-04 15:30
+	AlterEventCode   string         `gorm:"column:ALTER_EVENT_CODE" json:"alter_event_code" `         //type:string   comment:变更事项编码                                  version:2023-08-04 14:49
+	AlterEventKey    string         `gorm:"column:ALTER_EVENT_KEY" json:"alter_event_key" `           //type:string   comment:变更事项标签                                  version:2023-08-04 14:49
+	BeforeAlter      string         `gorm:"column:BEFORE_ALTER" json:"before_alter" `                 //type:string   comment:变更前                                        version:2023-08-04 14:49
+	AfterAlter       string         `gorm:"column:AFTER_ALTER" json:"after_alter" `                   //type:string   comment:变更后                                        version:2023-08-04 14:49
+	AlterSponsor     string         `gorm:"column:ALTER_SPONSOR" json:"alter_sponsor" `               //type:string   comment:变更发起人                                    version:2023-08-04 14:49
+	AlterStatus      int64          `gorm:"column:ALTER_STATUS" json:"alter_status" `                 //type:*int     comment:确认状态(0:未确认;1:确认)                     version:2023-08-04 14:49
+	AlterInstruction string         `gorm:"column:ALTER_INSTRUCTION" json:"alter_instruction" `       //type:string   comment:变更说明                                      version:2023-08-04 14:49
+	ConfirmBy        string         `gorm:"column:CONFIRM_BY" json:"confirm_by" `                     //type:string   comment:确认人                                        version:2023-08-11 14:23
+	ConfirmOpinion   string         `gorm:"column:CONFIRM_OPINION" json:"confirm_opinion" `           //type:string   comment:确认意见                                      version:2023-08-04 14:49
+	CreationMode     int64          `gorm:"column:CREATION_MODE" json:"creation_mode" `               //type:*int     comment:创建方式(1:人工录入;2:系统产生;3:信息修改)    version:2023-08-04 14:49
+	CreatedBy        string         `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人                                        version:2023-08-04 14:49
+	CreatedAt        int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间                                      version:2023-08-04 14:49
+	UpdatedBy        string         `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人                                        version:2023-08-04 14:49
+	UpdatedAt        int64          `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间                                      version:2023-08-04 14:49
+	DeletedAt        gorm.DeletedAt `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"` //type:*int       comment:删除时间        version:2023-9-08 16:39
 }
 
 type AssetAlterVo struct {

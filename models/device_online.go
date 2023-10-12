@@ -14,16 +14,17 @@ import (
 // group: DeviceOnline
 // version:2023-08-27 16:34
 type DeviceOnline struct {
-	Id            int64  `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键             version:2023-08-27 16:34
-	DeviceStatus  int64  `gorm:"column:DEVICE_STATUS" json:"device_status" `               //type:*int     comment:类型             version:2023-08-27 17:00
-	AssetId       int64  `gorm:"column:ASSET_ID" json:"asset_id" `                         //type:*int     comment:资产ID           version:2023-08-27 16:34
-	Description   string `gorm:"column:DESCRIPTION" json:"description" `                   //type:string   comment:说明             version:2023-08-27 16:34
-	LineAt        int64  `gorm:"column:LINE_AT" json:"line_at" `                           //type:*int     comment:上线/下线日期    version:2023-08-27 16:34
-	LineDirectory int64  `gorm:"column:LINE_DIRECTORY" json:"line_directory" `             //type:*int     comment:上线/下线目录    version:2023-08-27 17:10
-	CreatedBy     string `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人           version:2023-08-27 16:34
-	CreatedAt     int64  `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间         version:2023-08-27 16:34
-	UpdatedBy     string `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人           version:2023-08-27 16:34
-	UpdatedAt     int64  `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间         version:2023-08-27 16:34
+	Id            int64          `gorm:"column:ID;primaryKey" json:"id" `                          //type:*int     comment:主键             version:2023-08-27 16:34
+	DeviceStatus  int64          `gorm:"column:DEVICE_STATUS" json:"device_status" `               //type:*int     comment:类型             version:2023-08-27 17:00
+	AssetId       int64          `gorm:"column:ASSET_ID" json:"asset_id" `                         //type:*int     comment:资产ID           version:2023-08-27 16:34
+	Description   string         `gorm:"column:DESCRIPTION" json:"description" `                   //type:string   comment:说明             version:2023-08-27 16:34
+	LineAt        int64          `gorm:"column:LINE_AT" json:"line_at" `                           //type:*int     comment:上线/下线日期    version:2023-08-27 16:34
+	LineDirectory int64          `gorm:"column:LINE_DIRECTORY" json:"line_directory" `             //type:*int     comment:上线/下线目录    version:2023-08-27 17:10
+	CreatedBy     string         `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人           version:2023-08-27 16:34
+	CreatedAt     int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间         version:2023-08-27 16:34
+	UpdatedBy     string         `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人           version:2023-08-27 16:34
+	UpdatedAt     int64          `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间         version:2023-08-27 16:34
+	DeletedAt     gorm.DeletedAt `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"` //type:*int       comment:删除时间        version:2023-9-08 16:39
 }
 
 // TableName 表名:device_online，设备上线下线记录表。
