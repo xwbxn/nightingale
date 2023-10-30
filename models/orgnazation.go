@@ -7,11 +7,16 @@ import (
 )
 
 type Organization struct {
-	Id       int64           `json:"id" gorm:"primaryKey"` // id
-	Name     string          `json:"name"`                 // 组织名
-	ParentId int64           `json:"parent_id"`            // 组织父id
-	Path     string          `json:"-"`                    // 路径
-	Children []*Organization `json:"children" gorm:"-"`
+	Id          int64           `json:"id" gorm:"primaryKey"` // id
+	Name        string          `json:"name"`                 // 组织名
+	ParentId    int64           `json:"parent_id"`            // 组织父id
+	Path        string          `json:"-"`                    // 路径
+	Children    []*Organization `json:"children" gorm:"-"`
+	City        string          `json:"city"`
+	Manger      string          `json:"manger"`
+	Phone       string          `json:"phone"`
+	Address     string          `json:"address"`
+	Description string          `json:"description"`
 }
 
 func tree(menus []*Organization, pid int64) []*Organization {
@@ -133,10 +138,15 @@ func OrganizationDels(ctx *ctx.Context, ids []int64) error {
 // 前端输出组织接口
 // 前端结构定义
 type feOrg struct {
-	Id       int64    `json:"id"`   // id
-	Name     string   `json:"name"` // 组织名
-	ParentId int64    `json:"-"`    // 组织父id
-	Children []*feOrg `json:"children"`
+	Id          int64    `json:"id"`   // id
+	Name        string   `json:"name"` // 组织名
+	ParentId    int64    `json:"-"`    // 组织父id
+	Children    []*feOrg `json:"children"`
+	City        string   `json:"city"`
+	Manger      string   `json:"manger"`
+	Phone       string   `json:"phone"`
+	Address     string   `json:"address"`
+	Description string   `json:"description"`
 }
 
 // 前端数组织生成
@@ -165,9 +175,14 @@ func OrganizationTreeGetsFE(ctx *ctx.Context) ([]*feOrg, error) {
 	err := DB(ctx).Find(&lst).Error
 	for i := 0; i < len(lst); i++ {
 		felst = append(felst, &feOrg{
-			Id:       lst[i].Id,
-			Name:     lst[i].Name,
-			ParentId: lst[i].ParentId,
+			Id:          lst[i].Id,
+			Name:        lst[i].Name,
+			ParentId:    lst[i].ParentId,
+			City:        lst[i].City,
+			Manger:      lst[i].Manger,
+			Phone:       lst[i].Phone,
+			Address:     lst[i].Address,
+			Description: lst[i].Description,
 		})
 
 	}

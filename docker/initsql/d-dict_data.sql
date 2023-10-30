@@ -5,13 +5,13 @@
  Source Server Type    : MySQL
  Source Server Version : 80100
  Source Host           : localhost:3306
- Source Schema         : n9e_v6
+ Source Schema         : n9e_local
 
  Target Server Type    : MySQL
  Target Server Version : 80100
  File Encoding         : 65001
 
- Date: 12/10/2023 16:31:52
+ Date: 26/10/2023 09:26:47
 */
 
 SET NAMES utf8mb4;
@@ -22,19 +22,19 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ----------------------------
 DROP TABLE IF EXISTS `dict_data`;
 CREATE TABLE `dict_data`  (
-  `ID` int(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `ID` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
   `TYPE_CODE` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '字典编码',
   `DICT_KEY` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '字典标签',
   `DICT_VALUE` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '字典键值',
   `SN` int(0) DEFAULT NULL COMMENT '序号',
   `REMARK` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '备注',
   `CREATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '0' COMMENT '创建人',
-  `CREATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
+  `CREATED_AT` bigint NOT NULL DEFAULT 0 COMMENT '创建时间',
   `UPDATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '0' COMMENT '更新人',
-  `UPDATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '更新时间',
-  `DELETED_AT` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '删除时间',
+  `UPDATED_AT` bigint NOT NULL DEFAULT 0 COMMENT '更新时间',
+  `DELETED_AT` datetime(0) DEFAULT NULL COMMENT '删除时间',
   PRIMARY KEY (`ID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 129 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '字典数据表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 142 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '字典数据表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of dict_data
@@ -91,5 +91,18 @@ INSERT INTO `dict_data` VALUES (125, 'scrap_query_filter', 'in_3_months_scrap', 
 INSERT INTO `dict_data` VALUES (126, 'scrap_query_filter', 'in_6_months_scrap', '近半年内报废设备', 0, '', 'root', 1696750267, '', 1696750267, NULL);
 INSERT INTO `dict_data` VALUES (127, 'scrap_query_filter', 'in_this_year_scrap', '今年内报废设备', 0, '', 'root', 1696750267, '', 1696750267, NULL);
 INSERT INTO `dict_data` VALUES (128, 'scrap_query_filter', 'in_1_year_scrap', '最近一年内报废设备', 0, '', 'root', 1696750267, '', 1696750267, NULL);
+INSERT INTO `dict_data` VALUES (129, 'system_initialize', 'uptime', '1696089600', 0, '2023年10月1日（秒数）', 'root', 1697681226, '', 1697681226, NULL);
+INSERT INTO `dict_data` VALUES (130, 'asset_ext_fields', 'room_name', '机房', 0, '', 'root', 1697780381, '', 1697780381, NULL);
+INSERT INTO `dict_data` VALUES (131, 'asset_ext_fields', 'cpu_producer_name', 'CPU厂商名称', 0, '', 'root', 1697780381, '', 1697780381, NULL);
+INSERT INTO `dict_data` VALUES (132, 'cpu_specifications', '2', '2核', 0, '', 'root', 1697785594, '', 1697785594, NULL);
+INSERT INTO `dict_data` VALUES (133, 'cpu_specifications', '4', '4核', 0, '', 'root', 1697785594, '', 1697785594, NULL);
+INSERT INTO `dict_data` VALUES (134, 'memory_specifications', '4', '4G', 0, '', 'root', 1697785716, '', 1697785716, NULL);
+INSERT INTO `dict_data` VALUES (135, 'memory_specifications', '8', '8G', 0, '', 'root', 1697785716, '', 1697785716, NULL);
+INSERT INTO `dict_data` VALUES (136, 'memory_specifications', '16', '16G', 0, '', 'root', 1697785716, '', 1697785716, NULL);
+INSERT INTO `dict_data` VALUES (137, 'producer', '华为', '华为', 0, '', 'root', 1697785794, '', 1697785794, NULL);
+INSERT INTO `dict_data` VALUES (138, 'producer', '阿里', '阿里', 0, '', 'root', 1697785794, '', 1697785794, NULL);
+INSERT INTO `dict_data` VALUES (139, 'producer', '东软', '东软', 0, '', 'root', 1697785794, '', 1697785794, NULL);
+INSERT INTO `dict_data` VALUES (140, 'asset_status', '1', '已上线', 0, '', 'root', 1697785886, '', 1697785886, NULL);
+INSERT INTO `dict_data` VALUES (141, 'asset_status', '0', '未上线', 0, '', 'root', 1697785886, '', 1697785886, NULL);
 
 SET FOREIGN_KEY_CHECKS = 1;

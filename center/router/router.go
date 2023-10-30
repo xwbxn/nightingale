@@ -167,6 +167,7 @@ func (rt *Router) Config(r *gin.Engine) {
 	r.Use(stat())
 	r.Use(languageDetector(rt.Center.I18NHeaderKey))
 	r.Use(aop.Recovery())
+	r.Use(aop.LoggerToFile())
 
 	statikFS, err := fs.New()
 	if err != nil {
@@ -237,6 +238,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/user/:id/profile", rt.auth(), rt.admin(), rt.userProfilePut)
 		pages.PUT("/user/:id/password", rt.auth(), rt.admin(), rt.userPasswordPut)
 		pages.DELETE("/user/:id", rt.auth(), rt.admin(), rt.userDel)
+		pages.POST("/users/update-property", rt.auth(), rt.admin(), rt.userPropertyUpdate) //批量修改用户状态/组织
+		pages.POST("/users/batch-del", rt.auth(), rt.admin(), rt.userDels)                 //批量删除用户
 
 		pages.GET("/metric-views", rt.auth(), rt.metricViewGets)
 		pages.DELETE("/metric-views", rt.auth(), rt.user(), rt.metricViewDel)
@@ -422,6 +425,13 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/assets/bgid", rt.auth(), rt.user(), rt.perm("/assets/put"), rt.assetUpdateBgid)
 		pages.PUT("/assets/note", rt.auth(), rt.user(), rt.perm("/assets/note"), rt.assetUpdateNote)
 		pages.PUT("/assets/orgnazation", rt.auth(), rt.user(), rt.assetUpdateOrganization) // 批量修改资产组织ID
+		//西航
+		pages.POST("/xh/assets", rt.auth(), rt.admin(), rt.assetsAddXH)
+		pages.PUT("/xh/assets", rt.auth(), rt.admin(), rt.assetPutXH)
+		pages.PUT("/xh/assets/batch-update", rt.auth(), rt.admin(), rt.assetUpdateXH)
+		pages.POST("/xh/assets/batch-del", rt.auth(), rt.admin(), rt.assetDelXH)
+		pages.POST("/xh/assets/filter", rt.auth(), rt.admin(), rt.assetGetFilter)
+		pages.GET("/xh/assets/xml", rt.auth(), rt.admin(), rt.xmlceshi)
 
 		pages.GET("/organization/:id", rt.auth(), rt.user(), rt.organizationGet)    // 依据id获取组织信息
 		pages.GET("/organization", rt.auth(), rt.user(), rt.organizationGets)       // 获取组织树
@@ -677,6 +687,29 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/device-scrap/export-xls", rt.auth(), rt.admin(), rt.exportDeviceScraps)
 		// pages.PUT("/device-scrap", rt.auth(), rt.admin(), rt.deviceScrapPut)
 		pages.POST("/device-scrap/batch", rt.auth(), rt.admin(), rt.deviceScrapBatchDel)
+
+		// pages.GET("/dashboard/assets/statistics", rt.getDashboardAssetStatistics) //资产统计接口
+		pages.GET("/dashboard/count/ceshi", rt.getDashboardDataCount) //首页数据统计接口
+		pages.GET("/dashboard/asset/details/ceshi", rt.AssetDetails)  //资产详情接口
+		// pages.GET("/dashboard/alarm/details", rt.AlarmDetails)                    //告警详情接口
+		pages.GET("/dashboard/his-alarms/his-query/ceshi", rt.AlarmHisQueryGet) //历史告警搜索记录查询
+		pages.DELETE("/dashboard/his-alarms/his-query/ceshi", rt.AlarmHisDel)   //历史告警搜索删除
+		pages.GET("/dashboard/his-alarm/filter/ceshi", rt.AlarmHisFilter)       //历史告警过滤条件查询
+		pages.GET("/dashboard/his-alarms/ceshi", rt.AlarmHisGet)                //历史告警搜索记录
+
+		//资产目录
+		pages.GET("/asset-directory/tree", rt.auth(), rt.admin(), rt.assetsDirTreeGet)
+		pages.GET("/asset-directory/move", rt.auth(), rt.admin(), rt.assetsDirectoryMove)
+		pages.POST("/asset-directory", rt.auth(), rt.admin(), rt.assetsDirectoryAdd)
+		pages.PUT("/asset-directory", rt.auth(), rt.admin(), rt.assetsDirectoryPut)
+		pages.DELETE("/asset-directory/:id", rt.auth(), rt.admin(), rt.assetsDirectoryDel)
+
+		//资产扩展（西航）
+		pages.GET("/assets-expansion", rt.auth(), rt.admin(), rt.assetsExpansionGets)
+		pages.GET("/assets-expansion/:id", rt.auth(), rt.admin(), rt.assetsExpansionGet)
+		pages.POST("/assets-expansion", rt.auth(), rt.admin(), rt.assetsExpansionAdd)
+		pages.PUT("/assets-expansion", rt.auth(), rt.admin(), rt.assetsExpansionPut)
+		pages.DELETE("/assets-expansion/:id", rt.auth(), rt.admin(), rt.assetsExpansionDel)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
@@ -757,6 +790,13 @@ func (rt *Router) Config(r *gin.Engine) {
 			service.GET("/dashboard/organization-tree", rt.getOrganizationTreeByFE)     // 提供前端组织树接口
 			service.GET("/dashboard/alert-cur-events", rt.getAlertListByFE)             // 告警列表接口前端接口返回
 			service.GET("/dashboard/assets/statistics", rt.getDashboardAssetStatistics) //资产统计接口
+			service.GET("/dashboard/count", rt.getDashboardDataCount)                   //首页数据统计接口
+			service.GET("/dashboard/asset/details", rt.AssetDetails)                    //资产详情接口
+			service.GET("/dashboard/alarm/details", rt.AlarmDetails)                    //告警详情接口
+			service.GET("/dashboard/his-alarms/his-query", rt.AlarmHisQueryGet)         //历史告警搜索记录查询
+			service.DELETE("/dashboard/his-alarms/his-query", rt.AlarmHisDel)           //历史告警搜索删除
+			service.GET("/dashboard/his-alarm/filter", rt.AlarmHisFilter)               //历史告警过滤条件查询
+			service.GET("/dashboard/his-alarms", rt.AlarmHisGet)                        //历史告警搜索记录
 
 		}
 	}

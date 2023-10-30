@@ -49,11 +49,13 @@ func (rt *Router) organizationDel(c *gin.Context) {
 	}
 
 	childrenCount, err := models.OrganizationCount(rt.Ctx, "parent_id = ?", org.Id)
+	ginx.Dangerous(err)
 	if childrenCount > 0 {
 		ginx.Bomb(404, "This organization hava suborganization")
 	}
 
 	assetsCount, err := models.AssetCount(rt.Ctx, "organization_id = ?", org.Id)
+	ginx.Dangerous(err)
 	if assetsCount > 0 {
 		ginx.Bomb(404, "This organization hava assets")
 	}
@@ -69,9 +71,14 @@ func (rt *Router) organizationAdd(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 
 	u := models.Organization{
-		Name:     f.Name,
-		ParentId: f.ParentId,
-		Path:     f.Path,
+		Name:        f.Name,
+		ParentId:    f.ParentId,
+		Path:        f.Path,
+		City:        f.City,
+		Manger:      f.Manger,
+		Phone:       f.Phone,
+		Address:     f.Address,
+		Description: f.Description,
 	}
 
 	ginx.NewRender(c).Message(u.Add(rt.Ctx))

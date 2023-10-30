@@ -49,22 +49,25 @@ var (
 // group: User
 // version:2023-07-11 15:14
 type User struct {
-	Id         int64        `json:"id" gorm:"primaryKey"`
-	Username   string       `json:"username"`
-	Nickname   string       `json:"nickname"`
-	Password   string       `json:"-"`
-	Phone      string       `json:"phone"`
-	Email      string       `json:"email"`
-	Portrait   string       `json:"portrait"`
-	Roles      string       `json:"-"`              // 这个字段写入数据库
-	RolesLst   []string     `json:"roles" gorm:"-"` // 这个字段和前端交互
-	Contacts   ormx.JSONObj `json:"contacts"`       // 内容为 map[string]string 结构
-	Maintainer int          `json:"maintainer"`     // 是否给管理员发消息 0:not send 1:send
-	CreateAt   int64        `json:"create_at"`
-	CreateBy   string       `json:"create_by"`
-	UpdateAt   int64        `json:"update_at"`
-	UpdateBy   string       `json:"update_by"`
-	Admin      bool         `json:"admin" gorm:"-"` // 方便前端使用
+	Id             int64          `json:"id" gorm:"primaryKey"`
+	Username       string         `json:"username"`
+	Nickname       string         `json:"nickname"`
+	Password       string         `json:"-"`
+	Phone          string         `json:"phone"`
+	Email          string         `json:"email"`
+	Portrait       string         `json:"portrait"`
+	Roles          string         `json:"-"`                             // 这个字段写入数据库
+	RolesLst       []string       `json:"roles" gorm:"-"`                // 这个字段和前端交互
+	Contacts       ormx.JSONObj   `json:"contacts" swaggerignore:"true"` // 内容为 map[string]string 结构
+	Maintainer     int            `json:"maintainer"`                    // 是否给管理员发消息 0:not send 1:send
+	CreateAt       int64          `json:"create_at"`
+	CreateBy       string         `json:"create_by"`
+	UpdateAt       int64          `json:"update_at"`
+	UpdateBy       string         `json:"update_by"`
+	Admin          bool           `json:"admin" gorm:"-"`                  // 方便前端使用
+	Status         int64          `json:"status"`                          //用户状态（1：启用；0：禁用）
+	OrganizationId int64          `json:"organization_id"`                 //组织id
+	DeletedAt      gorm.DeletedAt `json:"deleted_at" swaggerignore:"true"` //逻辑删除字段
 }
 
 type userNameVo struct {
@@ -74,6 +77,16 @@ type userNameVo struct {
 
 func (u *User) TableName() string {
 	return "users"
+}
+
+//批量修改
+func UpdateBatch(ctx *ctx.Context, ids []int64, where map[string]interface{}) error {
+	return DB(ctx).Debug().Model(&User{}).Where("id in ?", ids).Updates(where).Error
+}
+
+//批量删除用户
+func UpdateBatchDel(ctx *ctx.Context, ids []int64) error {
+	return DB(ctx).Debug().Where("id in ?", ids).Delete(&User{}).Error
 }
 
 func (u *User) DB2FE() error {
@@ -131,7 +144,7 @@ func (u *User) Add(ctx *ctx.Context) error {
 	}
 
 	if user != nil {
-		return errors.New("Username already exists")
+		return errors.New("用户名已存在")
 	}
 
 	now := time.Now().Unix()
@@ -649,6 +662,58 @@ func (u *User) ExtractToken(key string) (string, bool) {
 func UserNameGets(ctx *ctx.Context) ([]userNameVo, error) {
 	var lst []userNameVo
 	err := DB(ctx).Model(&User{}).Select("id", "nickname").Find(&lst).Error
+
+	return lst, err
+}
+
+//过滤器统计数量
+func UserCountMap(ctx *ctx.Context, where map[string]interface{}, query string) (num int64, err error) {
+	query = "%" + query + "%"
+	var str strings.Builder
+	vals := make([]interface{}, 0)
+	str.WriteString("username like ? or ")
+	vals = append(vals, query)
+	str.WriteString("nickname like ? or ")
+	vals = append(vals, query)
+	str.WriteString("phone like ? or ")
+	vals = append(vals, query)
+	str.WriteString("email like ? or ")
+	vals = append(vals, query)
+	str.WriteString("roles like ?")
+	vals = append(vals, query)
+
+	err = DB(ctx).Debug().Model(&User{}).Where(where).Where(str.String(), vals...).Count(&num).Error
+	return num, err
+}
+
+func UserMap(ctx *ctx.Context, where map[string]interface{}, query string, limit, offset int) (lst []User, err error) {
+	session := DB(ctx)
+	// 分页
+	if limit > -1 {
+		session = session.Limit(limit).Offset(offset).Order("username")
+	}
+
+	query = "%" + query + "%"
+	var str strings.Builder
+	vals := make([]interface{}, 0)
+	str.WriteString("username like ? or ")
+	vals = append(vals, query)
+	str.WriteString("nickname like ? or ")
+	vals = append(vals, query)
+	str.WriteString("phone like ? or ")
+	vals = append(vals, query)
+	str.WriteString("email like ? or ")
+	vals = append(vals, query)
+	str.WriteString("roles like ?")
+	vals = append(vals, query)
+
+	err = session.Debug().Model(&User{}).Where(where).Where(str.String(), vals...).Find(&lst).Error
+
+	for i := 0; i < len(lst); i++ {
+		lst[i].RolesLst = strings.Fields(lst[i].Roles)
+		lst[i].Admin = lst[i].IsAdmin()
+		lst[i].Password = ""
+	}
 
 	return lst, err
 }

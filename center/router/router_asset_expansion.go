@@ -164,7 +164,7 @@ func (rt *Router) assetExpansionPut(c *gin.Context) {
 	var f []models.AssetExpansion
 	ginx.BindJSON(c, &f)
 	if len(f) == 0 {
-		ginx.Bomb(http.StatusOK, "Not update asset_expansion")
+		ginx.Bomb(http.StatusOK, "未传入资产扩展信息")
 	}
 
 	// 添加审计信息

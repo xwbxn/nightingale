@@ -5,6 +5,7 @@ package router
 
 import (
 	"net/http"
+	"strings"
 
 	models "github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
@@ -21,13 +22,18 @@ import (
 // @Router       /api/n9e/dict-data/{code} [get]
 // @Security     ApiKeyAuth
 func (rt *Router) dictDataGet(c *gin.Context) {
-	typeCode := ginx.UrlParamStr(c, "code")
-	m := make(map[string]interface{})
-	m["type_code"] = typeCode
-	dictData, err := models.DictDataGetByMap(rt.Ctx, m)
-	ginx.Dangerous(err)
-	if dictData == nil {
-		ginx.Bomb(404, "No such dict_data")
+	typeCodeTemp := ginx.UrlParamStr(c, "code")
+	typeCodeLst := strings.Split(typeCodeTemp, ",")
+	var dictData []models.DictData
+	var err error
+	if len(typeCodeLst) == 1 {
+		m := make(map[string]interface{})
+		m["type_code"] = typeCodeLst[0]
+		dictData, err = models.DictDataGetByMap(rt.Ctx, m)
+		ginx.Dangerous(err)
+	} else {
+		dictData, err = models.DictDataGetByTypeCodes(rt.Ctx, typeCodeLst)
+		ginx.Dangerous(err)
 	}
 
 	ginx.NewRender(c).Data(dictData, nil)

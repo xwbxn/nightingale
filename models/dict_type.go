@@ -109,7 +109,7 @@ func (d *DictTypeVo) Del(ctx *ctx.Context) error {
 	// 这里写DictType的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
-	return DB(ctx).Model(&DictType{}).Where("IS_VISIBLE = 'YES'").Delete(d).Error
+	return DB(ctx).Where("IS_VISIBLE = 'YES' AND ID = ?", d.Id).Delete(&DictType{}).Error
 }
 
 // 更新字典类别表

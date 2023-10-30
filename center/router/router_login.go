@@ -42,6 +42,16 @@ func (rt *Router) loginPost(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 	logger.Infof("username:%s login from:%s", f.Username, c.ClientIP())
 
+	//增加用户账号是否禁用校验
+	userGet, errGet := models.UserGetByUsername(rt.Ctx, f.Username)
+	ginx.Dangerous(errGet)
+	if (userGet == &models.User{}) {
+		ginx.Bomb(http.StatusOK, "该账号未找到！")
+	}
+	if (*userGet).Status == 0 {
+		ginx.Bomb(http.StatusOK, "该用户已被禁用！")
+	}
+
 	if rt.HTTP.ShowCaptcha.Enable {
 		if !CaptchaVerify(f.Captchaid, f.Verifyvalue) {
 			ginx.NewRender(c).Message("incorrect verification code")

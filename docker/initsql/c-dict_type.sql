@@ -11,7 +11,7 @@
  Target Server Version : 80100
  File Encoding         : 65001
 
- Date: 12/10/2023 16:32:02
+ Date: 26/10/2023 09:14:55
 */
 
 SET NAMES utf8mb4;
@@ -22,18 +22,18 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ----------------------------
 DROP TABLE IF EXISTS `dict_type`;
 CREATE TABLE `dict_type`  (
-  `ID` int(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `ID` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
   `TYPE_CODE` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '字典编码',
   `DICT_NAME` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '字典名称',
   `IS_VISIBLE` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '是否可见',
   `REMARK` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '备注',
   `CREATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '0' COMMENT '创建人',
-  `CREATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
+  `CREATED_AT` bigint NOT NULL DEFAULT 0 COMMENT '创建时间',
   `UPDATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '0' COMMENT '更新人',
-  `UPDATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '更新时间',
-  `DELETED_AT` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '删除时间',
+  `UPDATED_AT` bigint NOT NULL DEFAULT 0 COMMENT '更新时间',
+  `DELETED_AT` datetime(0) DEFAULT NULL COMMENT '删除时间',
   PRIMARY KEY (`ID`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 45 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '字典类别表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 52 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '字典类别表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of dict_type
@@ -55,5 +55,12 @@ INSERT INTO `dict_type` VALUES (41, 'link_method', '连接方式', 'YES', '', 'r
 INSERT INTO `dict_type` VALUES (42, 'asset_filter_status', '设备资产过滤器状态', 'YES', '', 'root', 1695712501, '', 1695712501, NULL);
 INSERT INTO `dict_type` VALUES (43, 'offline_release_status', '下线释放资源', 'NO', '', 'root', 1695806497, '', 1695806497, NULL);
 INSERT INTO `dict_type` VALUES (44, 'scrap_query_filter', '报废设备过滤器', 'YES', '', 'root', 1696749675, '', 1696749675, NULL);
+INSERT INTO `dict_type` VALUES (45, 'system_runing', '系统运行时间', 'YES', '', 'root', 1697680946, '', 1697680946, '2023-10-19 10:12:39.258');
+INSERT INTO `dict_type` VALUES (46, 'system_initialize', '系统初始化参数', 'YES', '', 'root', 1697681088, '', 1697681088, NULL);
+INSERT INTO `dict_type` VALUES (47, 'asset_ext_fields', '资产扩展属性', 'YES', '', 'root', 1697780263, '', 1697780263, NULL);
+INSERT INTO `dict_type` VALUES (48, 'cpu_specifications', 'CPU规格', 'YES', '', 'root', 1697785560, '', 1697785560, NULL);
+INSERT INTO `dict_type` VALUES (49, 'memory_specifications', '内存规格', 'YES', '', 'root', 1697785682, '', 1697785682, NULL);
+INSERT INTO `dict_type` VALUES (50, 'producer', '厂商', 'YES', '', 'root', 1697785758, '', 1697785758, NULL);
+INSERT INTO `dict_type` VALUES (51, 'asset_status', '资产状态', 'YES', '', 'root', 1697785853, '', 1697785853, NULL);
 
 SET FOREIGN_KEY_CHECKS = 1;

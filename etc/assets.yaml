@@ -7,6 +7,12 @@ config:
         metrics: cpu_usage_active
       - name: 内存使用率
         metrics: mem_used_percent
+      - name: 入口流量
+        metrics: net_bits_recv
+      - name: 出口流量
+        metrics: net_bits_sent
+      - name: CPU核数
+        metrics: system_n_cpus
     dashboard: "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Server&id=${id}&viewMode=fullscreen"
     form: []
 
@@ -18,6 +24,12 @@ config:
         metrics: "(((count(count(node_cpu_seconds_total) by (cpu))) - avg(sum by (mode)(rate(node_cpu_seconds_total{mode='idle'}[1m])))) * 100) / count(count(node_cpu_seconds_total) by (cpu))"
       - name: 内存使用率
         metrics: "(node_memory_MemTotal_bytes - node_memory_MemFree_bytes - (node_memory_Cached_bytes + node_memory_Buffers_bytes))/node_memory_MemTotal_bytes*100"
+      - name: 入口流量
+        metrics: net_bits_recv
+      - name: 出口流量
+        metrics: net_bits_sent
+      - name: CPU核数
+        metrics: system_n_cpus
     dashboard: "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Server&id=${id}&viewMode=fullscreen"
     form:
       - label: 监控Url
@@ -79,7 +91,7 @@ config:
         name: url
 
   - name: 网络连通(ping)
-    category: "网络资产"
+    category: "业务资产"
     plugin: ping
     metrics:
       - name: 返回状态码
@@ -144,6 +156,8 @@ config:
         metrics: switch_legacy_cpu_util
       - name: 内存使用率
         metrics: switch_legacy_mem_util
+      - name: 吞吐量
+        metrics: net_bits_sent
     dashboard: "/dashboards-built-in/detail?__built-in-cate=SNMP&__built-in-name=Switch&id=${id}&viewMode=fullscreen"
     form:
       - label: 地址
@@ -164,7 +178,7 @@ config:
         name: community
 
   - name: 防火墙
-    category: "网络安全"
+    category: "网络设备"
     plugin: switch_legacy
     metrics:
       - name: 在线状态
@@ -176,7 +190,7 @@ config:
         name: community
 
   - name: 上网行为管理
-    category: "网络安全"
+    category: "网络设备"
     plugin: switch_legacy
     metrics:
       - name: 在线状态
@@ -188,7 +202,7 @@ config:
         name: community
 
   - name: 入侵防护
-    category: "网络安全"
+    category: "网络设备"
     plugin: switch_legacy
     metrics:
       - name: 在线状态
@@ -200,7 +214,7 @@ config:
         name: community
 
   - name: WEB应用防火墙
-    category: "网络安全"
+    category: "网络设备"
     plugin: switch_legacy
     metrics:
       - name: 在线状态

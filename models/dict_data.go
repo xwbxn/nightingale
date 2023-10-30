@@ -103,9 +103,9 @@ func DictDataGetByMap(ctx *ctx.Context, m map[string]interface{}) ([]DictData, e
 }
 
 // 按type_code查询
-func DictDataGetByTypeCode(ctx *ctx.Context, typeCode string) ([]DictData, error) {
+func DictDataGetByTypeCodes(ctx *ctx.Context, typeCodes []string) ([]DictData, error) {
 	var obj []DictData
-	err := DB(ctx).Where("TYPE_CODE = ?", typeCode).Find(&obj).Error
+	err := DB(ctx).Where("TYPE_CODE IN ?", typeCodes).Find(&obj).Error
 	if err != nil {
 		return nil, err
 	}

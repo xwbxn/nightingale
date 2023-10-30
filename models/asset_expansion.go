@@ -293,7 +293,7 @@ func UpdateAssetExpansionGroup(ctx *ctx.Context, m map[string]interface{}, f []A
 			}
 		} else {
 			//旧数据不存在，删除旧数据
-			err = tx.Where("GROUP_ID = ?", groupId).Delete(AssetExpansion{}).Error
+			err = tx.Debug().Model(AssetExpansion{}).Where("GROUP_ID = ?", groupId).Delete(assetExpansions).Error
 			if err != nil {
 				tx.Rollback()
 			}
