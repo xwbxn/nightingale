@@ -1,7 +1,10 @@
 package router
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"math"
 	"net/http"
 	"regexp"
 	"sort"
@@ -10,7 +13,9 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
@@ -56,6 +61,7 @@ type AssetJson struct {
 	GroupId  int64               `json:"group_id"`
 	Tags     []string            `json:"tags"`
 	Url      string              `json:"url"`
+	Severity int64               `json:"severity"`
 }
 
 func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
@@ -127,6 +133,14 @@ func (rt *Router) getOrganizationTreeByFE(c *gin.Context) {
 	ginx.NewRender(c).Data(list, nil)
 }
 
+// @Summary      告警列表接口前端接口返回
+// @Description  告警列表接口前端接口返回
+// @Tags         大屏展示
+// @Accept       json
+// @Produce      json
+// @Success      200  {array}  []models.FeAlert
+// @Router       /api/n9e/dashboard/alert-cur-events/ceshi [get]
+// @Security     ApiKeyAuth
 func (rt *Router) getAlertListByFE(c *gin.Context) {
 	list, err := models.AlertFeList(rt.Ctx)
 
@@ -280,62 +294,98 @@ func (rt *Router) getDashboardDataCount(c *gin.Context) {
 // @Tags         大屏展示
 // @Accept       json
 // @Produce      json
-// @Param        id    query    int  true  "资产id"
-// @Success      200  {object}  AssetJson
-// @Router       /api/n9e/dashboard/asset/details/ceshi [get]
+// @Param        body  body   []int64 true "add []int64"
+// @Success      200  {array}  AssetJson
+// @Router       /api/n9e/dashboard/asset/details/ceshi [post]
 // @Security     ApiKeyAuth
 func (rt *Router) AssetDetails(c *gin.Context) {
-	assetId := ginx.QueryInt64(c, "id", -1)
+	// assetId := ginx.QueryInt64(c, "id", -1)
+
+	f := make([]int64, 0)
+	ginx.BindJSON(c, &f)
+	logger.Debug(f)
+
+	curAlert, err := models.AlertFeList(rt.Ctx)
+	ginx.Dangerous(err)
 
 	var data []*AssetJson
-	asset, Ok := rt.assetCache.Get(assetId)
-	if !Ok {
-		ginx.Bomb(http.StatusOK, "该资产不存在!")
-	}
-	ar, _ := rt.assetCache.GetType(asset.Type)
-
-	metrics := []map[string]string{}
-	for _, m := range asset.Metrics {
-		metrics = append(metrics, m)
-	}
-
-	//将名称中含有的IP拿出来
-	ip := ""
-	name := asset.Name
-	compileRegex := regexp.MustCompile("（(.*?)）") // 中文括号，例如：华南地区（广州） -> 广州
-	matchArr := compileRegex.FindStringSubmatch(asset.Name)
-
-	if len(matchArr) == 0 {
-		compileRegex = regexp.MustCompile("\\((.*?)\\)") // 兼容英文括号并取消括号的转义，例如：华南地区 (广州) -> 广州。
-		matchArr = compileRegex.FindStringSubmatch(asset.Name)
-	}
-	if len(matchArr) != 0 {
-		ipTemp := matchArr[len(matchArr)-1]
-		if len(strings.Split(ipTemp, ".")) == 4 {
-			ip = ipTemp
-			nameTemp := strings.Split(asset.Name, matchArr[0])
-			name = nameTemp[0]
+	for _, assetId := range f {
+		asset, Ok := rt.assetCache.Get(assetId)
+		if !Ok {
+			ginx.Bomb(http.StatusOK, "该资产不存在!")
 		}
+		ar, _ := rt.assetCache.GetType(asset.Type)
+
+		metrics := []map[string]string{}
+		for _, m := range asset.Metrics {
+			if m["name"] == "入口流量" || m["name"] == "出口流量" || m["name"] == "吞吐量" {
+				netData, err := strconv.ParseFloat(strings.Split(m["value"], ".")[0], 64)
+				logger.Debug(netData)
+				ginx.Dangerous(err)
+				if netData < math.Pow(10, 3) {
+					m["value"] = strings.Split(m["value"], ".")[0] + "Kb/s"
+				} else if netData >= math.Pow(10, 3) && netData < math.Pow(10, 6) {
+					netDT, err := strconv.ParseFloat(fmt.Sprintf("%.2f", netData/math.Pow(10, 3)), 64)
+					ginx.Dangerous(err)
+					logger.Debug(netDT)
+					m["value"] = strconv.FormatFloat(netDT, 'f', -1, 64) + "Mb/s"
+				} else if netData >= math.Pow(10, 6) && netData < math.Pow(10, 9) {
+					netDT, err := strconv.ParseFloat(fmt.Sprintf("%.2f", netData/math.Pow(10, 6)), 64)
+					ginx.Dangerous(err)
+					logger.Debug(netDT)
+					m["value"] = strconv.FormatFloat(netDT, 'f', -1, 64) + "Gb/s"
+					logger.Debug(m["value"])
+				}
+			}
+			metrics = append(metrics, m)
+		}
+
+		//将名称中含有的IP拿出来
+		ip := ""
+		name := asset.Name
+		compileRegex := regexp.MustCompile("（(.*?)）") // 中文括号，例如：华南地区（广州） -> 广州
+		matchArr := compileRegex.FindStringSubmatch(asset.Name)
+
+		if len(matchArr) == 0 {
+			compileRegex = regexp.MustCompile("\\((.*?)\\)") // 兼容英文括号并取消括号的转义，例如：华南地区 (广州) -> 广州。
+			matchArr = compileRegex.FindStringSubmatch(asset.Name)
+		}
+		if len(matchArr) != 0 {
+			ipTemp := matchArr[len(matchArr)-1]
+			if len(strings.Split(ipTemp, ".")) == 4 {
+				ip = ipTemp
+				nameTemp := strings.Split(asset.Name, matchArr[0])
+				name = nameTemp[0]
+			}
+		}
+
+		var severity int64
+		severity = 3
+		for _, alertVal := range curAlert {
+			if assetId == int64(alertVal.AssetId) {
+				if severity < int64(alertVal.Severity) {
+					severity = int64(alertVal.Severity)
+				}
+
+			}
+		}
+
+		data = append(data, &AssetJson{
+			Id:       asset.Id,
+			Name:     name,
+			Ip:       ip,
+			Label:    asset.Label,
+			Status:   asset.Health,
+			UpdateAt: asset.HealthAt,
+			Category: ar.Category,
+			Type:     asset.Type,
+			Metrics:  metrics,
+			GroupId:  asset.OrganizationId, //这里使用orgid作为group返回查询条件
+			Tags:     asset.TagsJSON,
+			Url:      ar.Dashboard,
+			Severity: severity,
+		})
 	}
-
-	data = append(data, &AssetJson{
-		Id:       asset.Id,
-		Name:     name,
-		Ip:       ip,
-		Label:    asset.Label,
-		Status:   asset.Health,
-		UpdateAt: asset.HealthAt,
-		Category: ar.Category,
-		Type:     asset.Type,
-		Metrics:  metrics,
-		GroupId:  asset.OrganizationId, //这里使用orgid作为group返回查询条件
-		Tags:     asset.TagsJSON,
-		//TODO url
-		// Url: ,
-	})
-
-	//ws.SetMessage(1, data) //socket推送内容
-
 	ginx.NewRender(c).Data(data, nil)
 }
 
@@ -357,10 +407,11 @@ func (rt *Router) AlarmDetails(c *gin.Context) {
 	list, err := models.AlertFeListByAssetId(rt.Ctx, assetId)
 
 	//从资产缓存中更新orgid
-	for _, item := range list {
+	for index, item := range list {
 		asset, has := rt.assetCache.Get(int64(item.AssetId))
 		if has {
-			item.OrganizeId = int(asset.OrganizationId)
+			list[index].Url = "/alert-cur-events/" + strconv.FormatInt(item.Id, 10)
+			list[index].OrganizeId = int(asset.OrganizationId)
 		}
 	}
 
@@ -569,11 +620,12 @@ func (rt *Router) AlarmHisGet(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	//从资产缓存中更新orgid
-	for _, item := range lst {
+	for index, item := range lst {
 		asset, has := rt.assetCache.Get(int64(item.AssetId))
 		if has {
-			item.AssetName = asset.Name
-			item.OrganizeId = int(asset.OrganizationId)
+			lst[index].Url = "/alert-his-events/" + strconv.FormatInt(item.Id, 10)
+			lst[index].AssetName = asset.Name
+			lst[index].OrganizeId = int(asset.OrganizationId)
 		}
 	}
 
@@ -581,4 +633,422 @@ func (rt *Router) AlarmHisGet(c *gin.Context) {
 		"list":  lst,
 		"total": total,
 	}, err)
+}
+
+// @Summary      列表数据测试
+// @Description  列表数据测试
+// @Tags         大屏展示
+// @Accept       json
+// @Produce      json
+// @Success      200
+// @Router       /api/n9e/dashboard/data/ceshi [get]
+// @Security     ApiKeyAuth
+func (rt *Router) DataBoardPerson(c *gin.Context) {
+
+	// me := c.MustGet("user").(*models.User)
+
+	asset, Ok := rt.assetCache.Get(111)
+	if !Ok {
+		ginx.Bomb(http.StatusOK, "该资产不存在!")
+	}
+	end := time.Now()
+	start := end.Add(-time.Hour * 24)
+	r := prom.Range{Start: start, End: end, Step: prom.DefaultStep * 2 * 60}
+	str := "cpu_usage_active{asset_id=" + "'" + strconv.FormatInt(asset.Id, 10) + "'" + "}"
+	value, warnings, err := rt.PromClients.GetCli(1).QueryRange(context.Background(), str, r)
+	ginx.Dangerous(err)
+
+	if len(warnings) > 0 {
+		logger.Error(err)
+		return
+	}
+	logger.Debug(value)
+
+	data := make(map[int64]float64)
+
+	items, ok := value.(model.Matrix)
+	if !ok {
+		return
+	}
+
+	for _, item := range items {
+		if len(item.Values) == 0 {
+			return
+		}
+		for _, val := range item.Values {
+			if math.IsNaN(float64(val.Value)) {
+				break
+			}
+			_, timeSOk := data[val.Timestamp.Unix()]
+			if timeSOk {
+				continue
+			}
+			data[val.Timestamp.Unix()] = float64(val.Value)
+		}
+	}
+	logger.Debug(data)
+}
+
+// @Summary      筛选资产
+// @Description  筛选资产
+// @Tags         大屏展示
+// @Accept       json
+// @Produce      json
+// @Param        filter    query    string  false  "资产类型"
+// @Param        query    query    string  false  "搜索框"
+// @Success      200
+// @Router       /api/n9e/dashboard/user/list/ceshi [get]
+// @Security     ApiKeyAuth
+func (rt *Router) DataBoardAssetList(c *gin.Context) {
+
+	filter := ginx.QueryStr(c, "filter", "")
+	query := ginx.QueryStr(c, "query", "")
+
+	var data []*AssetJson
+
+	ansAssets := make([]models.Asset, 0)
+	assets := rt.assetCache.GetAll()
+	for _, val := range assets {
+		if val.Type != "网络交换机" && val.Type != "主机" {
+			continue
+		}
+		if query == "" {
+			if filter == "" {
+				ansAssets = append(ansAssets, *val)
+			} else {
+				if (filter == "网络设备" && val.Type == "网络交换机") || (filter == "ECS" && (val.Type == "主机")) {
+					ansAssets = append(ansAssets, *val)
+				}
+			}
+		} else {
+			ids, err := models.OrgIdByName(rt.Ctx, query)
+			ginx.Dangerous(err)
+			if filter == "" {
+				if strings.Contains(val.Name, query) || strings.Contains(val.Type, query) || models.IsContain(ids, val.OrganizationId) {
+					ansAssets = append(ansAssets, *val)
+				}
+			} else {
+				if (filter == "网络设备" && val.Type == "网络交换机") || (filter == "ECS" && (val.Type == "主机")) {
+					if strings.Contains(val.Name, query) || strings.Contains(val.Type, query) || models.IsContain(ids, val.OrganizationId) {
+						ansAssets = append(ansAssets, *val)
+					}
+				}
+			}
+		}
+	}
+
+	for _, asset := range ansAssets {
+		ar, _ := rt.assetCache.GetType(asset.Type)
+		//将名称中含有的IP拿出来
+		ip := ""
+		name := asset.Name
+		compileRegex := regexp.MustCompile("（(.*?)）") // 中文括号，例如：华南地区（广州） -> 广州
+		matchArr := compileRegex.FindStringSubmatch(asset.Name)
+
+		if len(matchArr) == 0 {
+			compileRegex = regexp.MustCompile("\\((.*?)\\)") // 兼容英文括号并取消括号的转义，例如：华南地区 (广州) -> 广州。
+			matchArr = compileRegex.FindStringSubmatch(asset.Name)
+		}
+		if len(matchArr) != 0 {
+			ipTemp := matchArr[len(matchArr)-1]
+			if len(strings.Split(ipTemp, ".")) == 4 {
+				ip = ipTemp
+				nameTemp := strings.Split(asset.Name, matchArr[0])
+				name = nameTemp[0]
+			}
+		}
+
+		data = append(data, &AssetJson{
+			Id:       asset.Id,
+			Name:     name,
+			Ip:       ip,
+			Label:    asset.Label,
+			Status:   asset.Health,
+			UpdateAt: asset.HealthAt,
+			Category: ar.Category,
+			Type:     asset.Type,
+			GroupId:  asset.OrganizationId, //这里使用orgid作为group返回查询条件
+			Tags:     asset.TagsJSON,
+		})
+	}
+
+	ginx.NewRender(c).Data(data, nil)
+}
+
+// @Summary      获取pageName列表
+// @Description  获取pageName列表
+// @Tags         大屏展示
+// @Accept       json
+// @Produce      json
+// @Success      200 {array} string
+// @Router       /api/n9e/dashboard/user/page-name/get [get]
+// @Security     ApiKeyAuth
+func (rt *Router) DataBoardPageNameGets(c *gin.Context) {
+	me := c.MustGet("user").(*models.User)
+
+	lst, err := models.DashBoardUserPageNameByUser(rt.Ctx, me.Id)
+	ginx.NewRender(c).Data(lst, err)
+}
+
+// @Summary      删除pageName
+// @Description  删除pageName
+// @Tags         大屏展示
+// @Accept       json
+// @Produce      json
+// @Param        page_name query   string     false  "页签"
+// @Success      200 {array} string
+// @Router       /api/n9e/dashboard/user/page-name/del [delete]
+// @Security     ApiKeyAuth
+func (rt *Router) DataBoardPageNameDel(c *gin.Context) {
+	me := c.MustGet("user").(*models.User)
+	pageName := ginx.QueryStr(c, "page_name", "")
+
+	tx := models.DB(rt.Ctx).Begin()
+
+	err := models.DeleteByUserAndPageName(tx, me.Id, pageName)
+	tx.Commit()
+	ginx.NewRender(c).Message(err)
+}
+
+// @Summary      创建/删除用户看板
+// @Description  创建/删除用户看板
+// @Tags         大屏展示
+// @Accept       json
+// @Produce      json
+// @Param        page_name query   string     false  "页签"
+// @Param        body  body   []models.DashboardUser true "add DashboardUser"
+// @Success      200
+// @Router       /api/n9e/dashboard/user/add [post]
+// @Security     ApiKeyAuth
+func (rt *Router) DataBoardAsset(c *gin.Context) {
+	pageName := ginx.QueryStr(c, "page_name", "")
+
+	f := make([]models.DashboardUser, 0)
+	ginx.BindJSON(c, &f)
+
+	if len(f) == 0 {
+		ginx.Bomb(http.StatusOK, "参数为空")
+	}
+
+	me := c.MustGet("user").(*models.User)
+
+	for index := range f {
+		f[index].UserId = me.Id
+		f[index].PageName = pageName
+		f[index].CreatedBy = me.Username
+	}
+
+	tx := models.DB(rt.Ctx).Begin()
+
+	err := models.DeleteByUserAndPageName(tx, me.Id, pageName)
+	ginx.Dangerous(err)
+
+	err = models.AddDashBoardUser(tx, f)
+	tx.Commit()
+	ginx.NewRender(c).Message(err)
+}
+
+// @Summary      数据面板
+// @Description  数据面板
+// @Tags         大屏展示
+// @Accept       json
+// @Produce      json
+// @Param        page query   int     false  "页码"
+// @Param        limit query   int     false  "条数"
+// @Param        page_name query   string     false  "页签名称"
+// @Param        start query   int     false  "开始时间"
+// @Param        end query   int     false  "结束时间"
+// @Success      200
+// @Router       /api/n9e/dashboard/user/data [get]
+// @Security     ApiKeyAuth
+func (rt *Router) DataBoardAssetsGet(c *gin.Context) {
+	logger.Debug("9999999999999999999999999")
+
+	models.AssetTypeGetsAll()
+
+	page := ginx.QueryInt(c, "page", 1)
+	limit := ginx.QueryInt(c, "limit", 4)
+	pageName := ginx.QueryStr(c, "page_name", "")
+	startT := ginx.QueryInt64(c, "start", -1)
+	endT := ginx.QueryInt64(c, "end", -1)
+	if pageName == "" || startT == -1 || endT == -1 {
+		ginx.Bomb(http.StatusOK, "参数为空")
+	}
+	if startT >= endT {
+		ginx.Bomb(http.StatusOK, "时间区间错误")
+	}
+
+	data := make([]interface{}, 0)
+	me := c.MustGet("user").(*models.User)
+	total, err := models.DashBoardUserCountByUserAndPageName(rt.Ctx, me.Id, pageName)
+	ginx.Dangerous(err)
+	lst, err := models.DashBoardUserByUserAndPageName(rt.Ctx, me.Id, pageName, limit, (page-1)*limit)
+	ginx.Dangerous(err)
+
+	for _, val := range lst {
+		m := make(map[string]interface{})
+		asset, has := rt.assetCache.Get(val.AssetsId)
+		if !has {
+			ginx.Bomb(http.StatusOK, "该资产不存在")
+		}
+		m["sort"] = val.Sort
+		m["page_name"] = val.PageName
+
+		ar, _ := rt.assetCache.GetType(asset.Type)
+		//将名称中含有的IP拿出来
+		ip := ""
+		name := asset.Name
+		compileRegex := regexp.MustCompile("（(.*?)）") // 中文括号，例如：华南地区（广州） -> 广州
+		matchArr := compileRegex.FindStringSubmatch(asset.Name)
+
+		if len(matchArr) == 0 {
+			compileRegex = regexp.MustCompile("\\((.*?)\\)") // 兼容英文括号并取消括号的转义，例如：华南地区 (广州) -> 广州。
+			matchArr = compileRegex.FindStringSubmatch(asset.Name)
+		}
+		if len(matchArr) != 0 {
+			ipTemp := matchArr[len(matchArr)-1]
+			if len(strings.Split(ipTemp, ".")) == 4 {
+				ip = ipTemp
+				nameTemp := strings.Split(asset.Name, matchArr[0])
+				name = nameTemp[0]
+			}
+		}
+
+		m["id"] = asset.Id
+		m["name"] = name
+		m["ip"] = ip
+		m["status"] = asset.Health
+		m["label"] = asset.Label
+		m["update_at"] = asset.HealthAt
+		m["category"] = ar.Category
+		m["type"] = asset.Type
+		m["group_id"] = asset.OrganizationId //这里使用orgid作为group返回查询条件
+		m["tags"] = asset.TagsJSON
+
+		// end := time.Now()
+		// start := end.Add(-time.Hour * 24)
+		end := time.Unix(endT, 0)
+		start := time.Unix(startT, 0)
+		r := prom.Range{Start: start, End: end, Step: prom.DefaultStep * 2}
+		// str := "cpu_usage_active{asset_id=" + "'" + strconv.FormatInt(asset.Id, 10) + "'" + "}"
+
+		query := make(map[string]string, 0)
+		if val.Type == "主机" {
+			query["cpu_usage_active"] = "cpu_usage_active{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'}"
+			query["net_bits_recv"] = "net_bits_recv{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'}"
+			query["net_bits_sent"] = "net_bits_sent{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'}"
+			query["disk_used_percent"] = "sum by(asset_id) (disk_used{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'}) / sum by(asset_id) (disk_total{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'})"
+			query["mem_used_percent"] = "mem_used_percent{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'}"
+			query["diskio_read"] = "sum by(asset_id) (rate(diskio_read_bytes{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'}[1m]))"
+			query["diskio_write"] = "sum by(asset_id) (rate(diskio_write_bytes{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'}[1m]))"
+			query["netstat_tcp_established"] = "netstat_tcp_established{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'}"
+			query["system_load1"] = "system_load1{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'}"
+		} else {
+			query["switch_in"] = "sum by(asset_id) (rate(switch_legacy_if_in{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'}[5m]))"
+			query["switch_out"] = "sum by(asset_id) (rate(switch_legacy_if_out{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'}[5m]))"
+			query["cpu_usage_active"] = "switch_legacy_cpu_util{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'}"
+			query["mem_used_percent"] = "switch_legacy_mem_util{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'}"
+			query["drop_package"] = "sum by(asset_id) (switch_legacy_if_in_discards{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'})[1m]"
+			query["switch_in_percent"] = "sum by(asset_id) (switch_legacy_if_in_speed_percent{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'})[1m]"
+			query["switch_out_percent"] = "sum by(asset_id) (switch_legacy_if_out_speed_percent{asset_id='" + strconv.FormatInt(asset.Id, 10) + "'})[1m]"
+		}
+
+		for key, str := range query {
+			value, warnings, err := rt.PromClients.GetCli(1).QueryRange(context.Background(), str, r)
+			ginx.Dangerous(err)
+
+			if len(warnings) > 0 {
+				logger.Error(err)
+				return
+			}
+			dataVal := make(map[int64]float64)
+
+			items, ok := value.(model.Matrix)
+			if !ok {
+				return
+			}
+
+			for _, item := range items {
+				if len(item.Values) == 0 {
+					return
+				}
+				for _, val := range item.Values {
+					if math.IsNaN(float64(val.Value)) {
+						break
+					}
+					_, timeSOk := dataVal[val.Timestamp.Unix()]
+					if timeSOk {
+						continue
+					}
+					if key == "disk_used_percent" {
+						floatVal, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", float64(val.Value)*100), 64)
+						dataVal[val.Timestamp.Unix()] = floatVal
+					} else {
+						floatVal, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", float64(val.Value)), 64)
+						dataVal[val.Timestamp.Unix()] = floatVal
+					}
+				}
+			}
+			m[key] = dataVal
+		}
+
+		//当前值
+		mCur := make(map[string]float64)
+		for key, str := range query {
+			value, warnings, err := rt.PromClients.GetCli(1).Query(context.Background(), str, time.Now())
+			ginx.Dangerous(err)
+
+			if len(warnings) > 0 {
+				logger.Error(err)
+				return
+			}
+			// dataVal := make(map[int64]float64)
+			logger.Debug("_____________________________")
+			logger.Debug(key)
+			logger.Debug(value.Type())
+			logger.Debug(value)
+			if value.Type() == model.ValVector {
+				items, ok := value.(model.Vector)
+				if !ok {
+					return
+				}
+
+				for _, item := range items {
+					if math.IsNaN(float64(item.Value)) {
+						continue
+					}
+					if key == "disk_used_percent" {
+						floatVal, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", float64(item.Value)*100), 64)
+						mCur[key] = floatVal
+					} else {
+						floatVal, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", float64(item.Value)), 64)
+						mCur[key] = floatVal
+					}
+				}
+			} else if value.Type() == model.ValMatrix {
+				items, ok := value.(model.Matrix)
+				if !ok {
+					return
+				}
+
+				for _, item := range items {
+					if len(item.Values) == 0 {
+						return
+					}
+					if math.IsNaN(float64(item.Values[0].Value)) {
+						continue
+					}
+
+					floatVal, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", float64(item.Values[0].Value)), 64)
+					mCur[key] = floatVal
+				}
+			}
+			m["cur"] = mCur
+		}
+		data = append(data, m)
+	}
+	ginx.NewRender(c).Data(gin.H{
+		"list":  data,
+		"total": total,
+	}, nil)
 }
