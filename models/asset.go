@@ -63,6 +63,42 @@ type Metrics struct {
 	Metrics string `json:"metrics"`
 }
 
+type BaseProp struct {
+	Name     string   `json:"name" yaml:"name"`
+	Label    string   `json:"label"`
+	Required string   `json:"required"`
+	Type     string   `json:"type"`
+	Options  []string `json:"options" yaml:"options"`
+}
+
+type ExtraProp struct {
+	Cpu    *ExtraPropPart `json:"cpu" yaml:"cpu"`
+	Memory *ExtraPropPart `json:"memory" yaml:"memory"`
+	Disk   *ExtraPropPart `json:"disk" yaml:"disk"`
+	Net    *ExtraPropPart `json:"net" yaml:"net"`
+	Board  *ExtraPropPart `json:"board" yaml:"board"`
+	Bios   *ExtraPropPart `json:"bios" yaml:"bios"`
+	Bus    *ExtraPropPart `json:"bus" yaml:"bus"`
+	Os     *ExtraPropPart `json:"os" yaml:"os"`
+	Power  *ExtraPropPart `json:"power" yaml:"power"`
+	Device *ExtraPropPart `json:"device" yaml:"device"`
+}
+
+type ExtraPropPart struct {
+	Label string `json:"label"  yaml:"label"`
+	Props []*struct {
+		Name       string `json:"name" yaml:"name"`
+		Label      string `json:"label" yaml:"label"`
+		Type       string `json:"type" yaml:"type"`
+		ItemsLimit int64  `json:"items_limit" yaml:"items_limit"`
+		Items      []*struct {
+			Name  string `json:"name" yaml:"name"`
+			Label string `json:"label" yaml:"label"`
+			Type  string `json:"type" yaml:"type"`
+		} `json:"items" yaml:"items"`
+	} `json:"props" yaml:"props"`
+}
+
 type AssetType struct {
 	Name            string                   `json:"name"`
 	Plugin          string                   `json:"plugin"`
@@ -70,6 +106,8 @@ type AssetType struct {
 	OptionalMetrics []string                 `json:"optional_metrics" yaml:"optional_metrics"`
 	Category        string                   `json:"category"`
 	Form            []map[string]interface{} `json:"form"`
+	BaseProps       []*BaseProp              `json:"base_props" yaml:"base_props"`
+	ExtraProps      ExtraProp                `json:"extra_props" yaml:"extra_props"`
 
 	Dashboard string `json:"-"`
 }

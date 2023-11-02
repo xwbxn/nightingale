@@ -194,3 +194,20 @@ func OrganizationTreeGetsFE(ctx *ctx.Context) ([]*feOrg, error) {
 func OrganizationCount(ctx *ctx.Context, where string, args ...interface{}) (num int64, err error) {
 	return Count(DB(ctx).Model(&Organization{}).Where(where, args...))
 }
+
+//根据name模糊查询id
+func OrgIdByName(ctx *ctx.Context, name string) ([]int64, error) {
+	ids := make([]int64, 0)
+	name = "%" + name + "%"
+	err := DB(ctx).Debug().Model(&Organization{}).Where("name like ?", name).Pluck("id", &ids).Error
+	return ids, err
+}
+
+func IsContain(items []int64, item int64) bool {
+	for _, eachItem := range items {
+		if eachItem == item {
+			return true
+		}
+	}
+	return false
+}

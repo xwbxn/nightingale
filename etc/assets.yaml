@@ -1,3 +1,31 @@
+base_props: &base_props
+  - name: name
+    label: 名称
+    required: true
+    type: input
+  - name: ip
+    label: IP地址
+    required: true
+    type: input
+  - name: type
+    label: 类型
+    required: true
+    type: select
+    options: ['主机', '网络交换机']
+  - name: manufacturers
+    label: 厂商
+    required: false
+    type: input
+  - name: position
+    label: 位置
+    required: false
+    type: input
+  - name: status
+    label: 状态
+    required: true
+    type: select
+    options: ['正常', '下线']
+
 config:
   - name: 主机
     category: "业务资产"
@@ -8,14 +36,250 @@ config:
       - name: 内存使用率
         metrics: mem_used_percent
       - name: 入口流量
-        metrics: net_bits_recv
+        metrics: "rate(net_bits_recv[1m])"
       - name: 出口流量
-        metrics: net_bits_sent
+        metrics: "rate(net_bits_sent[1m])"
       - name: CPU核数
         metrics: system_n_cpus
     dashboard: "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Server&id=${id}&viewMode=fullscreen"
     form: []
+    base_props: *base_props
+    extra_props:
+      cpu:
+        label: CPU信息
+        props:
+          - name: cpu
+            label: CPU信息
+            type: list
+            items_limit: 8
+            items:
+            - name: model
+              label: 型号
+              type: input
+            - name: arch
+              label: 架构
+              type: input
+            - name: core_count
+              label: 物理核数量
+              type: input
+            - name: thread_count
+              label: 逻辑核数量
+              type: input
+            - name: max_frequency
+              label: 最大主频(Mhz)
+              type: input
+            - name: frequency
+              label: 主频(Mhz)
+              type: input
 
+      memory:
+        label: 内存信息
+        props:
+          - name: memory
+            label: 内存信息
+            type: list
+            items_limit: 128
+            items:
+            - name: brand
+              label: 品牌
+              type: input
+            - name: type
+              label: 类型
+              type: input
+            - name: frequency
+              label: 主频(Mhz)
+              type: input
+            - name: capacity
+              label: 容量(M)
+              type: input
+        
+      disk:
+        label: 磁盘信息
+        props:
+          - name: disk
+            label: 磁盘信息
+            type: list
+            items_limit: 64
+            items:
+              - name: name
+                label: 名称
+                type: input
+              - name: type
+                label: 类型
+                type: input
+              - name: capacity
+                label: 容量
+                type: input
+
+      net:
+        label: 网络信息
+        props:
+          - name: interface
+            label: 网络接口
+            type: list
+            items_limit: 128
+            items:
+              - name: name
+                label: 名称
+                type: input
+              - name: type
+                label: 类型
+                type: input
+              - name: address
+                label: 接口地址
+                type: input
+              - name: mac
+                label: mac地址
+                type: input
+              - name: gateway
+                label: 网关地址
+                type: input
+              
+      board:
+        label: 主板信息
+        props:
+          - name: board
+            label: 主板信息
+            type: list
+            items_limit: 1
+            items:
+              - name: manufacturers
+                label: 厂商
+                type: input
+              - name: serial_num
+                label: 序列号
+                type: input
+              - name: version
+                label: 版本
+                type: input
+
+      bios:
+        label: 固件信息
+        props:
+          - name: bios
+            label: 固件信息
+            type: list
+            items_limit: 1
+            items:
+              - name: manufacturers
+                label: 厂商
+                type: input
+              - name: version
+                label: 版本
+                type: input
+              - name: release_date
+                label: 发行日期
+                type: input
+
+      bus:
+        label: 主机控制器
+        props:
+          - name: devices
+            label: 控制器
+            type: list
+            items_limit: 32
+            items:
+              - name: name
+                label: 名称
+                type: input
+              - name: vendor
+                label: 制造商
+                type: input
+              - name: product
+                label: 设备名称
+                type: input
+
+      os:
+        label: 操作系统
+        props:
+          - name: os
+            label: 操作系统
+            type: list
+            items_limit: 1
+            items:
+              - name: name
+                label: 名称
+                type: input
+              - name: version
+                label: 版本
+                type: input
+              - name: vendor
+                label: 厂商
+                type: input
+              - name: env
+                label: 环境变量
+                type: input
+
+      power:
+        label: 电源信息
+        props:
+          - name: power_supply
+            label: 电源
+            type: list
+            items_limit: 8
+            items:
+              - name: status
+                label: 状态
+                type: input
+
+  - name: 网络交换机
+    category: "网络设备"
+    plugin: switch_legacy
+    metrics:
+      - name: 在线状态
+        metrics: switch_legacy_ping_up
+      - name: CPU使用率
+        metrics: switch_legacy_cpu_util
+      - name: 内存使用率
+        metrics: switch_legacy_mem_util
+      - name: 吞吐量
+        metrics: "sum by(asset_id) (rate(switch_legacy_if_out[5m]))"
+    dashboard: "/dashboards-built-in/detail?__built-in-cate=SNMP&__built-in-name=Switch&id=${id}&viewMode=fullscreen"
+    form:
+      - label: 地址
+        name: address
+      - label: 团体字
+        name: community
+    base_props: *base_props
+    extra_props:
+      device:
+        label: 设备信息
+        props:
+          - name: name
+            label: 名称
+            type: input
+          - name: desc
+            label: 描述
+            type: input
+          - name: ip
+            label: ip地址
+            type: input
+          - name: interface
+            label: 网络接口
+            type: list
+            items_limit: 256
+            items:
+              - name: name
+                label: 名称
+                type: input
+              - name: speed
+                label: 速率
+                type: input
+              - name: ip
+                label: ip地址
+                type: input
+              - name: mac
+                label: 物理地址
+                type: input
+              - name: admin_status
+                label: 管理状态
+                type: select
+                options: [[up, 1], [down, 2], [testing, 3]]
+              - name: oper_status
+                label: 业务状态
+                type: select
+                options:  [[up, 1], [down, 2], [testing, 3], [unkonwn 4], [dormant, 5], [notPresent, 6], [lowerLayerDown, 7]]
+    
   - name: 主机(exporter)
     category: "业务资产"
     plugin: prometheus
@@ -145,25 +409,6 @@ config:
     form:
       - label: 监控Url
         name: url
-
-  - name: 交换机
-    category: "网络设备"
-    plugin: switch_legacy
-    metrics:
-      - name: 在线状态
-        metrics: switch_legacy_ping_up
-      - name: CPU使用率
-        metrics: switch_legacy_cpu_util
-      - name: 内存使用率
-        metrics: switch_legacy_mem_util
-      - name: 吞吐量
-        metrics: net_bits_sent
-    dashboard: "/dashboards-built-in/detail?__built-in-cate=SNMP&__built-in-name=Switch&id=${id}&viewMode=fullscreen"
-    form:
-      - label: 地址
-        name: address
-      - label: 团体字
-        name: community
 
   - name: 负载均衡
     category: "网络设备"
