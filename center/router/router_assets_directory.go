@@ -23,12 +23,14 @@ import (
 func (rt *Router) assetsDirTreeGet(c *gin.Context) {
 	var assetsDirTree *models.AssetsDirTree
 	treeLst := make([]*models.AssetsDirTree, 0)
-	lst, err := models.AssetsDirectoryGetsMap(rt.Ctx, map[string]interface{}{"sort": -1})
-	ginx.Dangerous(err)
-	if len(lst) == 0 {
-		ginx.NewRender(c).Data(treeLst, nil)
-	}
-	assetsDirTree, err = models.BuildDirTree(rt.Ctx, lst[0].Id)
+	var treeNode *models.AssetsDirTree
+	treeNode.Id = 0
+	treeNode.Name = "root"
+	treeNode.ParentId = -1
+	treeNode.Sort = -1
+
+	var err error
+	assetsDirTree, err = models.BuildDirTree(rt.Ctx, treeNode.Id)
 	ginx.Dangerous(err)
 
 	assetsDirTree, err = models.AssetsDirCount(rt.Ctx, assetsDirTree)

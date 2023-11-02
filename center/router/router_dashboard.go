@@ -363,7 +363,7 @@ func (rt *Router) AssetDetails(c *gin.Context) {
 		severity = 3
 		for _, alertVal := range curAlert {
 			if assetId == int64(alertVal.AssetId) {
-				if severity < int64(alertVal.Severity) {
+				if severity > int64(alertVal.Severity) {
 					severity = int64(alertVal.Severity)
 				}
 

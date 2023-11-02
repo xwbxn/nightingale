@@ -18,6 +18,7 @@ CREATE TABLE `users` (
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
+    `deleted_at` datetime DEFAULT NULL COMMENT '删除时间',
     PRIMARY KEY (`id`),
     UNIQUE KEY (`username`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
@@ -212,6 +213,7 @@ CREATE TABLE `dashboard` (
     `create_by` varchar(64) not null default '',
     `update_at` bigint not null default 0,
     `update_by` varchar(64) not null default '',
+    `deleted_at` datetime DEFAULT NULL COMMENT '删除时间',
     PRIMARY KEY (`id`),
     UNIQUE KEY (`group_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
@@ -349,6 +351,7 @@ CREATE TABLE `target` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
     `ident` varchar(191) not null comment 'target id',
+    `current_version` varchar(128) DEFAULT NULL,
     `note` varchar(255) not null default '' comment 'append to alert event as field',
     `tags` varchar(512) not null default '' comment 'append to series data as tags, split by space, append external space at suffix',
     `update_at` bigint not null default 0,
@@ -641,6 +644,7 @@ CREATE TABLE `assets` (
   `create_by` varchar(64) NOT NULL DEFAULT '',
   `update_at` bigint(20) NOT NULL DEFAULT 0,
   `update_by` varchar(64) NOT NULL DEFAULT '',
+  `deleted_at` datetime DEFAULT NULL COMMENT '删除时间',
   `organization_id` bigint(20) NOT NULL DEFAULT 0,
   `optional_metrics` text,
   PRIMARY KEY (`id`),
@@ -654,6 +658,17 @@ CREATE TABLE `organization` (
   `name` varchar(50) DEFAULT NULL,
   `parent_id` int(10) DEFAULT NULL,
   `path` varchar(50) DEFAULT NULL,
+  `son` int DEFAULT NULL,
+  `city` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `manger` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `adress` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `create_at` bigint NOT NULL DEFAULT '0',
+  `create_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `update_at` bigint NOT NULL DEFAULT '0',
+  `update_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
