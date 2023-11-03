@@ -15,33 +15,45 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
+	"gorm.io/gorm"
 )
 
 type Asset struct {
-	Id                 int64      `json:"id" gorm:"primaryKey"`
-	Ident              string     `json:"ident"`
-	GroupId            int64      `json:"group_id"`
-	Name               string     `json:"name"`
-	Label              string     `json:"label"`
-	Tags               string     `json:"-"`
-	TagsJSON           []string   `json:"tags" gorm:"-"`
-	Type               string     `json:"type"`
-	Memo               string     `json:"memo"`
-	Configs            string     `json:"configs"`
-	Params             string     `json:"params"`
-	Plugin             string     `json:"plugin"`
-	Status             int64      `json:"status"` //0: 未生效, 1: 已生效
-	CreateAt           int64      `json:"create_at"`
-	CreateBy           string     `json:"create_by"`
-	UpdateAt           int64      `json:"update_at"`
-	UpdateBy           string     `json:"update_by"`
-	OrganizationId     int64      `json:"organization_id"`
-	OptionalMetrics    string     `json:"-"`
-	OptinalMetricsJson []*Metrics `json:"optional_metrics" gorm:"-"` //巡检检查使用
-	Dashboard          string     `json:"dashboard" gorm:"-"`
+	Id                 int64          `json:"id" gorm:"primaryKey"`
+	Ident              string         `json:"ident"`
+	GroupId            int64          `json:"group_id"`
+	Name               string         `json:"name"`
+	Label              string         `json:"label"`
+	Tags               string         `json:"-"`
+	TagsJSON           []string       `json:"tags" gorm:"-"`
+	Type               string         `json:"type"`
+	Ip                 string         `json:"ip"`
+	Producer           string         `json:"producer"`
+	Os                 string         `json:"os"`
+	Cpu                int64          `json:"cpu"`
+	Memory             int64          `json:"memory"`
+	PluginVersion      string         `json:"plugin_version"`
+	Location           string         `json:"location"`
+	AssetStatus        string         `json:"asset_status"`
+	Memo               string         `json:"memo"`
+	Configs            string         `json:"configs"`
+	Params             string         `json:"params"`
+	Plugin             string         `json:"plugin"`
+	Status             int64          `json:"status"` //0: 未生效, 1: 已生效
+	CreateAt           int64          `json:"create_at"`
+	CreateBy           string         `json:"create_by"`
+	UpdateAt           int64          `json:"update_at"`
+	UpdateBy           string         `json:"update_by"`
+	OrganizationId     int64          `json:"organization_id"`
+	DirectoryId        int64          `json:"directory_id"`
+	OptionalMetrics    string         `json:"-"`
+	OptinalMetricsJson []*Metrics     `json:"optional_metrics" gorm:"-"` //巡检检查使用
+	Dashboard          string         `json:"dashboard" gorm:"-"`
+	DeletedAt          gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"`
 
 	//下面的是健康检查使用，在memsto缓存中保存
-	Health   int64                        `json:"-" gorm:"-"` //0: fail 1: ok
+	Health   int64                        `json:"health" gorm:"-"` //0: fail 1: ok
 	HealthAt int64                        `json:"-" gorm:"-"`
 	Metrics  map[string]map[string]string `json:"-" gorm:"-"`
 }
@@ -51,6 +63,42 @@ type Metrics struct {
 	Metrics string `json:"metrics"`
 }
 
+type BaseProp struct {
+	Name     string   `json:"name" yaml:"name"`
+	Label    string   `json:"label"`
+	Required string   `json:"required"`
+	Type     string   `json:"type"`
+	Options  []string `json:"options" yaml:"options"`
+}
+
+type ExtraProp struct {
+	Cpu    *ExtraPropPart `json:"cpu" yaml:"cpu"`
+	Memory *ExtraPropPart `json:"memory" yaml:"memory"`
+	Disk   *ExtraPropPart `json:"disk" yaml:"disk"`
+	Net    *ExtraPropPart `json:"net" yaml:"net"`
+	Board  *ExtraPropPart `json:"board" yaml:"board"`
+	Bios   *ExtraPropPart `json:"bios" yaml:"bios"`
+	Bus    *ExtraPropPart `json:"bus" yaml:"bus"`
+	Os     *ExtraPropPart `json:"os" yaml:"os"`
+	Power  *ExtraPropPart `json:"power" yaml:"power"`
+	Device *ExtraPropPart `json:"device" yaml:"device"`
+}
+
+type ExtraPropPart struct {
+	Label string `json:"label"  yaml:"label"`
+	Props []*struct {
+		Name       string `json:"name" yaml:"name"`
+		Label      string `json:"label" yaml:"label"`
+		Type       string `json:"type" yaml:"type"`
+		ItemsLimit int64  `json:"items_limit" yaml:"items_limit"`
+		Items      []*struct {
+			Name  string `json:"name" yaml:"name"`
+			Label string `json:"label" yaml:"label"`
+			Type  string `json:"type" yaml:"type"`
+		} `json:"items" yaml:"items"`
+	} `json:"props" yaml:"props"`
+}
+
 type AssetType struct {
 	Name            string                   `json:"name"`
 	Plugin          string                   `json:"plugin"`
@@ -58,6 +106,8 @@ type AssetType struct {
 	OptionalMetrics []string                 `json:"optional_metrics" yaml:"optional_metrics"`
 	Category        string                   `json:"category"`
 	Form            []map[string]interface{} `json:"form"`
+	BaseProps       []*BaseProp              `json:"base_props" yaml:"base_props"`
+	ExtraProps      ExtraProp                `json:"extra_props" yaml:"extra_props"`
 
 	Dashboard string `json:"-"`
 }
@@ -108,6 +158,45 @@ func (ins *Asset) Add(ctx *ctx.Context) error {
 	return nil
 }
 
+func (ins *Asset) AddTx(tx *gorm.DB) (int64, error) {
+	if err := ins.Verify(); err != nil {
+		return 0, err
+	}
+
+	if ins.Type == "host" {
+		if exists, err := Exists(tx.Where("ident = ? and plugin = 'host")); err != nil || exists {
+			return 0, errors.New("duplicate host asset")
+		}
+	}
+
+	now := time.Now().Unix()
+	ins.CreateAt = now
+	ins.UpdateAt = now
+	ins.Status = 0
+	assetTypes, err := AssetTypeGetsAll()
+	if err != nil {
+		return 0, err
+	}
+
+	for _, item := range assetTypes {
+		if item.Name == ins.Type {
+			ins.Plugin = item.Plugin
+			break
+		}
+	}
+
+	err = tx.Model(&Asset{}).Create(ins).Error
+	if err != nil {
+		tx.Rollback()
+	}
+
+	// if err := Insert(tx, ins); err != nil {
+	// 	return err
+	// }
+
+	return ins.Id, nil
+}
+
 func (ins *Asset) Del(ctx *ctx.Context) error {
 	if err := DB(ctx).Where("id=?", ins.Id).Delete(&Asset{}).Error; err != nil {
 		return err
@@ -130,6 +219,27 @@ func (ins *Asset) Update(ctx *ctx.Context, selectField interface{}, selectFields
 	}
 
 	return nil
+}
+
+func (ins *Asset) UpdateTx(tx *gorm.DB, selectField interface{}, selectFields ...interface{}) error {
+	if err := ins.Verify(); err != nil {
+		return err
+	}
+
+	if err := tx.Model(ins).Select(selectField, selectFields...).Updates(ins).Error; err != nil {
+		tx.Rollback()
+	}
+
+	if err := tx.Model(ins).Select("status").Updates(map[string]interface{}{"status": 0}).Error; err != nil {
+		tx.Rollback()
+	}
+
+	return nil
+}
+
+//通过ids修改属性
+func UpdateByIds(ctx *ctx.Context, ids []int64, name string, value interface{}) error {
+	return DB(ctx).Model(&Asset{}).Where("id in ?", ids).Updates(map[string]interface{}{name: value}).Error
 }
 
 func AssetGetById(ctx *ctx.Context, id int64) (*Asset, error) {
@@ -322,6 +432,13 @@ func AssetDel(ctx *ctx.Context, ids []string) error {
 	return DB(ctx).Where("id in ?", ids).Delete(new(Asset)).Error
 }
 
+func AssetDelTx(tx *gorm.DB, ids []string) error {
+	if len(ids) == 0 {
+		panic("ids empty")
+	}
+	return tx.Where("id in ?", ids).Delete(new(Asset)).Error
+}
+
 func AssetUpdateNote(ctx *ctx.Context, ids []string, memo string) error {
 	return DB(ctx).Model(&Asset{}).Where("id in ?", ids).Updates(map[string]interface{}{
 		"memo":      memo,
@@ -344,4 +461,97 @@ func AssetUpdateOrganization(ctx *ctx.Context, ids []string, organize_id int64) 
 
 func (e *Asset) DB2FE() {
 	json.Unmarshal([]byte(e.OptionalMetrics), &e.OptinalMetricsJson)
+}
+
+//获取某一类资产上月（自然月）环比值
+func AssetMom(ctx *ctx.Context, aType string) (num int64, err error) {
+	//统计上月新增资产
+	var insertNum int64
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month()-1, 1, 0, 0, 0, 0, now.Location()).Unix()
+	end := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).Unix()
+
+	err = DB(ctx).Debug().Model(&Asset{}).Where("create_at >= ? AND create_at < ?", start, end).Count(&insertNum).Error
+	if err != nil {
+		return 0, errors.New("查询环比数据出错")
+	}
+	//统计上月删除资产
+	var delLst []Asset
+	// err = DB(ctx).Debug().Unscoped().Find(&delLst).Error
+	// err = DB(ctx).Debug().Unscoped().Where("IFNULL('deleted_at','kong')!='kong'").Find(&delLst).Error
+	err = DB(ctx).Debug().Unscoped().Where("`assets`.`deleted_at` IS NOT NULL").Find(&delLst).Error
+	if err != nil {
+		return 0, errors.New("查询环比数据出错")
+	}
+	for _, val := range delLst {
+		delUnix := val.DeletedAt.Time.Unix()
+		if delUnix >= start && delUnix < end {
+			insertNum--
+		}
+	}
+	return insertNum, err
+}
+
+//根据map查询
+func AssetsGetsMap(ctx *ctx.Context, where map[string]interface{}) (lst []Asset, err error) {
+	err = DB(ctx).Model(&Asset{}).Where(where).Find(&lst).Error
+	return lst, err
+}
+
+//根据map统计数量
+func AssetsCountMap(ctx *ctx.Context, where map[string]interface{}) (num int64, err error) {
+	err = DB(ctx).Model(&Asset{}).Where(where).Count(&num).Error
+	return num, err
+}
+
+//根据filter统计数量
+func AssetsCountFilter(ctx *ctx.Context, dirs []int64, query, queryType string) (num int64, err error) {
+	session := DB(ctx)
+
+	if queryType == "" {
+		if query != "" {
+			session = session.Where("name like ? or type like ? or ip like ? or asset_status like ? or os like ? or location like ?", query, query, query, query, query, query)
+		}
+	} else {
+		session = session.Where(queryType+" like ?", query)
+	}
+
+	if len(dirs) != 0 {
+		logger.Debug(dirs)
+		session = session.Where("directory_id in ?", dirs)
+	}
+
+	err = session.Debug().Model(&Asset{}).Count(&num).Error
+	return num, err
+}
+
+//根据filter查询
+func AssetsGetsFilter(ctx *ctx.Context, dirs []int64, query, queryType string, limit, offset int) (lst []Asset, err error) {
+	session := DB(ctx)
+	// 分页
+	if limit > -1 {
+		session = session.Limit(limit).Offset(offset).Order("ID")
+	}
+	if queryType == "" {
+		if query != "" {
+			logger.Debug(query)
+			session = session.Where("name like ? or type like ? or ip like ? or asset_status like ? or os like ? or location like ?", query, query, query, query, query, query)
+		}
+	} else {
+		session = session.Where(queryType+" like ?", query)
+	}
+	logger.Debug(dirs)
+	if len(dirs) != 0 {
+		session = session.Where("directory_id in ?", dirs)
+	}
+
+	err = session.Debug().Model(&Asset{}).Find(&lst).Error
+	return lst, err
+}
+
+//根据资产名称、类型、IP地址模糊匹配
+func AssetIdByNameTypeIp(ctx *ctx.Context, query string) (ids []int64, err error) {
+	query = "%" + query + "%"
+	err = DB(ctx).Model(&Asset{}).Distinct().Where("name like ? or type like ? or ip like ?", query, query, query).Pluck("id", &ids).Error
+	return ids, err
 }

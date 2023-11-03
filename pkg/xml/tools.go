@@ -1,0 +1,3 @@
+package xml
+
+func exportTemplet()

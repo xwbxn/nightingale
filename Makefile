@@ -39,3 +39,6 @@ run-pushgw:
 
 release:
 	goreleaser --skip-validate --skip-publish --snapshot
+
+version: build
+	gzip -f n9e

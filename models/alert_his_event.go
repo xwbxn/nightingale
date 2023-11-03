@@ -340,3 +340,148 @@ func EventPersist(ctx *ctx.Context, event *AlertCurEvent) error {
 
 	return nil
 }
+
+//统计未处理告警
+func AlertHisCount(ctx *ctx.Context) (num int64, err error) {
+	err = DB(ctx).Debug().Model(&AlertHisEvent{}).Where("status != 0").Count(&num).Error
+	return num, err
+}
+
+//map统计历史告警
+func AlertHisCountMap(ctx *ctx.Context, where map[string]interface{}) (num int64, err error) {
+	err = DB(ctx).Debug().Model(&AlertHisEvent{}).Where(where).Count(&num).Error
+	return num, err
+}
+
+//过滤器统计历史告警个数
+func AlertHisCountFilter(ctx *ctx.Context, where map[string]interface{}, dateRange int64, query string, ids []int64) (num int64, err error) {
+	session := DB(ctx)
+	if dateRange != -1 {
+		session = session.Where("trigger_time >= ?", time.Now().Unix()-dateRange)
+	}
+	if query != "" {
+		querystr := "%" + query + "%"
+
+		idsStr := make([]interface{}, 0)
+		sql := "id like ? or rule_name like ? or rule_note like ? or severity like ? or tags like ? "
+		idsStr = append(idsStr, querystr)
+		idsStr = append(idsStr, querystr)
+		idsStr = append(idsStr, querystr)
+		idsStr = append(idsStr, querystr)
+		idsStr = append(idsStr, "%asset_id="+query+"%")
+		if len(ids) > 0 {
+			sql += "or tags REGEXP "
+			for index, val := range ids {
+				if index == 0 {
+					sql += "?"
+				} else {
+					sql += "|?"
+				}
+				str := "asset_id=" + strconv.FormatInt(val, 10)
+				idsStr = append(idsStr, str)
+			}
+			logger.Debug(ids)
+			logger.Debug(idsStr)
+			// session = session.Or(sql, idsStr)
+		}
+
+		session = session.Where(sql, idsStr...)
+
+	}
+	err = session.Debug().Model(&AlertHisEvent{}).Where(where).Count(&num).Error
+	return num, err
+}
+
+//过滤器统计历史告警
+func AlertHisFilter(ctx *ctx.Context, where map[string]interface{}, dateRange int64, query string, ids []int64, limit, offset int) ([]*FeAlert, error) {
+	session := DB(ctx)
+	// 分页
+	if limit > -1 {
+		session = session.Limit(limit).Offset(offset).Order("ID")
+	}
+
+	if dateRange != -1 {
+		session = session.Where("trigger_time >= ?", time.Now().Unix()-dateRange)
+	}
+	if query != "" {
+		querystr := "%" + query + "%"
+
+		idsStr := make([]interface{}, 0)
+		sql := "id like ? or rule_name like ? or rule_note like ? or severity like ? or tags like ? "
+		idsStr = append(idsStr, querystr)
+		idsStr = append(idsStr, querystr)
+		idsStr = append(idsStr, querystr)
+		idsStr = append(idsStr, querystr)
+		idsStr = append(idsStr, "%asset_id="+query+"%")
+		if len(ids) > 0 {
+			sql += "or tags REGEXP "
+			for index, val := range ids {
+				if index == 0 {
+					sql += "?"
+				} else {
+					sql += "|?"
+				}
+				str := "asset_id=" + strconv.FormatInt(val, 10)
+				idsStr = append(idsStr, str)
+			}
+			logger.Debug(ids)
+			logger.Debug(idsStr)
+		}
+		session = session.Where(sql, idsStr...)
+
+	}
+	var dat []*AlertHisEvent
+	err := session.Debug().Model(&AlertHisEvent{}).Where(where).Find(&dat).Error
+	Fe := MakeHisFeAlert(dat)
+	return Fe, err
+}
+
+type RuleIdAndName struct {
+	RuleId   int64  `json:"rule_id"`
+	RuleName string `json:"rule_name"`
+}
+
+//统计所有的ruleName
+func RuleNameGet(ctx *ctx.Context) (result []RuleIdAndName, err error) {
+	err = DB(ctx).Model(&AlertHisEvent{}).Distinct("rule_id", "rule_name").Find(&result).Error
+	return result, err
+}
+
+type GroupIdAndName struct {
+	GroupId   int64  `json:"group_id"`
+	GroupName string `json:"group_name"`
+}
+
+//统计所有的groupName
+func GroupNameGet(ctx *ctx.Context) (result []GroupIdAndName, err error) {
+	err = DB(ctx).Model(&AlertHisEvent{}).Distinct("group_id", "group_name").Find(&result).Error
+	return result, err
+}
+
+// 生成新的适用于前端页面的返回数据格式
+func MakeHisFeAlert(dat []*AlertHisEvent) (Fe []*FeAlert) {
+	Fe = make([]*FeAlert, 0) //避免返回null
+	var assetID int
+	for i := 0; i < len(dat); i++ {
+		dat[i].DB2FE()
+		for u := 0; u < len(dat[i].TagsJSON); u++ {
+			s := strings.Split(dat[i].TagsJSON[u], "=")
+			if s[0] == "asset_id" {
+				assetID, _ = strconv.Atoi(s[1])
+				break
+			}
+		}
+		dic := &ruleConfigJson{}
+		json.Unmarshal([]byte(dat[i].RuleConfig), dic)
+		Fe = append(Fe, &FeAlert{
+			Id:           dat[i].Id,
+			Name:         dat[i].RuleName,
+			Severity:     dat[i].Severity,
+			TriggerTime:  dat[i].TriggerTime,
+			TriggerValue: dat[i].TriggerValue,
+			Rule:         dic.Queries[0]["prom_ql"].(string),
+			AssetId:      assetID,
+		})
+	}
+	return Fe
+}

@@ -7,11 +7,16 @@ import (
 )
 
 type Organization struct {
-	Id       int64           `json:"id" gorm:"primaryKey"` // id
-	Name     string          `json:"name"`                 // 组织名
-	ParentId int64           `json:"parent_id"`            // 组织父id
-	Path     string          `json:"-"`                    // 路径
-	Children []*Organization `json:"children" gorm:"-"`
+	Id          int64           `json:"id" gorm:"primaryKey"` // id
+	Name        string          `json:"name"`                 // 组织名
+	ParentId    int64           `json:"parent_id"`            // 组织父id
+	Path        string          `json:"-"`                    // 路径
+	Children    []*Organization `json:"children" gorm:"-"`
+	City        string          `json:"city"`
+	Manger      string          `json:"manger"`
+	Phone       string          `json:"phone"`
+	Address     string          `json:"address"`
+	Description string          `json:"description"`
 }
 
 func tree(menus []*Organization, pid int64) []*Organization {
@@ -102,6 +107,15 @@ func OrganizationGets(ctx *ctx.Context) ([]Organization, error) {
 	return lst, err
 }
 
+func OrganizationGetsByIds(ctx *ctx.Context, ids []int64) ([]Organization, error) {
+	session := DB(ctx)
+
+	var lst []Organization
+	err := session.Where("ID IN ?", ids).Find(&lst).Error
+
+	return lst, err
+}
+
 func OrganizationGetById(ctx *ctx.Context, id int64) (*Organization, error) {
 	return OrganizationGet(ctx, "id=?", id)
 }
@@ -124,10 +138,15 @@ func OrganizationDels(ctx *ctx.Context, ids []int64) error {
 // 前端输出组织接口
 // 前端结构定义
 type feOrg struct {
-	Id       int64    `json:"id"`   // id
-	Name     string   `json:"name"` // 组织名
-	ParentId int64    `json:"-"`    // 组织父id
-	Children []*feOrg `json:"children"`
+	Id          int64    `json:"id"`   // id
+	Name        string   `json:"name"` // 组织名
+	ParentId    int64    `json:"-"`    // 组织父id
+	Children    []*feOrg `json:"children"`
+	City        string   `json:"city"`
+	Manger      string   `json:"manger"`
+	Phone       string   `json:"phone"`
+	Address     string   `json:"address"`
+	Description string   `json:"description"`
 }
 
 // 前端数组织生成
@@ -156,9 +175,14 @@ func OrganizationTreeGetsFE(ctx *ctx.Context) ([]*feOrg, error) {
 	err := DB(ctx).Find(&lst).Error
 	for i := 0; i < len(lst); i++ {
 		felst = append(felst, &feOrg{
-			Id:       lst[i].Id,
-			Name:     lst[i].Name,
-			ParentId: lst[i].ParentId,
+			Id:          lst[i].Id,
+			Name:        lst[i].Name,
+			ParentId:    lst[i].ParentId,
+			City:        lst[i].City,
+			Manger:      lst[i].Manger,
+			Phone:       lst[i].Phone,
+			Address:     lst[i].Address,
+			Description: lst[i].Description,
 		})
 
 	}
@@ -169,4 +193,21 @@ func OrganizationTreeGetsFE(ctx *ctx.Context) ([]*feOrg, error) {
 // 根据条件统计个数
 func OrganizationCount(ctx *ctx.Context, where string, args ...interface{}) (num int64, err error) {
 	return Count(DB(ctx).Model(&Organization{}).Where(where, args...))
+}
+
+//根据name模糊查询id
+func OrgIdByName(ctx *ctx.Context, name string) ([]int64, error) {
+	ids := make([]int64, 0)
+	name = "%" + name + "%"
+	err := DB(ctx).Debug().Model(&Organization{}).Where("name like ?", name).Pluck("id", &ids).Error
+	return ids, err
+}
+
+func IsContain(items []int64, item int64) bool {
+	for _, eachItem := range items {
+		if eachItem == item {
+			return true
+		}
+	}
+	return false
 }

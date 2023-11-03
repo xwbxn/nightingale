@@ -16,6 +16,900 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/n9e/asset-basic/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新资产详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产详情"
+                ],
+                "summary": "更新资产详情",
+                "parameters": [
+                    {
+                        "description": "update assetBasic",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetBasic"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建资产详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产详情"
+                ],
+                "summary": "创建资产详情",
+                "parameters": [
+                    {
+                        "description": "add assetBasic",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetBasic"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/asset-basic/list/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询资产详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产详情"
+                ],
+                "summary": "查询资产详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.AssetBasic"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询资产详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产详情"
+                ],
+                "summary": "查询资产详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "description": "add AssetBasicFindVo",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetBasicFindVo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/models.AssetBasicDetailsVo"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/asset-basic/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取资产详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产详情"
+                ],
+                "summary": "获取资产详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetBasic"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除资产详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产详情"
+                ],
+                "summary": "删除资产详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/asset-expansion/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新资产扩展",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产扩展"
+                ],
+                "summary": "更新资产扩展",
+                "parameters": [
+                    {
+                        "description": "update assetExpansion",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetExpansion"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建资产扩展",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产扩展"
+                ],
+                "summary": "创建资产扩展",
+                "parameters": [
+                    {
+                        "description": "add assetExpansion",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetExpansion"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/asset-expansion/batch": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "批量创建资产扩展",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产扩展"
+                ],
+                "summary": "批量创建资产扩展",
+                "parameters": [
+                    {
+                        "description": "add assetExpansion",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.AssetExpansion"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/asset-expansion/list/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询资产扩展",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产扩展"
+                ],
+                "summary": "查询资产扩展",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.AssetExpansion"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/asset-expansion/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取资产扩展",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产扩展"
+                ],
+                "summary": "获取资产扩展",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetExpansion"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除资产扩展",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产扩展"
+                ],
+                "summary": "删除资产扩展",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/asset-maintenance/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询资产维保",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产维保"
+                ],
+                "summary": "查询资产维保",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.AssetMaintenance"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新资产维保",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产维保"
+                ],
+                "summary": "更新资产维保",
+                "parameters": [
+                    {
+                        "description": "update assetMaintenance",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetMaintenance"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建资产维保",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产维保"
+                ],
+                "summary": "创建资产维保",
+                "parameters": [
+                    {
+                        "description": "add assetMaintenance",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetMaintenance"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/asset-maintenance/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取资产维保",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产维保"
+                ],
+                "summary": "获取资产维保",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetMaintenance"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除资产维保",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产维保"
+                ],
+                "summary": "删除资产维保",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/asset-tree/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询资产树",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产树"
+                ],
+                "summary": "查询资产树",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.AssetTree"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建资产树",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产树"
+                ],
+                "summary": "创建资产树",
+                "parameters": [
+                    {
+                        "description": "add assetTree",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetTree"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/asset-tree/count": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取资产数量",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产树"
+                ],
+                "summary": "获取资产数量",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetTree"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/asset-tree/data": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取资产树数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产树"
+                ],
+                "summary": "获取资产树数据",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "设备状态",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetTree"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/asset-tree/list/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新资产树",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产树"
+                ],
+                "summary": "更新资产树",
+                "parameters": [
+                    {
+                        "description": "update assetTree",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetTree"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/asset-tree/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取资产树",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产树"
+                ],
+                "summary": "获取资产树",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetTree"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除资产树",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产树"
+                ],
+                "summary": "删除资产树",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/api/n9e/auth/login": {
             "post": {
                 "description": "登录",
@@ -38,6 +932,1682 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/router.loginForm"
                         }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/cabinet-group/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新机柜组信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机柜组信息"
+                ],
+                "summary": "更新机柜组信息",
+                "parameters": [
+                    {
+                        "description": "update cabinetGroup",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CabinetGroup"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建机柜组信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机柜组信息"
+                ],
+                "summary": "创建机柜组信息",
+                "parameters": [
+                    {
+                        "description": "add cabinetGroup",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CabinetGroup"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/cabinet-group/list/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询机柜组信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机柜组信息"
+                ],
+                "summary": "查询机柜组信息",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.CabinetGroup"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/cabinet-group/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取机柜组信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机柜组信息"
+                ],
+                "summary": "获取机柜组信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.CabinetGroup"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除机柜组信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机柜组信息"
+                ],
+                "summary": "删除机柜组信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/computer-room/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新机房信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机房信息"
+                ],
+                "summary": "更新机房信息",
+                "parameters": [
+                    {
+                        "description": "update computerRoom",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ComputerRoom"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建机房信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机房信息"
+                ],
+                "summary": "创建机房信息",
+                "parameters": [
+                    {
+                        "description": "add computerRoom",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ComputerRoom"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/computer-room/datacenterId/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取机房信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机房信息"
+                ],
+                "summary": "获取机房信息",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "数据中心Id",
+                        "name": "idcLocation",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ComputerRoomNameVo"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/computer-room/list/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询机房信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机房信息"
+                ],
+                "summary": "查询机房信息",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ComputerRoom"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/computer-room/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取机房信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机房信息"
+                ],
+                "summary": "获取机房信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ComputerRoom"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除机房信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机房信息"
+                ],
+                "summary": "删除机房信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/data-center/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询数据中心",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "数据中心"
+                ],
+                "summary": "查询数据中心",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.DataCenter"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新数据中心",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "数据中心"
+                ],
+                "summary": "更新数据中心",
+                "parameters": [
+                    {
+                        "description": "update dataCenter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DataCenter"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建数据中心",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "数据中心"
+                ],
+                "summary": "创建数据中心",
+                "parameters": [
+                    {
+                        "description": "add dataCenter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DataCenter"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/data-center/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取数据中心",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "数据中心"
+                ],
+                "summary": "获取数据中心",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DataCenter"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除数据中心",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "数据中心"
+                ],
+                "summary": "删除数据中心",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/datacenter/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新数据中心",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "数据中心"
+                ],
+                "summary": "更新数据中心",
+                "parameters": [
+                    {
+                        "description": "update datacenter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Datacenter"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建数据中心",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "数据中心"
+                ],
+                "summary": "创建数据中心",
+                "parameters": [
+                    {
+                        "description": "add datacenter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Datacenter"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/datacenter/list/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询数据中心",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "数据中心"
+                ],
+                "summary": "查询数据中心",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Datacenter"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/datacenter/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取数据中心",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "数据中心"
+                ],
+                "summary": "获取数据中心",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Datacenter"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除数据中心",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "数据中心"
+                ],
+                "summary": "删除数据中心",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-cabinet/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新机柜信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机柜信息"
+                ],
+                "summary": "更新机柜信息",
+                "parameters": [
+                    {
+                        "description": "update deviceCabinet",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceCabinet"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建机柜信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机柜信息"
+                ],
+                "summary": "创建机柜信息",
+                "parameters": [
+                    {
+                        "description": "add deviceCabinet",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceCabinet"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-cabinet/download-xls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "EXCEL导出机柜信息",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/msexcel"
+                ],
+                "tags": [
+                    "机柜信息"
+                ],
+                "summary": "EXCEL导出机柜信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "导入查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-cabinet/getNames/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据机房ID获取机柜名称列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机柜信息"
+                ],
+                "summary": "获取机柜名称列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "机房ID",
+                        "name": "roomId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceCabinetNameVo"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-cabinet/import-xls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "EXCEL导入机柜信息",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机柜信息"
+                ],
+                "summary": "EXCEL导入机柜信息",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-cabinet/list/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询机柜信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机柜信息"
+                ],
+                "summary": "查询机柜信息",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.DeviceCabinet"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-cabinet/templet": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "导出机柜信息模板",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机柜信息"
+                ],
+                "summary": "导出机柜信息模板",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceCabinet"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-cabinet/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取机柜信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机柜信息"
+                ],
+                "summary": "获取机柜信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceCabinet"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除机柜信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机柜信息"
+                ],
+                "summary": "删除机柜信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-model/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新设备型号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "更新设备型号",
+                "parameters": [
+                    {
+                        "description": "update deviceModel",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建设备型号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "创建设备型号",
+                "parameters": [
+                    {
+                        "description": "add deviceModel",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceModel"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-model/getmodel/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询设备型号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "查询设备型号",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "类型",
+                        "name": "deviceType",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.DeviceModelDetailsVo"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-model/import": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "导入型号",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "导入设备型号数据",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-model/outport": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件导出数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "导出设备型号数据",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceModel"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-model/templet": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "导出设备型号模板",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "导出设备型号模板",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceModel"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-model/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取设备型号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "获取设备型号",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceModel"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除设备型号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备型号"
+                ],
+                "summary": "删除设备型号",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-producer/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新设备厂商",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "更新设备厂商",
+                "parameters": [
+                    {
+                        "description": "update deviceProducer",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceProducer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建设备厂商",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "创建设备厂商",
+                "parameters": [
+                    {
+                        "description": "add deviceProducer",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceProducer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-producer/download-xls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "EXCEL导出设备厂商",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/msexcel"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "EXCEL导出设备厂商",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "导入查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-producer/getName": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "获取设备厂商名称",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "获取设备厂商名称",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.DeviceProducerNameVo"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-producer/import-xls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "EXCEL导入设备厂商",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "EXCEL导入设备厂商",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-producer/list/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询设备厂商",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "查询设备厂商",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.DeviceProducer"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-producer/templet": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "导出设备厂商模板",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "导出设备厂商模板",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceProducer"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/device-producer/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取设备厂商",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "获取设备厂商",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeviceProducer"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除设备厂商",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "设备厂商"
+                ],
+                "summary": "删除设备厂商",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -228,9 +2798,2223 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/n9e/dict-data/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新字典数据表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "字典数据表"
+                ],
+                "summary": "更新字典数据表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "编码",
+                        "name": "dictCode",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "update dictData",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.DictData"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建字典数据表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "字典数据表"
+                ],
+                "summary": "创建字典数据表",
+                "parameters": [
+                    {
+                        "description": "add dictData",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.DictData"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/dict-data/list/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询字典数据表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "字典数据表"
+                ],
+                "summary": "查询字典数据表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.DictData"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/dict-data/{code}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取字典数据表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "字典数据表"
+                ],
+                "summary": "获取字典数据表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "编码",
+                        "name": "code",
+                        "in": "path"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DictData"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/dict-data/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除字典数据表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "字典数据表"
+                ],
+                "summary": "删除字典数据表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/dict-type/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新字典类别表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "字典类别表"
+                ],
+                "summary": "更新字典类别表",
+                "parameters": [
+                    {
+                        "description": "update dictType",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DictType"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建字典类别表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "字典类别表"
+                ],
+                "summary": "创建字典类别表",
+                "parameters": [
+                    {
+                        "description": "add dictType",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DictType"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/dict-type/list/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询字典类别表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "字典类别表"
+                ],
+                "summary": "查询字典类别表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.DictType"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/dict-type/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取字典类别表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "字典类别表"
+                ],
+                "summary": "获取字典类别表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DictType"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除字典类别表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "字典类别表"
+                ],
+                "summary": "删除字典类别表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/distribution-frame/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新配线架信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "配线架信息"
+                ],
+                "summary": "更新配线架信息",
+                "parameters": [
+                    {
+                        "description": "update distributionFrame",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DistributionFrame"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建配线架信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "配线架信息"
+                ],
+                "summary": "创建配线架信息",
+                "parameters": [
+                    {
+                        "description": "add distributionFrame",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.DistributionFrame"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/distribution-frame/download-xls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "EXCEL导出配线架信息",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/msexcel"
+                ],
+                "tags": [
+                    "配线架信息"
+                ],
+                "summary": "EXCEL导出配线架信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "导入查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/distribution-frame/import-xls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "EXCEL导入配线架信息",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "配线架信息"
+                ],
+                "summary": "EXCEL导入配线架信息",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/distribution-frame/list/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询配线架信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "配线架信息"
+                ],
+                "summary": "查询配线架信息",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.DistributionFrame"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/distribution-frame/templet": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "导出配线架信息模板",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "配线架信息"
+                ],
+                "summary": "导出配线架信息模板",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DistributionFrame"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/distribution-frame/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取配线架信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "配线架信息"
+                ],
+                "summary": "获取配线架信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DistributionFrame"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除配线架信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "配线架信息"
+                ],
+                "summary": "删除配线架信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/machine-room/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询机房信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机房信息"
+                ],
+                "summary": "查询机房信息",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.MachineRoom"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新机房信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机房信息"
+                ],
+                "summary": "更新机房信息",
+                "parameters": [
+                    {
+                        "description": "update machineRoom",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.MachineRoom"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建机房信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机房信息"
+                ],
+                "summary": "创建机房信息",
+                "parameters": [
+                    {
+                        "description": "add machineRoom",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.MachineRoom"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/machine-room/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取机房信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机房信息"
+                ],
+                "summary": "获取机房信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.MachineRoom"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除机房信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "机房信息"
+                ],
+                "summary": "删除机房信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/pdu/": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新PDU",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PDU"
+                ],
+                "summary": "更新PDU",
+                "parameters": [
+                    {
+                        "description": "update pdu",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Pdu"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建PDU",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PDU"
+                ],
+                "summary": "创建PDU",
+                "parameters": [
+                    {
+                        "description": "add pdu",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Pdu"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/pdu/download-xls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "EXCEL导出PDU",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/msexcel"
+                ],
+                "tags": [
+                    "PDU"
+                ],
+                "summary": "EXCEL导出PDU",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "导入查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/pdu/import-xls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "EXCEL导入PDU",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PDU"
+                ],
+                "summary": "EXCEL导入PDU",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/pdu/list/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询PDU",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PDU"
+                ],
+                "summary": "查询PDU",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Pdu"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/pdu/templet": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "导出PDU模板",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PDU"
+                ],
+                "summary": "导出PDU模板",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Pdu"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/pdu/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取PDU",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PDU"
+                ],
+                "summary": "获取PDU",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Pdu"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除PDU",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PDU"
+                ],
+                "summary": "删除PDU",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/server/update/": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "导入升级包",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "探针版本"
+                ],
+                "summary": "导入升级包",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/target/version/": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "导入最新探针",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "探针版本"
+                ],
+                "summary": "导入最新探针",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/target/{ident}/version": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据ident获取可用探针版本",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "探针版本"
+                ],
+                "summary": "获取可用探针版本",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ident",
+                        "name": "ident",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "array"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新所选探针",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "探针版本"
+                ],
+                "summary": "更新所选探针",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ident",
+                        "name": "ident",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "update map",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/user/getNames/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "查询人员列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "人员信息"
+                ],
+                "summary": "查询人员列表",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.userNameVo"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "models.AssetBasic": {
+            "type": "object",
+            "properties": {
+                "abreast": {
+                    "description": "type:*int     comment:并排放置(0:否,1:是)                      version:2023-07-21 08:45",
+                    "type": "integer"
+                },
+                "affiliated_organization": {
+                    "type": "integer"
+                },
+                "business_manager_one": {
+                    "type": "string",
+                    "example": "业务负责人1"
+                },
+                "business_manager_two": {
+                    "type": "string",
+                    "example": "业务负责人2"
+                },
+                "cabinet_location": {
+                    "description": "type:*int     comment:机柜位置                                 version:2023-07-21 08:45",
+                    "type": "integer"
+                },
+                "device_manager_one": {
+                    "type": "string",
+                    "example": "设备负责人1"
+                },
+                "device_manager_two": {
+                    "type": "string",
+                    "example": "设备负责人2"
+                },
+                "device_model": {
+                    "type": "integer"
+                },
+                "device_name": {
+                    "type": "string",
+                    "example": "设备名称"
+                },
+                "device_producer": {
+                    "description": "type:*int     comment:厂商                                     version:2023-07-25 16:30",
+                    "type": "integer"
+                },
+                "device_status": {
+                    "description": "type:*int     comment:状态(1:待上线,2:已上线,3:下线,4:报废)    version:2023-07-21 08:45",
+                    "type": "integer"
+                },
+                "device_type": {
+                    "description": "type:*int   comment:设备类型                                 version:2023-07-21 08:45",
+                    "type": "integer"
+                },
+                "equipment_room": {
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "type:*int     comment:主键                                     version:2023-07-21 08:45",
+                    "type": "integer"
+                },
+                "location_description": {
+                    "type": "string",
+                    "example": "位置描述"
+                },
+                "managed_state": {
+                    "description": "type:*int     comment:纳管状态                                 version:2023-07-28 14:36",
+                    "type": "integer"
+                },
+                "management_ip": {
+                    "type": "string",
+                    "example": "管理IP"
+                },
+                "operating_system": {
+                    "type": "string",
+                    "example": "操作系统"
+                },
+                "outline_structure": {
+                    "type": "string",
+                    "example": "外形结构"
+                },
+                "owning_cabinet": {
+                    "type": "integer"
+                },
+                "region": {
+                    "type": "string",
+                    "example": "所在区域"
+                },
+                "remark": {
+                    "type": "string",
+                    "example": "备注"
+                },
+                "serial_number": {
+                    "type": "string",
+                    "example": "序列号"
+                },
+                "specifications": {
+                    "type": "string",
+                    "example": "规格"
+                },
+                "subtype": {
+                    "type": "string",
+                    "example": "子类型"
+                },
+                "u_number": {
+                    "description": "type:*int     comment:U数                                      version:2023-07-21 08:45",
+                    "type": "integer"
+                },
+                "use_storage": {
+                    "type": "string",
+                    "example": "使用存储"
+                }
+            }
+        },
+        "models.AssetBasicDetailsVo": {
+            "type": "object",
+            "properties": {
+                "abreast": {
+                    "description": "type:*int     comment:并排放置(0:否,1:是)                      version:2023-07-21 08:45",
+                    "type": "integer"
+                },
+                "affiliated_organization": {
+                    "type": "integer"
+                },
+                "business_manager_one": {
+                    "type": "string",
+                    "example": "业务负责人1"
+                },
+                "business_manager_two": {
+                    "type": "string",
+                    "example": "业务负责人2"
+                },
+                "cabinet_location": {
+                    "description": "type:*int     comment:机柜位置                                 version:2023-07-21 08:45",
+                    "type": "integer"
+                },
+                "cabinet_name": {
+                    "type": "string"
+                },
+                "device_manager_one": {
+                    "type": "string",
+                    "example": "设备负责人1"
+                },
+                "device_manager_two": {
+                    "type": "string",
+                    "example": "设备负责人2"
+                },
+                "device_model": {
+                    "type": "integer"
+                },
+                "device_model_name": {
+                    "type": "string"
+                },
+                "device_name": {
+                    "type": "string",
+                    "example": "设备名称"
+                },
+                "device_producer": {
+                    "description": "type:*int     comment:厂商                                     version:2023-07-25 16:30",
+                    "type": "integer"
+                },
+                "device_producer_name": {
+                    "type": "string"
+                },
+                "device_status": {
+                    "description": "type:*int     comment:状态(1:待上线,2:已上线,3:下线,4:报废)    version:2023-07-21 08:45",
+                    "type": "integer"
+                },
+                "device_type": {
+                    "description": "type:*int   comment:设备类型                                 version:2023-07-21 08:45",
+                    "type": "integer"
+                },
+                "device_type_name": {
+                    "type": "string"
+                },
+                "equipment_room": {
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "type:*int     comment:主键                                     version:2023-07-21 08:45",
+                    "type": "integer"
+                },
+                "location_description": {
+                    "type": "string",
+                    "example": "位置描述"
+                },
+                "managed_state": {
+                    "description": "type:*int     comment:纳管状态                                 version:2023-07-28 14:36",
+                    "type": "integer"
+                },
+                "management_ip": {
+                    "type": "string",
+                    "example": "管理IP"
+                },
+                "operating_system": {
+                    "type": "string",
+                    "example": "操作系统"
+                },
+                "organization_name": {
+                    "type": "string"
+                },
+                "outline_structure": {
+                    "type": "string",
+                    "example": "外形结构"
+                },
+                "owning_cabinet": {
+                    "type": "integer"
+                },
+                "region": {
+                    "type": "string",
+                    "example": "所在区域"
+                },
+                "remark": {
+                    "type": "string",
+                    "example": "备注"
+                },
+                "room_name": {
+                    "type": "string"
+                },
+                "serial_number": {
+                    "type": "string",
+                    "example": "序列号"
+                },
+                "specifications": {
+                    "type": "string",
+                    "example": "规格"
+                },
+                "subtype": {
+                    "type": "string",
+                    "example": "子类型"
+                },
+                "u_number": {
+                    "description": "type:*int     comment:U数                                      version:2023-07-21 08:45",
+                    "type": "integer"
+                },
+                "use_storage": {
+                    "type": "string",
+                    "example": "使用存储"
+                }
+            }
+        },
+        "models.AssetBasicFindVo": {
+            "type": "object",
+            "properties": {
+                "device_producer": {
+                    "description": "type:*int     comment:厂商                                     version:2023-07-25 16:30",
+                    "type": "integer"
+                },
+                "device_status": {
+                    "description": "type:*int     comment:状态(1:待上线,2:已上线,3:下线,4:报废)    version:2023-07-21 08:45",
+                    "type": "integer"
+                },
+                "device_type": {
+                    "description": "type:*int   comment:设备类型                                 version:2023-07-21 08:45",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "type:*int     comment:主键                                     version:2023-07-21 08:45",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.AssetExpansion": {
+            "type": "object",
+            "properties": {
+                "asset_id": {
+                    "description": "type:*int     comment:资产ID                                        version:2023-07-28 16:17",
+                    "type": "integer"
+                },
+                "associated_table": {
+                    "type": "string"
+                },
+                "config_category": {
+                    "description": "type:*int     comment:配置类别(1:基本信息,2:硬件配置,3:网络配置)    version:2023-07-23 09:04",
+                    "type": "integer"
+                },
+                "group_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "type:*int     comment:主键                                          version:2023-07-23 09:04",
+                    "type": "integer"
+                },
+                "property_category": {
+                    "type": "string"
+                },
+                "property_name": {
+                    "type": "string"
+                },
+                "property_value": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.AssetMaintenance": {
+            "type": "object",
+            "properties": {
+                "finish_at": {
+                    "description": "type:*int     comment:结束日期    version:2023-07-23 09:44",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "type:*int     comment:主键        version:2023-07-23 09:44",
+                    "type": "integer"
+                },
+                "maintenance_period": {
+                    "type": "string"
+                },
+                "maintenance_provider": {
+                    "type": "string"
+                },
+                "maintenance_type": {
+                    "type": "string"
+                },
+                "production_at": {
+                    "description": "type:*int     comment:出厂日期    version:2023-07-23 09:44",
+                    "type": "integer"
+                },
+                "start_at": {
+                    "description": "type:*int     comment:开始日期    version:2023-07-23 09:44",
+                    "type": "integer"
+                },
+                "version": {
+                    "description": "type:*int     comment:版本号      version:2023-07-23 09:44",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.AssetTree": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "type:*int     comment:主键        version:2023-07-21 09:50",
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "description": "type:*int     comment:父ID        version:2023-07-21 09:50",
+                    "type": "integer"
+                },
+                "property_id": {
+                    "description": "type:*int     comment:属性ID      version:2023-07-28 10:43",
+                    "type": "integer"
+                },
+                "remark": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "type:*int     comment:资产状态    version:2023-07-21 09:58",
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.CabinetGroup": {
+            "type": "object",
+            "properties": {
+                "cabinet_group_code": {
+                    "type": "string"
+                },
+                "cabinet_group_type": {
+                    "type": "string"
+                },
+                "column": {
+                    "description": "type:*int     comment:所在列        version:2023-07-15 14:32",
+                    "type": "integer"
+                },
+                "duty_person_one": {
+                    "type": "string"
+                },
+                "duty_person_two": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "type:*int     comment:主键          version:2023-07-15 14:32",
+                    "type": "integer"
+                },
+                "room_id": {
+                    "type": "integer"
+                },
+                "row": {
+                    "description": "type:*int     comment:行            version:2023-07-15 14:32",
+                    "type": "integer"
+                },
+                "start_column": {
+                    "description": "type:*int     comment:开始列        version:2023-07-15 14:32",
+                    "type": "integer"
+                },
+                "use_notes": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ComputerRoom": {
+            "type": "object",
+            "required": [
+                "cabinet_number",
+                "column_max",
+                "room_code",
+                "room_name",
+                "row_max"
+            ],
+            "properties": {
+                "cabinet_number": {
+                    "description": "type:*int       comment:可容纳机柜数    version:2023-07-11 16:11",
+                    "type": "integer",
+                    "maximum": 999999,
+                    "minimum": 1
+                },
+                "column_max": {
+                    "description": "type:*int       comment:最大列数        version:2023-07-11 16:11",
+                    "type": "integer",
+                    "maximum": 9999,
+                    "minimum": 1
+                },
+                "duty_person_one": {
+                    "type": "string"
+                },
+                "duty_person_two": {
+                    "type": "string"
+                },
+                "electric": {
+                    "description": "type:*int       comment:电流            version:2023-07-11 16:11",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "floor": {
+                    "description": "type:*int       comment:所属楼层        version:2023-07-11 16:11",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "type:*int       comment:主键            version:2023-07-11 16:11",
+                    "type": "integer"
+                },
+                "idc_location": {
+                    "description": "type:*int       comment:所在IDC         version:2023-07-25 11:09",
+                    "type": "integer"
+                },
+                "rated_power": {
+                    "description": "type:*int       comment:额定功率        version:2023-07-11 16:11",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "room_area": {
+                    "description": "type:*float64   comment:机房面积        version:2023-07-11 16:11",
+                    "type": "number",
+                    "minimum": 0
+                },
+                "room_bearing_capacity": {
+                    "description": "type:*float64   comment:机房承重        version:2023-07-11 16:11",
+                    "type": "number",
+                    "minimum": 0
+                },
+                "room_code": {
+                    "type": "string"
+                },
+                "room_name": {
+                    "type": "string"
+                },
+                "room_picture": {
+                    "type": "string"
+                },
+                "row_max": {
+                    "description": "type:*int       comment:最大行数        version:2023-07-11 16:11",
+                    "type": "integer",
+                    "maximum": 9999,
+                    "minimum": 1
+                },
+                "subgallery": {
+                    "type": "string"
+                },
+                "voltage": {
+                    "description": "type:*int       comment:电压            version:2023-07-11 16:11",
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+        "models.ComputerRoomNameVo": {
+            "type": "object",
+            "required": [
+                "room_name"
+            ],
+            "properties": {
+                "id": {
+                    "description": "type:*int       comment:主键            version:2023-07-11 16:11",
+                    "type": "integer"
+                },
+                "idc_location": {
+                    "description": "type:*int       comment:所在IDC         version:2023-07-25 11:09",
+                    "type": "integer"
+                },
+                "room_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.DataCenter": {
+            "type": "object",
+            "required": [
+                "city",
+                "data_center_name"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "affiliated_organization": {
+                    "type": "string"
+                },
+                "area": {
+                    "description": "type:*float64   comment:面积            version:2023-07-11 15:49",
+                    "type": "number",
+                    "minimum": 0
+                },
+                "city": {
+                    "type": "string"
+                },
+                "data_center_code": {
+                    "type": "string"
+                },
+                "data_center_name": {
+                    "type": "string"
+                },
+                "duty_person_one": {
+                    "type": "string"
+                },
+                "duty_person_two": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "type:*int       comment:主键            version:2023-07-11 15:49",
+                    "type": "integer"
+                },
+                "load_bearing": {
+                    "description": "type:*float64   comment:承重            version:2023-07-11 15:49",
+                    "type": "number",
+                    "minimum": 0
+                },
+                "remark": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Datacenter": {
+            "type": "object",
+            "required": [
+                "city",
+                "datacenter_name"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "area": {
+                    "description": "type:*float64   comment:面积            version:2023-07-11 15:49",
+                    "type": "number",
+                    "minimum": 0
+                },
+                "belong_organization": {
+                    "type": "integer"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "datacenter_code": {
+                    "type": "string"
+                },
+                "datacenter_name": {
+                    "type": "string"
+                },
+                "duty_person_one": {
+                    "type": "string"
+                },
+                "duty_person_two": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "type:*int       comment:主键            version:2023-07-11 15:49",
+                    "type": "integer"
+                },
+                "load_bearing": {
+                    "description": "type:*float64   comment:承重            version:2023-07-11 15:49",
+                    "type": "number",
+                    "minimum": 0
+                },
+                "remark": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.DeviceCabinet": {
+            "type": "object",
+            "required": [
+                "cabinet_code",
+                "column_number",
+                "power_consumption",
+                "row_number",
+                "unumber"
+            ],
+            "properties": {
+                "belong_room": {
+                    "type": "integer"
+                },
+                "cabinet_area": {
+                    "description": "type:*float64   comment:机柜面积                                        version:2023-07-11 15:14",
+                    "type": "number",
+                    "minimum": 0
+                },
+                "cabinet_bearing_capacity": {
+                    "description": "type:*float64   comment:机柜承重                                        version:2023-07-11 15:14",
+                    "type": "number",
+                    "minimum": 0
+                },
+                "cabinet_code": {
+                    "type": "string"
+                },
+                "cabinet_id": {
+                    "type": "string"
+                },
+                "cabinet_model": {
+                    "type": "integer"
+                },
+                "cabinet_name": {
+                    "type": "string"
+                },
+                "cabinet_picture": {
+                    "type": "string"
+                },
+                "cabinet_type": {
+                    "description": "type:*int       comment:机柜类型;1:大一体机机柜;2:普通机柜;3:屏蔽机柜   version:2023-07-11 15:14",
+                    "type": "integer"
+                },
+                "column_name": {
+                    "description": "type:*int       comment:所在列名称                                      version:2023-07-11 15:14",
+                    "type": "string"
+                },
+                "column_number": {
+                    "description": "type:*int       comment:所在列                                          version:2023-07-11 15:14",
+                    "type": "integer",
+                    "maximum": 9999,
+                    "minimum": 1
+                },
+                "duty_person_one": {
+                    "type": "string"
+                },
+                "duty_person_two": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "type:*int       comment:主键                                            version:2023-07-11 15:14",
+                    "type": "integer"
+                },
+                "main_power_supply": {
+                    "type": "string"
+                },
+                "power_consumption": {
+                    "description": "type:*int       comment:电源功耗                                        version:2023-07-11 15:14",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "power_plug_number": {
+                    "description": "type:*int       comment:电源插头数量                                    version:2023-07-11 15:14",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "power_supply_mode": {
+                    "type": "string"
+                },
+                "producer_id": {
+                    "type": "integer"
+                },
+                "rated_current": {
+                    "description": "type:*int       comment:额定电流                                        version:2023-07-11 15:14",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "rated_voltage": {
+                    "description": "type:*int       comment:额定电压                                        version:2023-07-11 15:14",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "reserved_cabinet": {
+                    "description": "type:*int       comment:预留机柜                                        version:2023-07-11 15:14",
+                    "type": "integer",
+                    "enum": [
+                        0,
+                        1
+                    ]
+                },
+                "row_name": {
+                    "type": "string"
+                },
+                "row_number": {
+                    "description": "type:*int       comment:所在行                                          version:2023-07-11 15:14",
+                    "type": "integer",
+                    "maximum": 9999,
+                    "minimum": 1
+                },
+                "service_partition": {
+                    "type": "string"
+                },
+                "standby_power_supply": {
+                    "type": "string"
+                },
+                "unavailable_space": {
+                    "description": "type:*int       comment:不可用空间                                      version:2023-07-11 15:14",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "unumber": {
+                    "description": "type:*int       comment:规格(U数)                                       version:2023-07-11 15:14",
+                    "type": "integer",
+                    "maximum": 99,
+                    "minimum": 0
+                },
+                "use": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.DeviceCabinetNameVo": {
+            "type": "object",
+            "required": [
+                "cabinet_code"
+            ],
+            "properties": {
+                "cabinet_code": {
+                    "type": "string"
+                },
+                "cabinet_id": {
+                    "type": "string"
+                },
+                "cabinet_name": {
+                    "type": "string"
+                },
+                "equipment_room": {
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "type:*int       comment:主键                                            version:2023-07-11 15:14",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.DeviceModel": {
+            "type": "object",
+            "properties": {
+                "describe": {
+                    "type": "string"
+                },
+                "device_type": {
+                    "description": "type:*int       comment:设备类型       version:2023-07-24 16:11",
+                    "type": "integer"
+                },
+                "enlistment": {
+                    "description": "type:*int       comment:服役期限(月)               version:2023-07-08 14:55",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "type:*int       comment:主键                       version:2023-07-08 14:55",
+                    "type": "integer"
+                },
+                "maximum_memory": {
+                    "description": "type:*float64   comment:最大内存（M）              version:2023-07-08 14:55",
+                    "type": "number"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "out_band_version": {
+                    "type": "string"
+                },
+                "outline_structure": {
+                    "type": "string"
+                },
+                "peak_consumption": {
+                    "description": "type:*float64   comment:峰值功耗(W)                version:2023-07-08 14:55",
+                    "type": "number"
+                },
+                "producer_id": {
+                    "description": "type:*int       comment:厂商-ID;来源设备厂商信息   version:2023-07-08 14:55",
+                    "type": "integer"
+                },
+                "rated_consumption": {
+                    "description": "type:*float64   comment:额定功耗(W)                version:2023-07-08 14:55",
+                    "type": "number"
+                },
+                "series": {
+                    "type": "string"
+                },
+                "specifications": {
+                    "type": "string"
+                },
+                "subtype": {
+                    "type": "string"
+                },
+                "u_number": {
+                    "description": "type:*int       comment:U数                        version:2023-07-08 14:55",
+                    "type": "integer"
+                },
+                "weight": {
+                    "description": "type:*float64   comment:设备重量(kg)               version:2023-07-08 14:55",
+                    "type": "number"
+                },
+                "working_consumption": {
+                    "description": "type:*float64   comment:工作功耗(W)                version:2023-07-08 14:55",
+                    "type": "number"
+                }
+            }
+        },
+        "models.DeviceModelDetailsVo": {
+            "type": "object",
+            "required": [
+                "alias"
+            ],
+            "properties": {
+                "alias": {
+                    "type": "string"
+                },
+                "device_type": {
+                    "description": "type:*int       comment:设备类型       version:2023-07-24 16:11",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "type:*int       comment:主键                       version:2023-07-08 14:55",
+                    "type": "integer"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "outline_structure": {
+                    "type": "string"
+                },
+                "producer_id": {
+                    "description": "type:*int       comment:厂商-ID;来源设备厂商信息   version:2023-07-08 14:55",
+                    "type": "integer"
+                },
+                "specifications": {
+                    "type": "string"
+                },
+                "subtype": {
+                    "type": "string"
+                },
+                "u_number": {
+                    "description": "type:*int       comment:U数                        version:2023-07-08 14:55",
+                    "type": "integer"
+                }
+            }
+        },
+        "models.DeviceProducer": {
+            "type": "object",
+            "required": [
+                "alias",
+                "company_name"
+            ],
+            "properties": {
+                "alias": {
+                    "type": "string"
+                },
+                "chinese_name": {
+                    "type": "string"
+                },
+                "company_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "type:*int     comment:主键            version:2023-07-08 14:43",
+                    "type": "integer"
+                },
+                "is_display_chinese": {
+                    "description": "type:*int     comment:是否显示中文    version:2023-07-08 14:43",
+                    "type": "integer",
+                    "enum": [
+                        0,
+                        1
+                    ]
+                },
+                "is_domestic": {
+                    "description": "type:*int     comment:是否国产        version:2023-07-08 14:43",
+                    "type": "integer",
+                    "enum": [
+                        0,
+                        1
+                    ]
+                },
+                "official": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.DeviceProducerNameVo": {
+            "type": "object",
+            "required": [
+                "alias"
+            ],
+            "properties": {
+                "alias": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "type:*int     comment:主键            version:2023-07-08 14:43",
+                    "type": "integer"
+                }
+            }
+        },
         "models.DeviceType": {
             "type": "object",
             "properties": {
@@ -239,6 +5023,298 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.DictData": {
+            "type": "object",
+            "properties": {
+                "dict_code": {
+                    "type": "string"
+                },
+                "dict_key": {
+                    "type": "string"
+                },
+                "dict_value": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "type:*int     comment:主键        version:2023-07-21 08:50",
+                    "type": "integer"
+                },
+                "remark": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.DictType": {
+            "type": "object",
+            "properties": {
+                "dict_code": {
+                    "type": "string"
+                },
+                "dict_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "type:*int     comment:主键        version:2023-07-21 08:48",
+                    "type": "integer"
+                },
+                "remark": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.DistributionFrame": {
+            "type": "object",
+            "required": [
+                "cabinet_id",
+                "dis_frame",
+                "duty_person_one",
+                "room_id",
+                "total_port_num"
+            ],
+            "properties": {
+                "cabinet_id": {
+                    "description": "type:*int     comment:所属机柜                             version:2023-07-29 15:08",
+                    "type": "integer"
+                },
+                "cabinet_location": {
+                    "description": "type:*int     comment:机柜位置(U)   version:2023-07-16 10:14",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "dis_frame": {
+                    "type": "string"
+                },
+                "dis_name": {
+                    "type": "string"
+                },
+                "dis_picture": {
+                    "type": "string"
+                },
+                "dis_type": {
+                    "description": "type:*int     comment:配线架类型(0:双绞线;1:光纤配线架)    version:2023-07-16 11:02",
+                    "type": "integer"
+                },
+                "duty_person_one": {
+                    "type": "string"
+                },
+                "duty_person_two": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "type:*int     comment:主键          version:2023-07-16 10:14",
+                    "type": "integer"
+                },
+                "model": {
+                    "type": "integer"
+                },
+                "port_prefix": {
+                    "type": "string"
+                },
+                "producer_id": {
+                    "description": "type:*int     comment:厂商                                 version:2023-07-25 17:25",
+                    "type": "integer"
+                },
+                "purchase_at": {
+                    "description": "type:*int     comment:采购日期      version:2023-07-16 10:14",
+                    "type": "integer"
+                },
+                "room_id": {
+                    "description": "type:*int     comment:所属机房                             version:2023-07-25 17:23",
+                    "type": "integer"
+                },
+                "specification": {
+                    "type": "string"
+                },
+                "total_port_num": {
+                    "description": "type:*int     comment:总端口数      version:2023-07-16 10:14",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "unumber": {
+                    "description": "type:*int     comment:U数           version:2023-07-16 10:14",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "use": {
+                    "type": "string"
+                },
+                "used_port_num": {
+                    "description": "type:*int     comment:已用端口数    version:2023-07-16 10:14",
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+        "models.MachineRoom": {
+            "type": "object",
+            "required": [
+                "cabinet_number",
+                "column_max",
+                "room_code",
+                "room_name",
+                "row_max"
+            ],
+            "properties": {
+                "cabinet_number": {
+                    "description": "type:*int       comment:可容纳机柜数    version:2023-07-11 16:11",
+                    "type": "integer",
+                    "maximum": 999999,
+                    "minimum": 1
+                },
+                "column_max": {
+                    "description": "type:*int       comment:最大列数        version:2023-07-11 16:11",
+                    "type": "integer",
+                    "maximum": 9999,
+                    "minimum": 1
+                },
+                "duty_person_one": {
+                    "type": "string"
+                },
+                "duty_person_two": {
+                    "type": "string"
+                },
+                "electric": {
+                    "description": "type:*int       comment:电流            version:2023-07-11 16:11",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "floor": {
+                    "description": "type:*int       comment:所属楼层        version:2023-07-11 16:11",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "type:*int       comment:主键            version:2023-07-11 16:11",
+                    "type": "integer"
+                },
+                "idc_location": {
+                    "type": "string"
+                },
+                "machine_room_picture": {
+                    "type": "string"
+                },
+                "rated_power": {
+                    "description": "type:*int       comment:额定功率        version:2023-07-11 16:11",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "room_area": {
+                    "description": "type:*float64   comment:机房面积        version:2023-07-11 16:11",
+                    "type": "number",
+                    "minimum": 0
+                },
+                "room_bearing_capacity": {
+                    "description": "type:*float64   comment:机房承重        version:2023-07-11 16:11",
+                    "type": "number",
+                    "minimum": 0
+                },
+                "room_code": {
+                    "type": "string"
+                },
+                "room_name": {
+                    "type": "string"
+                },
+                "row_max": {
+                    "description": "type:*int       comment:最大行数        version:2023-07-11 16:11",
+                    "type": "integer",
+                    "maximum": 9999,
+                    "minimum": 1
+                },
+                "subgallery": {
+                    "type": "string"
+                },
+                "voltage": {
+                    "description": "type:*int       comment:电压            version:2023-07-11 16:11",
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+        "models.Pdu": {
+            "type": "object",
+            "required": [
+                "assets_code",
+                "belong_room",
+                "cabinet_id",
+                "duty_person_one",
+                "jack_num",
+                "standard"
+            ],
+            "properties": {
+                "assets_code": {
+                    "type": "string"
+                },
+                "belong_room": {
+                    "description": "type:*int       comment:所在机房                 version:2023-07-29 15:22",
+                    "type": "integer"
+                },
+                "brand": {
+                    "type": "integer"
+                },
+                "cabinet_id": {
+                    "description": "type:*int       comment:所在机柜编号             version:2023-07-29 15:22",
+                    "type": "integer"
+                },
+                "duty_person_one": {
+                    "type": "string"
+                },
+                "duty_person_two": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "type:*int       comment:主键                  version:2023-07-16 10:13",
+                    "type": "integer"
+                },
+                "jack_num": {
+                    "description": "type:*int       comment:插孔数                version:2023-07-16 10:13",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "limit_voltage": {
+                    "description": "type:*float64   comment:限制电压(V)           version:2023-07-16 10:13",
+                    "type": "number"
+                },
+                "max_electric": {
+                    "description": "type:*float64   comment:最大耐冲击电压(KA)    version:2023-07-16 10:13",
+                    "type": "number"
+                },
+                "model": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "power": {
+                    "description": "type:*float64   comment:功率                  version:2023-07-16 10:13",
+                    "type": "number"
+                },
+                "purchase_at": {
+                    "description": "type:*int       comment:采购日期              version:2023-07-16 10:13",
+                    "type": "integer"
+                },
+                "standard": {
+                    "description": "type:*int       comment:标准(1:新国标;2:国标)    version:2023-07-16 11:05",
+                    "type": "integer"
+                },
+                "unit_price": {
+                    "description": "type:*float64   comment:单价                  version:2023-07-16 10:13",
+                    "type": "number"
+                },
+                "use": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.userNameVo": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "nickname": {
                     "type": "string"
                 }
             }

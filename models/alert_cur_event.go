@@ -575,15 +575,16 @@ func AlertCurEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error
 
 // 定义适用于前端返回的结构体
 type FeAlert struct {
-	Id           int64  `json:"id"`            //告警id
-	Name         string `json:"name"`          //告警规则名称 rulename
-	Rule         string `json:"rule"`          //告警规则 RuleConfigJson中prom_ql字段
-	Severity     int    `json:"severity"`      //告警级别 0:紧急 1:警告 2:提醒 ，0为最高
-	AssetId      int    `json:"asset_id"`      //资产id，对应TagsJSON中ident字段
-	TriggerTime  int64  `json:"trigger_time"`  //trigger_value
-	TriggerValue string `json:"trigger_value"` //trigger_value
-	OrganizeId   int    `json:"organize_id"`   //组织id
-
+	Id             int64       `json:"id"`            //告警id
+	Name           string      `json:"name"`          //告警规则名称 rulename
+	Rule           string      `json:"rule"`          //告警规则 RuleConfigJson中prom_ql字段
+	Severity       int         `json:"severity"`      //告警级别 0:紧急 1:警告 2:提醒 ，0为最高
+	AssetId        int         `json:"asset_id"`      //资产id，对应TagsJSON中ident字段
+	AssetName      string      `json:"asset_name"`    //资产名称
+	TriggerTime    int64       `json:"trigger_time"`  //trigger_value
+	TriggerValue   string      `json:"trigger_value"` //trigger_value
+	OrganizeId     int         `json:"organize_id"`   //组织id
+	Url            string      `json:"url"`
 	Tags           string      `json:"-"`
 	TagsJSON       []string    `json:"-"`
 	RuleConfig     string      `json:"-"`
@@ -658,6 +659,21 @@ func MakeFeAlert(dat []*AlertCurEvent) (Fe []*FeAlert) {
 func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
 	var dat []*AlertCurEvent
 	err := DB(ctx).Find(&dat).Error
+	Fe := MakeFeAlert(dat)
+	return Fe, err
+}
+
+//统计未处理告警
+func AlertCurCount(ctx *ctx.Context) (num int64, err error) {
+	err = DB(ctx).Debug().Model(&AlertCurEvent{}).Count(&num).Error
+	return num, err
+}
+
+//通过资产id查询当前告警
+func AlertFeListByAssetId(ctx *ctx.Context, where string) ([]*FeAlert, error) {
+	where = "%asset_id=" + where + "%"
+	var dat []*AlertCurEvent
+	err := DB(ctx).Where("tags like ?", where).Find(&dat).Error
 	Fe := MakeFeAlert(dat)
 	return Fe, err
 }

@@ -25,7 +25,7 @@ CertFile = ""
 # https key file path
 KeyFile = ""
 # whether print access log
-PrintAccessLog = false
+PrintAccessLog = true
 # whether enable pprof
 PProf = false
 # expose prometheus /metrics?

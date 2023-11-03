@@ -63,5 +63,5 @@ queries.active
 
 /n9e-*
 n9e.sql
-/etc/categraf/dist/categraf
-/etc/categraf/dist/categraf.exe
+/etc/client
+/etc/update

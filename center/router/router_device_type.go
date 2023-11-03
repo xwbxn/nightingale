@@ -6,7 +6,9 @@ package router
 import (
 	"net/http"
 
+	"github.com/360EntSecGroup-Skylar/excelize"
 	models "github.com/ccfos/nightingale/v6/models"
+	excels "github.com/ccfos/nightingale/v6/pkg/excel"
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 )
@@ -37,18 +39,28 @@ func (rt *Router) deviceTypeGet(c *gin.Context) {
 // @Tags         设备类型
 // @Accept       json
 // @Produce      json
-// @Param        limit query   int     false  "返回条数"
+// @Param        page query   int     false  "页码"
+// @Param        limit query   int     false  "条数"
 // @Param        query query   string  false  "查询条件"
+// @Param        types query   string  true  "类别"
 // @Success      200  {array}  models.DeviceType
 // @Router       /api/n9e/device-type/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) deviceTypeGets(c *gin.Context) {
+	page := ginx.QueryInt(c, "page", 1)
 	limit := ginx.QueryInt(c, "limit", 20)
-	query := ginx.QueryStr(c, "query", "")
+	deviceType := ginx.QueryStr(c, "query", "")
+	types := ginx.QueryStr(c, "types", "")
 
-	total, err := models.DeviceTypeCount(rt.Ctx, query)
+	m := make(map[string]interface{})
+	m["types"] = types
+	if deviceType != "" {
+		m["name"] = deviceType
+	}
+
+	total, err := models.DeviceTypeCountMap(rt.Ctx, m)
 	ginx.Dangerous(err)
-	lst, err := models.DeviceTypeGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
+	lst, err := models.DeviceTypeGetMap(rt.Ctx, m, limit, (page-1)*limit)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
@@ -106,24 +118,76 @@ func (rt *Router) deviceTypePut(c *gin.Context) {
 	ginx.NewRender(c).Message(old.Update(rt.Ctx, f, "*"))
 }
 
-// @Summary      删除设备类型
-// @Description  根据主键删除设备类型
+// @Summary      批量删除设备类型
+// @Description  批量删除设备类型
 // @Tags         设备类型
 // @Accept       json
 // @Produce      json
-// @Param        id    path    string  true  "主键"
+// @Param        body  body   models.DeviceType true "update deviceType"
 // @Success      200
-// @Router       /api/n9e/device-type/{id} [delete]
+// @Router       /api/n9e/device-type/batch-del/ [post]
 // @Security     ApiKeyAuth
-func (rt *Router) deviceTypeDel(c *gin.Context) {
-	id := ginx.UrlParamInt64(c, "id")
-	deviceType, err := models.DeviceTypeGetById(rt.Ctx, id)
-	// 有错则跳出，无错则继续
-	ginx.Dangerous(err)
+func (rt *Router) deviceTypeBatchDel(c *gin.Context) {
+	var f []models.DeviceType
+	ginx.BindJSON(c, &f)
 
-	if deviceType == nil {
-		ginx.NewRender(c).Message(nil)
+	ginx.NewRender(c).Message(models.DeviceTypeBatchDel(rt.Ctx, f))
+}
+
+// @Summary      导入设备类型
+// @Description  导入设备类型
+// @Tags         设备类型
+// @Accept       multipart/form-data
+// @Param        file formData file true "file"
+// @Produce      json
+// @Success      200
+// @Router       /api/n9e/device-type/import-xls [post]
+// @Security     ApiKeyAuth
+func (rt *Router) importsDeviceType(c *gin.Context) {
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, "上传文件出错")
 		return
 	}
-	ginx.NewRender(c).Message(deviceType.Del(rt.Ctx))
+	//读excel流
+	xlsx, err := excelize.OpenReader(file)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, "读取excel文件失败")
+		return
+	}
+	//解析excel的数据
+	deviceTypes, _, lxRrr := excels.ReadExce[models.DeviceType](xlsx, rt.Ctx)
+	if lxRrr != nil {
+		ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
+		return
+	}
+	me := c.MustGet("user").(*models.User)
+	var qty int = 0
+	for _, entity := range deviceTypes {
+		// 循环体
+		var f models.DeviceType = entity
+		f.Types = 2
+		f.CreatedBy = me.Username
+		f.UpdatedAt = f.CreatedAt
+		f.Add(rt.Ctx)
+		qty++
+	}
+	ginx.NewRender(c).Data(qty, nil)
+}
+
+// @Summary      导出设备类型模板
+// @Description  导出设备类型模板
+// @Tags         设备类型
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  models.DeviceType
+// @Router       /api/n9e/device-type/templet [post]
+// @Security     ApiKeyAuth
+func (rt *Router) templetDeviceType(c *gin.Context) {
+
+	datas := make([]interface{}, 0)
+
+	datas = append(datas, models.DeviceType{})
+
+	excels.NewMyExcel("设备类型导入模板").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
 }

@@ -49,11 +49,13 @@ func (rt *Router) organizationDel(c *gin.Context) {
 	}
 
 	childrenCount, err := models.OrganizationCount(rt.Ctx, "parent_id = ?", org.Id)
+	ginx.Dangerous(err)
 	if childrenCount > 0 {
 		ginx.Bomb(404, "This organization hava suborganization")
 	}
 
 	assetsCount, err := models.AssetCount(rt.Ctx, "organization_id = ?", org.Id)
+	ginx.Dangerous(err)
 	if assetsCount > 0 {
 		ginx.Bomb(404, "This organization hava assets")
 	}
@@ -69,10 +71,34 @@ func (rt *Router) organizationAdd(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 
 	u := models.Organization{
-		Name:     f.Name,
-		ParentId: f.ParentId,
-		Path:     f.Path,
+		Name:        f.Name,
+		ParentId:    f.ParentId,
+		Path:        f.Path,
+		City:        f.City,
+		Manger:      f.Manger,
+		Phone:       f.Phone,
+		Address:     f.Address,
+		Description: f.Description,
 	}
 
 	ginx.NewRender(c).Message(u.Add(rt.Ctx))
+}
+
+// @Summary      根据Ids获取组织树
+// @Description  根据Ids获取组织树
+// @Tags         组织树管理
+// @Accept       json
+// @Produce      json
+// @Param        body  body   []int64 true "add ids"
+// @Success      200 {array}  models.Organization
+// @Router       /api/n9e/organization/name/ [post]
+// @Security     ApiKeyAuth
+func (rt *Router) organizationGetsByIds(c *gin.Context) {
+	var f []int64
+	ginx.BindJSON(c, &f)
+
+	organizations, err := models.OrganizationGetsByIds(rt.Ctx, f)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(organizations, err)
 }
