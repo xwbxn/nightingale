@@ -353,6 +353,18 @@ func AlertHisCountMap(ctx *ctx.Context, where map[string]interface{}) (num int64
 	return num, err
 }
 
+//统计未处理告警
+func TodayAlertCount(ctx *ctx.Context) (num int64, err error) {
+	// 获取当前日期
+	now := time.Now()
+	// 根据当前日期设置零点时间
+	zeroTime := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	// 获取零点时间戳
+	zeroTimestamp := zeroTime.Unix()
+	err = DB(ctx).Debug().Model(&AlertHisEvent{}).Where("trigger_time >= ?", zeroTimestamp).Count(&num).Error
+	return num, err
+}
+
 //过滤器统计历史告警个数
 func AlertHisCountFilter(ctx *ctx.Context, where map[string]interface{}, dateRange int64, query string, ids []int64) (num int64, err error) {
 	session := DB(ctx)

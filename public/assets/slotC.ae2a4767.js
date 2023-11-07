@@ -1,0 +1,1 @@
+import{o as a,a3 as e,r as s,s as r}from"./vue.3e76d0e4.js";const d={},t={class:"child"},o=r("默认值"),l=r("heard 数据");d.render=function(r,d,n,u,c,f){return a(),e("div",t,[s(r.$slots,"default",{},(()=>[o])),s(r.$slots,"header",{data:{name:"header"}},(()=>[l]))])};export{d as default};

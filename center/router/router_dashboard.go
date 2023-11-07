@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -70,6 +69,9 @@ func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
 	atype := ginx.QueryStr(c, "atype", "")
 	groupId := ginx.QueryInt64(c, "group_id", -1)
 
+	curAlert, err := models.AlertFeList(rt.Ctx)
+	ginx.Dangerous(err)
+
 	var data []*AssetJson
 	lst := rt.assetCache.GetAll()
 	for _, item := range lst {
@@ -90,22 +92,16 @@ func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
 			metrics = append(metrics, m)
 		}
 
-		//将名称中含有的IP拿出来
-		ip := ""
-		name := item.Name
-		compileRegex := regexp.MustCompile("（(.*?)）") // 中文括号，例如：华南地区（广州） -> 广州
-		matchArr := compileRegex.FindStringSubmatch(item.Name)
+		ip, name := models.GetIP(item)
 
-		if len(matchArr) == 0 {
-			compileRegex = regexp.MustCompile("\\((.*?)\\)") // 兼容英文括号并取消括号的转义，例如：华南地区 (广州) -> 广州。
-			matchArr = compileRegex.FindStringSubmatch(item.Name)
-		}
-		if len(matchArr) != 0 {
-			ipTemp := matchArr[len(matchArr)-1]
-			if len(strings.Split(ipTemp, ".")) == 4 {
-				ip = ipTemp
-				nameTemp := strings.Split(item.Name, matchArr[0])
-				name = nameTemp[0]
+		var severity int64
+		severity = 4
+		for _, alertVal := range curAlert {
+			if item.Id == int64(alertVal.AssetId) {
+				if severity > int64(alertVal.Severity) {
+					severity = int64(alertVal.Severity)
+				}
+
 			}
 		}
 		data = append(data, &AssetJson{
@@ -120,6 +116,7 @@ func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
 			Metrics:  metrics,
 			GroupId:  item.OrganizationId, //这里使用orgid作为group返回查询条件
 			Tags:     item.TagsJSON,
+			Severity: severity,
 		})
 	}
 	//ws.SetMessage(1, data) //socket推送内容
@@ -150,6 +147,7 @@ func (rt *Router) getAlertListByFE(c *gin.Context) {
 		if has {
 			item.AssetName = asset.Name
 			item.OrganizeId = int(asset.OrganizationId)
+			item.Url = "/alert-cur-events/" + strconv.FormatInt(item.Id, 10)
 		}
 	}
 
@@ -188,7 +186,6 @@ func (rt *Router) getDashboardAssetStatistics(c *gin.Context) {
 // @Router       /api/n9e/dashboard/count/ceshi [get]
 // @Security     ApiKeyAuth
 func (rt *Router) getDashboardDataCount(c *gin.Context) {
-	logger.Debug("kaishitongji")
 
 	m := make(map[string]interface{})
 
@@ -213,10 +210,15 @@ func (rt *Router) getDashboardDataCount(c *gin.Context) {
 	ginx.Dangerous(err)
 	alarm["history"] = hisAll
 	alarm["confirm"] = hisAll - unprocessed
+	//当日累计告警数
+	today, err := models.TodayAlertCount(rt.Ctx)
+	ginx.Dangerous(err)
+	alarm["today"] = today
 	m["alarm"] = alarm
 
 	//资产分类
 	assetType := make(map[string]int64)
+	var appCount int64 = 0
 	//TODO 排序规则未给出
 	// deviceSort := make(map[string]int64, 0)
 	// appAndCloudSort := make(map[string]int64, 0)
@@ -232,6 +234,9 @@ func (rt *Router) getDashboardDataCount(c *gin.Context) {
 					core += int64(flo)
 				}
 			}
+		}
+		if val.Type == "Web服务" {
+			appCount++
 		}
 		num, Ok := assetType[val.Type]
 		if Ok {
@@ -250,7 +255,6 @@ func (rt *Router) getDashboardDataCount(c *gin.Context) {
 	device := make([]interface{}, deviceNum)
 	appAndCloud := make([]interface{}, len(assetType)-deviceNum)
 	var dNum, aNum int64
-	// mom := -1
 	for key, val := range assetType {
 		ar, _ := rt.assetCache.GetType(key)
 		//统计环比
@@ -283,7 +287,7 @@ func (rt *Router) getDashboardDataCount(c *gin.Context) {
 	overview["hardware"] = 99
 	overview["network"] = 99
 	overview["cores"] = core
-	overview["application"] = int64(len(assetType) - deviceNum)
+	overview["application"] = appCount
 	m["overview"] = overview
 
 	ginx.NewRender(c).Data(m, err)
@@ -320,47 +324,33 @@ func (rt *Router) AssetDetails(c *gin.Context) {
 		for _, m := range asset.Metrics {
 			if m["name"] == "入口流量" || m["name"] == "出口流量" || m["name"] == "吞吐量" {
 				netData, err := strconv.ParseFloat(strings.Split(m["value"], ".")[0], 64)
-				logger.Debug(netData)
 				ginx.Dangerous(err)
 				if netData < math.Pow(10, 3) {
 					m["value"] = strings.Split(m["value"], ".")[0] + "Kb/s"
 				} else if netData >= math.Pow(10, 3) && netData < math.Pow(10, 6) {
 					netDT, err := strconv.ParseFloat(fmt.Sprintf("%.2f", netData/math.Pow(10, 3)), 64)
 					ginx.Dangerous(err)
-					logger.Debug(netDT)
 					m["value"] = strconv.FormatFloat(netDT, 'f', -1, 64) + "Mb/s"
 				} else if netData >= math.Pow(10, 6) && netData < math.Pow(10, 9) {
 					netDT, err := strconv.ParseFloat(fmt.Sprintf("%.2f", netData/math.Pow(10, 6)), 64)
 					ginx.Dangerous(err)
-					logger.Debug(netDT)
 					m["value"] = strconv.FormatFloat(netDT, 'f', -1, 64) + "Gb/s"
-					logger.Debug(m["value"])
 				}
+			} else if m["name"] == "CPU使用率" || m["name"] == "内存使用率" {
+				netData, err := strconv.ParseFloat(m["value"], 64)
+				ginx.Dangerous(err)
+				floatVal, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", netData), 64)
+				m["value"] = strconv.FormatFloat(floatVal, 'f', -1, 64) + "%"
+			} else if m["name"] == "CPU核数" || m["name"] == "在线状态" {
+				m["value"] = strings.Split(m["value"], ".")[0]
 			}
 			metrics = append(metrics, m)
 		}
 
-		//将名称中含有的IP拿出来
-		ip := ""
-		name := asset.Name
-		compileRegex := regexp.MustCompile("（(.*?)）") // 中文括号，例如：华南地区（广州） -> 广州
-		matchArr := compileRegex.FindStringSubmatch(asset.Name)
-
-		if len(matchArr) == 0 {
-			compileRegex = regexp.MustCompile("\\((.*?)\\)") // 兼容英文括号并取消括号的转义，例如：华南地区 (广州) -> 广州。
-			matchArr = compileRegex.FindStringSubmatch(asset.Name)
-		}
-		if len(matchArr) != 0 {
-			ipTemp := matchArr[len(matchArr)-1]
-			if len(strings.Split(ipTemp, ".")) == 4 {
-				ip = ipTemp
-				nameTemp := strings.Split(asset.Name, matchArr[0])
-				name = nameTemp[0]
-			}
-		}
+		ip, name := models.GetIP(asset)
 
 		var severity int64
-		severity = 3
+		severity = 4
 		for _, alertVal := range curAlert {
 			if assetId == int64(alertVal.AssetId) {
 				if severity > int64(alertVal.Severity) {
@@ -442,8 +432,6 @@ func (rt *Router) AlarmHisQueryGet(c *gin.Context) {
 	err = json.Unmarshal(jsonData, &str)
 	ginx.Dangerous(err)
 
-	logger.Debug(str)
-
 	ginx.NewRender(c).Data(str, err)
 }
 
@@ -490,8 +478,6 @@ func (rt *Router) AlarmHisDel(c *gin.Context) {
 	ginx.Dangerous(err)
 	err = rt.Redis.Set(rt.Ctx.Ctx, "hisQuery", data, 0).Err()
 
-	logger.Debug(str)
-
 	ginx.NewRender(c).Message(err)
 }
 
@@ -513,9 +499,9 @@ func (rt *Router) AlarmHisFilter(c *gin.Context) {
 	}
 
 	severity := make(map[int64]string)
-	severity[0] = "紧急"
-	severity[1] = "一般"
-	severity[2] = "事件"
+	severity[1] = "紧急"
+	severity[2] = "一般"
+	severity[3] = "事件"
 
 	dataRange := make(map[int64]string)
 	dataRange[300] = "5分钟内"
@@ -626,7 +612,17 @@ func (rt *Router) AlarmHisGet(c *gin.Context) {
 			lst[index].Url = "/alert-his-events/" + strconv.FormatInt(item.Id, 10)
 			lst[index].AssetName = asset.Name
 			lst[index].OrganizeId = int(asset.OrganizationId)
+			organization, err := models.OrganizationGetById(rt.Ctx, asset.OrganizationId)
+			ginx.Dangerous(err)
+			lst[index].OrganizeName = (*organization).Name
 		}
+		lst[index].Type = asset.Type
+
+		ip, name := models.GetIP(asset)
+
+		lst[index].AssetName = name
+		lst[index].Ip = ip
+
 	}
 
 	ginx.NewRender(c).Data(gin.H{
@@ -662,7 +658,6 @@ func (rt *Router) DataBoardPerson(c *gin.Context) {
 		logger.Error(err)
 		return
 	}
-	logger.Debug(value)
 
 	data := make(map[int64]float64)
 
@@ -686,7 +681,6 @@ func (rt *Router) DataBoardPerson(c *gin.Context) {
 			data[val.Timestamp.Unix()] = float64(val.Value)
 		}
 	}
-	logger.Debug(data)
 }
 
 // @Summary      筛选资产
@@ -739,24 +733,7 @@ func (rt *Router) DataBoardAssetList(c *gin.Context) {
 
 	for _, asset := range ansAssets {
 		ar, _ := rt.assetCache.GetType(asset.Type)
-		//将名称中含有的IP拿出来
-		ip := ""
-		name := asset.Name
-		compileRegex := regexp.MustCompile("（(.*?)）") // 中文括号，例如：华南地区（广州） -> 广州
-		matchArr := compileRegex.FindStringSubmatch(asset.Name)
-
-		if len(matchArr) == 0 {
-			compileRegex = regexp.MustCompile("\\((.*?)\\)") // 兼容英文括号并取消括号的转义，例如：华南地区 (广州) -> 广州。
-			matchArr = compileRegex.FindStringSubmatch(asset.Name)
-		}
-		if len(matchArr) != 0 {
-			ipTemp := matchArr[len(matchArr)-1]
-			if len(strings.Split(ipTemp, ".")) == 4 {
-				ip = ipTemp
-				nameTemp := strings.Split(asset.Name, matchArr[0])
-				name = nameTemp[0]
-			}
-		}
+		ip, name := models.GetIP(&asset)
 
 		data = append(data, &AssetJson{
 			Id:       asset.Id,
@@ -815,37 +792,64 @@ func (rt *Router) DataBoardPageNameDel(c *gin.Context) {
 // @Tags         大屏展示
 // @Accept       json
 // @Produce      json
+// @Param        type query   int     true  "类型（1：编辑页签；2：创建/删除用户看板）"
+// @Param        old_page_name query   string     false  "旧页签"
 // @Param        page_name query   string     false  "页签"
 // @Param        body  body   []models.DashboardUser true "add DashboardUser"
 // @Success      200
 // @Router       /api/n9e/dashboard/user/add [post]
 // @Security     ApiKeyAuth
 func (rt *Router) DataBoardAsset(c *gin.Context) {
+	opType := ginx.QueryInt64(c, "type", -1)
 	pageName := ginx.QueryStr(c, "page_name", "")
-
-	f := make([]models.DashboardUser, 0)
-	ginx.BindJSON(c, &f)
-
-	if len(f) == 0 {
-		ginx.Bomb(http.StatusOK, "参数为空")
-	}
-
+	oldpageName := ginx.QueryStr(c, "old_page_name", "")
 	me := c.MustGet("user").(*models.User)
 
-	for index := range f {
-		f[index].UserId = me.Id
-		f[index].PageName = pageName
-		f[index].CreatedBy = me.Username
+	if opType == 1 {
+		if pageName == oldpageName {
+			ginx.Bomb(http.StatusOK, "新旧页签一致")
+		}
+		if pageName == "" {
+			ginx.Bomb(http.StatusOK, "新页签为空")
+		}
+		lst, err := models.DashBoardUserPageNameByUser(rt.Ctx, me.Id)
+		ginx.Dangerous(err)
+		count := 0
+		for _, val := range lst {
+			if val == pageName {
+				count++
+			}
+		}
+		if count > 1 {
+			ginx.Bomb(http.StatusOK, "新页签已存在")
+		}
+		err = models.DashBoardUserPageNameUpdate(rt.Ctx, me.Id, pageName, oldpageName)
+		ginx.NewRender(c).Message(err)
+
+	} else if opType == 2 {
+		f := make([]models.DashboardUser, 0)
+		ginx.BindJSON(c, &f)
+
+		if len(f) == 0 {
+			ginx.Bomb(http.StatusOK, "参数为空")
+		}
+
+		for index := range f {
+			f[index].UserId = me.Id
+			f[index].PageName = pageName
+			f[index].CreatedBy = me.Username
+		}
+
+		tx := models.DB(rt.Ctx).Begin()
+
+		err := models.DeleteByUserAndPageName(tx, me.Id, pageName)
+		ginx.Dangerous(err)
+
+		err = models.AddDashBoardUser(tx, f)
+		tx.Commit()
+		ginx.NewRender(c).Message(err)
 	}
 
-	tx := models.DB(rt.Ctx).Begin()
-
-	err := models.DeleteByUserAndPageName(tx, me.Id, pageName)
-	ginx.Dangerous(err)
-
-	err = models.AddDashBoardUser(tx, f)
-	tx.Commit()
-	ginx.NewRender(c).Message(err)
 }
 
 // @Summary      数据面板
@@ -862,7 +866,6 @@ func (rt *Router) DataBoardAsset(c *gin.Context) {
 // @Router       /api/n9e/dashboard/user/data [get]
 // @Security     ApiKeyAuth
 func (rt *Router) DataBoardAssetsGet(c *gin.Context) {
-	logger.Debug("9999999999999999999999999")
 
 	models.AssetTypeGetsAll()
 
@@ -895,24 +898,7 @@ func (rt *Router) DataBoardAssetsGet(c *gin.Context) {
 		m["page_name"] = val.PageName
 
 		ar, _ := rt.assetCache.GetType(asset.Type)
-		//将名称中含有的IP拿出来
-		ip := ""
-		name := asset.Name
-		compileRegex := regexp.MustCompile("（(.*?)）") // 中文括号，例如：华南地区（广州） -> 广州
-		matchArr := compileRegex.FindStringSubmatch(asset.Name)
-
-		if len(matchArr) == 0 {
-			compileRegex = regexp.MustCompile("\\((.*?)\\)") // 兼容英文括号并取消括号的转义，例如：华南地区 (广州) -> 广州。
-			matchArr = compileRegex.FindStringSubmatch(asset.Name)
-		}
-		if len(matchArr) != 0 {
-			ipTemp := matchArr[len(matchArr)-1]
-			if len(strings.Split(ipTemp, ".")) == 4 {
-				ip = ipTemp
-				nameTemp := strings.Split(asset.Name, matchArr[0])
-				name = nameTemp[0]
-			}
-		}
+		ip, name := models.GetIP(asset)
 
 		m["id"] = asset.Id
 		m["name"] = name
@@ -922,15 +908,12 @@ func (rt *Router) DataBoardAssetsGet(c *gin.Context) {
 		m["update_at"] = asset.HealthAt
 		m["category"] = ar.Category
 		m["type"] = asset.Type
-		m["group_id"] = asset.OrganizationId //这里使用orgid作为group返回查询条件
+		m["group_id"] = asset.OrganizationId
 		m["tags"] = asset.TagsJSON
 
-		// end := time.Now()
-		// start := end.Add(-time.Hour * 24)
 		end := time.Unix(endT, 0)
 		start := time.Unix(startT, 0)
 		r := prom.Range{Start: start, End: end, Step: prom.DefaultStep * 2}
-		// str := "cpu_usage_active{asset_id=" + "'" + strconv.FormatInt(asset.Id, 10) + "'" + "}"
 
 		query := make(map[string]string, 0)
 		if val.Type == "主机" {
@@ -1002,11 +985,6 @@ func (rt *Router) DataBoardAssetsGet(c *gin.Context) {
 				logger.Error(err)
 				return
 			}
-			// dataVal := make(map[int64]float64)
-			logger.Debug("_____________________________")
-			logger.Debug(key)
-			logger.Debug(value.Type())
-			logger.Debug(value)
 			if value.Type() == model.ValVector {
 				items, ok := value.(model.Vector)
 				if !ok {

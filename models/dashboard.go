@@ -204,8 +204,14 @@ func AddDashBoardUser(tx *gorm.DB, lst []DashboardUser) error {
 func DashBoardUserPageNameByUser(ctx *ctx.Context, userId int64) ([]string, error) {
 	var lst []string
 
-	err := DB(ctx).Debug().Model(&DashboardUser{}).Where("user_id = ?", userId).Pluck("page_name", &lst).Error
+	err := DB(ctx).Debug().Model(&DashboardUser{}).Distinct().Where("user_id = ?", userId).Pluck("page_name", &lst).Error
 	return lst, err
+}
+
+//根据userId和pageName更新页签
+func DashBoardUserPageNameUpdate(ctx *ctx.Context, userId int64, pageName, oldPageName string) error {
+
+	return DB(ctx).Debug().Model(&DashboardUser{}).Where("user_id = ? AND page_name = ?", userId, oldPageName).Update("page_name", pageName).Error
 }
 
 //根据userId和pageName分页查询

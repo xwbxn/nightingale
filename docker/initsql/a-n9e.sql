@@ -12,6 +12,8 @@ CREATE TABLE `users` (
     `email` varchar(64) not null default '',
     `portrait` varchar(255) not null default '' comment 'portrait image url',
     `roles` varchar(255) not null comment 'Admin | Standard | Guest, split by space',
+    `status` int NOT NULL COMMENT '用户状态',
+    `organization_id` int DEFAULT NULL COMMENT '组织id',
     `contacts` varchar(1024) comment 'json e.g. {wecom:xx, dingtalk_robot_token:yy}',
     `maintainer` tinyint(1) not null default 0,
     `create_at` bigint not null default 0,
@@ -23,7 +25,9 @@ CREATE TABLE `users` (
     UNIQUE KEY (`username`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
-insert into `users`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', '超管', 'root.2020', 'Admin', unix_timestamp(now()), 'system', unix_timestamp(now()), 'system');
+-- insert into `users`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', '超管', 'root.2020', 'Admin', unix_timestamp(now()), 'system', unix_timestamp(now()), 'system');
+INSERT INTO `users` VALUES (1, 'root', '超管', '042c05fffc2f49ca29a76223f3a41e83', '', '', '', 'Admin', 1, 1, '{}', 0, 1698905269, 'system', 1698973348, 'root', NULL);
+
 
 CREATE TABLE `user_group` (
     `id` bigint unsigned not null auto_increment,
@@ -633,44 +637,71 @@ CREATE TABLE `assets` (
   `group_id` bigint(20) NOT NULL,
   `name` varchar(200) NOT NULL,
   `type` varchar(255) NOT NULL,
-  `memo` varchar(255) NOT NULL DEFAULT '',
-  `configs` text,
-  `tags` varchar(512) NOT NULL DEFAULT '',
-  `plugin` varchar(100) NOT NULL DEFAULT '',
-  `label` varchar(200) NOT NULL DEFAULT '',
-  `params` text,
-  `status` int(1) NOT NULL DEFAULT '0',
-  `create_at` bigint(20) NOT NULL DEFAULT 0,
-  `create_by` varchar(64) NOT NULL DEFAULT '',
-  `update_at` bigint(20) NOT NULL DEFAULT 0,
-  `update_by` varchar(64) NOT NULL DEFAULT '',
-  `deleted_at` datetime DEFAULT NULL COMMENT '删除时间',
-  `organization_id` bigint(20) NOT NULL DEFAULT 0,
-  `optional_metrics` text,
+  `ip` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'IP地址',
+  `producer` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '厂商',
+  `os` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '操作系统',
+  `cpu` int(0) DEFAULT NULL COMMENT 'cpu核数',
+  `memory` int(0) DEFAULT NULL COMMENT '内存',
+  `plugin_version` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '插件版本',
+  `location` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '资产位置',
+  `asset_status` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '状态',
+  `memo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `configs` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `tags` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `plugin` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `label` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `params` varchar(3000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `status` int(0) NOT NULL DEFAULT 0,
+  `directory_id` bigint(0) DEFAULT NULL COMMENT '所在分组',
+  `create_at` bigint(0) NOT NULL DEFAULT 0,
+  `create_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `update_at` bigint(0) NOT NULL DEFAULT 0,
+  `update_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `organization_id` bigint(0) DEFAULT NULL,
+  `optional_metrics` varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `deleted_at` datetime(0) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `group_id` (`group_id`),
   KEY `ident` (`ident`),
   KEY `organization_id` (`organization_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `organization` (
-  `id` int(10) NOT NULL AUTO_INCREMENT,
-  `name` varchar(50) DEFAULT NULL,
-  `parent_id` int(10) DEFAULT NULL,
-  `path` varchar(50) DEFAULT NULL,
-  `son` int DEFAULT NULL,
+-- CREATE TABLE `organization` (
+--   `id` int(10) NOT NULL AUTO_INCREMENT,
+--   `name` varchar(50) DEFAULT NULL,
+--   `parent_id` int(10) DEFAULT NULL,
+--   `path` varchar(50) DEFAULT NULL,
+--   `son` int DEFAULT NULL,
+--   `city` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+--   `manger` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+--   `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+--   `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+--   `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+--   `create_at` bigint NOT NULL DEFAULT '0',
+--   `create_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+--   `update_at` bigint NOT NULL DEFAULT '0',
+--   `update_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+--   `deleted_at` datetime DEFAULT NULL,
+--   PRIMARY KEY (`id`)
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `organization`  (
+  `id` int(0) NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `parent_id` int(0) DEFAULT NULL,
+  `path` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `son` int(0) DEFAULT NULL,
   `city` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `manger` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `adress` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `create_at` bigint NOT NULL DEFAULT '0',
+  `create_at` bigint(0) NOT NULL DEFAULT 0,
   `create_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
-  `update_at` bigint NOT NULL DEFAULT '0',
+  `update_at` bigint(0) NOT NULL DEFAULT 0,
   `update_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
-  `deleted_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `deleted_at` datetime(0) DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 CREATE TABLE `es_index_pattern` (
     `id` bigint unsigned not null auto_increment,

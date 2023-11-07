@@ -1,0 +1,1 @@
+import{aa as a,ab as s,o as e,a3 as t,a4 as c}from"./vue.3e76d0e4.js";const d={};a("data-v-442cb4d4");const o={class:"xueyueView"},r=[c("h1",{class:"title"},"scss 全局变量",-1)];s(),d.render=function(a,s){return e(),t("div",o,r)},d.__scopeId="data-v-442cb4d4";export{d as default};

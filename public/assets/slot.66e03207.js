@@ -1,0 +1,1 @@
+import"./slotC.ae2a4767.js";import{f as a,o as s,a3 as e,a as t,w as l,a4 as n,t as o,s as d}from"./vue.3e76d0e4.js";const r={},u={class:"bb"},i=d(" 任意内容 "),f=n("div",null,"退出",-1);r.render=function(d,r,c,m,v,p){const b=a("SlotC");return s(),e("div",u,[t(b,null,{default:l((()=>[i,f])),header:l((({data:a})=>[n("div",null,"111"+o(a.name),1)])),_:1})])};export{r as default};

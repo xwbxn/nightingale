@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"path"
+	"regexp"
 	"sort"
 	"strings"
 	"text/template"
@@ -471,7 +473,7 @@ func AssetMom(ctx *ctx.Context, aType string) (num int64, err error) {
 	start := time.Date(now.Year(), now.Month()-1, 1, 0, 0, 0, 0, now.Location()).Unix()
 	end := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).Unix()
 
-	err = DB(ctx).Debug().Model(&Asset{}).Where("create_at >= ? AND create_at < ?", start, end).Count(&insertNum).Error
+	err = DB(ctx).Debug().Model(&Asset{}).Where("create_at >= ? AND create_at < ?", start, end).Where("type = ?", aType).Count(&insertNum).Error
 	if err != nil {
 		return 0, errors.New("查询环比数据出错")
 	}
@@ -479,7 +481,7 @@ func AssetMom(ctx *ctx.Context, aType string) (num int64, err error) {
 	var delLst []Asset
 	// err = DB(ctx).Debug().Unscoped().Find(&delLst).Error
 	// err = DB(ctx).Debug().Unscoped().Where("IFNULL('deleted_at','kong')!='kong'").Find(&delLst).Error
-	err = DB(ctx).Debug().Unscoped().Where("`assets`.`deleted_at` IS NOT NULL").Find(&delLst).Error
+	err = DB(ctx).Debug().Unscoped().Where("type = ?", aType).Where("`assets`.`deleted_at` IS NOT NULL").Find(&delLst).Error
 	if err != nil {
 		return 0, errors.New("查询环比数据出错")
 	}
@@ -554,4 +556,33 @@ func AssetIdByNameTypeIp(ctx *ctx.Context, query string) (ids []int64, err error
 	query = "%" + query + "%"
 	err = DB(ctx).Model(&Asset{}).Distinct().Where("name like ? or type like ? or ip like ?", query, query, query).Pluck("id", &ids).Error
 	return ids, err
+}
+
+//获取ip
+func GetIP(asset *Asset) (ip, name string) {
+	ip = ""
+	name = asset.Name
+	address := net.ParseIP(asset.Label)
+	if address != nil {
+		ip = asset.Label
+	} else {
+		//将名称中含有的IP拿出来
+
+		compileRegex := regexp.MustCompile("（(.*?)）") // 中文括号，例如：华南地区（广州） -> 广州
+		matchArr := compileRegex.FindStringSubmatch(asset.Name)
+
+		if len(matchArr) == 0 {
+			compileRegex = regexp.MustCompile("\\((.*?)\\)") // 兼容英文括号并取消括号的转义，例如：华南地区 (广州) -> 广州。
+			matchArr = compileRegex.FindStringSubmatch(asset.Name)
+		}
+		if len(matchArr) != 0 {
+			ipTemp := matchArr[len(matchArr)-1]
+			if len(strings.Split(ipTemp, ".")) == 4 {
+				ip = ipTemp
+				nameTemp := strings.Split(asset.Name, matchArr[0])
+				name = nameTemp[0]
+			}
+		}
+	}
+	return ip, name
 }

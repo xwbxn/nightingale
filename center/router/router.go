@@ -693,12 +693,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/dashboard/asset/details/ceshi", rt.AssetDetails) //资产详情接口
 		// pages.GET("/dashboard/alarm/details", rt.AlarmDetails)                    //告警详情接口
 		pages.GET("/dashboard/his-alarms/his-query/ceshi", rt.AlarmHisQueryGet)                      //历史告警搜索记录查询
-		pages.DELETE("/dashboard/his-alarms/his-query/ceshi", rt.AlarmHisDel)                        //历史告警搜索删除
+		pages.DELETE("/dashboard/his-alarms/his-query/ceshi", rt.AlarmHisDel)                        //历史告警搜索记录删除
 		pages.GET("/dashboard/his-alarm/filter/ceshi", rt.AlarmHisFilter)                            //历史告警过滤条件查询
-		pages.GET("/dashboard/his-alarms/ceshi", rt.AlarmHisGet)                                     //历史告警搜索记录
+		pages.GET("/dashboard/his-alarms/ceshi", rt.AlarmHisGet)                                     //历史告警查询
 		pages.GET("/dashboard/data/ceshi", rt.DataBoardPerson)                                       //列表数据测试
 		pages.GET("/dashboard/user/list/ceshi", rt.DataBoardAssetList)                               //数据看板筛选资产
-		pages.POST("/dashboard/user/add", rt.auth(), rt.user(), rt.DataBoardAsset)                   //创建/编辑/删除用户看板
+		pages.POST("/dashboard/user/add", rt.auth(), rt.user(), rt.DataBoardAsset)                   //创建/删除用户看板
 		pages.GET("/dashboard/user/data", rt.auth(), rt.user(), rt.DataBoardAssetsGet)               //数据面板
 		pages.GET("/dashboard/user/page-name/get", rt.auth(), rt.user(), rt.DataBoardPageNameGets)   //获取pageName列表
 		pages.DELETE("/dashboard/user/page-name/del", rt.auth(), rt.user(), rt.DataBoardPageNameDel) //获取pageName列表

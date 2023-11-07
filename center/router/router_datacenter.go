@@ -177,46 +177,46 @@ func (rt *Router) datacenterDel(c *gin.Context) {
 // @Success      200  {array}  models.Datacenter
 // @Router       /api/n9e/datacenter/statistics/ [get]
 // @Security     ApiKeyAuth
-func (rt *Router) datacenterIndexStatistics(c *gin.Context) {
-	id := ginx.QueryInt64(c, "id", -1)
-	if id == -1 {
-		ginx.Bomb(http.StatusOK, "参数错误!")
-	}
-	ans := make(map[string]interface{}, 0)
-	ans["room_num"] = 0
-	ans["device_total"] = 0
-	ans["nanotube_num"] = 0 //纳管开发未完成
-	ans["online_num"] = 0
-	ans["cabinet_num"] = 0
+// func (rt *Router) datacenterIndexStatistics(c *gin.Context) {
+// 	id := ginx.QueryInt64(c, "id", -1)
+// 	if id == -1 {
+// 		ginx.Bomb(http.StatusOK, "参数错误!")
+// 	}
+// 	ans := make(map[string]interface{}, 0)
+// 	ans["room_num"] = 0
+// 	ans["device_total"] = 0
+// 	ans["nanotube_num"] = 0 //纳管开发未完成
+// 	ans["online_num"] = 0
+// 	ans["cabinet_num"] = 0
 
-	//查询机房
-	rooms, err := models.ComputerRoomGetByMap(rt.Ctx, map[string]interface{}{"idc_location": id})
-	ginx.Dangerous(err)
-	if len(rooms) == 0 {
-		ginx.NewRender(c).Data(ans, nil)
-	}
-	ans["room_num"] = len(rooms)
+// 	//查询机房
+// 	rooms, err := models.ComputerRoomGetByMap(rt.Ctx, map[string]interface{}{"idc_location": id})
+// 	ginx.Dangerous(err)
+// 	if len(rooms) == 0 {
+// 		ginx.NewRender(c).Data(ans, nil)
+// 	}
+// 	ans["room_num"] = len(rooms)
 
-	//查询机柜
-	for _, room := range rooms {
-		roomAns := make(map[string]interface{})
-		//查询该机房全部设备数
-		deviceNum, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"equipment_room": room.Id})
-		ginx.Dangerous(err)
-		roomAns["device_num"] = deviceNum
-		cabinetNum, err := models.DeviceCabinetCountByMap(rt.Ctx, map[string]interface{}{"belong_room": room.Id})
-		ginx.Dangerous(err)
-		roomAns["cabinet_num"] = cabinetNum
+// 	//查询机柜
+// 	for _, room := range rooms {
+// 		roomAns := make(map[string]interface{})
+// 		//查询该机房全部设备数
+// 		deviceNum, err := models.AssetCountByMap(rt.Ctx, map[string]interface{}{"equipment_room": room.Id})
+// 		ginx.Dangerous(err)
+// 		roomAns["device_num"] = deviceNum
+// 		cabinetNum, err := models.DeviceCabinetCountByMap(rt.Ctx, map[string]interface{}{"belong_room": room.Id})
+// 		ginx.Dangerous(err)
+// 		roomAns["cabinet_num"] = cabinetNum
 
-	}
+// 	}
 
-	// total, err := models.DatacenterCount(rt.Ctx, query)
-	// ginx.Dangerous(err)
-	// lst, err := models.DatacenterGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
-	// ginx.Dangerous(err)
+// total, err := models.DatacenterCount(rt.Ctx, query)
+// ginx.Dangerous(err)
+// lst, err := models.DatacenterGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
+// ginx.Dangerous(err)
 
-	// ginx.NewRender(c).Data(gin.H{
-	// 	"list":  lst,
-	// 	"total": total,
-	// }, nil)
-}
+// ginx.NewRender(c).Data(gin.H{
+// 	"list":  lst,
+// 	"total": total,
+// }, nil)
+// }

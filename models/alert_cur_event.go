@@ -584,11 +584,14 @@ type FeAlert struct {
 	TriggerTime    int64       `json:"trigger_time"`  //trigger_value
 	TriggerValue   string      `json:"trigger_value"` //trigger_value
 	OrganizeId     int         `json:"organize_id"`   //组织id
+	OrganizeName   string      `json:"organize_name"` //组织name
 	Url            string      `json:"url"`
 	Tags           string      `json:"-"`
 	TagsJSON       []string    `json:"-"`
 	RuleConfig     string      `json:"-"`
 	RuleConfigJson interface{} `json:"-"`
+	Type           string      `json:"type"`
+	Ip             string      `json:"ip"`
 	// RuleConfigJson interface{} `json:"ruleconfigJson"`
 }
 
