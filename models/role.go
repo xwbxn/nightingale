@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 )
 
 type Role struct {
@@ -54,6 +55,15 @@ func (r *Role) Del(ctx *ctx.Context) error {
 // 更新角色
 func (ug *Role) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {
 	return DB(ctx).Model(ug).Select(selectField, selectFields...).Updates(ug).Error
+}
+
+// 更新角色(事务)
+func (ug *Role) UpdateTx(tx *gorm.DB, selectField interface{}, selectFields ...interface{}) error {
+	err := tx.Model(ug).Select(selectField, selectFields...).Updates(ug).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
 }
 
 func RoleGet(ctx *ctx.Context, where string, args ...interface{}) (*Role, error) {

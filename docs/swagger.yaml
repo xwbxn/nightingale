@@ -1,4 +1,65 @@
 definitions:
+  models.Asset:
+    properties:
+      configs:
+        type: string
+      create_at:
+        type: integer
+      create_by:
+        type: string
+      dashboard:
+        type: string
+      directory_id:
+        type: integer
+      group_id:
+        type: integer
+      health:
+        description: 下面的是健康检查使用，在memsto缓存中保存
+        type: integer
+      id:
+        type: integer
+      ident:
+        type: string
+      ip:
+        type: string
+      label:
+        type: string
+      manufacturers:
+        type: string
+      memo:
+        type: string
+      name:
+        type: string
+      optional_metrics:
+        description: 巡检检查使用
+        items:
+          $ref: '#/definitions/models.Metrics'
+        type: array
+      organization_id:
+        type: integer
+      params:
+        type: string
+      plugin:
+        type: string
+      position:
+        type: string
+      status:
+        description: '0: 未生效, 1: 已生效'
+        enum:
+        - 0
+        - 1
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      type:
+        type: string
+      update_at:
+        type: integer
+      update_by:
+        type: string
+    type: object
   models.AssetAlter:
     properties:
       after_alter:
@@ -629,12 +690,18 @@ definitions:
       assets_id:
         description: type:*int     comment:资产id      version:2023-9-20 14:33
         type: integer
+      config_category:
+        type: string
+      group_id:
+        type: string
       id:
         description: type:*int     comment:主键        version:2023-9-20 11:23
         type: integer
       name:
         type: string
       name_cn:
+        type: string
+      property_category:
         type: string
       value:
         type: string
@@ -1307,6 +1374,9 @@ definitions:
       organize_id:
         description: 组织id
         type: integer
+      organize_name:
+        description: 组织name
+        type: string
       rule:
         description: 告警规则 RuleConfigJson中prom_ql字段
         type: string
@@ -1340,6 +1410,13 @@ definitions:
       service_obj_value:
         type: string
       service_option_code:
+        type: string
+    type: object
+  models.Metrics:
+    properties:
+      metrics:
+        type: string
+      name:
         type: string
     type: object
   models.Organization:
@@ -1631,14 +1708,8 @@ definitions:
     type: object
   router.assetsModel:
     properties:
-      asset_status:
-        type: string
       configs:
         type: string
-      cpu:
-        type: integer
-      directory_id:
-        type: integer
       group_id:
         type: integer
       id:
@@ -1649,25 +1720,19 @@ definitions:
         type: string
       label:
         type: string
-      location:
+      manufacturers:
         type: string
       memo:
         type: string
-      memory:
-        type: integer
       name:
         type: string
       optional_metrics:
         type: string
       organization_id:
         type: integer
-      os:
-        type: string
       params:
         type: string
-      plugin_version:
-        type: string
-      producer:
+      position:
         type: string
       tags:
         type: string
@@ -3172,119 +3237,6 @@ paths:
       summary: 资产树转移
       tags:
       - 资产树
-  /api/n9e/assets-expansion/:
-    get:
-      consumes:
-      - application/json
-      description: 根据条件查询资产扩展-西航
-      parameters:
-      - description: 返回条数
-        in: query
-        name: limit
-        type: integer
-      - description: 查询条件
-        in: query
-        name: query
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/models.AssetsExpansion'
-            type: array
-      security:
-      - ApiKeyAuth: []
-      summary: 查询资产扩展-西航
-      tags:
-      - 资产扩展-西航
-    post:
-      consumes:
-      - application/json
-      description: 创建资产扩展-西航
-      parameters:
-      - description: add assetsExpansion
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/models.AssetsExpansion'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-      security:
-      - ApiKeyAuth: []
-      summary: 创建资产扩展-西航
-      tags:
-      - 资产扩展-西航
-    put:
-      consumes:
-      - application/json
-      description: 更新资产扩展-西航
-      parameters:
-      - description: update assetsExpansion
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/models.AssetsExpansion'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-      security:
-      - ApiKeyAuth: []
-      summary: 更新资产扩展-西航
-      tags:
-      - 资产扩展-西航
-  /api/n9e/assets-expansion/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: 根据主键删除资产扩展-西航
-      parameters:
-      - description: 主键
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-      security:
-      - ApiKeyAuth: []
-      summary: 删除资产扩展-西航
-      tags:
-      - 资产扩展-西航
-    get:
-      consumes:
-      - application/json
-      description: 根据主键获取资产扩展-西航
-      parameters:
-      - description: 主键
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.AssetsExpansion'
-      security:
-      - ApiKeyAuth: []
-      summary: 获取资产扩展-西航
-      tags:
-      - 资产扩展-西航
   /api/n9e/auth/login:
     post:
       consumes:
@@ -6785,6 +6737,179 @@ paths:
       summary: 批量修改用户状态/组织
       tags:
       - 人员信息
+  /api/n9e/xh/asset/export-xls:
+    post:
+      consumes:
+      - multipart/form-data
+      description: EXCEL导出配线架信息
+      parameters:
+      - description: 导入查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/msexcel
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: EXCEL导出配线架信息
+      tags:
+      - 配线架信息
+  /api/n9e/xh/asset/import-xls:
+    post:
+      consumes:
+      - multipart/form-data
+      description: EXCEL导入资产
+      parameters:
+      - description: file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: EXCEL导入资产
+      tags:
+      - 资产详情
+  /api/n9e/xh/asset/templet:
+    post:
+      consumes:
+      - application/json
+      description: 导出资产模板
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Asset'
+      security:
+      - ApiKeyAuth: []
+      summary: 导出资产模板
+      tags:
+      - 资产详情
+  /api/n9e/xh/assets-expansion/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询资产扩展-西航
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.AssetsExpansion'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询资产扩展-西航
+      tags:
+      - 资产扩展-西航
+    post:
+      consumes:
+      - application/json
+      description: 创建资产扩展-西航
+      parameters:
+      - description: add assetsExpansion
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/models.AssetsExpansion'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建资产扩展-西航
+      tags:
+      - 资产扩展-西航
+    put:
+      consumes:
+      - application/json
+      description: 更新资产扩展-西航
+      parameters:
+      - description: update assetsExpansion
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.AssetsExpansion'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新资产扩展-西航
+      tags:
+      - 资产扩展-西航
+  /api/n9e/xh/assets-expansion/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除资产扩展-西航
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除资产扩展-西航
+      tags:
+      - 资产扩展-西航
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取资产扩展-西航
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AssetsExpansion'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取资产扩展-西航
+      tags:
+      - 资产扩展-西航
   /api/n9e/xh/assets/:
     post:
       consumes:

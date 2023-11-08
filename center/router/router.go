@@ -708,11 +708,18 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/asset-directory/:id", rt.auth(), rt.user(), rt.assetsDirectoryDel)
 
 		//资产扩展（西航）
-		pages.GET("/assets-expansion", rt.auth(), rt.user(), rt.assetsExpansionGets)
-		pages.GET("/assets-expansion/:id", rt.auth(), rt.user(), rt.assetsExpansionGet)
-		pages.POST("/assets-expansion", rt.auth(), rt.user(), rt.assetsExpansionAdd)
-		pages.PUT("/assets-expansion", rt.auth(), rt.user(), rt.assetsExpansionPut)
-		pages.DELETE("/assets-expansion/:id", rt.auth(), rt.user(), rt.assetsExpansionDel)
+		pages.GET("/xh/assets-expansion", rt.auth(), rt.user(), rt.assetsExpansionGets)
+		pages.GET("/xh/assets-expansion/:id", rt.auth(), rt.user(), rt.assetsExpansionGet)
+		pages.POST("/xh/assets-expansion", rt.auth(), rt.user(), rt.assetsExpansionAdd)
+		pages.PUT("/xh/assets-expansion", rt.auth(), rt.user(), rt.assetsExpansionPut)
+		pages.DELETE("/xh/assets-expansion/:id", rt.auth(), rt.user(), rt.assetsExpansionDel)
+
+		//监控（西航）
+		pages.GET("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringGets)
+		pages.GET("/xh/monitoring/:id", rt.auth(), rt.admin(), rt.monitoringGet)
+		pages.POST("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringAdd)
+		pages.PUT("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringPut)
+		pages.DELETE("/xh/monitoring/:id", rt.auth(), rt.admin(), rt.monitoringDel)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

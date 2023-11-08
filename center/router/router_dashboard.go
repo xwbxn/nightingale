@@ -913,7 +913,6 @@ func (rt *Router) DataBoardAssetsGet(c *gin.Context) {
 
 		end := time.Unix(endT, 0)
 		start := time.Unix(startT, 0)
-		r := prom.Range{Start: start, End: end, Step: prom.DefaultStep * 2}
 
 		query := make(map[string]string, 0)
 		if val.Type == "主机" {
@@ -937,6 +936,14 @@ func (rt *Router) DataBoardAssetsGet(c *gin.Context) {
 		}
 
 		for key, str := range query {
+			var r prom.Range
+			if endT-startT <= 60*60*24 {
+				r = prom.Range{Start: start, End: end, Step: prom.DefaultStep * 2}
+			} else if endT-startT > 60*60*24 && endT-startT <= 60*60*24*7 {
+				r = prom.Range{Start: start, End: end, Step: prom.DefaultStep * 2 * 60}
+			} else if endT-startT > 60*60*24*7 {
+				r = prom.Range{Start: start, End: end, Step: prom.DefaultStep * 2 * 60 * 60}
+			}
 			value, warnings, err := rt.PromClients.GetCli(1).QueryRange(context.Background(), str, r)
 			ginx.Dangerous(err)
 

@@ -2396,188 +2396,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/n9e/assets-expansion/": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "根据条件查询资产扩展-西航",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "资产扩展-西航"
-                ],
-                "summary": "查询资产扩展-西航",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "返回条数",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "查询条件",
-                        "name": "query",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.AssetsExpansion"
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "更新资产扩展-西航",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "资产扩展-西航"
-                ],
-                "summary": "更新资产扩展-西航",
-                "parameters": [
-                    {
-                        "description": "update assetsExpansion",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.AssetsExpansion"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "创建资产扩展-西航",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "资产扩展-西航"
-                ],
-                "summary": "创建资产扩展-西航",
-                "parameters": [
-                    {
-                        "description": "add assetsExpansion",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.AssetsExpansion"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
-        "/api/n9e/assets-expansion/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "根据主键获取资产扩展-西航",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "资产扩展-西航"
-                ],
-                "summary": "获取资产扩展-西航",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "主键",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.AssetsExpansion"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "根据主键删除资产扩展-西航",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "资产扩展-西航"
-                ],
-                "summary": "删除资产扩展-西航",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "主键",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
         "/api/n9e/auth/login": {
             "post": {
                 "description": "登录",
@@ -8215,6 +8033,286 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/n9e/xh/asset/export-xls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "EXCEL导出配线架信息",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/msexcel"
+                ],
+                "tags": [
+                    "配线架信息"
+                ],
+                "summary": "EXCEL导出配线架信息",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "导入查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/xh/asset/import-xls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "EXCEL导入资产",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产详情"
+                ],
+                "summary": "EXCEL导入资产",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/xh/asset/templet": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "导出资产模板",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产详情"
+                ],
+                "summary": "导出资产模板",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Asset"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/xh/assets-expansion/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询资产扩展-西航",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产扩展-西航"
+                ],
+                "summary": "查询资产扩展-西航",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.AssetsExpansion"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新资产扩展-西航",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产扩展-西航"
+                ],
+                "summary": "更新资产扩展-西航",
+                "parameters": [
+                    {
+                        "description": "update assetsExpansion",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetsExpansion"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建资产扩展-西航",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产扩展-西航"
+                ],
+                "summary": "创建资产扩展-西航",
+                "parameters": [
+                    {
+                        "description": "add assetsExpansion",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.AssetsExpansion"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/xh/assets-expansion/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取资产扩展-西航",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产扩展-西航"
+                ],
+                "summary": "获取资产扩展-西航",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.AssetsExpansion"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除资产扩展-西航",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产扩展-西航"
+                ],
+                "summary": "删除资产扩展-西航",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/api/n9e/xh/assets/": {
             "put": {
                 "security": [
@@ -8421,6 +8519,96 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "models.Asset": {
+            "type": "object",
+            "properties": {
+                "configs": {
+                    "type": "string"
+                },
+                "create_at": {
+                    "type": "integer"
+                },
+                "create_by": {
+                    "type": "string"
+                },
+                "dashboard": {
+                    "type": "string"
+                },
+                "directory_id": {
+                    "type": "integer"
+                },
+                "group_id": {
+                    "type": "integer"
+                },
+                "health": {
+                    "description": "下面的是健康检查使用，在memsto缓存中保存",
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "ident": {
+                    "type": "string"
+                },
+                "ip": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "manufacturers": {
+                    "type": "string"
+                },
+                "memo": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "optional_metrics": {
+                    "description": "巡检检查使用",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Metrics"
+                    }
+                },
+                "organization_id": {
+                    "type": "integer"
+                },
+                "params": {
+                    "type": "string"
+                },
+                "plugin": {
+                    "type": "string"
+                },
+                "position": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "0: 未生效, 1: 已生效",
+                    "type": "integer",
+                    "enum": [
+                        0,
+                        1
+                    ]
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "type": {
+                    "type": "string"
+                },
+                "update_at": {
+                    "type": "integer"
+                },
+                "update_by": {
+                    "type": "string"
+                }
+            }
+        },
         "models.AssetAlter": {
             "type": "object",
             "properties": {
@@ -9259,6 +9447,12 @@ const docTemplate = `{
                     "description": "type:*int     comment:资产id      version:2023-9-20 14:33",
                     "type": "integer"
                 },
+                "config_category": {
+                    "type": "string"
+                },
+                "group_id": {
+                    "type": "string"
+                },
                 "id": {
                     "description": "type:*int     comment:主键        version:2023-9-20 11:23",
                     "type": "integer"
@@ -9267,6 +9461,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name_cn": {
+                    "type": "string"
+                },
+                "property_category": {
                     "type": "string"
                 },
                 "value": {
@@ -10158,6 +10355,10 @@ const docTemplate = `{
                     "description": "组织id",
                     "type": "integer"
                 },
+                "organize_name": {
+                    "description": "组织name",
+                    "type": "string"
+                },
                 "rule": {
                     "description": "告警规则 RuleConfigJson中prom_ql字段",
                     "type": "string"
@@ -10204,6 +10405,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "service_option_code": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Metrics": {
+            "type": "object",
+            "properties": {
+                "metrics": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 }
             }
@@ -10607,17 +10819,8 @@ const docTemplate = `{
         "router.assetsModel": {
             "type": "object",
             "properties": {
-                "asset_status": {
-                    "type": "string"
-                },
                 "configs": {
                     "type": "string"
-                },
-                "cpu": {
-                    "type": "integer"
-                },
-                "directory_id": {
-                    "type": "integer"
                 },
                 "group_id": {
                     "type": "integer"
@@ -10634,14 +10837,11 @@ const docTemplate = `{
                 "label": {
                     "type": "string"
                 },
-                "location": {
+                "manufacturers": {
                     "type": "string"
                 },
                 "memo": {
                     "type": "string"
-                },
-                "memory": {
-                    "type": "integer"
                 },
                 "name": {
                     "type": "string"
@@ -10652,16 +10852,10 @@ const docTemplate = `{
                 "organization_id": {
                     "type": "integer"
                 },
-                "os": {
-                    "type": "string"
-                },
                 "params": {
                     "type": "string"
                 },
-                "plugin_version": {
-                    "type": "string"
-                },
-                "producer": {
+                "position": {
                     "type": "string"
                 },
                 "tags": {

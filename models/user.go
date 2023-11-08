@@ -68,8 +68,8 @@ type UserInfo struct {
 	Status         int64          `json:"status"`                          //用户状态（1：启用；0：禁用）
 	OrganizationId int64          `json:"organization_id"`                 //组织id
 	DeletedAt      gorm.DeletedAt `json:"deleted_at" swaggerignore:"true"` //逻辑删除字段
-	Name     			 string  				`json:"name"`
-	GroupName 		 []string 			`json:"group_name"`
+	Name           string         `json:"name"`
+	GroupName      []string       `json:"group_name"`
 }
 
 type User struct {
@@ -741,15 +741,32 @@ func UserMap(ctx *ctx.Context, where map[string]interface{}, query string, limit
 	vals = append(vals, query)
 
 	err = session.Debug().Model(&User{}).Joins("LEFT JOIN user_group_member ugm ON ugm.user_id = users.id").
-	Joins("LEFT JOIN user_group ug ON ugm.group_id = ug.id").Select("users.*,GROUP_CONCAT(ug.name) AS name").Where(where).
-	Where(str.String(), vals...).Group("users.id").Find(&lst).Error
+		Joins("LEFT JOIN user_group ug ON ugm.group_id = ug.id").Select("users.*,GROUP_CONCAT(ug.name) AS name").Where(where).
+		Where(str.String(), vals...).Group("users.id").Find(&lst).Error
 
 	for i := 0; i < len(lst); i++ {
 		lst[i].RolesLst = strings.Fields(lst[i].Roles)
 		lst[i].Admin = lst[i].IsAdmin()
 		lst[i].Password = ""
-		lst[i].GroupName = strings.Split(lst[i].Name,",")
+		lst[i].GroupName = strings.Split(lst[i].Name, ",")
 	}
 
 	return lst, err
+}
+
+//查询role
+func UserRoleGets(ctx *ctx.Context, oldRole string) ([]User, error) {
+	var lst []User
+	oldRole = "%" + oldRole + "%"
+	err := DB(ctx).Model(&User{}).Where("roles like ?", oldRole).Find(&lst).Error
+	return lst, err
+}
+
+// 更新角色(事务)
+func UserRoleUpdateTx(tx *gorm.DB, id int64, roles string) error {
+	err := tx.Model(&User{}).Where("id = ?", id).Update("roles", roles).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
 }

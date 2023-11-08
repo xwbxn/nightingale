@@ -11,7 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/ccfos/nightingale/v6/models"
+	excels "github.com/ccfos/nightingale/v6/pkg/excel"
 	"github.com/prometheus/common/model"
 
 	"github.com/gin-gonic/gin"
@@ -54,14 +56,8 @@ type assetsModel struct {
 	Tags            string `json:"tags"`
 	Type            string `json:"type"`
 	Ip              string `json:"ip"`
-	Producer        string `json:"producer"`
-	Os              string `json:"os"`
-	Cpu             int64  `json:"cpu"`
-	Memory          int64  `json:"memory"`
-	PluginVersion   string `json:"plugin_version"`
-	Location        string `json:"location"`
-	AssetStatus     string `json:"asset_status"`
-	DirectoryId     int64  `json:"directory_id"`
+	Manufacturers   string `json:"manufacturers"`
+	Position        string `json:"position"`
 	Memo            string `json:"memo"`
 	Configs         string `json:"configs"`
 	Params          string `json:"params"`
@@ -105,21 +101,12 @@ func (rt *Router) assetsAddXH(c *gin.Context) {
 	var f map[string]interface{}
 	ginx.BindJSON(c, &f)
 	me := c.MustGet("user").(*models.User)
+	logger.Debug(f)
 
-	pluginVersion := ""
-	pluginVersionT, pluginVersionOk := f["plugin_version"]
-	if pluginVersionOk {
-		pluginVersion = pluginVersionT.(string)
-	}
-	location := ""
-	locationT, locationOk := f["location"]
-	if locationOk {
-		location = locationT.(string)
-	}
-	assetStatus := ""
-	assetStatusT, assetStatusOk := f["asset_status"]
-	if assetStatusOk {
-		assetStatus = assetStatusT.(string)
+	position := ""
+	positionT, positionOk := f["position"]
+	if positionOk {
+		position = positionT.(string)
 	}
 	memo := ""
 	memoT, memoOk := f["memo"]
@@ -128,45 +115,39 @@ func (rt *Router) assetsAddXH(c *gin.Context) {
 	}
 
 	var assets = models.Asset{
-		Name:           f["name"].(string),
-		Type:           f["type"].(string),
-		Ip:             f["ip"].(string),
-		Producer:       f["producer"].(string),
-		Os:             f["os"].(string),
-		Cpu:            int64(f["cpu"].(float64)),
-		Memory:         int64(f["memory"].(float64)),
-		PluginVersion:  pluginVersion,
-		Location:       location,
-		AssetStatus:    assetStatus,
-		DirectoryId:    int64(f["directory_id"].(float64)),
-		Memo:           memo,
-		CreateBy:       me.Username,
-		CreateAt:       time.Now().Unix(),
-		OrganizationId: int64(f["organization_id"].(float64)),
+		Name:          f["name"].(string),
+		Type:          f["type"].(string),
+		Ip:            f["ip"].(string),
+		Manufacturers: f["manufacturers"].(string),
+		Position:      position,
+		Memo:          memo,
+		CreateBy:      me.Username,
+		CreateAt:      time.Now().Unix(),
 	}
 
-	tx := models.DB(rt.Ctx).Begin()
-	assetId, err := assets.AddTx(tx)
+	// tx := models.DB(rt.Ctx).Begin()
+	// assetId, err := assets.AddTx(tx)
+	err := assets.Add(rt.Ctx)
 	ginx.Dangerous(err)
 
-	var assetsExpansion []models.AssetsExpansion
-	dictDatas, err := models.DictDataGetByMap(rt.Ctx, map[string]interface{}{"type_code": "asset_ext_fields"})
-	ginx.Dangerous(err)
-	for _, val := range dictDatas {
-		value, ok := f[val.DictKey]
-		if ok {
-			var expansion = models.AssetsExpansion{
-				AssetsId:  assetId,
-				NameCn:    val.DictValue,
-				Name:      val.DictKey,
-				Value:     value.(string),
-				CreatedBy: me.Username,
-			}
-			assetsExpansion = append(assetsExpansion, expansion)
-		}
-	}
-	err = models.AssetsExpansionAddTx(tx, assetsExpansion)
-	tx.Commit()
+	// var assetsExpansion []models.AssetsExpansion
+	// dictDatas, err := models.DictDataGetByMap(rt.Ctx, map[string]interface{}{"type_code": "asset_ext_fields"})
+	// ginx.Dangerous(err)
+	// for _, val := range dictDatas {
+	// 	value, ok := f[val.DictKey]
+	// 	if ok {
+	// 		var expansion = models.AssetsExpansion{
+	// 			AssetsId:  assetId,
+	// 			NameCn:    val.DictValue,
+	// 			Name:      val.DictKey,
+	// 			Value:     value.(string),
+	// 			CreatedBy: me.Username,
+	// 		}
+	// 		assetsExpansion = append(assetsExpansion, expansion)
+	// 	}
+	// }
+	// err = models.AssetsExpansionAddTx(tx, assetsExpansion)
+	// tx.Commit()
 
 	ginx.NewRender(c).Message(err)
 }
@@ -243,20 +224,10 @@ func (rt *Router) assetPutXH(c *gin.Context) {
 		ginx.Bomb(http.StatusOK, "assets not found")
 	}
 
-	pluginVersion := ""
-	pluginVersionT, pluginVersionOk := f["plugin_version"]
-	if pluginVersionOk {
-		pluginVersion = pluginVersionT.(string)
-	}
-	location := ""
-	locationT, locationOk := f["location"]
-	if locationOk {
-		location = locationT.(string)
-	}
-	assetStatus := ""
-	assetStatusT, assetStatusOk := f["asset_status"]
-	if assetStatusOk {
-		assetStatus = assetStatusT.(string)
+	position := ""
+	positionT, positionOk := f["position"]
+	if positionOk {
+		position = positionT.(string)
 	}
 	memo := ""
 	memoT, memoOk := f["memo"]
@@ -267,14 +238,8 @@ func (rt *Router) assetPutXH(c *gin.Context) {
 	oldAssets.Name = f["name"].(string)
 	oldAssets.Type = f["type"].(string)
 	oldAssets.Ip = f["ip"].(string)
-	oldAssets.Producer = f["producer"].(string)
-	oldAssets.Os = f["os"].(string)
-	oldAssets.Cpu = int64(f["cpu"].(float64))
-	oldAssets.Memory = int64(f["memory"].(float64))
-	oldAssets.PluginVersion = pluginVersion
-	oldAssets.Location = location
-	oldAssets.AssetStatus = assetStatus
-	oldAssets.DirectoryId = int64(f["directory_id"].(float64))
+	oldAssets.Manufacturers = f["manufacturers"].(string)
+	oldAssets.Position = position
 	oldAssets.Memo = memo
 	oldAssets.UpdateAt = time.Now().Unix()
 	oldAssets.UpdateBy = me.Username
@@ -329,21 +294,21 @@ func (rt *Router) assetGetFilter(c *gin.Context) {
 
 	//分页参数
 	limitT, limitOk := f["limit"]
-	limit := int(limitT.(float64))
-	if !limitOk {
-		limit = 20
+	limit := 20
+	if limitOk {
+		limit = int(limitT.(float64))
 	}
 	pageT, pageOk := f["page"]
-	page := int(pageT.(float64))
-	if !pageOk {
-		page = 1
+	page := 1
+	if pageOk {
+		page = int(pageT.(float64))
 	}
 
 	query := ""
 	queryTemp, queryOk := f["query"]
-	if !queryOk {
-		query = ""
-	}
+	// if !queryOk {
+	// 	query = ""
+	// }
 
 	queryType := ""
 	filter, filterOk := f["filter"]
@@ -366,20 +331,30 @@ func (rt *Router) assetGetFilter(c *gin.Context) {
 			query = "%" + queryTemp.(string) + "%"
 		}
 	}
-	ids := make([]int64, 0)
-	directoryId, directoryIdOk := f["directory_id"]
-	if directoryIdOk {
-		assetsDirTree, err := models.BuildDirTree(rt.Ctx, int64(directoryId.(float64)))
-		ginx.Dangerous(err)
-		ids, err = models.AssetsDirIds(rt.Ctx, assetsDirTree, ids)
-		logger.Debug(ids)
-		ginx.Dangerous(err)
+	aType := ""
+	typeT, typeOk := f["type"]
+	if typeOk {
+		aType = typeT.(string)
 	}
-	total, err := models.AssetsCountFilter(rt.Ctx, ids, query, queryType)
+	total, err := models.AssetsCountFilter(rt.Ctx, aType, query, queryType)
 	ginx.Dangerous(err)
 
-	lst, err := models.AssetsGetsFilter(rt.Ctx, ids, query, queryType, limit, (page-1)*limit)
+	lst, err := models.AssetsGetsFilter(rt.Ctx, aType, query, queryType, limit, (page-1)*limit)
 	ginx.Dangerous(err)
+	// ids := make([]int64, 0)
+	// directoryId, directoryIdOk := f["directory_id"]
+	// if directoryIdOk {
+	// 	assetsDirTree, err := models.BuildDirTree(rt.Ctx, int64(directoryId.(float64)))
+	// 	ginx.Dangerous(err)
+	// 	ids, err = models.AssetsDirIds(rt.Ctx, assetsDirTree, ids)
+	// 	logger.Debug(ids)
+	// 	ginx.Dangerous(err)
+	// }
+	// total, err := models.AssetsCountFilter(rt.Ctx, ids, query, queryType)
+	// ginx.Dangerous(err)
+
+	// lst, err := models.AssetsGetsFilter(rt.Ctx, ids, query, queryType, limit, (page-1)*limit)
+	// ginx.Dangerous(err)
 
 	for _, asset := range lst {
 		atype, ok := rt.assetCache.GetType(asset.Type)
@@ -390,6 +365,9 @@ func (rt *Router) assetGetFilter(c *gin.Context) {
 		if ok {
 			asset.Health = health.Health
 		}
+		lst, err := models.AssetExpansionGetByMap(rt.Ctx, map[string]interface{}{"asset_id": asset.Id})
+		ginx.Dangerous(err)
+		asset.Exps = lst
 	}
 
 	ginx.NewRender(c).Data(gin.H{
@@ -669,4 +647,131 @@ func (rt *Router) xmlceshi(c *gin.Context) {
 	c.Writer.Write(xmlData)
 	logger.Debug("333333333333")
 	ginx.NewRender(c)
+}
+
+// @Summary      导出资产模板
+// @Description  导出资产模板
+// @Tags         资产详情
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  models.Asset
+// @Router       /api/n9e/xh/asset/templet [post]
+// @Security     ApiKeyAuth
+func (rt *Router) templeAssetXH(c *gin.Context) {
+
+	datas := make([]interface{}, 0)
+
+	datas = append(datas, models.Asset{})
+
+	excels.NewMyExcel("资产信息").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+}
+
+// @Summary      EXCEL导入资产
+// @Description  EXCEL导入资产
+// @Tags         资产详情
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        file formData file true "file"
+// @Success      200
+// @Router       /api/n9e/xh/asset/import-xls [post]
+// @Security     ApiKeyAuth
+func (rt *Router) importAssetXH(c *gin.Context) {
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, "上传文件出错")
+	}
+	//读excel流
+	xlsx, err := excelize.OpenReader(file)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, "读取excel文件失败")
+	}
+
+	//解析excel的数据
+	assetImports, _, lxRrr := excels.ReadExce[models.Asset](xlsx, rt.Ctx)
+	if lxRrr != nil {
+		ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
+		return
+	}
+	me := c.MustGet("user").(*models.User)
+	var qty int = 0
+	for _, entity := range assetImports {
+		// 循环体
+		var f models.Asset = entity
+		f.CreateBy = me.Username
+		f.Add(rt.Ctx)
+		qty++
+	}
+	ginx.NewRender(c).Data(qty, nil)
+
+}
+
+// @Summary      EXCEL导出配线架信息
+// @Description  EXCEL导出配线架信息
+// @Tags         配线架信息
+// @Accept       multipart/form-data
+// @Produce      application/msexcel
+// @Param        query query   string  false  "导入查询条件"
+// @Success      200
+// @Router       /api/n9e/xh/asset/export-xls [post]
+// @Security     ApiKeyAuth
+func (rt *Router) exportAssetXH(c *gin.Context) {
+
+	var f map[string]interface{}
+	ginx.BindJSON(c, &f)
+	var lst []models.Asset
+	var err error
+
+	idsTemp, idsOk := f["ids"]
+	ids := make([]int64, 0)
+	// var err error
+	if idsOk {
+		for _, val := range idsTemp.([]interface{}) {
+			ids = append(ids, int64(val.(float64)))
+		}
+		lst, err = models.AssetGetByIds(rt.Ctx, ids)
+		ginx.Dangerous(err)
+	} else {
+		query := ""
+		queryTemp, queryOk := f["query"]
+
+		queryType := ""
+		filter, filterOk := f["filter"]
+		if filterOk {
+			if !queryOk {
+				ginx.Bomb(http.StatusBadRequest, "参数为空")
+			} else {
+				query = "%" + queryTemp.(string) + "%"
+			}
+
+			if filter.(string) == "1" || filter.(string) == "4" {
+				queryType = "name"
+			} else if filter.(string) == "2" {
+				queryType = "ip"
+			} else if filter.(string) == "3" {
+				queryType = "type"
+			}
+		} else {
+			if queryOk {
+				query = "%" + queryTemp.(string) + "%"
+			}
+		}
+		aType := ""
+		typeT, typeOk := f["type"]
+		if typeOk {
+			aType = typeT.(string)
+		}
+
+		lst, err = models.AssetsGetsFilter(rt.Ctx, aType, query, queryType, -1, -1)
+		ginx.Dangerous(err)
+	}
+
+	datas := make([]interface{}, 0)
+	if len(lst) > 0 {
+		for _, v := range lst {
+			datas = append(datas, v)
+
+		}
+	}
+	excels.NewMyExcel("资产信息").ExportDataInfo(datas, "cn", rt.Ctx, c)
+
 }

@@ -18,7 +18,7 @@ import (
 // @Produce      json
 // @Param        id    path    string  true  "主键"
 // @Success      200  {object}  models.AssetsExpansion
-// @Router       /api/n9e/assets-expansion/{id} [get]
+// @Router       /api/n9e/xh/assets-expansion/{id} [get]
 // @Security     ApiKeyAuth
 func (rt *Router) assetsExpansionGet(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
@@ -40,7 +40,7 @@ func (rt *Router) assetsExpansionGet(c *gin.Context) {
 // @Param        limit query   int     false  "返回条数"
 // @Param        query query   string  false  "查询条件"
 // @Success      200  {array}  models.AssetsExpansion
-// @Router       /api/n9e/assets-expansion/ [get]
+// @Router       /api/n9e/xh/assets-expansion/ [get]
 // @Security     ApiKeyAuth
 func (rt *Router) assetsExpansionGets(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)
@@ -62,20 +62,22 @@ func (rt *Router) assetsExpansionGets(c *gin.Context) {
 // @Tags         资产扩展-西航
 // @Accept       json
 // @Produce      json
-// @Param        body  body   models.AssetsExpansion true "add assetsExpansion"
+// @Param        body  body   []models.AssetsExpansion true "add assetsExpansion"
 // @Success      200
-// @Router       /api/n9e/assets-expansion/ [post]
+// @Router       /api/n9e/xh/assets-expansion/ [post]
 // @Security     ApiKeyAuth
 func (rt *Router) assetsExpansionAdd(c *gin.Context) {
-	var f models.AssetsExpansion
+	var f []models.AssetsExpansion
 	ginx.BindJSON(c, &f)
 
 	// 添加审计信息
 	me := c.MustGet("user").(*models.User)
-	f.CreatedBy = me.Username
+	for index := range f {
+		f[index].CreatedBy = me.Username
+	}
 
 	// 更新模型
-	err := f.Add(rt.Ctx)
+	err := models.AssetsExpansionAdd(rt.Ctx, f)
 	ginx.NewRender(c).Message(err)
 }
 
@@ -86,7 +88,7 @@ func (rt *Router) assetsExpansionAdd(c *gin.Context) {
 // @Produce      json
 // @Param        body  body   models.AssetsExpansion true "update assetsExpansion"
 // @Success      200
-// @Router       /api/n9e/assets-expansion/ [put]
+// @Router       /api/n9e/xh/assets-expansion/ [put]
 // @Security     ApiKeyAuth
 func (rt *Router) assetsExpansionPut(c *gin.Context) {
 	var f models.AssetsExpansion
@@ -113,7 +115,7 @@ func (rt *Router) assetsExpansionPut(c *gin.Context) {
 // @Produce      json
 // @Param        id    path    string  true  "主键"
 // @Success      200
-// @Router       /api/n9e/assets-expansion/{id} [delete]
+// @Router       /api/n9e/xh/assets-expansion/{id} [delete]
 // @Security     ApiKeyAuth
 func (rt *Router) assetsExpansionDel(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")

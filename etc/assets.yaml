@@ -245,15 +245,6 @@ config:
       device:
         label: 设备信息
         props:
-          - name: name
-            label: 名称
-            type: input
-          - name: desc
-            label: 描述
-            type: input
-          - name: ip
-            label: ip地址
-            type: input
           - name: interface
             label: 网络接口
             type: list

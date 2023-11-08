@@ -25,24 +25,19 @@ type Asset struct {
 	Id                 int64          `json:"id" gorm:"primaryKey"`
 	Ident              string         `json:"ident"`
 	GroupId            int64          `json:"group_id"`
-	Name               string         `json:"name"`
+	Name               string         `json:"name" cn:"名称"`
+	Type               string         `json:"type" cn:"类型"`
+	Ip                 string         `json:"ip" cn:"IP"`
+	Manufacturers      string         `json:"manufacturers" cn:"厂商"`
+	Position           string         `json:"position" cn:"资产位置"`
+	Status             int64          `json:"status" cn:"状态" validate:"omitempty,oneof=0 1" source:"type=option,value=[下线;正常]"` //0: 未生效, 1: 已生效
 	Label              string         `json:"label"`
 	Tags               string         `json:"-"`
 	TagsJSON           []string       `json:"tags" gorm:"-"`
-	Type               string         `json:"type"`
-	Ip                 string         `json:"ip"`
-	Producer           string         `json:"producer"`
-	Os                 string         `json:"os"`
-	Cpu                int64          `json:"cpu"`
-	Memory             int64          `json:"memory"`
-	PluginVersion      string         `json:"plugin_version"`
-	Location           string         `json:"location"`
-	AssetStatus        string         `json:"asset_status"`
 	Memo               string         `json:"memo"`
 	Configs            string         `json:"configs"`
 	Params             string         `json:"params"`
 	Plugin             string         `json:"plugin"`
-	Status             int64          `json:"status"` //0: 未生效, 1: 已生效
 	CreateAt           int64          `json:"create_at"`
 	CreateBy           string         `json:"create_by"`
 	UpdateAt           int64          `json:"update_at"`
@@ -58,6 +53,7 @@ type Asset struct {
 	Health   int64                        `json:"health" gorm:"-"` //0: fail 1: ok
 	HealthAt int64                        `json:"-" gorm:"-"`
 	Metrics  map[string]map[string]string `json:"-" gorm:"-"`
+	Exps     []AssetExpansion             `json:"exps" gorm:"-"`
 }
 
 type Metrics struct {
@@ -187,7 +183,7 @@ func (ins *Asset) AddTx(tx *gorm.DB) (int64, error) {
 		}
 	}
 
-	err = tx.Model(&Asset{}).Create(ins).Error
+	err = tx.Debug().Model(&Asset{}).Create(ins).Error
 	if err != nil {
 		tx.Rollback()
 	}
@@ -473,7 +469,7 @@ func AssetMom(ctx *ctx.Context, aType string) (num int64, err error) {
 	start := time.Date(now.Year(), now.Month()-1, 1, 0, 0, 0, 0, now.Location()).Unix()
 	end := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).Unix()
 
-	err = DB(ctx).Debug().Model(&Asset{}).Where("create_at >= ? AND create_at < ?", start, end).Where("type = ?", aType).Count(&insertNum).Error
+	err = DB(ctx).Model(&Asset{}).Where("create_at >= ? AND create_at < ?", start, end).Where("type = ?", aType).Count(&insertNum).Error
 	if err != nil {
 		return 0, errors.New("查询环比数据出错")
 	}
@@ -481,7 +477,7 @@ func AssetMom(ctx *ctx.Context, aType string) (num int64, err error) {
 	var delLst []Asset
 	// err = DB(ctx).Debug().Unscoped().Find(&delLst).Error
 	// err = DB(ctx).Debug().Unscoped().Where("IFNULL('deleted_at','kong')!='kong'").Find(&delLst).Error
-	err = DB(ctx).Debug().Unscoped().Where("type = ?", aType).Where("`assets`.`deleted_at` IS NOT NULL").Find(&delLst).Error
+	err = DB(ctx).Unscoped().Where("type = ?", aType).Where("`assets`.`deleted_at` IS NOT NULL").Find(&delLst).Error
 	if err != nil {
 		return 0, errors.New("查询环比数据出错")
 	}
@@ -507,7 +503,7 @@ func AssetsCountMap(ctx *ctx.Context, where map[string]interface{}) (num int64, 
 }
 
 //根据filter统计数量
-func AssetsCountFilter(ctx *ctx.Context, dirs []int64, query, queryType string) (num int64, err error) {
+func AssetsCountFilter(ctx *ctx.Context, aType string, query, queryType string) (num int64, err error) {
 	session := DB(ctx)
 
 	if queryType == "" {
@@ -518,17 +514,20 @@ func AssetsCountFilter(ctx *ctx.Context, dirs []int64, query, queryType string) 
 		session = session.Where(queryType+" like ?", query)
 	}
 
-	if len(dirs) != 0 {
-		logger.Debug(dirs)
-		session = session.Where("directory_id in ?", dirs)
+	// if len(dirs) != 0 {
+	// 	logger.Debug(dirs)
+	// 	session = session.Where("directory_id in ?", dirs)
+	// }
+	if aType != "" {
+		session = session.Where("type = ?", aType)
 	}
 
-	err = session.Debug().Model(&Asset{}).Count(&num).Error
+	err = session.Model(&Asset{}).Count(&num).Error
 	return num, err
 }
 
 //根据filter查询
-func AssetsGetsFilter(ctx *ctx.Context, dirs []int64, query, queryType string, limit, offset int) (lst []Asset, err error) {
+func AssetsGetsFilter(ctx *ctx.Context, aType string, query, queryType string, limit, offset int) (lst []Asset, err error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
@@ -542,12 +541,15 @@ func AssetsGetsFilter(ctx *ctx.Context, dirs []int64, query, queryType string, l
 	} else {
 		session = session.Where(queryType+" like ?", query)
 	}
-	logger.Debug(dirs)
-	if len(dirs) != 0 {
-		session = session.Where("directory_id in ?", dirs)
+	// logger.Debug(dirs)
+	// if len(dirs) != 0 {
+	// 	session = session.Where("directory_id in ?", dirs)
+	// }
+	if aType != "" {
+		session = session.Where("type = ?", aType)
 	}
 
-	err = session.Debug().Model(&Asset{}).Find(&lst).Error
+	err = session.Model(&Asset{}).Find(&lst).Error
 	return lst, err
 }
 
@@ -585,4 +587,11 @@ func GetIP(asset *Asset) (ip, name string) {
 		}
 	}
 	return ip, name
+}
+
+//根据ids获得资产
+func AssetGetByIds(ctx *ctx.Context, ids []int64) ([]Asset, error) {
+	var lst []Asset
+	err := DB(ctx).Model(&Asset{}).Where("id in ?", ids).Find(&lst).Error
+	return lst, err
 }

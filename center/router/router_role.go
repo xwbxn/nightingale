@@ -54,11 +54,43 @@ func (rt *Router) rolePut(c *gin.Context) {
 			ginx.Bomb(http.StatusOK, "role name already exists")
 		}
 	}
+	old := oldRule.Name
 
 	oldRule.Name = f.Name
 	oldRule.Note = f.Note
 
-	ginx.NewRender(c).Message(oldRule.Update(rt.Ctx, "name", "note"))
+	tx := models.DB(rt.Ctx).Begin()
+	err = oldRule.UpdateTx(tx, "name", "note")
+	ginx.Dangerous(err)
+
+	lst, err := models.UserRoleGets(rt.Ctx, f.Name)
+	if err != nil {
+		tx.Rollback()
+	}
+
+	for _, val := range lst {
+		roles := strings.Split(val.Roles, " ")
+		str := ""
+		for index := range roles {
+			if roles[index] == old {
+				if index == 0 {
+					str += f.Name
+				} else {
+					str += " " + f.Name
+				}
+			} else {
+				if index == 0 {
+					str += roles[index]
+				} else {
+					str += " " + roles[index]
+				}
+			}
+		}
+		err = models.UserRoleUpdateTx(tx, val.Id, str)
+		ginx.Dangerous(err)
+	}
+
+	ginx.NewRender(c).Message(err)
 }
 
 func (rt *Router) roleDel(c *gin.Context) {
