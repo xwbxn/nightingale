@@ -48,6 +48,30 @@ var (
 // 表名:user
 // group: User
 // version:2023-07-11 15:14
+type UserInfo struct {
+	Id             int64          `json:"id" gorm:"primaryKey"`
+	Username       string         `json:"username"`
+	Nickname       string         `json:"nickname"`
+	Password       string         `json:"-"`
+	Phone          string         `json:"phone"`
+	Email          string         `json:"email"`
+	Portrait       string         `json:"portrait"`
+	Roles          string         `json:"-"`                             // 这个字段写入数据库
+	RolesLst       []string       `json:"roles" gorm:"-"`                // 这个字段和前端交互
+	Contacts       ormx.JSONObj   `json:"contacts" swaggerignore:"true"` // 内容为 map[string]string 结构
+	Maintainer     int            `json:"maintainer"`                    // 是否给管理员发消息 0:not send 1:send
+	CreateAt       int64          `json:"create_at"`
+	CreateBy       string         `json:"create_by"`
+	UpdateAt       int64          `json:"update_at"`
+	UpdateBy       string         `json:"update_by"`
+	Admin          bool           `json:"admin" gorm:"-"`                  // 方便前端使用
+	Status         int64          `json:"status"`                          //用户状态（1：启用；0：禁用）
+	OrganizationId int64          `json:"organization_id"`                 //组织id
+	DeletedAt      gorm.DeletedAt `json:"deleted_at" swaggerignore:"true"` //逻辑删除字段
+	Name     			 string  				`json:"name"`
+	GroupName 		 []string 			`json:"group_name"`
+}
+
 type User struct {
 	Id             int64          `json:"id" gorm:"primaryKey"`
 	Username       string         `json:"username"`
@@ -103,6 +127,15 @@ func (u *User) String() string {
 }
 
 func (u *User) IsAdmin() bool {
+	for i := 0; i < len(u.RolesLst); i++ {
+		if u.RolesLst[i] == AdminRole {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *UserInfo) IsAdmin() bool {
 	for i := 0; i < len(u.RolesLst); i++ {
 		if u.RolesLst[i] == AdminRole {
 			return true
@@ -686,7 +719,7 @@ func UserCountMap(ctx *ctx.Context, where map[string]interface{}, query string) 
 	return num, err
 }
 
-func UserMap(ctx *ctx.Context, where map[string]interface{}, query string, limit, offset int) (lst []User, err error) {
+func UserMap(ctx *ctx.Context, where map[string]interface{}, query string, limit, offset int) (lst []UserInfo, err error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
@@ -707,12 +740,15 @@ func UserMap(ctx *ctx.Context, where map[string]interface{}, query string, limit
 	str.WriteString("roles like ?")
 	vals = append(vals, query)
 
-	err = session.Debug().Model(&User{}).Where(where).Where(str.String(), vals...).Find(&lst).Error
+	err = session.Debug().Model(&User{}).Joins("LEFT JOIN user_group_member ugm ON ugm.user_id = users.id").
+	Joins("LEFT JOIN user_group ug ON ugm.group_id = ug.id").Select("users.*,GROUP_CONCAT(ug.name) AS name").Where(where).
+	Where(str.String(), vals...).Group("users.id").Find(&lst).Error
 
 	for i := 0; i < len(lst); i++ {
 		lst[i].RolesLst = strings.Fields(lst[i].Roles)
 		lst[i].Admin = lst[i].IsAdmin()
 		lst[i].Password = ""
+		lst[i].GroupName = strings.Split(lst[i].Name,",")
 	}
 
 	return lst, err
