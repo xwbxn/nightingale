@@ -13,7 +13,6 @@ import (
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/center/sso"
 	_ "github.com/ccfos/nightingale/v6/front/statik"
-	_ "github.com/ccfos/nightingale/v6/front/statik_dashboard"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -117,46 +116,52 @@ func languageDetector(i18NHeaderKey string) gin.HandlerFunc {
 	}
 }
 
-func (rt *Router) configDashboardRoute(r *gin.Engine, fs *http.FileSystem) {
-	r.NoRoute(func(c *gin.Context) {
-		if strings.HasPrefix(c.Request.URL.Path, "/prod-api") {
-			path := strings.ReplaceAll(c.Request.URL.Path, "/prod-api", "")
-			c.FileFromFS(path, *fs)
-		}
-	})
-}
-
 func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 	r.NoRoute(func(c *gin.Context) {
 		arr := strings.Split(c.Request.URL.Path, ".")
 		suffix := arr[len(arr)-1]
 
-		switch suffix {
-		case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf":
-			if !rt.Center.UseFileAssets {
-				c.FileFromFS(c.Request.URL.Path, *fs)
-			} else {
-				cwdarr := []string{"/"}
-				if runtime.GOOS == "windows" {
-					cwdarr[0] = ""
-				}
-				cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
-				cwdarr = append(cwdarr, "pub")
-				cwdarr = append(cwdarr, strings.Split(c.Request.URL.Path, "/")...)
-				c.File(path.Join(cwdarr...))
+		if strings.HasPrefix(arr[0], "/prod-api") {
+			cwdarr := []string{"/"}
+			if runtime.GOOS == "windows" {
+				cwdarr[0] = ""
 			}
-		default:
-			if !rt.Center.UseFileAssets {
-				c.FileFromFS("/", *fs)
-			} else {
-				cwdarr := []string{"/"}
-				if runtime.GOOS == "windows" {
-					cwdarr[0] = ""
+			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
+			cwdarr = append(cwdarr, "public")
+			filename := strings.ReplaceAll(c.Request.URL.Path, "/prod-api", "")
+			if filename == "" || filename == "/" {
+				filename = "/index.html"
+			}
+			cwdarr = append(cwdarr, strings.Split(filename, "/")...)
+			c.File(path.Join(cwdarr...))
+		} else {
+			switch suffix {
+			case "png", "jpeg", "jpg", "svg", "ico", "gif", "css", "js", "html", "htm", "gz", "zip", "map", "ttf":
+				if !rt.Center.UseFileAssets {
+					c.FileFromFS(c.Request.URL.Path, *fs)
+				} else {
+					cwdarr := []string{"/"}
+					if runtime.GOOS == "windows" {
+						cwdarr[0] = ""
+					}
+					cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
+					cwdarr = append(cwdarr, "pub")
+					cwdarr = append(cwdarr, strings.Split(c.Request.URL.Path, "/")...)
+					c.File(path.Join(cwdarr...))
 				}
-				cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
-				cwdarr = append(cwdarr, "pub")
-				cwdarr = append(cwdarr, "index.html")
-				c.File(path.Join(cwdarr...))
+			default:
+				if !rt.Center.UseFileAssets {
+					c.FileFromFS("/", *fs)
+				} else {
+					cwdarr := []string{"/"}
+					if runtime.GOOS == "windows" {
+						cwdarr[0] = ""
+					}
+					cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
+					cwdarr = append(cwdarr, "pub")
+					cwdarr = append(cwdarr, "index.html")
+					c.File(path.Join(cwdarr...))
+				}
 			}
 		}
 	})
@@ -176,15 +181,6 @@ func (rt *Router) Config(r *gin.Engine) {
 
 	if !rt.Center.UseFileAssets {
 		r.StaticFS("/pub", statikFS)
-	}
-
-	statikDashboardFS, err := fs.NewWithNamespace("dashboard")
-	if err != nil {
-		logger.Errorf("cannot create statik fs: %v", err)
-	}
-
-	if !rt.Center.UseFileAssets {
-		r.StaticFS("/prod-api", statikDashboardFS)
 	}
 
 	pagesPrefix := "/api/n9e"
@@ -823,9 +819,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	rt.configDashboardRoute(r, &statikDashboardFS)
 	rt.configNoRoute(r, &statikFS)
-
 }
 
 func Render(c *gin.Context, data, msg interface{}) {
