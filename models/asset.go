@@ -25,12 +25,12 @@ type Asset struct {
 	Id                 int64          `json:"id" gorm:"primaryKey"`
 	Ident              string         `json:"ident"`
 	GroupId            int64          `json:"group_id"`
-	Name               string         `json:"name" cn:"名称"`
-	Type               string         `json:"type" cn:"类型"`
-	Ip                 string         `json:"ip" cn:"IP"`
-	Manufacturers      string         `json:"manufacturers" cn:"厂商"`
-	Position           string         `json:"position" cn:"资产位置"`
-	Status             int64          `json:"status" cn:"状态" validate:"omitempty,oneof=0 1" source:"type=option,value=[下线;正常]"` //0: 未生效, 1: 已生效
+	Name               string         `json:"name" cn:"名称" xml:"name"`
+	Type               string         `json:"type" cn:"类型" xml:"type" source:"type=cache"`
+	Ip                 string         `json:"ip" cn:"IP" xml:""`
+	Manufacturers      string         `json:"manufacturers" cn:"厂商" xml:"manufacturers"`
+	Position           string         `json:"position" cn:"资产位置" xml:"position"`
+	Status             int64          `json:"status" xml:"status" cn:"状态" validate:"omitempty,oneof=0 1" source:"type=option,value=[下线;正常]"` //0: 未生效, 1: 已生效
 	Label              string         `json:"label"`
 	Tags               string         `json:"-"`
 	TagsJSON           []string       `json:"tags" gorm:"-"`
@@ -50,15 +50,26 @@ type Asset struct {
 	DeletedAt          gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"`
 
 	//下面的是健康检查使用，在memsto缓存中保存
-	Health   int64                        `json:"health" gorm:"-"` //0: fail 1: ok
-	HealthAt int64                        `json:"-" gorm:"-"`
-	Metrics  map[string]map[string]string `json:"-" gorm:"-"`
-	Exps     []AssetExpansion             `json:"exps" gorm:"-"`
+	Health      int64                        `json:"health" gorm:"-"` //0: fail 1: ok
+	HealthAt    int64                        `json:"-" gorm:"-"`
+	Metrics     map[string]map[string]string `json:"-" gorm:"-"`
+	Exps        []AssetsExpansion            `json:"exps" gorm:"-"`
+	MetricsList []map[string]interface{}     `json:"metrics_list" gorm:"-"`
+}
+
+type AssetImport struct {
+	Name          string `json:"name" cn:"名称" xml:"name"`
+	Type          string `json:"type" cn:"类型" xml:"type"`
+	Ip            string `json:"ip" cn:"IP" xml:"IP"`
+	Manufacturers string `json:"manufacturers" cn:"厂商" xml:"manufacturers"`
+	Position      string `json:"position" cn:"资产位置" xml:"position"`
+	Status        string `json:"status" xml:"status" cn:"状态"` //0: 未生效, 1: 已生效
+
 }
 
 type Metrics struct {
 	Name    string `json:"name"`
-	Metrics string `json:"metrics"`
+	Metrics string `json:"metrics" yaml:"metrics"`
 }
 
 type BaseProp struct {
@@ -90,9 +101,13 @@ type ExtraPropPart struct {
 		Type       string `json:"type" yaml:"type"`
 		ItemsLimit int64  `json:"items_limit" yaml:"items_limit"`
 		Items      []*struct {
-			Name  string `json:"name" yaml:"name"`
-			Label string `json:"label" yaml:"label"`
-			Type  string `json:"type" yaml:"type"`
+			Name    string `json:"name" yaml:"name"`
+			Label   string `json:"label" yaml:"label"`
+			Type    string `json:"type" yaml:"type"`
+			Options []*struct {
+				Label string `json:"label" yaml:"label"`
+				Value string `json:"value" yaml:"value"`
+			} `json:"options" yaml:"options"`
 		} `json:"items" yaml:"items"`
 	} `json:"props" yaml:"props"`
 }
@@ -154,6 +169,41 @@ func (ins *Asset) Add(ctx *ctx.Context) error {
 	}
 
 	return nil
+}
+
+//西航
+func (ins *Asset) AddXH(ctx *ctx.Context) (int64, error) {
+	if err := ins.Verify(); err != nil {
+		return 0, err
+	}
+
+	if ins.Type == "host" {
+		if exists, err := Exists(DB(ctx).Where("ident = ? and plugin = 'host")); err != nil || exists {
+			return 0, errors.New("duplicate host asset")
+		}
+	}
+
+	now := time.Now().Unix()
+	ins.CreateAt = now
+	ins.UpdateAt = now
+	ins.Status = 0
+	assetTypes, err := AssetTypeGetsAll()
+	if err != nil {
+		return 0, err
+	}
+
+	for _, item := range assetTypes {
+		if item.Name == ins.Type {
+			ins.Plugin = item.Plugin
+			break
+		}
+	}
+
+	if err := Insert(ctx, ins); err != nil {
+		return 0, err
+	}
+
+	return ins.Id, nil
 }
 
 func (ins *Asset) AddTx(tx *gorm.DB) (int64, error) {

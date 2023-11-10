@@ -2396,6 +2396,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/n9e/assets/types": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询资产详情/维保/管理",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产-西航"
+                ],
+                "summary": "ceshi",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.AssetType"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/n9e/auth/login": {
             "post": {
                 "description": "登录",
@@ -8040,23 +8071,33 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "EXCEL导出配线架信息",
+                "description": "EXCEL导出资产",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
-                    "application/msexcel"
+                    "application/json"
                 ],
                 "tags": [
-                    "配线架信息"
+                    "资产-西航"
                 ],
-                "summary": "EXCEL导出配线架信息",
+                "summary": "EXCEL导出资产",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "导入查询条件",
-                        "name": "query",
+                        "type": "integer",
+                        "description": "类型",
+                        "name": "ftype",
                         "in": "query"
+                    },
+                    {
+                        "description": "add query",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     }
                 ],
                 "responses": {
@@ -8081,7 +8122,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "资产详情"
+                    "资产-西航"
                 ],
                 "summary": "EXCEL导入资产",
                 "parameters": [
@@ -8115,7 +8156,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "资产详情"
+                    "资产-西航"
                 ],
                 "summary": "导出资产模板",
                 "responses": {
@@ -8129,49 +8170,6 @@ const docTemplate = `{
             }
         },
         "/api/n9e/xh/assets-expansion/": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "根据条件查询资产扩展-西航",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "资产扩展-西航"
-                ],
-                "summary": "查询资产扩展-西航",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "返回条数",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "查询条件",
-                        "name": "query",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.AssetsExpansion"
-                            }
-                        }
-                    }
-                }
-            },
             "put": {
                 "security": [
                     {
@@ -8191,41 +8189,21 @@ const docTemplate = `{
                 "summary": "更新资产扩展-西航",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "资产ID",
+                        "name": "asset",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "属性",
+                        "name": "type",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
                         "description": "update assetsExpansion",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.AssetsExpansion"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "创建资产扩展-西航",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "资产扩展-西航"
-                ],
-                "summary": "创建资产扩展-西航",
-                "parameters": [
-                    {
-                        "description": "add assetsExpansion",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -8235,75 +8213,6 @@ const docTemplate = `{
                                 "$ref": "#/definitions/models.AssetsExpansion"
                             }
                         }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
-        "/api/n9e/xh/assets-expansion/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "根据主键获取资产扩展-西航",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "资产扩展-西航"
-                ],
-                "summary": "获取资产扩展-西航",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "主键",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.AssetsExpansion"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "根据主键删除资产扩展-西航",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "资产扩展-西航"
-                ],
-                "summary": "删除资产扩展-西航",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "主键",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -8403,12 +8312,12 @@ const docTemplate = `{
                 "summary": "批量删除资产-西航",
                 "parameters": [
                     {
-                        "description": "add assetsModel",
+                        "description": "add assetsForm",
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/router.assetsModel"
+                            "$ref": "#/definitions/router.assetsForm"
                         }
                     }
                 ],
@@ -8483,6 +8392,40 @@ const docTemplate = `{
                             "type": "object",
                             "additionalProperties": true
                         }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/xh/assets/id": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据id查询资产-西航",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "资产-西航"
+                ],
+                "summary": "根据id查询资产-西航",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "资产ID",
+                        "name": "asset",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -8831,7 +8774,7 @@ const docTemplate = `{
                 "exps": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.AssetExpansion"
+                        "$ref": "#/definitions/models.AssetsExpansion"
                     }
                 },
                 "group_id": {
@@ -8858,6 +8801,13 @@ const docTemplate = `{
                 },
                 "memo": {
                     "type": "string"
+                },
+                "metrics_list": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                    }
                 },
                 "name": {
                     "type": "string"
@@ -9688,6 +9638,48 @@ const docTemplate = `{
                 }
             }
         },
+        "models.AssetType": {
+            "type": "object",
+            "properties": {
+                "base_props": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.BaseProp"
+                    }
+                },
+                "category": {
+                    "type": "string"
+                },
+                "extra_props": {
+                    "$ref": "#/definitions/models.ExtraProp"
+                },
+                "form": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "metrics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Metrics"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "optional_metrics": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "plugin": {
+                    "type": "string"
+                }
+            }
+        },
         "models.AssetsDirTree": {
             "type": "object",
             "properties": {
@@ -9760,10 +9752,30 @@ const docTemplate = `{
                 "name_cn": {
                     "type": "string"
                 },
-                "property_category": {
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BaseProp": {
+            "type": "object",
+            "properties": {
+                "label": {
                     "type": "string"
                 },
-                "value": {
+                "name": {
+                    "type": "string"
+                },
+                "options": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "required": {
+                    "type": "string"
+                },
+                "type": {
                     "type": "string"
                 }
             }
@@ -10650,6 +10662,100 @@ const docTemplate = `{
                 }
             }
         },
+        "models.ExtraProp": {
+            "type": "object",
+            "properties": {
+                "bios": {
+                    "$ref": "#/definitions/models.ExtraPropPart"
+                },
+                "board": {
+                    "$ref": "#/definitions/models.ExtraPropPart"
+                },
+                "bus": {
+                    "$ref": "#/definitions/models.ExtraPropPart"
+                },
+                "cpu": {
+                    "$ref": "#/definitions/models.ExtraPropPart"
+                },
+                "device": {
+                    "$ref": "#/definitions/models.ExtraPropPart"
+                },
+                "disk": {
+                    "$ref": "#/definitions/models.ExtraPropPart"
+                },
+                "memory": {
+                    "$ref": "#/definitions/models.ExtraPropPart"
+                },
+                "net": {
+                    "$ref": "#/definitions/models.ExtraPropPart"
+                },
+                "os": {
+                    "$ref": "#/definitions/models.ExtraPropPart"
+                },
+                "power": {
+                    "$ref": "#/definitions/models.ExtraPropPart"
+                }
+            }
+        },
+        "models.ExtraPropPart": {
+            "type": "object",
+            "properties": {
+                "label": {
+                    "type": "string"
+                },
+                "props": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "label": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "options": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "label": {
+                                                        "type": "string"
+                                                    },
+                                                    "value": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "type": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "items_limit": {
+                                "type": "integer"
+                            },
+                            "label": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "models.FeAlert": {
             "type": "object",
             "properties": {
@@ -11169,6 +11275,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "value": {}
+            }
+        },
+        "router.assetsForm": {
+            "type": "object",
+            "required": [
+                "ids"
+            ],
+            "properties": {
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
             }
         },
         "router.assetsModel": {

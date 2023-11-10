@@ -32,15 +32,15 @@ config:
     plugin: host
     metrics:
       - name: CPU使用率
-        metrics: cpu_usage_active
+        metrics: "cpu_usage_active"
       - name: 内存使用率
-        metrics: mem_used_percent
+        metrics: "mem_used_percent"
       - name: 入口流量
-        metrics: "rate(net_bits_recv[1m])"
+        metrics: 'rate(net_bits_recv[1m])'
       - name: 出口流量
         metrics: "rate(net_bits_sent[1m])"
       - name: CPU核数
-        metrics: system_n_cpus
+        metrics: "system_n_cpus"
     dashboard: "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Server&id=${id}&viewMode=fullscreen"
     form: []
     base_props: *base_props
@@ -265,11 +265,31 @@ config:
               - name: admin_status
                 label: 管理状态
                 type: select
-                options: [[up, 1], [down, 2], [testing, 3]]
+                options: 
+                  - label: up
+                    value: 1 
+                  - label: down
+                    value: 2
+                  - label: testing
+                    value: 3
               - name: oper_status
                 label: 业务状态
                 type: select
-                options:  [[up, 1], [down, 2], [testing, 3], [unkonwn 4], [dormant, 5], [notPresent, 6], [lowerLayerDown, 7]]
+                options:  
+                  - label: up
+                    value: 1
+                  - label: down
+                    value: 2
+                  - label: testing
+                    value: 3
+                  - label: unkonwn
+                    value: 4
+                  - label: dormant
+                    value: 5
+                  - label: notPresent
+                    value: 6
+                  - label: lowerLayerDown
+                    value: 7
     
   - name: 主机(exporter)
     category: "业务资产"

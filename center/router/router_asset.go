@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -101,7 +103,12 @@ func (rt *Router) assetsAddXH(c *gin.Context) {
 	var f map[string]interface{}
 	ginx.BindJSON(c, &f)
 	me := c.MustGet("user").(*models.User)
-	logger.Debug(f)
+
+	num, err := models.AssetsCountMap(rt.Ctx, map[string]interface{}{"ip": f["ip"]})
+	ginx.Dangerous(err)
+	if num > 0 {
+		ginx.Bomb(http.StatusOK, "IP已存在")
+	}
 
 	position := ""
 	positionT, positionOk := f["position"]
@@ -125,31 +132,10 @@ func (rt *Router) assetsAddXH(c *gin.Context) {
 		CreateAt:      time.Now().Unix(),
 	}
 
-	// tx := models.DB(rt.Ctx).Begin()
-	// assetId, err := assets.AddTx(tx)
-	err := assets.Add(rt.Ctx)
+	id, err := assets.AddXH(rt.Ctx)
 	ginx.Dangerous(err)
 
-	// var assetsExpansion []models.AssetsExpansion
-	// dictDatas, err := models.DictDataGetByMap(rt.Ctx, map[string]interface{}{"type_code": "asset_ext_fields"})
-	// ginx.Dangerous(err)
-	// for _, val := range dictDatas {
-	// 	value, ok := f[val.DictKey]
-	// 	if ok {
-	// 		var expansion = models.AssetsExpansion{
-	// 			AssetsId:  assetId,
-	// 			NameCn:    val.DictValue,
-	// 			Name:      val.DictKey,
-	// 			Value:     value.(string),
-	// 			CreatedBy: me.Username,
-	// 		}
-	// 		assetsExpansion = append(assetsExpansion, expansion)
-	// 	}
-	// }
-	// err = models.AssetsExpansionAddTx(tx, assetsExpansion)
-	// tx.Commit()
-
-	ginx.NewRender(c).Message(err)
+	ginx.NewRender(c).Data(id, err)
 }
 
 type optionalMetricsForm struct {
@@ -214,14 +200,21 @@ func (rt *Router) assetPut(c *gin.Context) {
 func (rt *Router) assetPutXH(c *gin.Context) {
 	var f map[string]interface{}
 	ginx.BindJSON(c, &f)
+
 	oldAssets, err := models.AssetGet(rt.Ctx, "id=?", int64(f["id"].(float64)))
 	ginx.Dangerous(err)
-	oldExpansions, err := models.AssetsExpansionGetsMap(rt.Ctx, map[string]interface{}{"assets_id": int64(f["id"].(float64))})
-	ginx.Dangerous(err)
+
 	me := c.MustGet("user").(*models.User)
 
 	if oldAssets == nil {
 		ginx.Bomb(http.StatusOK, "assets not found")
+	}
+	if oldAssets.Ip != f["ip"].(string) {
+		num, err := models.AssetsCountMap(rt.Ctx, map[string]interface{}{"ip": f["ip"]})
+		ginx.Dangerous(err)
+		if num > 0 {
+			ginx.Bomb(http.StatusOK, "IP已存在")
+		}
 	}
 
 	position := ""
@@ -244,17 +237,8 @@ func (rt *Router) assetPutXH(c *gin.Context) {
 	oldAssets.UpdateAt = time.Now().Unix()
 	oldAssets.UpdateBy = me.Username
 
-	tx := models.DB(rt.Ctx).Begin()
-
-	err = oldAssets.UpdateTx(tx, "name", "type", "ip", "producer", "os", "cpu", "memory", "plugin_version", "location", "asset_status", "directory_id", "memo", "update_at", "update_by")
+	err = oldAssets.Update(rt.Ctx, "name", "type", "ip", "manufacturers", "os", "cpu", "memory", "plugin_version", "position", "asset_status", "directory_id", "memo", "update_at", "update_by")
 	ginx.Dangerous(err)
-	for _, val := range oldExpansions {
-		if f[val.Name].(string) != val.Value {
-			models.AssetsExpansionUpdateTx(tx, map[string]interface{}{"id": val.Id}, map[string]interface{}{"value": f[val.Name], "updated_by": me.Username})
-			ginx.Dangerous(err)
-		}
-	}
-	tx.Commit()
 
 	ginx.NewRender(c).Message(err)
 }
@@ -277,6 +261,61 @@ func (rt *Router) assetDel(c *gin.Context) {
 	tx.Commit()
 
 	ginx.NewRender(c).Message(err)
+}
+
+// @Summary      根据id查询资产-西航
+// @Description  根据id查询资产-西航
+// @Tags         资产-西航
+// @Accept       json
+// @Produce      json
+// @Param        asset query   int     true  "资产ID"
+// @Success      200
+// @Router       /api/n9e/xh/assets/id [get]
+// @Security     ApiKeyAuth
+func (rt *Router) assetGetById(c *gin.Context) {
+	id := ginx.QueryInt64(c, "asset", -1)
+	logger.Debug(id)
+	if id == -1 {
+		ginx.Bomb(http.StatusOK, "参数错误")
+	}
+
+	lst, err := models.AssetsGetsMap(rt.Ctx, map[string]interface{}{"id": id})
+	ginx.Dangerous(err)
+	if len(lst) == 0 {
+		ginx.Bomb(http.StatusOK, "资产不存在")
+	}
+	for index, asset := range lst {
+		atype, ok := rt.assetCache.GetType(asset.Type)
+		if ok {
+			asset.Dashboard = strings.ReplaceAll(atype.Dashboard, "${id}", fmt.Sprintf("%d", asset.Id))
+		}
+		health, ok := rt.assetCache.Get(asset.Id)
+		if ok {
+			asset.Health = health.Health
+		}
+		assetType, _ := rt.assetCache.GetType(asset.Type)
+		assetC, assetCOk := rt.assetCache.Get(asset.Id)
+		if assetCOk {
+			metrics := make([]map[string]interface{}, 0)
+
+			for _, val := range assetType.Metrics {
+				value, valueOk := assetC.Metrics[val.Name]
+				if valueOk {
+					metrics = append(metrics, map[string]interface{}{"label": val.Metrics, "val": value["value"]})
+				}
+			}
+			lst[index].MetricsList = metrics
+		}
+
+		exps, err := models.AssetsExpansionGetsMap(rt.Ctx, map[string]interface{}{"assets_id": asset.Id})
+		ginx.Dangerous(err)
+		lst[index].Exps = exps
+	}
+	for _, val := range lst {
+		logger.Debug(val.Metrics)
+	}
+
+	ginx.NewRender(c).Data(lst[0], nil)
 }
 
 // @Summary      过滤器-西航
@@ -341,22 +380,8 @@ func (rt *Router) assetGetFilter(c *gin.Context) {
 
 	lst, err := models.AssetsGetsFilter(rt.Ctx, aType, query, queryType, limit, (page-1)*limit)
 	ginx.Dangerous(err)
-	// ids := make([]int64, 0)
-	// directoryId, directoryIdOk := f["directory_id"]
-	// if directoryIdOk {
-	// 	assetsDirTree, err := models.BuildDirTree(rt.Ctx, int64(directoryId.(float64)))
-	// 	ginx.Dangerous(err)
-	// 	ids, err = models.AssetsDirIds(rt.Ctx, assetsDirTree, ids)
-	// 	logger.Debug(ids)
-	// 	ginx.Dangerous(err)
-	// }
-	// total, err := models.AssetsCountFilter(rt.Ctx, ids, query, queryType)
-	// ginx.Dangerous(err)
 
-	// lst, err := models.AssetsGetsFilter(rt.Ctx, ids, query, queryType, limit, (page-1)*limit)
-	// ginx.Dangerous(err)
-
-	for _, asset := range lst {
+	for index, asset := range lst {
 		atype, ok := rt.assetCache.GetType(asset.Type)
 		if ok {
 			asset.Dashboard = strings.ReplaceAll(atype.Dashboard, "${id}", fmt.Sprintf("%d", asset.Id))
@@ -365,9 +390,26 @@ func (rt *Router) assetGetFilter(c *gin.Context) {
 		if ok {
 			asset.Health = health.Health
 		}
-		lst, err := models.AssetExpansionGetByMap(rt.Ctx, map[string]interface{}{"asset_id": asset.Id})
+		assetType, _ := rt.assetCache.GetType(asset.Type)
+		assetC, assetCOk := rt.assetCache.Get(asset.Id)
+		if assetCOk {
+			metrics := make([]map[string]interface{}, 0)
+
+			if len(assetType.Metrics) > 0 {
+				for _, val := range assetType.Metrics {
+					value, valueOk := assetC.Metrics[val.Name]
+					if valueOk {
+						metrics = append(metrics, map[string]interface{}{"label": val.Metrics, "val": value["value"]})
+					}
+				}
+			}
+
+			lst[index].MetricsList = metrics
+		}
+
+		exps, err := models.AssetsExpansionGetsMap(rt.Ctx, map[string]interface{}{"assets_id": asset.Id})
 		ginx.Dangerous(err)
-		asset.Exps = lst
+		lst[index].Exps = exps
 	}
 
 	ginx.NewRender(c).Data(gin.H{
@@ -403,7 +445,7 @@ func (rt *Router) assetUpdateXH(c *gin.Context) {
 // @Tags         资产-西航
 // @Accept       json
 // @Produce      json
-// @Param        body  body   assetsModel true "add assetsModel"
+// @Param        body  body  assetsForm   true "add assetsForm"
 // @Success      200
 // @Router       /api/n9e/xh/assets/batch-del/ [post]
 // @Security     ApiKeyAuth
@@ -439,8 +481,17 @@ func (rt *Router) assetIdentGetAll(c *gin.Context) {
 	ginx.NewRender(c).Data(data, err)
 }
 
+// @Summary      ceshi
+// @Description  根据条件查询资产详情/维保/管理
+// @Tags         资产-西航
+// @Accept       json
+// @Produce      json
+// @Success      200 {array}  models.AssetType
+// @Router       /api/n9e/assets/types [get]
+// @Security     ApiKeyAuth
 func (rt *Router) assetGetTypeList(c *gin.Context) {
 	data, err := models.AssetTypeGetsAll()
+
 	ginx.NewRender(c).Data(data, err)
 }
 
@@ -651,7 +702,7 @@ func (rt *Router) xmlceshi(c *gin.Context) {
 
 // @Summary      导出资产模板
 // @Description  导出资产模板
-// @Tags         资产详情
+// @Tags         资产-西航
 // @Accept       json
 // @Produce      json
 // @Success      200  {object}  models.Asset
@@ -660,15 +711,13 @@ func (rt *Router) xmlceshi(c *gin.Context) {
 func (rt *Router) templeAssetXH(c *gin.Context) {
 
 	datas := make([]interface{}, 0)
-
 	datas = append(datas, models.Asset{})
-
 	excels.NewMyExcel("资产信息").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
 }
 
 // @Summary      EXCEL导入资产
 // @Description  EXCEL导入资产
-// @Tags         资产详情
+// @Tags         资产-西航
 // @Accept       multipart/form-data
 // @Produce      json
 // @Param        file formData file true "file"
@@ -692,29 +741,46 @@ func (rt *Router) importAssetXH(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
 		return
 	}
+	logger.Debug(assetImports)
 	me := c.MustGet("user").(*models.User)
 	var qty int = 0
-	for _, entity := range assetImports {
+	for index, entity := range assetImports {
+
+		//校验
+		num, err := models.AssetsCountMap(rt.Ctx, map[string]interface{}{"ip": entity.Ip})
+		ginx.Dangerous(err)
+		if num > 0 {
+			str := "第" + strconv.Itoa(index) + "数据，IP已存在"
+			ginx.Bomb(http.StatusOK, str)
+		}
+
 		// 循环体
 		var f models.Asset = entity
 		f.CreateBy = me.Username
-		f.Add(rt.Ctx)
+		f.AddXH(rt.Ctx)
 		qty++
 	}
 	ginx.NewRender(c).Data(qty, nil)
 
 }
 
-// @Summary      EXCEL导出配线架信息
-// @Description  EXCEL导出配线架信息
-// @Tags         配线架信息
-// @Accept       multipart/form-data
-// @Produce      application/msexcel
-// @Param        query query   string  false  "导入查询条件"
+type AssetXml struct {
+	AssetData []models.AssetImport `xml:"asset_data"`
+}
+
+// @Summary      EXCEL导出资产
+// @Description  EXCEL导出资产
+// @Tags         资产-西航
+// @Accept       json
+// @Produce      json
+// @Param        ftype query   int     false  "类型"
+// @Param        body  body   map[string]interface{} true "add query"
 // @Success      200
 // @Router       /api/n9e/xh/asset/export-xls [post]
 // @Security     ApiKeyAuth
 func (rt *Router) exportAssetXH(c *gin.Context) {
+
+	fType := ginx.QueryInt64(c, "ftype", -1)
 
 	var f map[string]interface{}
 	ginx.BindJSON(c, &f)
@@ -772,6 +838,98 @@ func (rt *Router) exportAssetXH(c *gin.Context) {
 
 		}
 	}
-	excels.NewMyExcel("资产信息").ExportDataInfo(datas, "cn", rt.Ctx, c)
+	if fType == 1 {
+		excels.NewMyExcel("资产信息").ExportDataInfo(datas, "cn", rt.Ctx, c)
+	} else if fType == 2 {
+		// 创建用于写入XML文件的临时文件
+		file, err := os.CreateTemp("", "data.xml")
+		if err != nil {
+			ginx.Bomb(http.StatusBadRequest, "导出失败")
+			return
+		}
+		defer os.Remove(file.Name())
+		// 创建XML编码器，将数据写入文件
+		encoder := xml.NewEncoder(file)
+		encoder.Indent("", "  ")
+
+		var assetsImport []models.AssetImport
+		for _, val := range lst {
+			var assetImport models.AssetImport
+			assetImport.Ip = val.Ip
+			assetImport.Name = val.Name
+			assetImport.Manufacturers = val.Manufacturers
+			assetImport.Position = val.Position
+			if val.Status == 0 {
+				assetImport.Status = "下线"
+			} else if val.Status == 1 {
+				assetImport.Status = "正常"
+			}
+
+			assetImport.Type = val.Type
+			assetsImport = append(assetsImport, assetImport)
+		}
+		da := AssetXml{
+			AssetData: assetsImport,
+		}
+		procInst := xml.ProcInst{
+			Target: "xml",
+			Inst:   []byte("version=\"1.0\" encoding=\"UTF-8\"\n"),
+		}
+		if err := encoder.EncodeToken(procInst); err != nil {
+			ginx.Bomb(http.StatusBadRequest, "导出失败")
+		}
+		err = encoder.Encode(da)
+
+		if err != nil {
+			ginx.Bomb(http.StatusBadRequest, "导出失败")
+		}
+		encoder.Flush()
+		file.Close()
+		fmt.Println("XML导出成功！")
+		//设置文件类型
+		c.Header("Content-Type", "application/xml;charset=utf8")
+		//设置文件名称
+		rand.Seed(time.Now().UnixNano())
+		name := "资产信息" + strconv.FormatInt(rand.Int63n(time.Now().Unix()), 10)
+		c.Header("Content-Disposition", "attachment; filename="+url.QueryEscape(name))
+		c.File(file.Name())
+		ginx.NewRender(c)
+	} else if fType == 3 {
+		// 将结构体数组导出为txt文件
+		file, err := os.Create("asset.txt")
+		if err != nil {
+			fmt.Println("创建文件失败:", err)
+			return
+		}
+		defer file.Close()
+		str := "名称\t类型\tIP\t厂商\t资产位置\t状态\n"
+		_, err = io.WriteString(file, str)
+		if err != nil {
+			fmt.Println("写入文件失败:", err)
+			return
+		}
+		for _, asset := range lst {
+			status := ""
+			if asset.Status == 0 {
+				status = "下线"
+			} else if asset.Status == 1 {
+				status = "正常"
+			}
+			str := fmt.Sprintf("%s\t\t%s\t%s\t%s\t%s\t%s\n", asset.Name, asset.Type, asset.Ip, asset.Manufacturers, asset.Position, status)
+			_, err := io.WriteString(file, str)
+			if err != nil {
+				fmt.Println("写入文件失败:", err)
+				return
+			}
+		}
+		//设置文件类型
+		c.Header("Content-Type", "text/plain")
+		//设置文件名称
+		rand.Seed(time.Now().UnixNano())
+		name := "资产信息" + strconv.FormatInt(rand.Int63n(time.Now().Unix()), 10)
+		c.Header("Content-Disposition", "attachment; filename="+url.QueryEscape(name))
+		c.File(file.Name())
+		ginx.NewRender(c)
+	}
 
 }
