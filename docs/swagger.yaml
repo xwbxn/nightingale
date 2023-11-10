@@ -11,6 +11,10 @@ definitions:
         type: string
       directory_id:
         type: integer
+      exps:
+        items:
+          $ref: '#/definitions/models.AssetsExpansion'
+        type: array
       group_id:
         type: integer
       health:
@@ -28,6 +32,11 @@ definitions:
         type: string
       memo:
         type: string
+      metrics_list:
+        items:
+          additionalProperties: true
+          type: object
+        type: array
       name:
         type: string
       optional_metrics:
@@ -651,6 +660,34 @@ definitions:
       type:
         type: string
     type: object
+  models.AssetType:
+    properties:
+      base_props:
+        items:
+          $ref: '#/definitions/models.BaseProp'
+        type: array
+      category:
+        type: string
+      extra_props:
+        $ref: '#/definitions/models.ExtraProp'
+      form:
+        items:
+          additionalProperties: true
+          type: object
+        type: array
+      metrics:
+        items:
+          $ref: '#/definitions/models.Metrics'
+        type: array
+      name:
+        type: string
+      optional_metrics:
+        items:
+          type: string
+        type: array
+      plugin:
+        type: string
+    type: object
   models.AssetsDirTree:
     properties:
       children:
@@ -701,9 +738,22 @@ definitions:
         type: string
       name_cn:
         type: string
-      property_category:
-        type: string
       value:
+        type: string
+    type: object
+  models.BaseProp:
+    properties:
+      label:
+        type: string
+      name:
+        type: string
+      options:
+        items:
+          type: string
+        type: array
+      required:
+        type: string
+      type:
         type: string
     type: object
   models.CabinetGroup:
@@ -824,6 +874,23 @@ definitions:
     - room_name
     type: object
   models.DashboardUser:
+    properties:
+      assets_id:
+        description: type:BIGINT       comment:资产id      version:2023-9-31 09:11
+        type: integer
+      id:
+        description: type:BIGINT       comment:主键        version:2023-9-31 09:11
+        type: integer
+      page_name:
+        type: string
+      sort:
+        description: type:*int         comment:序号        version:2023-9-31 09:11
+        type: integer
+      type:
+        type: string
+      user_id:
+        description: type:BIGINT       comment:用户id      version:2023-9-31 09:11
+        type: integer
     type: object
   models.Datacenter:
     properties:
@@ -1355,6 +1422,67 @@ definitions:
     - room_id
     - total_port_num
     type: object
+  models.ExtraProp:
+    properties:
+      bios:
+        $ref: '#/definitions/models.ExtraPropPart'
+      board:
+        $ref: '#/definitions/models.ExtraPropPart'
+      bus:
+        $ref: '#/definitions/models.ExtraPropPart'
+      cpu:
+        $ref: '#/definitions/models.ExtraPropPart'
+      device:
+        $ref: '#/definitions/models.ExtraPropPart'
+      disk:
+        $ref: '#/definitions/models.ExtraPropPart'
+      memory:
+        $ref: '#/definitions/models.ExtraPropPart'
+      net:
+        $ref: '#/definitions/models.ExtraPropPart'
+      os:
+        $ref: '#/definitions/models.ExtraPropPart'
+      power:
+        $ref: '#/definitions/models.ExtraPropPart'
+    type: object
+  models.ExtraPropPart:
+    properties:
+      label:
+        type: string
+      props:
+        items:
+          properties:
+            items:
+              items:
+                properties:
+                  label:
+                    type: string
+                  name:
+                    type: string
+                  options:
+                    items:
+                      properties:
+                        label:
+                          type: string
+                        value:
+                          type: string
+                      type: object
+                    type: array
+                  type:
+                    type: string
+                type: object
+              type: array
+            items_limit:
+              type: integer
+            label:
+              type: string
+            name:
+              type: string
+            type:
+              type: string
+          type: object
+        type: array
+    type: object
   models.FeAlert:
     properties:
       asset_id:
@@ -1418,6 +1546,30 @@ definitions:
         type: string
       name:
         type: string
+    type: object
+  models.Monitoring:
+    properties:
+      asset_id:
+        description: type:BIGINT       comment:资产id      version:2023-10-08 16:45
+        type: integer
+      datasource_id:
+        description: type:BIGINT       comment:数据源名称    version:2023-10-08 16:45
+        type: integer
+      id:
+        description: type:BIGINT       comment:主键        version:2023-10-08 16:45
+        type: integer
+      monitoring_name:
+        type: string
+      monitoring_sql:
+        type: string
+      remark:
+        type: string
+      status:
+        description: type:*int         comment:状态        version:2023-10-08 16:45
+        type: integer
+      target_id:
+        description: type:*int         comment:采集器      version:2023-10-08 16:45
+        type: integer
     type: object
   models.Organization:
     properties:
@@ -1705,6 +1857,15 @@ definitions:
       name:
         type: string
       value: {}
+    type: object
+  router.assetsForm:
+    properties:
+      ids:
+        items:
+          type: string
+        type: array
+    required:
+    - ids
     type: object
   router.assetsModel:
     properties:
@@ -3237,6 +3398,25 @@ paths:
       summary: 资产树转移
       tags:
       - 资产树
+  /api/n9e/assets/types:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询资产详情/维保/管理
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.AssetType'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: ceshi
+      tags:
+      - 资产-西航
   /api/n9e/auth/login:
     post:
       consumes:
@@ -6740,23 +6920,30 @@ paths:
   /api/n9e/xh/asset/export-xls:
     post:
       consumes:
-      - multipart/form-data
-      description: EXCEL导出配线架信息
+      - application/json
+      description: EXCEL导出资产
       parameters:
-      - description: 导入查询条件
+      - description: 类型
         in: query
-        name: query
-        type: string
+        name: ftype
+        type: integer
+      - description: add query
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
       produces:
-      - application/msexcel
+      - application/json
       responses:
         "200":
           description: OK
       security:
       - ApiKeyAuth: []
-      summary: EXCEL导出配线架信息
+      summary: EXCEL导出资产
       tags:
-      - 配线架信息
+      - 资产-西航
   /api/n9e/xh/asset/import-xls:
     post:
       consumes:
@@ -6777,7 +6964,7 @@ paths:
       - ApiKeyAuth: []
       summary: EXCEL导入资产
       tags:
-      - 资产详情
+      - 资产-西航
   /api/n9e/xh/asset/templet:
     post:
       consumes:
@@ -6794,41 +6981,24 @@ paths:
       - ApiKeyAuth: []
       summary: 导出资产模板
       tags:
-      - 资产详情
+      - 资产-西航
   /api/n9e/xh/assets-expansion/:
-    get:
+    put:
       consumes:
       - application/json
-      description: 根据条件查询资产扩展-西航
+      description: 更新资产扩展-西航
       parameters:
-      - description: 返回条数
+      - description: 资产ID
         in: query
-        name: limit
+        name: asset
+        required: true
         type: integer
-      - description: 查询条件
+      - description: 属性
         in: query
-        name: query
+        name: type
+        required: true
         type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/models.AssetsExpansion'
-            type: array
-      security:
-      - ApiKeyAuth: []
-      summary: 查询资产扩展-西航
-      tags:
-      - 资产扩展-西航
-    post:
-      consumes:
-      - application/json
-      description: 创建资产扩展-西航
-      parameters:
-      - description: add assetsExpansion
+      - description: update assetsExpansion
         in: body
         name: body
         required: true
@@ -6843,71 +7013,7 @@ paths:
           description: OK
       security:
       - ApiKeyAuth: []
-      summary: 创建资产扩展-西航
-      tags:
-      - 资产扩展-西航
-    put:
-      consumes:
-      - application/json
-      description: 更新资产扩展-西航
-      parameters:
-      - description: update assetsExpansion
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/models.AssetsExpansion'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-      security:
-      - ApiKeyAuth: []
       summary: 更新资产扩展-西航
-      tags:
-      - 资产扩展-西航
-  /api/n9e/xh/assets-expansion/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: 根据主键删除资产扩展-西航
-      parameters:
-      - description: 主键
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-      security:
-      - ApiKeyAuth: []
-      summary: 删除资产扩展-西航
-      tags:
-      - 资产扩展-西航
-    get:
-      consumes:
-      - application/json
-      description: 根据主键获取资产扩展-西航
-      parameters:
-      - description: 主键
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.AssetsExpansion'
-      security:
-      - ApiKeyAuth: []
-      summary: 获取资产扩展-西航
       tags:
       - 资产扩展-西航
   /api/n9e/xh/assets/:
@@ -6959,12 +7065,12 @@ paths:
       - application/json
       description: 批量删除资产-西航
       parameters:
-      - description: add assetsModel
+      - description: add assetsForm
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/router.assetsModel'
+          $ref: '#/definitions/router.assetsForm'
       produces:
       - application/json
       responses:
@@ -7020,6 +7126,27 @@ paths:
       summary: 过滤器-西航
       tags:
       - 资产-西航
+  /api/n9e/xh/assets/id:
+    get:
+      consumes:
+      - application/json
+      description: 根据id查询资产-西航
+      parameters:
+      - description: 资产ID
+        in: query
+        name: asset
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 根据id查询资产-西航
+      tags:
+      - 资产-西航
   /api/n9e/xh/assets/xml/:
     get:
       consumes:
@@ -7035,6 +7162,219 @@ paths:
       summary: 导出xml（测试）
       tags:
       - 资产-西航
+  /api/n9e/xh/monitoring/:
+    get:
+      consumes:
+      - application/json
+      description: 查询所有监控
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Monitoring'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询所有监控
+      tags:
+      - 监控
+    post:
+      consumes:
+      - application/json
+      description: 创建监控
+      parameters:
+      - description: add monitoring
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Monitoring'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建监控
+      tags:
+      - 监控
+    put:
+      consumes:
+      - application/json
+      description: 更新监控
+      parameters:
+      - description: update monitoring
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Monitoring'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新监控
+      tags:
+      - 监控
+  /api/n9e/xh/monitoring/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除监控
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除监控
+      tags:
+      - 监控
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取监控
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Monitoring'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取监控
+      tags:
+      - 监控
+  /api/n9e/xh/monitoring/data:
+    post:
+      consumes:
+      - application/json
+      description: 获取监控数据
+      parameters:
+      - description: 开始时间
+        in: query
+        name: start
+        type: integer
+      - description: 结束时间
+        in: query
+        name: end
+        type: integer
+      - description: update query
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 获取监控数据
+      tags:
+      - 监控
+  /api/n9e/xh/monitoring/filter:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询监控
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 条数
+        in: query
+        name: limit
+        type: integer
+      - description: 搜索栏
+        in: query
+        name: query
+        type: string
+      - description: 资产类型
+        in: query
+        name: assetType
+        type: string
+      - description: 数据源类型
+        in: query
+        name: datasource
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Monitoring'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询监控
+      tags:
+      - 监控
+  /api/n9e/xh/monitoring/status/{id}:
+    post:
+      consumes:
+      - application/json
+      description: 根据主键更新监控状态
+      parameters:
+      - description: 新状态
+        in: query
+        name: status
+        required: true
+        type: integer
+      - description: add ids
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 监控开关
+      tags:
+      - 监控
 securityDefinitions:
   ApiKeyAuth:
     in: header

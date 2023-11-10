@@ -451,6 +451,7 @@ func (rt *Router) AlarmHisDel(c *gin.Context) {
 	if record == "" {
 		ginx.Bomb(http.StatusOK, "参数错误")
 	}
+	records := strings.Split(record, "-")
 
 	jsonData, err := rt.Redis.Get(rt.Ctx.Ctx, "hisQuery").Bytes()
 	if err != nil {
@@ -468,7 +469,14 @@ func (rt *Router) AlarmHisDel(c *gin.Context) {
 
 	var new []string
 	for _, val := range str {
-		if val != record {
+		flog := true
+		for _, re := range records {
+			if val != re {
+				flog = false
+
+			}
+		}
+		if flog {
 			new = append(new, val)
 		}
 	}
@@ -866,8 +874,6 @@ func (rt *Router) DataBoardAsset(c *gin.Context) {
 // @Router       /api/n9e/dashboard/user/data [get]
 // @Security     ApiKeyAuth
 func (rt *Router) DataBoardAssetsGet(c *gin.Context) {
-
-	models.AssetTypeGetsAll()
 
 	page := ginx.QueryInt(c, "page", 1)
 	limit := ginx.QueryInt(c, "limit", 4)

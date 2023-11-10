@@ -428,6 +428,10 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/xh/assets/batch-del", rt.auth(), rt.user(), rt.assetDelXH)
 		pages.POST("/xh/assets/filter", rt.auth(), rt.user(), rt.assetGetFilter)
 		pages.GET("/xh/assets/xml", rt.auth(), rt.user(), rt.xmlceshi)
+		pages.GET("/xh/assets/id", rt.auth(), rt.user(), rt.assetGetById)
+		pages.POST("/xh/asset/import-xls", rt.auth(), rt.user(), rt.importAssetXH)
+		pages.POST("/xh/asset/export-xls", rt.auth(), rt.user(), rt.exportAssetXH)
+		pages.POST("/xh/asset/templet", rt.auth(), rt.user(), rt.templeAssetXH)
 
 		pages.GET("/organization/:id", rt.auth(), rt.user(), rt.organizationGet)    // 依据id获取组织信息
 		pages.GET("/organization", rt.auth(), rt.user(), rt.organizationGets)       // 获取组织树
@@ -708,11 +712,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/asset-directory/:id", rt.auth(), rt.user(), rt.assetsDirectoryDel)
 
 		//资产扩展（西航）
-		pages.GET("/assets-expansion", rt.auth(), rt.user(), rt.assetsExpansionGets)
-		pages.GET("/assets-expansion/:id", rt.auth(), rt.user(), rt.assetsExpansionGet)
-		pages.POST("/assets-expansion", rt.auth(), rt.user(), rt.assetsExpansionAdd)
-		pages.PUT("/assets-expansion", rt.auth(), rt.user(), rt.assetsExpansionPut)
-		pages.DELETE("/assets-expansion/:id", rt.auth(), rt.user(), rt.assetsExpansionDel)
+		pages.PUT("/xh/assets-expansion", rt.auth(), rt.user(), rt.assetsExpansionPut)
+
+		//监控（西航）
+		pages.GET("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringGets)
+		pages.GET("/xh/monitoring/:id", rt.auth(), rt.admin(), rt.monitoringGet)
+		pages.POST("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringAdd)
+		pages.PUT("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringPut)
+		pages.DELETE("/xh/monitoring/:id", rt.auth(), rt.admin(), rt.monitoringDel)
 
 		//大屏管理
 		pages.GET("/bigscreen", rt.auth(), rt.admin(), rt.bigscreenGets)

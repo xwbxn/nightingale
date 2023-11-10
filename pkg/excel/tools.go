@@ -3,6 +3,7 @@ package excel
 import (
 	"fmt"
 	"math/rand"
+	"net/http"
 	"net/url"
 	"reflect"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/gin-gonic/gin"
+	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -703,6 +705,16 @@ func (l *lzExcelExport) writeTemplet(params []map[string]string, data []interfac
 					currentValue := m["value"][1 : len(m["value"])-1]
 					rangs := strings.Split(currentValue, ";")
 					values = append(values, rangs...)
+				} else if m["type"] == "cache" {
+					aTypes, err := models.AssetTypeGetsAll()
+					if err != nil {
+						ginx.Bomb(http.StatusOK, "导出模板失败")
+					}
+					types := make([]string, 0)
+					for _, val := range aTypes {
+						types = append(types, val.Name)
+					}
+					values = append(values, types...)
 				}
 				dv.SetDropList(values)
 				l.file.AddDataValidation(l.sheetName, dv)
@@ -745,9 +757,9 @@ func createFile() *excelize.File {
 }
 
 func createFileName(l *lzExcelExport) string {
-	name := time.Now().Format("2006-01-02-15-04-05")
+	// name := time.Now().Format("2006-01-02-15-04-05")
 	rand.Seed(time.Now().UnixNano())
-	return fmt.Sprintf("%s-%v-%v.xlsx", l.sheetName, name, rand.Int63n(time.Now().Unix()))
+	return fmt.Sprintf("%s-%v.xlsx", l.sheetName, rand.Int63n(time.Now().Unix()))
 }
 
 // Letter 遍历a-z

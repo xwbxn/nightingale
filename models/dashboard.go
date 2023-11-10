@@ -34,7 +34,7 @@ type DashboardUser struct {
 	CreatedAt int64          `gorm:"column:created_at" json:"created_at" swaggerignore:"true"` //type:*int         comment:创建时间    version:2023-9-31 09:11
 	UpdatedBy string         `gorm:"column:updated_by" json:"updated_by" swaggerignore:"true"` //type:string       comment:更新人      version:2023-9-31 09:11
 	UpdatedAt int64          `gorm:"column:updated_at" json:"updated_at" swaggerignore:"true"` //type:*int         comment:更新时间    version:2023-9-31 09:11
-	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at" `                     //type:*time.Time   comment:删除时间    version:2023-9-31 09:11
+	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"` //type:*time.Time   comment:删除时间    version:2023-9-31 09:11
 }
 
 func (d *Dashboard) TableName() string {
