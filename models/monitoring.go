@@ -4,6 +4,9 @@
 package models
 
 import (
+	"strings"
+	"time"
+
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"gorm.io/gorm"
 )
@@ -17,6 +20,7 @@ type Monitoring struct {
 	Id             int64          `gorm:"column:ID;primaryKey" json:"id" `                          //type:BIGINT       comment:主键        version:2023-10-08 16:45
 	AssetId        int64          `gorm:"column:ASSET_ID" json:"asset_id" `                         //type:BIGINT       comment:资产id      version:2023-10-08 16:45
 	MonitoringName string         `gorm:"column:MONITORING_NAME" json:"monitoring_name" `           //type:string       comment:监控名称    version:2023-10-08 16:45
+	DatasourceId   int64          `gorm:"column:DATASOURCE_ID" json:"datasource_id" `               //type:BIGINT       comment:数据源名称    version:2023-10-08 16:45
 	MonitoringSql  string         `gorm:"column:MONITORING_SQL" json:"monitoring_sql" `             //type:string       comment:监控脚本    version:2023-10-08 16:45
 	Status         int64          `gorm:"column:STATUS" json:"status" `                             //type:*int         comment:状态        version:2023-10-08 16:45
 	TargetId       int64          `gorm:"column:TARGET_ID" json:"target_id" `                       //type:*int         comment:采集器      version:2023-10-08 16:45
@@ -34,8 +38,8 @@ func (m *Monitoring) TableName() string {
 	return "monitoring"
 }
 
-// 条件查询
-func MonitoringGets(ctx *ctx.Context, query string, limit, offset int) ([]Monitoring, error) {
+// 查询所有
+func MonitoringAllGets(ctx *ctx.Context, query string, limit, offset int) ([]Monitoring, error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
@@ -50,6 +54,77 @@ func MonitoringGets(ctx *ctx.Context, query string, limit, offset int) ([]Monito
 
 	var lst []Monitoring
 	err := session.Find(&lst).Error
+
+	return lst, err
+}
+
+// 根据条件统计个数
+func MonitoringMapCount(ctx *ctx.Context, where map[string]interface{}, query string,
+	 assetType string, datasource int) (num int64, err error) {
+
+		var str strings.Builder
+		vals := make([]interface{}, 0)
+		if query != "" {
+			query = "%" + query + "%"
+			str.WriteString("( monitoring.MONITORING_NAME like ? or ")
+			vals = append(vals, query)
+			str.WriteString("assets.name like ? or ")
+			vals = append(vals, query)
+			str.WriteString("assets.type like ? or ")
+			vals = append(vals, query)
+			str.WriteString("assets.ip like ? )")
+			vals = append(vals, query)
+			if assetType != ""{
+				str.WriteString(" and assets.type = ? ")
+				vals = append(vals, assetType)
+			}
+			if datasource != -1{
+				str.WriteString(" and datasource.id = ? ")
+				vals = append(vals, datasource)
+			}
+		}
+
+	err = DB(ctx).Debug().Model(&Monitoring{}).Joins("LEFT JOIN assets ON monitoring.ASSET_ID = assets.id").
+	Joins("LEFT JOIN datasource ON monitoring.datasource_id = datasource.id").Where(str.String(), vals...).Count(&num).Error
+
+	return num, err
+}
+
+// 条件查询
+func MonitoringMapGets(ctx *ctx.Context,where map[string]interface{}, query string, limit, offset int,
+	assetType string, datasource int) (lst []Monitoring,err error) {
+	session := DB(ctx)
+	// 分页
+	if limit > -1 {
+		session = session.Limit(limit).Offset(offset).Order("id")
+	}
+
+	var str strings.Builder
+	vals := make([]interface{}, 0)
+	// 这里使用列名的硬编码构造查询参数, 避免从前台传入造成注入风险
+	if query != "" {
+		query = "%" + query + "%"
+		str.WriteString("( monitoring.MONITORING_NAME like ? or ")
+		vals = append(vals, query)
+		str.WriteString("assets.name like ? or ")
+		vals = append(vals, query)
+		str.WriteString("assets.type like ? or ")
+		vals = append(vals, query)
+		str.WriteString("assets.ip like ? )")
+		vals = append(vals, query)
+		if assetType != ""{
+			str.WriteString(" and assets.type = ? ")
+			vals = append(vals, assetType)
+		}
+		if datasource != -1{
+			str.WriteString(" and datasource.id = ? ")
+			vals = append(vals, datasource)
+		}
+	}
+
+	err = session.Debug().Model(&Monitoring{}).Joins("LEFT JOIN assets ON monitoring.ASSET_ID = assets.id").
+	Joins("LEFT JOIN datasource ON monitoring.datasource_id = datasource.id").
+	Select("monitoring.*").Where(str.String(), vals...).Find(&lst).Error
 
 	return lst, err
 }
@@ -73,20 +148,28 @@ func MonitoringGetsAll(ctx *ctx.Context) ([]Monitoring, error) {
 	return lst, err
 }
 
+func (m *Monitoring) Verify() error {
+	return nil
+}
+
 // 增加监控
 func (m *Monitoring) Add(ctx *ctx.Context) error {
 	// 这里写Monitoring的业务逻辑，通过error返回错误
+	if err := m.Verify(); err != nil {
+		return err
+	}
 
-	// 实际向库中写入
+	now := time.Now().Unix()
+	m.CreatedAt = now
+	m.UpdatedAt = now
+
 	return DB(ctx).Create(m).Error
 }
 
+
 // 删除监控
 func (m *Monitoring) Del(ctx *ctx.Context) error {
-	// 这里写Monitoring的业务逻辑，通过error返回错误
-
-	// 实际向库中写入
-	return DB(ctx).Delete(m).Error
+	return DB(ctx).Debug().Where("id=?", m.Id).Delete(&Monitoring{}).Error
 }
 
 // 更新监控
@@ -100,4 +183,9 @@ func (m *Monitoring) Update(ctx *ctx.Context, updateFrom interface{}, selectFiel
 // 根据条件统计个数
 func MonitoringCount(ctx *ctx.Context, where string, args ...interface{}) (num int64, err error) {
 	return Count(DB(ctx).Model(&Monitoring{}).Where(where, args...))
+}
+
+// 批量更改监控状态
+func MonitoringUpdateStatus(ctx *ctx.Context, ids []int64, status int64) error {
+	return DB(ctx).Model(&Monitoring{}).Where("id in ?", ids).Updates(map[string]interface{}{"status": status}).Error
 }

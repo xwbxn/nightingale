@@ -715,11 +715,13 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/xh/assets-expansion/:id", rt.auth(), rt.user(), rt.assetsExpansionDel)
 
 		//监控（西航）
-		pages.GET("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringGets)
+		pages.GET("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringAllGets)
+		pages.GET("/xh/monitoring/filter", rt.auth(), rt.admin(), rt.monitoringGets)
 		pages.GET("/xh/monitoring/:id", rt.auth(), rt.admin(), rt.monitoringGet)
 		pages.POST("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringAdd)
 		pages.PUT("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringPut)
 		pages.DELETE("/xh/monitoring/:id", rt.auth(), rt.admin(), rt.monitoringDel)
+		pages.POST("/xh/monitoring/status/:id", rt.auth(), rt.admin(), rt.monitoringStatusUpdate)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

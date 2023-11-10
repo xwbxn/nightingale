@@ -11,6 +11,10 @@ definitions:
         type: string
       directory_id:
         type: integer
+      exps:
+        items:
+          $ref: '#/definitions/models.AssetExpansion'
+        type: array
       group_id:
         type: integer
       health:
@@ -824,6 +828,23 @@ definitions:
     - room_name
     type: object
   models.DashboardUser:
+    properties:
+      assets_id:
+        description: type:BIGINT       comment:资产id      version:2023-9-31 09:11
+        type: integer
+      id:
+        description: type:BIGINT       comment:主键        version:2023-9-31 09:11
+        type: integer
+      page_name:
+        type: string
+      sort:
+        description: type:*int         comment:序号        version:2023-9-31 09:11
+        type: integer
+      type:
+        type: string
+      user_id:
+        description: type:BIGINT       comment:用户id      version:2023-9-31 09:11
+        type: integer
     type: object
   models.Datacenter:
     properties:
@@ -1418,6 +1439,30 @@ definitions:
         type: string
       name:
         type: string
+    type: object
+  models.Monitoring:
+    properties:
+      asset_id:
+        description: type:BIGINT       comment:资产id      version:2023-10-08 16:45
+        type: integer
+      datasource_id:
+        description: type:BIGINT       comment:数据源名称    version:2023-10-08 16:45
+        type: integer
+      id:
+        description: type:BIGINT       comment:主键        version:2023-10-08 16:45
+        type: integer
+      monitoring_name:
+        type: string
+      monitoring_sql:
+        type: string
+      remark:
+        type: string
+      status:
+        description: type:*int         comment:状态        version:2023-10-08 16:45
+        type: integer
+      target_id:
+        description: type:*int         comment:采集器      version:2023-10-08 16:45
+        type: integer
     type: object
   models.Organization:
     properties:
@@ -7035,6 +7080,188 @@ paths:
       summary: 导出xml（测试）
       tags:
       - 资产-西航
+  /api/n9e/xh/monitoring/:
+    get:
+      consumes:
+      - application/json
+      description: 查询所有监控
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Monitoring'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询所有监控
+      tags:
+      - 监控
+    post:
+      consumes:
+      - application/json
+      description: 创建监控
+      parameters:
+      - description: add monitoring
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Monitoring'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建监控
+      tags:
+      - 监控
+    put:
+      consumes:
+      - application/json
+      description: 更新监控
+      parameters:
+      - description: update monitoring
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Monitoring'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新监控
+      tags:
+      - 监控
+  /api/n9e/xh/monitoring/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除监控
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除监控
+      tags:
+      - 监控
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取监控
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Monitoring'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取监控
+      tags:
+      - 监控
+  /api/n9e/xh/monitoring/filter:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询监控
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 条数
+        in: query
+        name: limit
+        type: integer
+      - description: 搜索栏
+        in: query
+        name: query
+        type: string
+      - description: 资产类型
+        in: query
+        name: assetType
+        type: string
+      - description: 数据源类型
+        in: query
+        name: datasource
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Monitoring'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询监控
+      tags:
+      - 监控
+  /api/n9e/xh/monitoring/status/{id}:
+    post:
+      consumes:
+      - application/json
+      description: 根据主键更新监控状态
+      parameters:
+      - description: 新状态
+        in: query
+        name: status
+        required: true
+        type: integer
+      - description: add ids
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 监控开关
+      tags:
+      - 监控
 securityDefinitions:
   ApiKeyAuth:
     in: header

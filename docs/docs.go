@@ -8516,6 +8516,297 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/n9e/xh/monitoring/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "查询所有监控",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "监控"
+                ],
+                "summary": "查询所有监控",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Monitoring"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新监控",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "监控"
+                ],
+                "summary": "更新监控",
+                "parameters": [
+                    {
+                        "description": "update monitoring",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Monitoring"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建监控",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "监控"
+                ],
+                "summary": "创建监控",
+                "parameters": [
+                    {
+                        "description": "add monitoring",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Monitoring"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/xh/monitoring/filter": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询监控",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "监控"
+                ],
+                "summary": "查询监控",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索栏",
+                        "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "资产类型",
+                        "name": "assetType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "数据源类型",
+                        "name": "datasource",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Monitoring"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/xh/monitoring/status/{id}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键更新监控状态",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "监控"
+                ],
+                "summary": "监控开关",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "新状态",
+                        "name": "status",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "add ids",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/xh/monitoring/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取监控",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "监控"
+                ],
+                "summary": "获取监控",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Monitoring"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除监控",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "监控"
+                ],
+                "summary": "删除监控",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -8536,6 +8827,12 @@ const docTemplate = `{
                 },
                 "directory_id": {
                     "type": "integer"
+                },
+                "exps": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.AssetExpansion"
+                    }
                 },
                 "group_id": {
                     "type": "integer"
@@ -9633,7 +9930,31 @@ const docTemplate = `{
             }
         },
         "models.DashboardUser": {
-            "type": "object"
+            "type": "object",
+            "properties": {
+                "assets_id": {
+                    "description": "type:BIGINT       comment:资产id      version:2023-9-31 09:11",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "type:BIGINT       comment:主键        version:2023-9-31 09:11",
+                    "type": "integer"
+                },
+                "page_name": {
+                    "type": "string"
+                },
+                "sort": {
+                    "description": "type:*int         comment:序号        version:2023-9-31 09:11",
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "type:BIGINT       comment:用户id      version:2023-9-31 09:11",
+                    "type": "integer"
+                }
+            }
         },
         "models.Datacenter": {
             "type": "object",
@@ -10417,6 +10738,40 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "models.Monitoring": {
+            "type": "object",
+            "properties": {
+                "asset_id": {
+                    "description": "type:BIGINT       comment:资产id      version:2023-10-08 16:45",
+                    "type": "integer"
+                },
+                "datasource_id": {
+                    "description": "type:BIGINT       comment:数据源名称    version:2023-10-08 16:45",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "type:BIGINT       comment:主键        version:2023-10-08 16:45",
+                    "type": "integer"
+                },
+                "monitoring_name": {
+                    "type": "string"
+                },
+                "monitoring_sql": {
+                    "type": "string"
+                },
+                "remark": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "type:*int         comment:状态        version:2023-10-08 16:45",
+                    "type": "integer"
+                },
+                "target_id": {
+                    "description": "type:*int         comment:采集器      version:2023-10-08 16:45",
+                    "type": "integer"
                 }
             }
         },

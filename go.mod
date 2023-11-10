@@ -11,7 +11,7 @@ require (
 	github.com/go-ldap/ldap/v3 v3.4.4
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/golang/protobuf v1.5.2
+	github.com/golang/protobuf v1.5.3
 	github.com/golang/snappy v0.0.4
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-version v1.6.0
@@ -29,7 +29,7 @@ require (
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/tidwall/gjson v1.14.0
 	github.com/toolkits/pkg v1.3.3
-	golang.org/x/oauth2 v0.4.0
+	golang.org/x/oauth2 v0.8.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gorm.io/driver/mysql v1.4.4
 	gorm.io/driver/postgres v1.4.5
@@ -48,6 +48,7 @@ require (
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/spec v0.20.9 // indirect
 	github.com/go-openapi/swag v0.22.4 // indirect
+	// github.com/go-swagger/go-swagger v0.30.5 // indirect
 	github.com/jpillora/overseer v1.1.6 // indirect
 	github.com/jpillora/s3 v1.1.4 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
