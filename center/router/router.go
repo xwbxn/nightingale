@@ -715,13 +715,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/xh/assets-expansion", rt.auth(), rt.user(), rt.assetsExpansionPut)
 
 		//监控（西航）
-		pages.GET("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringAllGets)
-		pages.GET("/xh/monitoring/filter", rt.auth(), rt.admin(), rt.monitoringGets)
-		pages.GET("/xh/monitoring/:id", rt.auth(), rt.admin(), rt.monitoringGet)
-		pages.POST("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringAdd)
-		pages.PUT("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringPut)
-		pages.DELETE("/xh/monitoring/:id", rt.auth(), rt.admin(), rt.monitoringDel)
-		pages.POST("/xh/monitoring/status/:id", rt.auth(), rt.admin(), rt.monitoringStatusUpdate)
+		pages.GET("/xh/monitoring", rt.auth(), rt.user(), rt.monitoringAllGets)
+		pages.GET("/xh/monitoring/filter", rt.auth(), rt.user(), rt.monitoringGets)
+		pages.GET("/xh/monitoring/:id", rt.auth(), rt.user(), rt.monitoringGet)
+		pages.POST("/xh/monitoring", rt.auth(), rt.user(), rt.monitoringAdd)
+		pages.PUT("/xh/monitoring", rt.auth(), rt.user(), rt.monitoringPut)
+		pages.DELETE("/xh/monitoring/:id", rt.auth(), rt.user(), rt.monitoringDel)
+		pages.POST("/xh/monitoring/status/:id", rt.auth(), rt.user(), rt.monitoringStatusUpdate)
+		pages.POST("/xh/monitoring/data", rt.auth(), rt.user(), rt.monitoringData)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

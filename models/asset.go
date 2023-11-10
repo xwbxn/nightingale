@@ -581,7 +581,7 @@ func AssetsGetsFilter(ctx *ctx.Context, aType string, query, queryType string, l
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
-		session = session.Limit(limit).Offset(offset).Order("ID")
+		session = session.Limit(limit).Offset(offset).Order("id DESC")
 	}
 	if queryType == "" {
 		if query != "" {

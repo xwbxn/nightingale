@@ -60,39 +60,39 @@ func MonitoringAllGets(ctx *ctx.Context, query string, limit, offset int) ([]Mon
 
 // 根据条件统计个数
 func MonitoringMapCount(ctx *ctx.Context, where map[string]interface{}, query string,
-	 assetType string, datasource int) (num int64, err error) {
+	assetType string, datasource int) (num int64, err error) {
 
-		var str strings.Builder
-		vals := make([]interface{}, 0)
-		if query != "" {
-			query = "%" + query + "%"
-			str.WriteString("( monitoring.MONITORING_NAME like ? or ")
-			vals = append(vals, query)
-			str.WriteString("assets.name like ? or ")
-			vals = append(vals, query)
-			str.WriteString("assets.type like ? or ")
-			vals = append(vals, query)
-			str.WriteString("assets.ip like ? )")
-			vals = append(vals, query)
-			if assetType != ""{
-				str.WriteString(" and assets.type = ? ")
-				vals = append(vals, assetType)
-			}
-			if datasource != -1{
-				str.WriteString(" and datasource.id = ? ")
-				vals = append(vals, datasource)
-			}
+	var str strings.Builder
+	vals := make([]interface{}, 0)
+	if query != "" {
+		query = "%" + query + "%"
+		str.WriteString("( monitoring.MONITORING_NAME like ? or ")
+		vals = append(vals, query)
+		str.WriteString("assets.name like ? or ")
+		vals = append(vals, query)
+		str.WriteString("assets.type like ? or ")
+		vals = append(vals, query)
+		str.WriteString("assets.ip like ? )")
+		vals = append(vals, query)
+		if assetType != "" {
+			str.WriteString(" and assets.type = ? ")
+			vals = append(vals, assetType)
 		}
+		if datasource != -1 {
+			str.WriteString(" and datasource.id = ? ")
+			vals = append(vals, datasource)
+		}
+	}
 
 	err = DB(ctx).Debug().Model(&Monitoring{}).Joins("LEFT JOIN assets ON monitoring.ASSET_ID = assets.id").
-	Joins("LEFT JOIN datasource ON monitoring.datasource_id = datasource.id").Where(str.String(), vals...).Count(&num).Error
+		Joins("LEFT JOIN datasource ON monitoring.datasource_id = datasource.id").Where(str.String(), vals...).Count(&num).Error
 
 	return num, err
 }
 
 // 条件查询
-func MonitoringMapGets(ctx *ctx.Context,where map[string]interface{}, query string, limit, offset int,
-	assetType string, datasource int) (lst []Monitoring,err error) {
+func MonitoringMapGets(ctx *ctx.Context, where map[string]interface{}, query string, limit, offset int,
+	assetType string, datasource int) (lst []Monitoring, err error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
@@ -112,19 +112,19 @@ func MonitoringMapGets(ctx *ctx.Context,where map[string]interface{}, query stri
 		vals = append(vals, query)
 		str.WriteString("assets.ip like ? )")
 		vals = append(vals, query)
-		if assetType != ""{
+		if assetType != "" {
 			str.WriteString(" and assets.type = ? ")
 			vals = append(vals, assetType)
 		}
-		if datasource != -1{
+		if datasource != -1 {
 			str.WriteString(" and datasource.id = ? ")
 			vals = append(vals, datasource)
 		}
 	}
 
 	err = session.Debug().Model(&Monitoring{}).Joins("LEFT JOIN assets ON monitoring.ASSET_ID = assets.id").
-	Joins("LEFT JOIN datasource ON monitoring.datasource_id = datasource.id").
-	Select("monitoring.*").Where(str.String(), vals...).Find(&lst).Error
+		Joins("LEFT JOIN datasource ON monitoring.datasource_id = datasource.id").
+		Select("monitoring.*").Where(str.String(), vals...).Find(&lst).Error
 
 	return lst, err
 }
@@ -138,6 +138,13 @@ func MonitoringGetById(ctx *ctx.Context, id int64) (*Monitoring, error) {
 	}
 
 	return obj, nil
+}
+
+// 按ids查询
+func MonitoringGetByBatchId(ctx *ctx.Context, ids []int64) ([]Monitoring, error) {
+	var lst []Monitoring
+	err := DB(ctx).Model(&Monitoring{}).Where("id in ?", ids).Find(&lst).Error
+	return lst, err
 }
 
 // 查询所有
@@ -165,7 +172,6 @@ func (m *Monitoring) Add(ctx *ctx.Context) error {
 
 	return DB(ctx).Create(m).Error
 }
-
 
 // 删除监控
 func (m *Monitoring) Del(ctx *ctx.Context) error {

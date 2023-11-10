@@ -7275,6 +7275,37 @@ paths:
       summary: 获取监控
       tags:
       - 监控
+  /api/n9e/xh/monitoring/data:
+    post:
+      consumes:
+      - application/json
+      description: 获取监控数据
+      parameters:
+      - description: 开始时间
+        in: query
+        name: start
+        type: integer
+      - description: 结束时间
+        in: query
+        name: end
+        type: integer
+      - description: update query
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 获取监控数据
+      tags:
+      - 监控
   /api/n9e/xh/monitoring/filter:
     get:
       consumes:

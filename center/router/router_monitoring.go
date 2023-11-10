@@ -4,12 +4,23 @@
 package router
 
 import (
+	"context"
+	"crypto/tls"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"math"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	models "github.com/ccfos/nightingale/v6/models"
+	"github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 // @Summary      获取监控
@@ -48,7 +59,7 @@ func (rt *Router) monitoringGet(c *gin.Context) {
 // @Security     ApiKeyAuth
 func (rt *Router) monitoringGets(c *gin.Context) {
 	page := ginx.QueryInt(c, "page", 1)
-	assetType := ginx.QueryStr(c, "assetType","")
+	assetType := ginx.QueryStr(c, "assetType", "")
 	limit := ginx.QueryInt(c, "limit", 20)
 	query := ginx.QueryStr(c, "query", "")
 	datasource := ginx.QueryInt(c, "datasource", -1)
@@ -96,20 +107,6 @@ func (rt *Router) monitoringAllGets(c *gin.Context) {
 	}, nil)
 }
 
-type monitoring struct {
-	Id             int64  `json:"id"`
-	AssetId        int64  `json:"asset_id"`
-	MonitoringName string `json:"monitoring_name"`
-	DatasourceId   int64  `json:"datasource_id"`
-	MonitoringSql  string `json:"monitoring_sql"`
-	Status         int64  `json:"status"`
-	TargetId       int64  `json:"target_id"`
-	Remark         string `json:"remark"`
-	CreatedBy      string `json:"created_by"`
-	CreatedAt      int64  `json:"created_at"`
-	UpdatedBy      string `json:"updated_by"`
-	UpdatedAt      int64  `json:"updated_at"`
-}
 // @Summary      创建监控
 // @Description  创建监控
 // @Tags         监控
@@ -120,7 +117,7 @@ type monitoring struct {
 // @Router       /api/n9e/xh/monitoring/ [post]
 // @Security     ApiKeyAuth
 func (rt *Router) monitoringAdd(c *gin.Context) {
-	var f monitoring
+	var f models.Monitoring
 	ginx.BindJSON(c, &f)
 	me := c.MustGet("user").(*models.User)
 
@@ -208,4 +205,172 @@ func (rt *Router) monitoringStatusUpdate(c *gin.Context) {
 	ginx.BindJSON(c, &ids)
 
 	ginx.NewRender(c).Message(models.MonitoringUpdateStatus(rt.Ctx, ids, status))
+}
+
+// @Summary      获取监控数据
+// @Description  获取监控数据
+// @Tags         监控
+// @Accept       json
+// @Produce      json
+// @Param        start query   int     false  "开始时间"
+// @Param        end query   int     false  "结束时间"
+// @Param        body  body   map[string]interface{} true "update query"
+// @Success      200
+// @Router       /api/n9e/xh/monitoring/data [post]
+// @Security     ApiKeyAuth
+func (rt *Router) monitoringData(c *gin.Context) {
+
+	startT := ginx.QueryInt64(c, "start", -1)
+	endT := ginx.QueryInt64(c, "end", -1)
+	if startT == -1 || endT == -1 {
+		ginx.Bomb(http.StatusOK, "参数为空")
+	}
+	if startT >= endT {
+		ginx.Bomb(http.StatusOK, "时间区间错误")
+	}
+
+	end := time.Unix(endT, 0)
+	start := time.Unix(startT, 0)
+
+	var f map[string]interface{}
+	ginx.BindJSON(c, &f)
+
+	idsTemp, idsOk := f["ids"]
+	ids := make([]int64, 0)
+	// var err error
+	if idsOk {
+		for _, val := range idsTemp.([]interface{}) {
+			ids = append(ids, int64(val.(float64)))
+		}
+	}
+	lst, err := models.MonitoringGetByBatchId(rt.Ctx, ids)
+	ginx.Dangerous(err)
+
+	datasourceMap := make(map[int64]interface{}, 0)
+	dsMon := make(map[int64][]string, 0)
+	dat := make(map[int64]interface{}, 0)
+	for _, monitoring := range lst {
+		_, datasourceOk := datasourceMap[monitoring.DatasourceId]
+		if !datasourceOk {
+			datasource, err := models.DatasourceGet(rt.Ctx, monitoring.DatasourceId)
+			ginx.Dangerous(err)
+			datasourceMap[monitoring.DatasourceId] = nil
+
+			err = datasource.DB2FE()
+			ginx.Dangerous(err)
+
+			client := &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{
+						InsecureSkipVerify: datasource.HTTPJson.TLS.SkipTlsVerify,
+					},
+				},
+			}
+
+			fullURL := datasource.HTTPJson.Url + "/api/v1/label/__name__/values"
+			req, err := http.NewRequest("GET", fullURL, nil)
+			if err != nil {
+				logger.Errorf("Error creating request: %v", err)
+				ginx.Bomb(http.StatusOK, fmt.Errorf("request url:%s failed", fullURL).Error())
+			}
+			if datasource.AuthJson.BasicAuth && datasource.AuthJson.BasicAuthUser != "" {
+				req.SetBasicAuth(datasource.AuthJson.BasicAuthUser, datasource.AuthJson.BasicAuthPassword)
+			}
+
+			for k, v := range datasource.HTTPJson.Headers {
+				req.Header.Set(k, v)
+			}
+			resp, err := client.Do(req)
+			if err != nil {
+				logger.Errorf("Error making request: %v\n", err)
+				ginx.Bomb(http.StatusOK, fmt.Errorf("request url:%s failed", fullURL).Error())
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != 200 {
+				logger.Errorf("Error making request: %v\n", resp.StatusCode)
+				ginx.Bomb(http.StatusOK, fmt.Errorf("request url:%s failed code:%d", fullURL, resp.StatusCode).Error())
+			}
+			// 读取响应Body
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				ginx.Bomb(http.StatusOK, "获取数据失败")
+				return
+			}
+			var result map[string]interface{}
+			err = json.Unmarshal(body, &result)
+			if err != nil {
+				logger.Errorf("解析JSON发生错误:", err)
+				ginx.Bomb(http.StatusOK, "获取数据失败")
+				return
+			}
+			dataT, dataOk := result["data"]
+			data := make([]string, 0)
+			if dataOk {
+				for _, val := range dataT.([]interface{}) {
+					data = append(data, val.(string))
+				}
+			}
+			dsMon[datasource.Id] = data
+		}
+	}
+	for _, monitoring := range lst {
+		sql := monitoring.MonitoringSql
+		for _, val := range dsMon[monitoring.DatasourceId] {
+			if strings.Contains(sql, val) {
+				sqlLst := strings.Split(sql, val)
+				sql = ""
+				for index, sqlPart := range sqlLst {
+					if index == 0 {
+						sql += sqlPart
+					} else {
+						if sqlPart[0:1] == "{" {
+							sql += val + "{asset_id='" + strconv.FormatInt(monitoring.AssetId, 10) + "'," + sqlPart[1:strings.Count(sqlPart, "")-1]
+						} else {
+							sql += val + "{asset_id='" + strconv.FormatInt(monitoring.AssetId, 10) + "'}" + sqlPart
+						}
+					}
+				}
+			}
+		}
+		var r prom.Range
+		if endT-startT <= 60*60*24 {
+			r = prom.Range{Start: start, End: end, Step: prom.DefaultStep * 2}
+		} else if endT-startT > 60*60*24 && endT-startT <= 60*60*24*7 {
+			r = prom.Range{Start: start, End: end, Step: prom.DefaultStep * 2 * 60}
+		} else if endT-startT > 60*60*24*7 {
+			r = prom.Range{Start: start, End: end, Step: prom.DefaultStep * 2 * 60 * 60}
+		}
+		value, warnings, err := rt.PromClients.GetCli(monitoring.DatasourceId).QueryRange(context.Background(), sql, r)
+		ginx.Dangerous(err)
+
+		if len(warnings) > 0 {
+			logger.Error(err)
+			return
+		}
+		dataVal := make(map[int64]float64)
+
+		items, ok := value.(model.Matrix)
+		if !ok {
+			return
+		}
+
+		for _, item := range items {
+			if len(item.Values) == 0 {
+				return
+			}
+			for _, val := range item.Values {
+				if math.IsNaN(float64(val.Value)) {
+					break
+				}
+				_, timeSOk := dataVal[val.Timestamp.Unix()]
+				if timeSOk {
+					continue
+				}
+				dataVal[val.Timestamp.Unix()] = float64(val.Value)
+			}
+		}
+		dat[monitoring.Id] = dataVal
+	}
+	ginx.NewRender(c).Data(dat, err)
 }
