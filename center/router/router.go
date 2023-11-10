@@ -720,7 +720,15 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/bigscreen", rt.auth(), rt.admin(), rt.bigscreenAdd)
 		pages.PUT("/bigscreen", rt.auth(), rt.admin(), rt.bigscreenPut)
 		pages.DELETE("/bigscreen/:id", rt.auth(), rt.admin(), rt.bigscreenDel)
-		pages.GET("/bigscreen/data", rt.auth(), rt.user(), rt.bigScreenData)
+		pages.GET("/bigscreen/metric/value/:ids", rt.auth(), rt.user(), rt.bigScreenData)
+		pages.GET("/bigscreen/metric/options", rt.auth(), rt.user(), rt.bigScreenMetricOptions)
+
+		//API管理
+		pages.GET("/apiservice", rt.auth(), rt.admin(), rt.apiserviceGets)
+		pages.GET("/apiservice/:id", rt.auth(), rt.admin(), rt.apiserviceGet)
+		pages.POST("/apiservice", rt.auth(), rt.admin(), rt.apiserviceAdd)
+		pages.PUT("/apiservice", rt.auth(), rt.admin(), rt.apiservicePut)
+		pages.DELETE("/apiservice/:id", rt.auth(), rt.admin(), rt.apiserviceDel)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
