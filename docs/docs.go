@@ -8666,6 +8666,12 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "string",
+                        "description": "资产类型",
+                        "name": "assetId",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
                         "description": "数据源类型",
                         "name": "datasource",
@@ -8685,7 +8691,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/n9e/xh/monitoring/status/{id}": {
+        "/api/n9e/xh/monitoring/status": {
             "post": {
                 "security": [
                     {
@@ -8704,6 +8710,13 @@ const docTemplate = `{
                 ],
                 "summary": "监控开关",
                 "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "类型",
+                        "name": "type",
+                        "in": "query",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "新状态",
@@ -10903,12 +10916,19 @@ const docTemplate = `{
                     "description": "type:BIGINT       comment:资产id      version:2023-10-08 16:45",
                     "type": "integer"
                 },
+                "config": {
+                    "type": "string"
+                },
                 "datasource_id": {
                     "description": "type:BIGINT       comment:数据源名称    version:2023-10-08 16:45",
                     "type": "integer"
                 },
                 "id": {
                     "description": "type:BIGINT       comment:主键        version:2023-10-08 16:45",
+                    "type": "integer"
+                },
+                "is_alarm": {
+                    "description": "type:*int         comment:是否启用告警    version:2023-10-13 14:27",
                     "type": "integer"
                 },
                 "monitoring_name": {

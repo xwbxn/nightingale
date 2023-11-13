@@ -257,6 +257,9 @@ CREATE TABLE `chart_share` (
 CREATE TABLE `alert_rule` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
+    `asset_id` bigint DEFAULT NULL COMMENT '资产id',
+    `asset_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '资产名称',
+    `asset_ip` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '资产IP',
     `cate` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null,
     `datasource_ids` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '' comment 'datasource ids',
     `cluster` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null,
@@ -439,6 +442,9 @@ insert into alert_aggr_view(name, rule, cate) values('By RuleName', 'field:rule_
 
 CREATE TABLE `alert_cur_event` (
     `id` bigint unsigned not null comment 'use alert_his_event.id',
+    `asset_id` bigint DEFAULT NULL COMMENT '资产id',
+    `asset_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '资产名称',
+    `asset_ip` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '资产IP',
     `cate` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null,
     `datasource_id` bigint not null default 0 comment 'datasource id',
     `cluster` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null,
@@ -480,6 +486,9 @@ CREATE TABLE `alert_cur_event` (
 CREATE TABLE `alert_his_event` (
     `id` bigint unsigned not null AUTO_INCREMENT,
     `is_recovered` tinyint(1) not null,
+    `asset_id` bigint DEFAULT NULL COMMENT '资产id',
+    `asset_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '资产名称',
+    `asset_ip` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '资产IP',
     `cate` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null,
     `datasource_id` bigint not null default 0 comment 'datasource id',
     `cluster` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null,

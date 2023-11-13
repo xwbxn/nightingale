@@ -721,7 +721,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/xh/monitoring", rt.auth(), rt.user(), rt.monitoringAdd)
 		pages.PUT("/xh/monitoring", rt.auth(), rt.user(), rt.monitoringPut)
 		pages.DELETE("/xh/monitoring/:id", rt.auth(), rt.user(), rt.monitoringDel)
-		pages.POST("/xh/monitoring/status/:id", rt.auth(), rt.user(), rt.monitoringStatusUpdate)
+		pages.POST("/xh/monitoring/status", rt.auth(), rt.user(), rt.monitoringStatusUpdate)
 		pages.POST("/xh/monitoring/data", rt.auth(), rt.user(), rt.monitoringData)
 	}
 

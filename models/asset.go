@@ -484,7 +484,11 @@ func AssetDelTx(tx *gorm.DB, ids []string) error {
 	if len(ids) == 0 {
 		panic("ids empty")
 	}
-	return tx.Where("id in ?", ids).Delete(new(Asset)).Error
+	err := tx.Where("id in ?", ids).Delete(new(Asset)).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
 }
 
 func AssetUpdateNote(ctx *ctx.Context, ids []string, memo string) error {

@@ -23,7 +23,9 @@ type Monitoring struct {
 	DatasourceId   int64          `gorm:"column:DATASOURCE_ID" json:"datasource_id" `               //type:BIGINT       comment:数据源名称    version:2023-10-08 16:45
 	MonitoringSql  string         `gorm:"column:MONITORING_SQL" json:"monitoring_sql" `             //type:string       comment:监控脚本    version:2023-10-08 16:45
 	Status         int64          `gorm:"column:STATUS" json:"status" `                             //type:*int         comment:状态        version:2023-10-08 16:45
+	IsAlarm        int64          `gorm:"column:IS_ALARM" json:"is_alarm" `                         //type:*int         comment:是否启用告警    version:2023-10-13 14:27
 	TargetId       int64          `gorm:"column:TARGET_ID" json:"target_id" `                       //type:*int         comment:采集器      version:2023-10-08 16:45
+	Config         string         `gorm:"column:CONFIG" json:"config" `                             //type:string       comment:配置信息    version:2023-10-13 14:20
 	Remark         string         `gorm:"column:REMARK" json:"remark" `                             //type:string       comment:说明        version:2023-10-08 16:45
 	CreatedBy      string         `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string       comment:创建人      version:2023-10-08 16:45
 	CreatedAt      int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int         comment:创建时间    version:2023-10-08 16:45
@@ -60,7 +62,20 @@ func MonitoringAllGets(ctx *ctx.Context, query string, limit, offset int) ([]Mon
 
 // 根据条件统计个数
 func MonitoringMapCount(ctx *ctx.Context, where map[string]interface{}, query string,
-	assetType string, datasource int) (num int64, err error) {
+	assetType string, datasource, assetId int64) (num int64, err error) {
+
+	session := DB(ctx).Joins("LEFT JOIN assets ON monitoring.ASSET_ID = assets.id").
+		Joins("LEFT JOIN datasource ON monitoring.datasource_id = datasource.id")
+
+	if assetId != -1 {
+		session = session.Where("monitoring.ASSET_ID = ? ", assetId)
+	}
+	if assetType != "" {
+		session = session.Where("assets.type = ? ", assetType)
+	}
+	if datasource != -1 {
+		session = session.Where("datasource.id = ? ", datasource)
+	}
 
 	var str strings.Builder
 	vals := make([]interface{}, 0)
@@ -74,29 +89,32 @@ func MonitoringMapCount(ctx *ctx.Context, where map[string]interface{}, query st
 		vals = append(vals, query)
 		str.WriteString("assets.ip like ? )")
 		vals = append(vals, query)
-		if assetType != "" {
-			str.WriteString(" and assets.type = ? ")
-			vals = append(vals, assetType)
-		}
-		if datasource != -1 {
-			str.WriteString(" and datasource.id = ? ")
-			vals = append(vals, datasource)
-		}
+
 	}
 
-	err = DB(ctx).Debug().Model(&Monitoring{}).Joins("LEFT JOIN assets ON monitoring.ASSET_ID = assets.id").
-		Joins("LEFT JOIN datasource ON monitoring.datasource_id = datasource.id").Where(str.String(), vals...).Count(&num).Error
+	err = session.Debug().Model(&Monitoring{}).Where(str.String(), vals...).Count(&num).Error
 
 	return num, err
 }
 
 // 条件查询
 func MonitoringMapGets(ctx *ctx.Context, where map[string]interface{}, query string, limit, offset int,
-	assetType string, datasource int) (lst []Monitoring, err error) {
-	session := DB(ctx)
+	assetType string, datasource, assetId int64) (lst []Monitoring, err error) {
+	session := DB(ctx).Joins("LEFT JOIN assets ON monitoring.ASSET_ID = assets.id").
+		Joins("LEFT JOIN datasource ON monitoring.datasource_id = datasource.id")
 	// 分页
 	if limit > -1 {
 		session = session.Limit(limit).Offset(offset).Order("id")
+	}
+
+	if assetId != -1 {
+		session = session.Where("monitoring.ASSET_ID = ? ", assetId)
+	}
+	if assetType != "" {
+		session = session.Where("assets.type = ? ", assetType)
+	}
+	if datasource != -1 {
+		session = session.Where("datasource.id = ? ", datasource)
 	}
 
 	var str strings.Builder
@@ -112,18 +130,9 @@ func MonitoringMapGets(ctx *ctx.Context, where map[string]interface{}, query str
 		vals = append(vals, query)
 		str.WriteString("assets.ip like ? )")
 		vals = append(vals, query)
-		if assetType != "" {
-			str.WriteString(" and assets.type = ? ")
-			vals = append(vals, assetType)
-		}
-		if datasource != -1 {
-			str.WriteString(" and datasource.id = ? ")
-			vals = append(vals, datasource)
-		}
 	}
 
-	err = session.Debug().Model(&Monitoring{}).Joins("LEFT JOIN assets ON monitoring.ASSET_ID = assets.id").
-		Joins("LEFT JOIN datasource ON monitoring.datasource_id = datasource.id").
+	err = session.Debug().Model(&Monitoring{}).
 		Select("monitoring.*").Where(str.String(), vals...).Find(&lst).Error
 
 	return lst, err
@@ -178,6 +187,15 @@ func (m *Monitoring) Del(ctx *ctx.Context) error {
 	return DB(ctx).Debug().Where("id=?", m.Id).Delete(&Monitoring{}).Error
 }
 
+// 根据asset_id批量删除监控（事务）
+func MonitoringDelTxByAssetId(tx *gorm.DB, assetId []string) error {
+	err := tx.Debug().Where("ASSET_ID in ?", assetId).Delete(&Monitoring{}).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
+}
+
 // 更新监控
 func (m *Monitoring) Update(ctx *ctx.Context, updateFrom interface{}, selectField interface{}, selectFields ...interface{}) error {
 	// 这里写Monitoring的业务逻辑，通过error返回错误
@@ -192,6 +210,11 @@ func MonitoringCount(ctx *ctx.Context, where string, args ...interface{}) (num i
 }
 
 // 批量更改监控状态
-func MonitoringUpdateStatus(ctx *ctx.Context, ids []int64, status int64) error {
-	return DB(ctx).Model(&Monitoring{}).Where("id in ?", ids).Updates(map[string]interface{}{"status": status}).Error
+func MonitoringUpdateStatus(ctx *ctx.Context, ids []int64, status, oType int64) error {
+	if oType == 1 {
+		return DB(ctx).Debug().Model(&Monitoring{}).Where("id in ?", ids).Updates(map[string]interface{}{"status": status}).Error
+	} else if oType == 2 {
+		return DB(ctx).Debug().Model(&Monitoring{}).Where("id in ?", ids).Updates(map[string]interface{}{"is_alarm": status}).Error
+	}
+	return nil
 }

@@ -119,6 +119,19 @@ func DatasourceGet(ctx *ctx.Context, id int64) (*Datasource, error) {
 	return ds, ds.DB2FE()
 }
 
+//获取全部数据源
+func DatasourceGetAll(ctx *ctx.Context) ([]*Datasource, error) {
+	var ds []*Datasource
+	err := DB(ctx).Find(&ds).Error
+	if err != nil {
+		return nil, err
+	}
+	for key := range ds {
+		err = ds[key].DB2FE()
+	}
+	return ds, err
+}
+
 func (ds *Datasource) Get(ctx *ctx.Context) error {
 	err := DB(ctx).Where("id = ?", ds.Id).First(ds).Error
 	if err != nil {
