@@ -17,6 +17,9 @@ import (
 
 type AlertCurEvent struct {
 	Id                       int64             `json:"id" gorm:"primaryKey"`
+	AssetId                  int64             `json:"asset_id"`
+	AssetName                string            `json:"asset_name"`
+	AssetIp                  string            `json:"asset_ip"`
 	Cate                     string            `json:"cate"`
 	Cluster                  string            `json:"cluster"`
 	DatasourceId             int64             `json:"datasource_id"`

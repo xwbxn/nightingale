@@ -1,11 +1,13 @@
 package models
 
 import (
+	"path"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/pkg/errors"
+	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/str"
 	"gorm.io/gorm"
 )
@@ -37,6 +39,28 @@ type DashboardUser struct {
 	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"` //type:*time.Time   comment:删除时间    version:2023-9-31 09:11
 }
 
+type DashboardMetricsFront struct {
+	Name    string `json:"name"`
+	Metrics string `json:"metrics"`
+	Value   string `json:"value"`
+}
+
+type DashboardMetrics struct {
+	Service []DashboardSystem `json:"service" yaml:"service"`
+	Device  []DashboardSystem `json:"device" yaml:"device"`
+}
+
+type DashboardSystem struct {
+	Name    string       `json:"name" yaml:"name"`
+	Metrics []MetricsMap `json:"metrics" yaml:"metrics"`
+}
+
+type MetricsMap struct {
+	Name   string `json:"name" yaml:"name"`
+	Promql string `json:"promql" yaml:"promql"`
+	Unit   string `json:"unit" yaml:"unit"`
+}
+
 func (d *Dashboard) TableName() string {
 	return "dashboard"
 }
@@ -51,6 +75,13 @@ func (d *Dashboard) Verify() error {
 	}
 
 	return nil
+}
+
+func DashboardMetricsGetsAll() (DashboardMetrics, error) {
+	fp := path.Join("etc/dashboard", "metrics.yaml")
+	var dashboardMetrics DashboardMetrics
+	err := file.ReadYaml(fp, &dashboardMetrics)
+	return dashboardMetrics, err
 }
 
 func (d *Dashboard) Add(ctx *ctx.Context) error {

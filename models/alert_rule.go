@@ -9,6 +9,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
+	"gorm.io/gorm"
 
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
@@ -24,7 +25,10 @@ const (
 
 type AlertRule struct {
 	Id                    int64             `json:"id" gorm:"primaryKey"`
-	GroupId               int64             `json:"group_id"`                      // busi group id
+	GroupId               int64             `json:"group_id"` // busi group id
+	AssetId               int64             `json:"asset_id"`
+	AssetName             string            `json:"asset_name"`
+	AssetIp               string            `json:"asset_ip"`
 	Cate                  string            `json:"cate"`                          // alert rule cate (prometheus|elasticsearch)
 	DatasourceIds         string            `json:"-" gorm:"datasource_ids"`       // datasource ids
 	DatasourceIdsJson     []int64           `json:"datasource_ids" gorm:"-"`       // for fe
@@ -76,6 +80,7 @@ type AlertRule struct {
 	CreateBy              string            `json:"create_by"`
 	UpdateAt              int64             `json:"update_at"`
 	UpdateBy              string            `json:"update_by"`
+	DeletedAt             gorm.DeletedAt    `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"`
 }
 
 type PromRuleConfig struct {

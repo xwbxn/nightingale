@@ -216,12 +216,98 @@ func (rt *Router) getDashboardDataCount(c *gin.Context) {
 	alarm["today"] = today
 	m["alarm"] = alarm
 
+	newDevice := make([]models.DashboardMetricsFront, 0)
+	dashboardMetrics, err := models.DashboardMetricsGetsAll()
+	ginx.Dangerous(err)
+	for _, val := range dashboardMetrics.Device {
+		for _, metricsVal := range val.Metrics {
+			value, warnings, err := rt.PromClients.GetCli(1).Query(context.Background(), metricsVal.Promql, time.Now())
+			ginx.Dangerous(err)
+
+			if len(warnings) > 0 {
+				logger.Error(err)
+				return
+			}
+			valueT := prom.GetValue(value)
+			logger.Debug(valueT)
+			if metricsVal.Unit == "bool" {
+				str := ""
+				if int64(valueT) == 0 {
+					str = "异常"
+				} else {
+					str = "正常"
+				}
+				newDevice = append(newDevice, models.DashboardMetricsFront{
+					Name:    val.Name,
+					Metrics: metricsVal.Name,
+					Value:   str,
+				})
+			} else if metricsVal.Unit == "/秒" || metricsVal.Unit == "/毫秒" || metricsVal.Unit == "%" || metricsVal.Unit == "Mbps" {
+				newDevice = append(newDevice, models.DashboardMetricsFront{
+					Name:    val.Name,
+					Metrics: metricsVal.Name,
+					Value:   fmt.Sprintf("%.1f", valueT) + metricsVal.Unit,
+				})
+			} else if metricsVal.Unit == "/天" || metricsVal.Unit == "/条" {
+				newDevice = append(newDevice, models.DashboardMetricsFront{
+					Name:    val.Name,
+					Metrics: metricsVal.Name,
+					Value:   strconv.FormatInt(int64(valueT), 10) + metricsVal.Unit,
+				})
+			}
+
+		}
+	}
+	m["new_device"] = newDevice
+
+	for _, val := range dashboardMetrics.Service {
+		for _, metricsVal := range val.Metrics {
+			value, warnings, err := rt.PromClients.GetCli(1).Query(context.Background(), metricsVal.Promql, time.Now())
+			ginx.Dangerous(err)
+
+			if len(warnings) > 0 {
+				logger.Error(err)
+				return
+			}
+			valueT := prom.GetValue(value)
+			logger.Debug(valueT)
+			if metricsVal.Unit == "bool" {
+				str := ""
+				if int64(valueT) == 0 {
+					str = "异常"
+				} else {
+					str = "正常"
+				}
+				newDevice = append(newDevice, models.DashboardMetricsFront{
+					Name:    val.Name,
+					Metrics: metricsVal.Name,
+					Value:   str,
+				})
+			} else if metricsVal.Unit == "/秒" || metricsVal.Unit == "/毫秒" || metricsVal.Unit == "%" || metricsVal.Unit == "Mbps" {
+				newDevice = append(newDevice, models.DashboardMetricsFront{
+					Name:    val.Name,
+					Metrics: metricsVal.Name,
+					Value:   fmt.Sprintf("%.1f", valueT) + metricsVal.Unit,
+				})
+			} else if metricsVal.Unit == "/天" || metricsVal.Unit == "/条" {
+				newDevice = append(newDevice, models.DashboardMetricsFront{
+					Name:    val.Name,
+					Metrics: metricsVal.Name,
+					Value:   strconv.FormatInt(int64(valueT), 10) + metricsVal.Unit,
+				})
+			}
+
+		}
+	}
+	m["new_service"] = newDevice
+
 	//资产分类
 	assetType := make(map[string]int64)
 	var appCount int64 = 0
 	//TODO 排序规则未给出
 	// deviceSort := make(map[string]int64, 0)
 	// appAndCloudSort := make(map[string]int64, 0)
+	var monDevice, monService int64
 	var core int64
 	lst := rt.assetCache.GetAll()
 	for _, val := range lst {
@@ -243,6 +329,13 @@ func (rt *Router) getDashboardDataCount(c *gin.Context) {
 			assetType[val.Type] = num + 1
 		} else {
 			assetType[val.Type] = 1
+		}
+
+		ar, _ := rt.assetCache.GetType(val.Type)
+		if ar.Category == "业务资产" {
+			monService++
+		} else {
+			monDevice++
 		}
 	}
 	deviceNum := 0
@@ -282,11 +375,22 @@ func (rt *Router) getDashboardDataCount(c *gin.Context) {
 	m["device"] = device
 	m["app_and_cloud"] = appAndCloud
 
+	value, warnings, err := rt.PromClients.GetCli(1).Query(context.Background(), "sum(rate(vm_rows_inserted_total[1m]))", time.Now())
+	ginx.Dangerous(err)
+
+	if len(warnings) > 0 {
+		logger.Error(err)
+		return
+	}
+
 	//TODO
-	overview := make(map[string]int64)
+	overview := make(map[string]interface{})
+	overview["cur_gather"] = fmt.Sprintf("%.2f", prom.GetValue(value))
 	overview["hardware"] = 99
 	overview["network"] = 99
 	overview["cores"] = core
+	overview["mon_service"] = monService
+	overview["mon_device"] = monDevice
 	overview["application"] = appCount
 	m["overview"] = overview
 

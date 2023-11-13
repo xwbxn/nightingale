@@ -715,27 +715,14 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/xh/assets-expansion", rt.auth(), rt.user(), rt.assetsExpansionPut)
 
 		//监控（西航）
-		pages.GET("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringGets)
-		pages.GET("/xh/monitoring/:id", rt.auth(), rt.admin(), rt.monitoringGet)
-		pages.POST("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringAdd)
-		pages.PUT("/xh/monitoring", rt.auth(), rt.admin(), rt.monitoringPut)
-		pages.DELETE("/xh/monitoring/:id", rt.auth(), rt.admin(), rt.monitoringDel)
-
-		//大屏管理
-		pages.GET("/bigscreen", rt.auth(), rt.admin(), rt.bigscreenGets)
-		pages.GET("/bigscreen/:id", rt.auth(), rt.admin(), rt.bigscreenGet)
-		pages.POST("/bigscreen", rt.auth(), rt.admin(), rt.bigscreenAdd)
-		pages.PUT("/bigscreen", rt.auth(), rt.admin(), rt.bigscreenPut)
-		pages.DELETE("/bigscreen/:id", rt.auth(), rt.admin(), rt.bigscreenDel)
-		pages.GET("/bigscreen/metric/value/:ids", rt.auth(), rt.user(), rt.bigScreenData)
-		pages.GET("/bigscreen/metric/options", rt.auth(), rt.user(), rt.bigScreenMetricOptions)
-
-		//API管理
-		pages.GET("/apiservice", rt.auth(), rt.admin(), rt.apiserviceGets)
-		pages.GET("/apiservice/:id", rt.auth(), rt.admin(), rt.apiserviceGet)
-		pages.POST("/apiservice", rt.auth(), rt.admin(), rt.apiserviceAdd)
-		pages.PUT("/apiservice", rt.auth(), rt.admin(), rt.apiservicePut)
-		pages.DELETE("/apiservice/:id", rt.auth(), rt.admin(), rt.apiserviceDel)
+		pages.GET("/xh/monitoring", rt.auth(), rt.user(), rt.monitoringAllGets)
+		pages.GET("/xh/monitoring/filter", rt.auth(), rt.user(), rt.monitoringGets)
+		pages.GET("/xh/monitoring/:id", rt.auth(), rt.user(), rt.monitoringGet)
+		pages.POST("/xh/monitoring", rt.auth(), rt.user(), rt.monitoringAdd)
+		pages.PUT("/xh/monitoring", rt.auth(), rt.user(), rt.monitoringPut)
+		pages.DELETE("/xh/monitoring/:id", rt.auth(), rt.user(), rt.monitoringDel)
+		pages.POST("/xh/monitoring/status", rt.auth(), rt.user(), rt.monitoringStatusUpdate)
+		pages.POST("/xh/monitoring/data", rt.auth(), rt.user(), rt.monitoringData)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

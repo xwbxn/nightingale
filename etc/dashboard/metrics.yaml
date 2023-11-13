@@ -1,0 +1,105 @@
+service:
+  - name: 核酸系统
+    metrics:
+      - name: 首页状态
+        promql: http_response_result_code{instance="核酸检测系统"}
+        unit: bool
+      - name: 首页响应时长
+        promql: http_response_response_time{instance="核酸检测系统"}
+        unit: /秒
+      - name: 证书可用期
+        promql: (http_response_cert_expire_timestamp{instance="核酸检测系统"} - time())/3600/24
+        unit: /天
+      - name: 数据库主从延迟
+        promql: max(mysql_slave_status_seconds_behind_master)
+        unit: /秒
+      - name: es数据库cpu
+        promql: max(elasticsearch_process_cpu_percent)
+        unit: '%'
+      - name: 数据库慢sql
+        promql: increase(mysql_global_status_slow_queries[1m])
+        unit: /条
+      - name: 省政务网络延迟
+        promql: ping_average_response_ms{target="59.218.152.129"}
+        unit: /毫秒
+  
+  - name: 疫苗预约系统
+    metrics:
+    - name: 首页状态
+      promql: http_response_result_code{instance="核酸检测系统"}
+      unit: bool
+    - name: 首页响应时长
+      promql: http_response_response_time{instance="核酸检测系统"}
+      unit: /秒
+    - name: 证书可用期
+      promql: (http_response_cert_expire_timestamp{instance="核酸检测系统"} - time())/3600/24
+      unit: /天
+    - name: 数据库主从延迟
+      promql: max(mysql_slave_status_seconds_behind_master)
+      unit: /秒
+    - name: es数据库cpu
+      promql: max(elasticsearch_process_cpu_percent)
+      unit: '%'
+    - name: 数据库慢sql
+      promql: increase(mysql_global_status_slow_queries[1m])
+      unit: /条
+      
+  - name: 市政府官网
+    metrics: 
+    - name: 首页状态
+      promql: http_response_result_code{instance="https://www.xa.gov.cn/"}
+      unit: bool
+    - name: 首页响应时长
+      promql: http_response_response_time{instance="https://www.xa.gov.cn/"}
+      unit: /秒
+      
+      
+device:
+  - name: 互联网出口交换机
+    metrics:
+      - name: 已运行时间
+        promql: switch_legacy_uptime{ip="172.16.9.43"} / 3600/24/24
+        unit: /天
+      - name: CPU利用率
+        promql: switch_legacy_mem_util{ip="172.16.9.43"}
+        unit: '%'
+      - name: 内存利用率
+        promql: switch_legacy_mem_util{ip="172.16.9.43"}
+        unit: '%'
+      - name: 入流量
+        promql: sum(switch_legacy_if_in{ip="172.16.9.43", ifname=~"XGigabitEthernet1/0/21|XGigabitEthernet0/0/20|XGigabitEthernet0/0/19"})/1000/1000
+        unit: Mbps
+      - name: 出流量
+        promql: sum(switch_legacy_if_out{ip="172.16.9.43", ifname=~"XGigabitEthernet1/0/21|XGigabitEthernet0/0/20|XGigabitEthernet0/0/19"})/1000/1000
+        unit: Mbps
+  
+  - name: 互联网负载均衡
+    metrics:
+      - name: 在线状态
+        promql: switch_legacy_ping_up{ip="172.16.16.249"}
+        unit: bool
+  
+  - name: 互联网防火墙
+    metrics:
+      - name: 在线状态
+        promql: switch_legacy_ping_up{ip="172.16.16.26"}
+        unit: bool
+  
+  - name: 行政办公出口交换机
+    metrics:
+      - name: 在线状态
+        promql: switch_legacy_ping_up{ip="172.16.16.26"}
+        unit: bool
+  
+  - name: 行政办公上网行为管理
+    metrics:
+      - name: 在线状态
+        promql: switch_legacy_ping_up{ip="172.16.16.26"}
+        unit: bool
+      - name: 入流量
+        promql: sum(switch_legacy_if_in{ip="172.16.9.14", ifname=~"xge0|xge1"})/1000/1000
+        unit: Mbps
+      - name: 出流量
+        promql: sum(switch_legacy_if_out{ip="172.16.9.14", ifname=~"xge0|xge1"})/1000/1000
+        unit: Mbps
+  

@@ -53,6 +53,7 @@ func (rt *Router) monitoringGet(c *gin.Context) {
 // @Param        limit query   int     false  "条数"
 // @Param        query query   string  false  "搜索栏"
 // @Param        assetType query   string  false  "资产类型"
+// @Param        assetId query   string  false  "资产类型"
 // @Param        datasource query   int  false  "数据源类型"
 // @Success      200  {array}  models.Monitoring
 // @Router       /api/n9e/xh/monitoring/filter [get]
@@ -62,7 +63,8 @@ func (rt *Router) monitoringGets(c *gin.Context) {
 	assetType := ginx.QueryStr(c, "assetType", "")
 	limit := ginx.QueryInt(c, "limit", 20)
 	query := ginx.QueryStr(c, "query", "")
-	datasource := ginx.QueryInt(c, "datasource", -1)
+	datasource := ginx.QueryInt64(c, "datasource", -1)
+	assetId := ginx.QueryInt64(c, "assetId", -1)
 
 	m := make(map[string]interface{})
 	// if dataSource != -1 {
@@ -71,9 +73,9 @@ func (rt *Router) monitoringGets(c *gin.Context) {
 	// if assetType != ""{
 	// 	m["assets.type"] = assetType
 	// }
-	total, err := models.MonitoringMapCount(rt.Ctx, m, query, assetType, datasource)
+	total, err := models.MonitoringMapCount(rt.Ctx, m, query, assetType, datasource, assetId)
 	ginx.Dangerous(err)
-	lst, err := models.MonitoringMapGets(rt.Ctx, m, query, limit, (page-1)*limit, assetType, datasource)
+	lst, err := models.MonitoringMapGets(rt.Ctx, m, query, limit, (page-1)*limit, assetType, datasource, assetId)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
@@ -194,17 +196,23 @@ func (rt *Router) monitoringDel(c *gin.Context) {
 // @Tags         监控
 // @Accept       json
 // @Produce      json
+// @Param		 type	query	int		true "类型"
 // @Param		 status	query	int		true "新状态"
 // @Param        body	body	[]int64 true "add ids"
 // @Success      200
-// @Router       /api/n9e/xh/monitoring/status/{id} [post]
+// @Router       /api/n9e/xh/monitoring/status [post]
 // @Security     ApiKeyAuth
 func (rt *Router) monitoringStatusUpdate(c *gin.Context) {
-	status := ginx.QueryInt64(c, "status", 1)
+	status := ginx.QueryInt64(c, "status", -1)
+	oType := ginx.QueryInt64(c, "type", -1)
+	if status == -1 || oType == -1 {
+		ginx.Bomb(http.StatusOK, "参数错误")
+	}
+
 	var ids []int64
 	ginx.BindJSON(c, &ids)
 
-	ginx.NewRender(c).Message(models.MonitoringUpdateStatus(rt.Ctx, ids, status))
+	ginx.NewRender(c).Message(models.MonitoringUpdateStatus(rt.Ctx, ids, status, oType))
 }
 
 // @Summary      获取监控数据

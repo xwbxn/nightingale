@@ -460,6 +460,8 @@ func (rt *Router) assetDelXH(c *gin.Context) {
 	err := models.AssetDelTx(tx, f.Ids)
 	ginx.Dangerous(err)
 	err = models.AssetsExpansionDelAssetsIds(tx, f.Ids)
+	ginx.Dangerous(err)
+	err = models.MonitoringDelTxByAssetId(tx, f.Ids)
 	tx.Commit()
 
 	ginx.NewRender(c).Message(err)
