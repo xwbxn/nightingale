@@ -256,7 +256,7 @@ func (rt *Router) monitoringData(c *gin.Context) {
 
 	datasourceMap := make(map[int64]interface{}, 0)
 	dsMon := make(map[int64][]string, 0)
-	dat := make(map[int64]interface{}, 0)
+	dat := make(map[string]interface{}, 0)
 	for _, monitoring := range lst {
 		_, datasourceOk := datasourceMap[monitoring.DatasourceId]
 		if !datasourceOk {
@@ -324,18 +324,28 @@ func (rt *Router) monitoringData(c *gin.Context) {
 	}
 	for _, monitoring := range lst {
 		sql := monitoring.MonitoringSql
+		logger.Debug(sql)
 		for _, val := range dsMon[monitoring.DatasourceId] {
 			if strings.Contains(sql, val) {
 				sqlLst := strings.Split(sql, val)
 				sql = ""
+				logger.Debug(sqlLst)
+				logger.Debug(len(sqlLst))
 				for index, sqlPart := range sqlLst {
+					// if sqlPart == "" {
+					// 	break
+					// }
 					if index == 0 {
 						sql += sqlPart
 					} else {
-						if sqlPart[0:1] == "{" {
-							sql += val + "{asset_id='" + strconv.FormatInt(monitoring.AssetId, 10) + "'," + sqlPart[1:strings.Count(sqlPart, "")-1]
-						} else {
+						if sqlPart == "" {
 							sql += val + "{asset_id='" + strconv.FormatInt(monitoring.AssetId, 10) + "'}" + sqlPart
+						} else {
+							if sqlPart[0:1] == "{" {
+								sql += val + "{asset_id='" + strconv.FormatInt(monitoring.AssetId, 10) + "'," + sqlPart[1:strings.Count(sqlPart, "")-1]
+							} else {
+								sql += val + "{asset_id='" + strconv.FormatInt(monitoring.AssetId, 10) + "'}" + sqlPart
+							}
 						}
 					}
 				}
@@ -349,6 +359,7 @@ func (rt *Router) monitoringData(c *gin.Context) {
 		} else if endT-startT > 60*60*24*7 {
 			r = prom.Range{Start: start, End: end, Step: prom.DefaultStep * 2 * 60 * 60}
 		}
+		logger.Debug(sql)
 		value, warnings, err := rt.PromClients.GetCli(monitoring.DatasourceId).QueryRange(context.Background(), sql, r)
 		ginx.Dangerous(err)
 
@@ -378,7 +389,7 @@ func (rt *Router) monitoringData(c *gin.Context) {
 				dataVal[val.Timestamp.Unix()] = float64(val.Value)
 			}
 		}
-		dat[monitoring.Id] = dataVal
+		dat["id="+strconv.FormatInt(monitoring.Id, 10)] = dataVal
 	}
 	ginx.NewRender(c).Data(dat, err)
 }
