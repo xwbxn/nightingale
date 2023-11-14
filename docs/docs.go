@@ -8573,6 +8573,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/n9e/xh/monitoring/asset": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取监控",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "监控"
+                ],
+                "summary": "根据资产id获取监控",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Monitoring"
+                        }
+                    }
+                }
+            }
+        },
         "/api/n9e/xh/monitoring/data": {
             "post": {
                 "security": [

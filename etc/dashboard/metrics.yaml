@@ -6,7 +6,7 @@ service:
         unit: bool
       - name: 首页响应时长
         promql: http_response_response_time{instance="核酸检测系统"}
-        unit: /秒
+        unit: /毫秒
       - name: 证书可用期
         promql: (http_response_cert_expire_timestamp{instance="核酸检测系统"} - time())/3600/24
         unit: /天
@@ -30,7 +30,7 @@ service:
       unit: bool
     - name: 首页响应时长
       promql: http_response_response_time{instance="核酸检测系统"}
-      unit: /秒
+      unit: /毫秒
     - name: 证书可用期
       promql: (http_response_cert_expire_timestamp{instance="核酸检测系统"} - time())/3600/24
       unit: /天
@@ -51,7 +51,7 @@ service:
       unit: bool
     - name: 首页响应时长
       promql: http_response_response_time{instance="https://www.xa.gov.cn/"}
-      unit: /秒
+      unit: /毫秒
       
       
 device:
@@ -61,7 +61,7 @@ device:
         promql: switch_legacy_uptime{ip="172.16.9.43"} / 3600/24/24
         unit: /天
       - name: CPU利用率
-        promql: switch_legacy_mem_util{ip="172.16.9.43"}
+        promql: switch_legacy_cpu_util{ip="172.16.9.43"}
         unit: '%'
       - name: 内存利用率
         promql: switch_legacy_mem_util{ip="172.16.9.43"}

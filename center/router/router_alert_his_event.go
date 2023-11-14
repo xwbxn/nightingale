@@ -62,6 +62,12 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 	cache := make(map[int64]*models.UserGroup)
 	for i := 0; i < len(list); i++ {
 		list[i].FillNotifyGroups(rt.Ctx, cache)
+		if list[i].AssetId != 0 {
+			asset, err := rt.assetCache.Get(list[i].AssetId)
+			ginx.Dangerous(err)
+			list[i].AssetName = asset.Name
+			list[i].AssetIp = asset.Ip
+		}
 	}
 
 	ginx.NewRender(c).Data(gin.H{

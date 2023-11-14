@@ -7280,6 +7280,29 @@ paths:
       summary: 获取监控
       tags:
       - 监控
+  /api/n9e/xh/monitoring/asset:
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取监控
+      parameters:
+      - description: 主键
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Monitoring'
+      security:
+      - ApiKeyAuth: []
+      summary: 根据资产id获取监控
+      tags:
+      - 监控
   /api/n9e/xh/monitoring/data:
     post:
       consumes:

@@ -27,8 +27,8 @@ type AlertRule struct {
 	Id                    int64             `json:"id" gorm:"primaryKey"`
 	GroupId               int64             `json:"group_id"` // busi group id
 	AssetId               int64             `json:"asset_id"`
-	AssetName             string            `json:"asset_name"`
-	AssetIp               string            `json:"asset_ip"`
+	AssetName             string            `json:"asset_name" gorm:"-"`
+	AssetIp               string            `json:"asset_ip" gorm:"-"`
 	Cate                  string            `json:"cate"`                          // alert rule cate (prometheus|elasticsearch)
 	DatasourceIds         string            `json:"-" gorm:"datasource_ids"`       // datasource ids
 	DatasourceIdsJson     []int64           `json:"datasource_ids" gorm:"-"`       // for fe

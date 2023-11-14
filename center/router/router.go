@@ -718,6 +718,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/xh/monitoring", rt.auth(), rt.user(), rt.monitoringAllGets)
 		pages.GET("/xh/monitoring/filter", rt.auth(), rt.user(), rt.monitoringGets)
 		pages.GET("/xh/monitoring/:id", rt.auth(), rt.user(), rt.monitoringGet)
+		pages.GET("/xh/monitoring/asset", rt.auth(), rt.user(), rt.monitoringGetByAssetId)
 		pages.POST("/xh/monitoring", rt.auth(), rt.user(), rt.monitoringAdd)
 		pages.PUT("/xh/monitoring", rt.auth(), rt.user(), rt.monitoringPut)
 		pages.DELETE("/xh/monitoring/:id", rt.auth(), rt.user(), rt.monitoringDel)
