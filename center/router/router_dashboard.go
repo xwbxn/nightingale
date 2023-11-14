@@ -217,6 +217,7 @@ func (rt *Router) getDashboardDataCount(c *gin.Context) {
 	m["alarm"] = alarm
 
 	newDevice := make([]models.DashboardMetricsFront, 0)
+	newService := make([]models.DashboardMetricsFront, 0)
 	dashboardMetrics, err := models.DashboardMetricsGetsAll()
 	ginx.Dangerous(err)
 	for _, val := range dashboardMetrics.Device {
@@ -274,32 +275,38 @@ func (rt *Router) getDashboardDataCount(c *gin.Context) {
 			if metricsVal.Unit == "bool" {
 				str := ""
 				if int64(valueT) == 0 {
-					str = "异常"
-				} else {
 					str = "正常"
+				} else {
+					str = "异常"
 				}
-				newDevice = append(newDevice, models.DashboardMetricsFront{
+				newService = append(newService, models.DashboardMetricsFront{
 					Name:    val.Name,
 					Metrics: metricsVal.Name,
 					Value:   str,
 				})
-			} else if metricsVal.Unit == "/秒" || metricsVal.Unit == "/毫秒" || metricsVal.Unit == "%" || metricsVal.Unit == "Mbps" {
-				newDevice = append(newDevice, models.DashboardMetricsFront{
+			} else if metricsVal.Unit == "/秒" || metricsVal.Unit == "%" || metricsVal.Unit == "Mbps" {
+				newService = append(newService, models.DashboardMetricsFront{
 					Name:    val.Name,
 					Metrics: metricsVal.Name,
 					Value:   fmt.Sprintf("%.1f", valueT) + metricsVal.Unit,
 				})
 			} else if metricsVal.Unit == "/天" || metricsVal.Unit == "/条" {
-				newDevice = append(newDevice, models.DashboardMetricsFront{
+				newService = append(newService, models.DashboardMetricsFront{
 					Name:    val.Name,
 					Metrics: metricsVal.Name,
 					Value:   strconv.FormatInt(int64(valueT), 10) + metricsVal.Unit,
+				})
+			} else if metricsVal.Unit == "/毫秒" {
+				newService = append(newService, models.DashboardMetricsFront{
+					Name:    val.Name,
+					Metrics: metricsVal.Name,
+					Value:   fmt.Sprintf("%.1f", valueT*1000) + metricsVal.Unit,
 				})
 			}
 
 		}
 	}
-	m["new_service"] = newDevice
+	m["new_service"] = newService
 
 	//资产分类
 	assetType := make(map[string]int64)

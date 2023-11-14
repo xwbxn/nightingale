@@ -18,8 +18,8 @@ import (
 type AlertCurEvent struct {
 	Id                       int64             `json:"id" gorm:"primaryKey"`
 	AssetId                  int64             `json:"asset_id"`
-	AssetName                string            `json:"asset_name"`
-	AssetIp                  string            `json:"asset_ip"`
+	AssetName                string            `json:"asset_name" gorm:"-"`
+	AssetIp                  string            `json:"asset_ip" gorm:"-"`
 	Cate                     string            `json:"cate"`
 	Cluster                  string            `json:"cluster"`
 	DatasourceId             int64             `json:"datasource_id"`
@@ -194,6 +194,7 @@ func (e *AlertCurEvent) ToHis(ctx *ctx.Context) *AlertHisEvent {
 
 	return &AlertHisEvent{
 		IsRecovered:      isRecovered,
+		AssetId:          e.AssetId,
 		Cate:             e.Cate,
 		Cluster:          e.Cluster,
 		DatasourceId:     e.DatasourceId,

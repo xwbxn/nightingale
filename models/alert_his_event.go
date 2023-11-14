@@ -13,6 +13,9 @@ import (
 
 type AlertHisEvent struct {
 	Id                 int64             `json:"id" gorm:"primaryKey"`
+	AssetId            int64             `json:"asset_id"`
+	AssetName          string            `json:"asset_name" gorm:"-"`
+	AssetIp            string            `json:"asset_ip" gorm:"-"`
 	Cate               string            `json:"cate"`
 	IsRecovered        int               `json:"is_recovered"`
 	DatasourceId       int64             `json:"datasource_id"`
@@ -296,6 +299,12 @@ func EventPersist(ctx *ctx.Context, event *AlertCurEvent) error {
 	if err != nil {
 		return fmt.Errorf("event_persist_check_exists_fail: %v rule_id=%d hash=%s", err, event.RuleId, event.Hash)
 	}
+
+	alertRule, err := AlertRuleGetById(ctx, event.RuleId)
+	if err != nil {
+		return err
+	}
+	event.AssetId = alertRule.AssetId
 
 	his := event.ToHis(ctx)
 

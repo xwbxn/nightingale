@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -42,6 +41,23 @@ func (rt *Router) monitoringGet(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(monitoring, nil)
+}
+
+// @Summary      根据资产id获取监控
+// @Description  根据主键获取监控
+// @Tags         监控
+// @Accept       json
+// @Produce      json
+// @Param        id    query    int  true  "主键"
+// @Success      200  {object}  models.Monitoring
+// @Router       /api/n9e/xh/monitoring/asset [get]
+// @Security     ApiKeyAuth
+func (rt *Router) monitoringGetByAssetId(c *gin.Context) {
+	id := ginx.QueryInt64(c, "id", -1)
+	monitorings, err := models.MonitoringGetMap(rt.Ctx, map[string]interface{}{"asset_id": id})
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(monitorings, err)
 }
 
 // @Summary      查询监控
@@ -256,7 +272,8 @@ func (rt *Router) monitoringData(c *gin.Context) {
 
 	datasourceMap := make(map[int64]interface{}, 0)
 	dsMon := make(map[int64][]string, 0)
-	dat := make(map[string]interface{}, 0)
+	// dat := make(map[string]interface{}, 0)
+	values := make([]model.Value, 0)
 	for _, monitoring := range lst {
 		_, datasourceOk := datasourceMap[monitoring.DatasourceId]
 		if !datasourceOk {
@@ -324,17 +341,11 @@ func (rt *Router) monitoringData(c *gin.Context) {
 	}
 	for _, monitoring := range lst {
 		sql := monitoring.MonitoringSql
-		logger.Debug(sql)
 		for _, val := range dsMon[monitoring.DatasourceId] {
 			if strings.Contains(sql, val) {
 				sqlLst := strings.Split(sql, val)
 				sql = ""
-				logger.Debug(sqlLst)
-				logger.Debug(len(sqlLst))
 				for index, sqlPart := range sqlLst {
-					// if sqlPart == "" {
-					// 	break
-					// }
 					if index == 0 {
 						sql += sqlPart
 					} else {
@@ -359,7 +370,6 @@ func (rt *Router) monitoringData(c *gin.Context) {
 		} else if endT-startT > 60*60*24*7 {
 			r = prom.Range{Start: start, End: end, Step: prom.DefaultStep * 2 * 60 * 60}
 		}
-		logger.Debug(sql)
 		value, warnings, err := rt.PromClients.GetCli(monitoring.DatasourceId).QueryRange(context.Background(), sql, r)
 		ginx.Dangerous(err)
 
@@ -367,29 +377,31 @@ func (rt *Router) monitoringData(c *gin.Context) {
 			logger.Error(err)
 			return
 		}
-		dataVal := make(map[int64]float64)
+		values = append(values, value)
 
-		items, ok := value.(model.Matrix)
-		if !ok {
-			return
-		}
+		// dataVal := make(map[int64]float64)
 
-		for _, item := range items {
-			if len(item.Values) == 0 {
-				return
-			}
-			for _, val := range item.Values {
-				if math.IsNaN(float64(val.Value)) {
-					break
-				}
-				_, timeSOk := dataVal[val.Timestamp.Unix()]
-				if timeSOk {
-					continue
-				}
-				dataVal[val.Timestamp.Unix()] = float64(val.Value)
-			}
-		}
-		dat["id="+strconv.FormatInt(monitoring.Id, 10)] = dataVal
+		// items, ok := value.(model.Matrix)
+		// if !ok {
+		// 	return
+		// }
+
+		// for _, item := range items {
+		// 	if len(item.Values) == 0 {
+		// 		return
+		// 	}
+		// 	for _, val := range item.Values {
+		// 		if math.IsNaN(float64(val.Value)) {
+		// 			break
+		// 		}
+		// 		_, timeSOk := dataVal[val.Timestamp.Unix()]
+		// 		if timeSOk {
+		// 			continue
+		// 		}
+		// 		dataVal[val.Timestamp.Unix()] = float64(val.Value)
+		// 	}
+		// }
+		// dat["id="+strconv.FormatInt(monitoring.Id, 10)] = dataVal
 	}
-	ginx.NewRender(c).Data(dat, err)
+	ginx.NewRender(c).Data(values, err)
 }

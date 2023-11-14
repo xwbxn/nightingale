@@ -149,6 +149,14 @@ func MonitoringGetById(ctx *ctx.Context, id int64) (*Monitoring, error) {
 	return obj, nil
 }
 
+// 按map查询
+func MonitoringGetMap(ctx *ctx.Context, where map[string]interface{}) ([]Monitoring, error) {
+	var lst []Monitoring
+	err := DB(ctx).Where(where).Find(&lst).Error
+
+	return lst, err
+}
+
 // 按ids查询
 func MonitoringGetByBatchId(ctx *ctx.Context, ids []int64) ([]Monitoring, error) {
 	var lst []Monitoring
