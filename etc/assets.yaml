@@ -243,7 +243,7 @@ config:
     base_props: *base_props
     extra_props:
       device:
-        label: 设备信息
+        label: 接口信息
         props:
           - name: interface
             label: 网络接口
@@ -290,25 +290,17 @@ config:
                     value: 6
                   - label: lowerLayerDown
                     value: 7
-    
-  - name: 主机(exporter)
-    category: "业务资产"
-    plugin: prometheus
-    metrics:
-      - name: CPU使用率
-        metrics: "(((count(count(node_cpu_seconds_total) by (cpu))) - avg(sum by (mode)(rate(node_cpu_seconds_total{mode='idle'}[1m])))) * 100) / count(count(node_cpu_seconds_total) by (cpu))"
-      - name: 内存使用率
-        metrics: "(node_memory_MemTotal_bytes - node_memory_MemFree_bytes - (node_memory_Cached_bytes + node_memory_Buffers_bytes))/node_memory_MemTotal_bytes*100"
-      - name: 入口流量
-        metrics: net_bits_recv
-      - name: 出口流量
-        metrics: net_bits_sent
-      - name: CPU核数
-        metrics: system_n_cpus
-    dashboard: "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Server&id=${id}&viewMode=fullscreen"
-    form:
-      - label: 监控Url
-        name: url
+      snmp:
+        label: SNMP属性
+        props:
+          - name: snmp
+            label: snmp属性
+            type: list
+            items_limit: 1
+            items:
+              - name: community
+                label: 团体字
+                type: input
 
   - name: MySQL
     category: "业务资产"
@@ -321,17 +313,28 @@ config:
       - name: 活动线程数
         metrics: mysql_global_status_threads_connected
     dashboard: "/dashboards-built-in/detail?__built-in-cate=MySQL&__built-in-name=MySQL&id=${id}&viewMode=fullscreen"
-    form:
-      - label: 地址
-        name: address
-      - label: 端口
-        name: port
-      - label: 用户名
-        name: user
-      - label: 密码
-        name: password
-        password: true
-
+    base_props: *base_props
+    extra_props:
+      connection:
+        label: 连接属性
+        props:
+          - name: connection
+            label: 连接属性
+            type: list
+            items_limit: 1
+            items:
+              - name: address
+                label: 地址
+                type: input
+              - name: port
+                label: 端口
+                type: input
+              - name: username
+                label: 用户名
+                type: input
+              - name: password
+                label: 密码
+                type: input
   - name: Redis
     category: "业务资产"
     plugin: redis

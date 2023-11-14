@@ -80,19 +80,6 @@ type BaseProp struct {
 	Options  []string `json:"options" yaml:"options"`
 }
 
-type ExtraProp struct {
-	Cpu    *ExtraPropPart `json:"cpu" yaml:"cpu"`
-	Memory *ExtraPropPart `json:"memory" yaml:"memory"`
-	Disk   *ExtraPropPart `json:"disk" yaml:"disk"`
-	Net    *ExtraPropPart `json:"net" yaml:"net"`
-	Board  *ExtraPropPart `json:"board" yaml:"board"`
-	Bios   *ExtraPropPart `json:"bios" yaml:"bios"`
-	Bus    *ExtraPropPart `json:"bus" yaml:"bus"`
-	Os     *ExtraPropPart `json:"os" yaml:"os"`
-	Power  *ExtraPropPart `json:"power" yaml:"power"`
-	Device *ExtraPropPart `json:"device" yaml:"device"`
-}
-
 type ExtraPropPart struct {
 	Label string `json:"label"  yaml:"label"`
 	Props []*struct {
@@ -113,14 +100,14 @@ type ExtraPropPart struct {
 }
 
 type AssetType struct {
-	Name            string                   `json:"name"`
-	Plugin          string                   `json:"plugin"`
-	Metrics         []*Metrics               `json:"metrics"`
-	OptionalMetrics []string                 `json:"optional_metrics" yaml:"optional_metrics"`
-	Category        string                   `json:"category"`
-	Form            []map[string]interface{} `json:"form"`
-	BaseProps       []*BaseProp              `json:"base_props" yaml:"base_props"`
-	ExtraProps      ExtraProp                `json:"extra_props" yaml:"extra_props"`
+	Name            string                    `json:"name"`
+	Plugin          string                    `json:"plugin"`
+	Metrics         []*Metrics                `json:"metrics"`
+	OptionalMetrics []string                  `json:"optional_metrics" yaml:"optional_metrics"`
+	Category        string                    `json:"category"`
+	Form            []map[string]interface{}  `json:"form"`
+	BaseProps       []*BaseProp               `json:"base_props" yaml:"base_props"`
+	ExtraProps      map[string]*ExtraPropPart `json:"extra_props" yaml:"extra_props"`
 
 	Dashboard string `json:"-"`
 }
@@ -171,7 +158,7 @@ func (ins *Asset) Add(ctx *ctx.Context) error {
 	return nil
 }
 
-//西航
+// 西航
 func (ins *Asset) AddXH(ctx *ctx.Context) (int64, error) {
 	if err := ins.Verify(); err != nil {
 		return 0, err
@@ -192,15 +179,32 @@ func (ins *Asset) AddXH(ctx *ctx.Context) (int64, error) {
 		return 0, err
 	}
 
+	var assetType AssetType
 	for _, item := range assetTypes {
 		if item.Name == ins.Type {
 			ins.Plugin = item.Plugin
+			assetType = *item
 			break
 		}
 	}
 
 	if err := Insert(ctx, ins); err != nil {
 		return 0, err
+	}
+
+	// 将asset.yaml中的默认指标入库，这里未使用事务
+	for _, m := range assetType.Metrics {
+		monitoring := Monitoring{
+			AssetId:        ins.Id,
+			MonitoringName: m.Name,
+			MonitoringSql:  m.Metrics,
+			DatasourceId:   1, //暂定默认为1
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+		if err := monitoring.Add(ctx); err != nil {
+			logger.Error("新增默认指标错误:", err)
+		}
 	}
 
 	return ins.Id, nil
@@ -285,7 +289,7 @@ func (ins *Asset) UpdateTx(tx *gorm.DB, selectField interface{}, selectFields ..
 	return nil
 }
 
-//通过ids修改属性
+// 通过ids修改属性
 func UpdateByIds(ctx *ctx.Context, ids []int64, name string, value interface{}) error {
 	return DB(ctx).Model(&Asset{}).Where("id in ?", ids).Updates(map[string]interface{}{name: value}).Error
 }
@@ -515,7 +519,7 @@ func (e *Asset) DB2FE() {
 	json.Unmarshal([]byte(e.OptionalMetrics), &e.OptinalMetricsJson)
 }
 
-//获取某一类资产上月（自然月）环比值
+// 获取某一类资产上月（自然月）环比值
 func AssetMom(ctx *ctx.Context, aType string) (num int64, err error) {
 	//统计上月新增资产
 	var insertNum int64
@@ -544,19 +548,19 @@ func AssetMom(ctx *ctx.Context, aType string) (num int64, err error) {
 	return insertNum, err
 }
 
-//根据map查询
+// 根据map查询
 func AssetsGetsMap(ctx *ctx.Context, where map[string]interface{}) (lst []Asset, err error) {
 	err = DB(ctx).Model(&Asset{}).Where(where).Find(&lst).Error
 	return lst, err
 }
 
-//根据map统计数量
+// 根据map统计数量
 func AssetsCountMap(ctx *ctx.Context, where map[string]interface{}) (num int64, err error) {
 	err = DB(ctx).Model(&Asset{}).Where(where).Count(&num).Error
 	return num, err
 }
 
-//根据filter统计数量
+// 根据filter统计数量
 func AssetsCountFilter(ctx *ctx.Context, aType string, query, queryType string) (num int64, err error) {
 	session := DB(ctx)
 
@@ -580,7 +584,7 @@ func AssetsCountFilter(ctx *ctx.Context, aType string, query, queryType string) 
 	return num, err
 }
 
-//根据filter查询
+// 根据filter查询
 func AssetsGetsFilter(ctx *ctx.Context, aType string, query, queryType string, limit, offset int) (lst []Asset, err error) {
 	session := DB(ctx)
 	// 分页
@@ -607,14 +611,14 @@ func AssetsGetsFilter(ctx *ctx.Context, aType string, query, queryType string, l
 	return lst, err
 }
 
-//根据资产名称、类型、IP地址模糊匹配
+// 根据资产名称、类型、IP地址模糊匹配
 func AssetIdByNameTypeIp(ctx *ctx.Context, query string) (ids []int64, err error) {
 	query = "%" + query + "%"
 	err = DB(ctx).Model(&Asset{}).Distinct().Where("name like ? or type like ? or ip like ?", query, query, query).Pluck("id", &ids).Error
 	return ids, err
 }
 
-//获取ip
+// 获取ip
 func GetIP(asset *Asset) (ip, name string) {
 	ip = ""
 	name = asset.Name
@@ -643,7 +647,7 @@ func GetIP(asset *Asset) (ip, name string) {
 	return ip, name
 }
 
-//根据ids获得资产
+// 根据ids获得资产
 func AssetGetByIds(ctx *ctx.Context, ids []int64) ([]Asset, error) {
 	var lst []Asset
 	err := DB(ctx).Model(&Asset{}).Where("id in ?", ids).Find(&lst).Error
