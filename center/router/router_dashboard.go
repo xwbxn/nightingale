@@ -418,7 +418,6 @@ func (rt *Router) AssetDetails(c *gin.Context) {
 
 	f := make([]int64, 0)
 	ginx.BindJSON(c, &f)
-	logger.Debug(f)
 
 	curAlert, err := models.AlertFeList(rt.Ctx)
 	ginx.Dangerous(err)
@@ -437,15 +436,15 @@ func (rt *Router) AssetDetails(c *gin.Context) {
 				netData, err := strconv.ParseFloat(strings.Split(m["value"], ".")[0], 64)
 				ginx.Dangerous(err)
 				if netData < math.Pow(10, 3) {
-					m["value"] = strings.Split(m["value"], ".")[0] + "Kb/s"
+					m["value"] = strings.Split(m["value"], ".")[0] + "b/s"
 				} else if netData >= math.Pow(10, 3) && netData < math.Pow(10, 6) {
 					netDT, err := strconv.ParseFloat(fmt.Sprintf("%.2f", netData/math.Pow(10, 3)), 64)
 					ginx.Dangerous(err)
-					m["value"] = strconv.FormatFloat(netDT, 'f', -1, 64) + "Mb/s"
+					m["value"] = strconv.FormatFloat(netDT, 'f', -1, 64) + "Kb/s"
 				} else if netData >= math.Pow(10, 6) && netData < math.Pow(10, 9) {
 					netDT, err := strconv.ParseFloat(fmt.Sprintf("%.2f", netData/math.Pow(10, 6)), 64)
 					ginx.Dangerous(err)
-					m["value"] = strconv.FormatFloat(netDT, 'f', -1, 64) + "Gb/s"
+					m["value"] = strconv.FormatFloat(netDT, 'f', -1, 64) + "Mb/s"
 				}
 			} else if m["name"] == "CPU使用率" || m["name"] == "内存使用率" {
 				netData, err := strconv.ParseFloat(m["value"], 64)
