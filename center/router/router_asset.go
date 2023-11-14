@@ -457,11 +457,17 @@ func (rt *Router) assetDelXH(c *gin.Context) {
 		ginx.Bomb(http.StatusBadRequest, "参数为空")
 	}
 	tx := models.DB(rt.Ctx).Begin()
+	//删除资产基本属性
 	err := models.AssetDelTx(tx, f.Ids)
 	ginx.Dangerous(err)
+	//删除资产扩展属性
 	err = models.AssetsExpansionDelAssetsIds(tx, f.Ids)
 	ginx.Dangerous(err)
+	//删除资产所属监控
 	err = models.MonitoringDelTxByAssetId(tx, f.Ids)
+	ginx.Dangerous(err)
+	//删除资产告警规则
+	err = models.AlertRuleDelTxByAssetId(tx, f.Ids)
 	tx.Commit()
 
 	ginx.NewRender(c).Message(err)
