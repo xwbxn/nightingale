@@ -14,10 +14,6 @@ import (
 	json "github.com/json-iterator/go"
 	"github.com/prometheus/common/model"
 
-	// "github.com/pkg/errors"
-	// "github.com/prometheus/common/model"
-	// "github.com/prometheus/prometheus/pkg/labels"
-	// "github.com/prometheus/prometheus/promql/parser"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 )
@@ -135,7 +131,7 @@ func getAllMetrics(ctx *ctx.Context) {
 		var result map[string]interface{}
 		err = json.Unmarshal(body, &result)
 		if err != nil {
-			logger.Errorf("解析JSON发生错误:", err)
+			logger.Errorf("解析JSON发生错误: %s", err)
 			ginx.Bomb(http.StatusOK, "获取数据失败")
 			return
 		}
@@ -149,50 +145,3 @@ func getAllMetrics(ctx *ctx.Context) {
 		dsMon[datasource.Id] = data
 	}
 }
-
-// func injectLabels(expr parser.Expr, match labels.MatchType, name, value string) {
-// 	switch e := expr.(type) {
-// 	case *parser.AggregateExpr:
-// 		injectLabels(e.Expr, match, name, value)
-// 	case *parser.Call:
-// 		for _, v := range e.Args {
-// 			injectLabels(v, match, name, value)
-// 		}
-// 	case *parser.ParenExpr:
-// 		injectLabels(e.Expr, match, name, value)
-// 	case *parser.UnaryExpr:
-// 		injectLabels(e.Expr, match, name, value)
-// 	case *parser.BinaryExpr:
-// 		injectLabels(e.LHS, match, name, value)
-// 		injectLabels(e.RHS, match, name, value)
-// 	case *parser.VectorSelector:
-// 		l := genMetricLabel(match, name, value)
-// 		e.LabelMatchers = append(e.LabelMatchers, l)
-// 		return
-// 	case *parser.MatrixSelector:
-// 		injectLabels(e.VectorSelector, match, name, value)
-// 	case *parser.SubqueryExpr:
-// 		injectLabels(e.Expr, match, name, value)
-// 	case *parser.NumberLiteral, *parser.StringLiteral:
-// 		return
-// 	default:
-// 		panic(errors.Errorf("unhandled expression of type: %T", expr))
-// 	}
-// 	return
-// }
-
-// func genMetricLabel(match labels.MatchType, name, value string) *labels.Matcher {
-// 	m, err := labels.NewMatcher(match, name, value)
-// 	if nil != err {
-// 		return nil
-// 	}
-
-// 	return m
-// }
-
-// func main() {
-// 	ql := `rate(http_requests_total[5m])[30m:1m]`
-// 	expr, _ := parser.ParseExpr(ql)
-// 	injectLabels(expr, labels.MatchEqual, "asset_id", "123")
-// 	fmt.Println(expr.String())
-// }

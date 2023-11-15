@@ -31,8 +31,12 @@ func ConvertToTimeSeries(value model.Value, rule *models.RecordingRule) (lst []*
 			s.Timestamp = time.Unix(item.Timestamp.Unix(), 0).UnixNano() / 1e6
 			s.Value = float64(item.Value)
 			l := labelsToLabelsProto(item.Metric, rule)
+			refLables := []prompb.Label{}
+			for _, item := range l {
+				refLables = append(refLables, *item)
+			}
 			lst = append(lst, &prompb.TimeSeries{
-				Labels:  l,
+				Labels:  refLables,
 				Samples: []prompb.Sample{s},
 			})
 		}
@@ -63,8 +67,12 @@ func ConvertToTimeSeries(value model.Value, rule *models.RecordingRule) (lst []*
 					Value:     float64(v.Value),
 				})
 			}
+			refLables := []prompb.Label{}
+			for _, item := range l {
+				refLables = append(refLables, *item)
+			}
 			lst = append(lst, &prompb.TimeSeries{
-				Labels:  l,
+				Labels:  refLables,
 				Samples: slst,
 			})
 		}

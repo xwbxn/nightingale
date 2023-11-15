@@ -31,8 +31,13 @@ func (w WriterType) Write(items []*prompb.TimeSeries, headers ...map[string]stri
 		return
 	}
 
+	refItems := []prompb.TimeSeries{}
+	for _, item := range items {
+		refItems = append(refItems, *item)
+	}
+
 	req := &prompb.WriteRequest{
-		Timeseries: items,
+		Timeseries: refItems,
 	}
 
 	data, err := proto.Marshal(req)

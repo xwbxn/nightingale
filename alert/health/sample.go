@@ -59,16 +59,16 @@ func ConvertMetricTimeSeries(value model.Value, mts *models.Metrics, assets []*m
 }
 
 func convertHealthSeries(asset *models.Asset, health int) (ts *prompb.TimeSeries) {
-	var healthLabels []*prompb.Label
-	healthLabels = append(healthLabels, &prompb.Label{
+	var healthLabels []prompb.Label
+	healthLabels = append(healthLabels, prompb.Label{
 		Name:  LabelName,
 		Value: HealthMetric,
 	})
-	healthLabels = append(healthLabels, &prompb.Label{
+	healthLabels = append(healthLabels, prompb.Label{
 		Name:  AssetId,
 		Value: fmt.Sprintf("%d", asset.Id),
 	})
-	healthLabels = append(healthLabels, &prompb.Label{
+	healthLabels = append(healthLabels, prompb.Label{
 		Name:  AssetInstance,
 		Value: asset.Label,
 	})
