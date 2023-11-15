@@ -732,7 +732,10 @@ func (rt *Router) AlarmHisGet(c *gin.Context) {
 			lst[index].OrganizeId = int(asset.OrganizationId)
 			organization, err := models.OrganizationGetById(rt.Ctx, asset.OrganizationId)
 			ginx.Dangerous(err)
-			lst[index].OrganizeName = (*organization).Name
+			if organization != nil {
+				lst[index].OrganizeName = (*organization).Name
+			}
+
 		}
 		lst[index].Type = asset.Type
 

@@ -8,5 +8,5 @@ import (
 )
 
 func TestInject(t *testing.T) {
-	fmt.Printf(InjectLabel("sum(cpu_usage_active{instance=\"111\"})", "asset_id", "20", labels.MatchEqual))
+	fmt.Println(InjectLabel("sum(cpu_usage_active)", "asset_id", "20", labels.MatchNotEqual))
 }

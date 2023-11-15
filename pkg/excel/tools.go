@@ -276,19 +276,38 @@ func (l *lzExcelExport) ExportDataInfo(data []interface{}, tagName string, ctx *
 							}
 						} else if m["type"] == "option" {
 							currentValue := m["value"][1 : len(m["value"])-1]
+							// logger.Debug(m["value"])
+							// logger.Debug(currentValue)
 							rangs := strings.Split(currentValue, ";")
-							logger.Debug("--------------------------")
-							logger.Debug(rangs)
 							for idx := 0; idx < len(rangs); idx++ {
 								logger.Debug(v.Field(i).Interface())
-								currentValue := fmt.Sprintf("%d", v.Field(i).Interface())
-								logger.Debug(currentValue)
-								logger.Debug(idx)
-								if fmt.Sprintf("%d", idx) == currentValue {
-									out[t.Field(i).Name] = rangs[idx]
-									break
+								logger.Debug(v.Field(i).Type())
+								if v.Field(i).Type().Name() == "string" {
+									if fmt.Sprintf("%d", idx) == v.Field(i).Interface() {
+										out[t.Field(i).Name] = rangs[idx]
+										break
+									}
+								} else {
+									currentValue := fmt.Sprintf("%d", v.Field(i).Interface())
+									logger.Debug(currentValue)
+									logger.Debug(idx)
+									if fmt.Sprintf("%d", idx) == currentValue {
+										out[t.Field(i).Name] = rangs[idx]
+										break
+									}
 								}
+
+								// if int(v.Field(i).Interface().(float64)) == idx {
+								// 	out[t.Field(i).Name] = rangs[idx]
+								// 	break
+								// }
 							}
+						} else if m["type"] == "date" {
+							logger.Debug(v.Field(i).Interface())
+							trigger_time, _ := strconv.ParseInt(v.Field(i).Interface().(string), 10, 64)
+							out[t.Field(i).Name] = time.Unix(trigger_time, 0).Format("2006-01-02 15:04:05")
+							logger.Debug(out[t.Field(i).Name])
+							logger.Debug(out)
 						} else {
 							out[t.Field(i).Name] = v.Field(i).Interface()
 						}

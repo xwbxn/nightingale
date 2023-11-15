@@ -22,6 +22,12 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 		for i := 0; i < len(ars); i++ {
 			ars[i].FillNotifyGroups(rt.Ctx, cache)
 			ars[i].FillSeverities()
+			if ars[i].AssetId != 0 {
+				asset, err := rt.assetCache.Get(ars[i].AssetId)
+				ginx.Dangerous(err)
+				ars[i].AssetName = asset.Name
+				ars[i].AssetIp = asset.Ip
+			}
 		}
 	}
 	ginx.NewRender(c).Data(ars, err)
@@ -112,7 +118,7 @@ func (rt *Router) alertRuleAddForService(lst []models.AlertRule, username string
 			lst[i].UpdateBy = username
 		}
 
-		if err := lst[i].FE2DB(); err != nil {
+		if err := lst[i].FE2DB(rt.Ctx); err != nil {
 			reterr[lst[i].Name] = err.Error()
 			continue
 		}
@@ -138,7 +144,7 @@ func (rt *Router) alertRuleAdd(lst []models.AlertRule, username string, bgid int
 			lst[i].UpdateBy = username
 		}
 
-		if err := lst[i].FE2DB(); err != nil {
+		if err := lst[i].FE2DB(rt.Ctx); err != nil {
 			reterr[lst[i].Name] = i18n.Sprintf(lang, err.Error())
 			continue
 		}
@@ -270,7 +276,46 @@ func (rt *Router) alertRuleGet(c *gin.Context) {
 	err = ar.FillNotifyGroups(rt.Ctx, make(map[int64]*models.UserGroup))
 	ginx.Dangerous(err)
 
+	if ar.AssetId != 0 {
+		asset, err := rt.assetCache.Get(ar.AssetId)
+		ginx.Dangerous(err)
+		ar.AssetName = asset.Name
+		ar.AssetIp = asset.Ip
+	}
+
 	ginx.NewRender(c).Data(ar, err)
+}
+
+func (rt *Router) alertRuleGetsByIds(c *gin.Context) {
+
+	var f map[string]interface{}
+	ginx.BindJSON(c, &f)
+
+	idsTemp, idsOk := f["ids"]
+	ids := make([]int64, 0)
+	// var err error
+	if idsOk {
+		for _, val := range idsTemp.([]interface{}) {
+			ids = append(ids, int64(val.(float64)))
+		}
+	}
+
+	ars, err := models.AlertRuleGetByIds(rt.Ctx, ids)
+	ginx.Dangerous(err)
+
+	for index := range ars {
+		err = ars[index].FillNotifyGroups(rt.Ctx, make(map[int64]*models.UserGroup))
+		ginx.Dangerous(err)
+
+		if ars[index].AssetId != 0 {
+			asset, err := rt.assetCache.Get(ars[index].AssetId)
+			ginx.Dangerous(err)
+			ars[index].AssetName = asset.Name
+			ars[index].AssetIp = asset.Ip
+		}
+	}
+
+	ginx.NewRender(c).Data(ars, err)
 }
 
 // pre validation before save rule

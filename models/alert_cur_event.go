@@ -13,6 +13,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/toolkits/pkg/logger"
+	"gorm.io/gorm"
 )
 
 type AlertCurEvent struct {
@@ -66,6 +67,23 @@ type AlertCurEvent struct {
 	Status                   int               `json:"status" gorm:"-"`
 	Claimant                 string            `json:"claimant" gorm:"-"`
 	SubRuleId                int64             `json:"sub_rule_id" gorm:"-"`
+	DeletedAt                gorm.DeletedAt    `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"`
+}
+
+type AlterImport struct {
+	RuleName         string `json:"rule_name" cn:"规则标题" xml:"rule_name"`
+	AssetName        string `json:"asset_name" cn:"资产名称" xml:"asset_name"`
+	AssetIp          string `json:"asset_ip" cn:"资产IP" xml:"asset_ip"`
+	Severity         string `json:"severity" cn:"告警级别" xml:"severity" validate:"omitempty,oneof=0 1 2 3" source:"type=option,value=[nil;紧急;一般;事件]"`
+	PromSql          string `json:"prom_sql" cn:"指标" xml:"prom_sql"`
+	TriggerTime      string `json:"trigger_time" cn:"触发时间" xml:"trigger_time" source:"type=date,value=2006-01-02 15:04:05"`
+	TriggerValue     string `json:"trigger_value" cn:"触发时值" xml:"trigger_value"`
+	PromEvalInterval int    `json:"prom_eval_interval" cn:"执行频率/s" xml:"prom_eval_interval"`
+	PromForDuration  int    `json:"prom_for_duration" cn:"持续时长/s" xml:"prom_for_duration"`
+}
+
+type AlterXml struct {
+	AlterData []AlterImport `xml:"alter_data"`
 }
 
 func (e *AlertCurEvent) TableName() string {
@@ -683,4 +701,78 @@ func AlertFeListByAssetId(ctx *ctx.Context, where string) ([]*FeAlert, error) {
 	err := DB(ctx).Where("tags like ?", where).Find(&dat).Error
 	Fe := MakeFeAlert(dat)
 	return Fe, err
+}
+
+//西航
+func AlertCurEventXHTotal(ctx *ctx.Context, fType, start, end, group int64, ids []int64, query string) (int64, error) {
+	session := DB(ctx)
+	if start != -1 {
+		session = session.Where("trigger_time >= ?", start)
+	}
+	if end != -1 {
+		session = session.Where("trigger_time <= ?", end)
+	}
+	if group == -1 {
+		session = session.Where("group_id = ?", group)
+	}
+	if query != "" {
+		query = "%" + query + "%"
+		if fType == -1 {
+			session = session.Where("asset_id in ? or id like ? or rule_name like ? or severity like ?", ids, query, query, query)
+		} else if fType == 1 {
+			session = session.Where("severity like ?", query)
+		} else if fType == 2 {
+			session = session.Where("asset_id in ?", ids)
+		}
+	}
+	var num int64
+	err := session.Model(&AlertCurEvent{}).Count(&num).Error
+	return num, err
+}
+
+func AlertCurEventXHGets(ctx *ctx.Context, fType, start, end, group int64, ids []int64, query string, limit, offset int) ([]AlertCurEvent, error) {
+	session := DB(ctx)
+	// 分页
+	if limit > -1 {
+		session = session.Limit(limit).Offset(offset).Order("id DESC")
+	}
+	if start != -1 {
+		session = session.Where("trigger_time >= ?", start)
+	}
+	if end != -1 {
+		session = session.Where("trigger_time <= ?", end)
+	}
+	if group == -1 {
+		session = session.Where("group_id = ?", group)
+	}
+	if query != "" {
+		query = "%" + query + "%"
+		if fType == -1 {
+			session = session.Where("asset_id in ? or id like ? or rule_name like ? or severity like ?", ids, query, query, query)
+		} else if fType == 1 {
+			session = session.Where("severity like ?", query)
+		} else if fType == 2 {
+			session = session.Where("asset_id in ?", ids)
+		}
+	}
+	var lst []AlertCurEvent
+	err := session.Model(&AlertCurEvent{}).Find(&lst).Error
+
+	for index := range lst {
+		lst[index].DB2FE()
+	}
+	return lst, err
+
+}
+
+func AlertCurEventDelByIds(ctx *ctx.Context, ids []int64) error {
+	return DB(ctx).Where("id in ?", ids).Delete(&AlertCurEvent{}).Error
+}
+
+func AlertCurEventDelByIdsTx(tx *gorm.DB, ids []int64) error {
+	err := tx.Where("id in ?", ids).Delete(&AlertCurEvent{}).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return nil
 }

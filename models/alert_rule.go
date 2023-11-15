@@ -289,7 +289,7 @@ func (ar *AlertRule) Update(ctx *ctx.Context, arf AlertRule) error {
 		}
 	}
 
-	err := arf.FE2DB()
+	err := arf.FE2DB(ctx)
 	if err != nil {
 		return err
 	}
@@ -497,7 +497,7 @@ func (ar *AlertRule) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*UserGro
 	return nil
 }
 
-func (ar *AlertRule) FE2DB() error {
+func (ar *AlertRule) FE2DB(ctx *ctx.Context) error {
 
 	if len(ar.EnableStimesJSON) > 0 {
 		ar.EnableStime = strings.Join(ar.EnableStimesJSON, " ")
@@ -549,6 +549,29 @@ func (ar *AlertRule) FE2DB() error {
 		ar.RuleConfigJson = PromRuleConfig{
 			Queries: []PromQuery{query},
 		}
+	} else {
+		logger.Debug(ar.RuleConfigJson)
+		query := ar.RuleConfigJson.(map[string]interface{})
+		// mon, monOk := query["queries"]["monitor_id"]
+
+		logger.Debug(query["queries"])
+		queries := query["queries"].([]interface{})
+		logger.Debug(queries)
+		for index := range queries {
+			config := queries[index].(map[string]interface{})
+			newConfig := make(map[string]interface{}, 0)
+			mon, monOk := config["monitor_id"]
+			if monOk {
+				monitoring, err := MonitoringGetById(ctx, int64(mon.(float64)))
+				if err != nil {
+					return err
+				}
+				newConfig["prom_ql"] = monitoring.MonitoringSql + config["relation"].(string) + config["value"].(string)
+				newConfig["severity"] = int64(config["severity"].(float64))
+				queries[index] = newConfig
+			}
+		}
+
 	}
 
 	// json.Marshal  RuleConfigJson
@@ -674,7 +697,7 @@ func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
 			return nil, err
 		}
 		for i := 0; i < len(lst); i++ {
-			lst[i].FE2DB()
+			lst[i].FE2DB(ctx)
 		}
 		return lst, err
 	}
@@ -757,6 +780,12 @@ func AlertRuleGet(ctx *ctx.Context, where string, args ...interface{}) (*AlertRu
 
 func AlertRuleGetById(ctx *ctx.Context, id int64) (*AlertRule, error) {
 	return AlertRuleGet(ctx, "id=?", id)
+}
+
+func AlertRuleGetByIds(ctx *ctx.Context, ids []int64) ([]AlertRule, error) {
+	var lst []AlertRule
+	err := DB(ctx).Model(&AlertRule{}).Where("id in ?", ids).Find(&lst).Error
+	return lst, err
 }
 
 func AlertRuleGetName(ctx *ctx.Context, id int64) (string, error) {

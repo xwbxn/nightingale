@@ -1,4 +1,110 @@
 definitions:
+  models.AlertHisEvent:
+    properties:
+      annotations:
+        additionalProperties:
+          type: string
+        description: for fe
+        type: object
+      asset_id:
+        type: integer
+      asset_ip:
+        type: string
+      asset_name:
+        type: string
+      callbacks:
+        items:
+          type: string
+        type: array
+      cate:
+        type: string
+      cluster:
+        type: string
+      datasource_id:
+        type: integer
+      extra_config: {}
+      first_trigger_time:
+        description: 连续告警的首次告警时间
+        type: integer
+      group_id:
+        type: integer
+      group_name:
+        description: busi group name
+        type: string
+      handle_at:
+        description: 创建时间
+        type: integer
+      handle_by:
+        description: 创建人
+        type: string
+      hash:
+        type: string
+      id:
+        type: integer
+      is_recovered:
+        type: integer
+      last_eval_time:
+        type: integer
+      notify_channels:
+        items:
+          type: string
+        type: array
+      notify_cur_number:
+        description: 'notify: current number'
+        type: integer
+      notify_groups:
+        items:
+          type: string
+        type: array
+      notify_groups_obj:
+        items:
+          $ref: '#/definitions/models.UserGroup'
+        type: array
+      notify_recovered:
+        type: integer
+      prom_eval_interval:
+        type: integer
+      prom_for_duration:
+        type: integer
+      prom_ql:
+        type: string
+      recover_time:
+        type: integer
+      remark:
+        description: 备注
+        type: string
+      rule_algo:
+        type: string
+      rule_config:
+        description: rule config for fe
+      rule_id:
+        type: integer
+      rule_name:
+        type: string
+      rule_note:
+        type: string
+      rule_prod:
+        type: string
+      runbook_url:
+        type: string
+      severity:
+        type: integer
+      status:
+        description: 状态
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+      target_ident:
+        type: string
+      target_note:
+        type: string
+      trigger_time:
+        type: integer
+      trigger_value:
+        type: string
+    type: object
   models.Asset:
     properties:
       configs:
@@ -669,7 +775,9 @@ definitions:
       category:
         type: string
       extra_props:
-        $ref: '#/definitions/models.ExtraProp'
+        additionalProperties:
+          $ref: '#/definitions/models.ExtraPropPart'
+        type: object
       form:
         items:
           additionalProperties: true
@@ -754,6 +862,18 @@ definitions:
       required:
         type: string
       type:
+        type: string
+    type: object
+  models.Bigscreen:
+    properties:
+      config:
+        type: string
+      desc:
+        type: string
+      id:
+        description: type:*int         comment:主键        version:2023-10-08 15:31
+        type: integer
+      title:
         type: string
     type: object
   models.CabinetGroup:
@@ -1422,29 +1542,6 @@ definitions:
     - room_id
     - total_port_num
     type: object
-  models.ExtraProp:
-    properties:
-      bios:
-        $ref: '#/definitions/models.ExtraPropPart'
-      board:
-        $ref: '#/definitions/models.ExtraPropPart'
-      bus:
-        $ref: '#/definitions/models.ExtraPropPart'
-      cpu:
-        $ref: '#/definitions/models.ExtraPropPart'
-      device:
-        $ref: '#/definitions/models.ExtraPropPart'
-      disk:
-        $ref: '#/definitions/models.ExtraPropPart'
-      memory:
-        $ref: '#/definitions/models.ExtraPropPart'
-      net:
-        $ref: '#/definitions/models.ExtraPropPart'
-      os:
-        $ref: '#/definitions/models.ExtraPropPart'
-      power:
-        $ref: '#/definitions/models.ExtraPropPart'
-    type: object
   models.ExtraPropPart:
     properties:
       label:
@@ -1811,6 +1908,23 @@ definitions:
       username:
         type: string
     type: object
+  models.UserGroup:
+    properties:
+      create_at:
+        type: integer
+      create_by:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      note:
+        type: string
+      update_at:
+        type: integer
+      update_by:
+        type: string
+    type: object
   models.userNameVo:
     properties:
       id:
@@ -1920,6 +2034,242 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/n9e/alert-cur-events/batch-del:
+    post:
+      consumes:
+      - application/json
+      description: 批量删除当前告警
+      parameters:
+      - description: add query
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 批量删除当前告警
+      tags:
+      - 历史告警和当前告警-西航
+  /api/n9e/alert-cur-events/export-xls:
+    post:
+      consumes:
+      - application/json
+      description: EXCEL导出资产
+      parameters:
+      - description: 类型
+        in: query
+        name: ftype
+        type: integer
+      - description: 类型
+        in: query
+        name: type
+        type: integer
+      - description: 开始时间
+        in: query
+        name: start
+        type: integer
+      - description: 结束时间
+        in: query
+        name: end
+        type: integer
+      - description: 搜索框
+        in: query
+        name: query
+        type: string
+      - description: 业务组id
+        in: query
+        name: group
+        type: integer
+      - description: add query
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: EXCEL导出资产
+      tags:
+      - 历史告警和当前告警-西航
+  /api/n9e/alert-cur-events/list/xh:
+    get:
+      consumes:
+      - application/json
+      description: 当前告警过滤器
+      parameters:
+      - description: 类型
+        in: query
+        name: type
+        type: integer
+      - description: 开始时间
+        in: query
+        name: start
+        type: integer
+      - description: 结束时间
+        in: query
+        name: end
+        type: integer
+      - description: 搜索框
+        in: query
+        name: query
+        type: string
+      - description: 业务组id
+        in: query
+        name: group
+        type: integer
+      - description: 条数
+        in: query
+        name: limit
+        type: integer
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.AlertHisEvent'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 当前告警过滤器
+      tags:
+      - 历史告警和当前告警-西航
+  /api/n9e/alert-his-events/batch-del:
+    post:
+      consumes:
+      - application/json
+      description: 批量删除历史告警
+      parameters:
+      - description: add query
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 批量删除历史告警
+      tags:
+      - 历史告警和当前告警-西航
+  /api/n9e/alert-his-events/export-xls:
+    post:
+      consumes:
+      - application/json
+      description: EXCEL导出历史告警
+      parameters:
+      - description: 类型
+        in: query
+        name: ftype
+        type: integer
+      - description: 类型
+        in: query
+        name: type
+        type: integer
+      - description: 开始时间
+        in: query
+        name: start
+        type: integer
+      - description: 结束时间
+        in: query
+        name: end
+        type: integer
+      - description: 搜索框
+        in: query
+        name: query
+        type: string
+      - description: 业务组id
+        in: query
+        name: group
+        type: integer
+      - description: add query
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: EXCEL导出历史告警
+      tags:
+      - 历史告警和当前告警-西航
+  /api/n9e/alert-his-events/list/xh:
+    get:
+      consumes:
+      - application/json
+      description: 历史告警过滤器
+      parameters:
+      - description: 资产ID
+        in: query
+        name: type
+        type: integer
+      - description: 开始时间
+        in: query
+        name: start
+        type: integer
+      - description: 结束时间
+        in: query
+        name: end
+        type: integer
+      - description: 搜索框
+        in: query
+        name: query
+        type: string
+      - description: 业务组id
+        in: query
+        name: group
+        type: integer
+      - description: 条数
+        in: query
+        name: limit
+        type: integer
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.AlertHisEvent'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 历史告警过滤器
+      tags:
+      - 历史告警和当前告警-西航
   /api/n9e/asset-alter/:
     post:
       consumes:
@@ -3442,6 +3792,119 @@ paths:
       summary: 登录
       tags:
       - auth
+  /api/n9e/bigscreen/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询
+      parameters:
+      - description: 返回条数
+        in: query
+        name: limit
+        type: integer
+      - description: 查询条件
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Bigscreen'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询
+      tags:
+      - ""
+    post:
+      consumes:
+      - application/json
+      description: 创建
+      parameters:
+      - description: add bigscreen
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Bigscreen'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建
+      tags:
+      - ""
+    put:
+      consumes:
+      - application/json
+      description: 更新
+      parameters:
+      - description: update bigscreen
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.Bigscreen'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新
+      tags:
+      - ""
+  /api/n9e/bigscreen/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除
+      tags:
+      - ""
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Bigscreen'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取
+      tags:
+      - ""
   /api/n9e/cabinet-group/:
     post:
       consumes:

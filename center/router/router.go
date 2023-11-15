@@ -304,6 +304,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/busi-group/:id/alert-rules/fields", rt.auth(), rt.user(), rt.perm("/alert-rules/put"), rt.bgrw(), rt.alertRulePutFields)
 		pages.PUT("/busi-group/:id/alert-rule/:arid", rt.auth(), rt.user(), rt.perm("/alert-rules/put"), rt.alertRulePutByFE)
 		pages.GET("/alert-rule/:arid", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRuleGet)
+		pages.POST("/alert-rule/arid", rt.auth(), rt.user(), rt.alertRuleGetsByIds)
 		pages.PUT("/busi-group/:id/alert-rule/:arid/validate", rt.auth(), rt.user(), rt.perm("/alert-rules/put"), rt.alertRuleValidation)
 
 		pages.GET("/busi-group/:id/recording-rules", rt.auth(), rt.user(), rt.perm("/recording-rules"), rt.recordingRuleGets)
@@ -335,9 +336,15 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		// card logic
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.alertCurEventsList)
+		pages.GET("/alert-cur-events/list/xh", rt.auth(), rt.alertCurEventsListXH)
 		pages.GET("/alert-cur-events/card", rt.auth(), rt.alertCurEventsCard)
 		pages.POST("/alert-cur-events/card/details", rt.auth(), rt.alertCurEventsCardDetails)
 		pages.GET("/alert-his-events/list", rt.auth(), rt.alertHisEventsList)
+		pages.GET("/alert-his-events/list/xh", rt.auth(), rt.alertHisEventsListXH)
+		pages.POST("/alert-his-events/batch-del", rt.auth(), rt.admin(), rt.alertHisEventBatchDel)
+		pages.POST("/alert-cur-events/batch-del", rt.auth(), rt.admin(), rt.alertCurEventBatchDel)
+		pages.POST("/alert-cur-events/export-xls", rt.auth(), rt.admin(), rt.exportCurEventXH)
+		pages.POST("/alert-his-events/export-xls", rt.auth(), rt.admin(), rt.exportHisEventXH)
 		pages.DELETE("/alert-cur-events", rt.auth(), rt.user(), rt.perm("/alert-cur-events/del"), rt.alertCurEventDel)
 
 		pages.POST("/alert-his-event/solve/:eid", rt.auth(), rt.user(), rt.alertHisEventSolve) //人工解决异常接口

@@ -9,6 +9,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/toolkits/pkg/logger"
+	"gorm.io/gorm"
 )
 
 type AlertHisEvent struct {
@@ -60,6 +61,7 @@ type AlertHisEvent struct {
 	HandleAt           int64             `json:"handle_at"`            // 创建时间
 	HandleBy           string            `json:"handle_by"`            // 创建人
 	ExtraConfig        interface{}       `json:"extra_config" gorm:"-"`
+	DeletedAt          gorm.DeletedAt    `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"`
 }
 
 func (e *AlertHisEvent) TableName() string {
@@ -204,6 +206,81 @@ func AlertHisEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int6
 	return lst, err
 }
 
+//西航
+func AlertHisEventXHTotal(ctx *ctx.Context, fType, start, end, group int64, ids []int64, query string) (int64, error) {
+	session := DB(ctx)
+	if start != -1 {
+		session = session.Where("trigger_time >= ?", start)
+	}
+	if end != -1 {
+		session = session.Where("trigger_time <= ?", end)
+	}
+	if group == -1 {
+		session = session.Where("group_id = ?", group)
+	}
+	if query != "" {
+		query = "%" + query + "%"
+		if fType == -1 {
+			session = session.Where("asset_id in ? or id like ? or rule_name like ? or severity like ?", ids, query, query, query)
+		} else if fType == 1 {
+			session = session.Where("severity like ?", query)
+		} else if fType == 2 {
+			session = session.Where("asset_id in ?", ids)
+		}
+	}
+	var num int64
+	err := session.Model(&AlertHisEvent{}).Count(&num).Error
+	return num, err
+}
+
+func AlertHisEventXHGets(ctx *ctx.Context, fType, start, end, group int64, ids []int64, query string, limit, offset int) ([]AlertHisEvent, error) {
+	session := DB(ctx)
+	// 分页
+	if limit > -1 {
+		session = session.Limit(limit).Offset(offset).Order("id DESC")
+	}
+	if start != -1 {
+		session = session.Where("trigger_time >= ?", start)
+	}
+	if end != -1 {
+		session = session.Where("trigger_time <= ?", end)
+	}
+	if group == -1 {
+		session = session.Where("group_id = ?", group)
+	}
+	if query != "" {
+		query = "%" + query + "%"
+		if fType == -1 {
+			session = session.Where("asset_id in ? or id like ? or rule_name like ? or severity like ?", ids, query, query, query)
+		} else if fType == 1 {
+			session = session.Where("severity like ?", query)
+		} else if fType == 2 {
+			session = session.Where("asset_id in ?", ids)
+		}
+	}
+	var lst []AlertHisEvent
+	err := session.Model(&AlertHisEvent{}).Find(&lst).Error
+
+	for index := range lst {
+		lst[index].DB2FE()
+	}
+
+	return lst, err
+
+}
+
+func AlertHisEventDelByIds(ctx *ctx.Context, ids []int64) error {
+	return DB(ctx).Debug().Where("id in ?", ids).Delete(&AlertHisEvent{}).Error
+}
+
+func AlertHisEventDelByIdsTx(tx *gorm.DB, ids []int64) error {
+	err := tx.Debug().Where("id in ?", ids).Delete(&AlertHisEvent{}).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return nil
+}
+
 func AlertHisEventGet(ctx *ctx.Context, where string, args ...interface{}) (*AlertHisEvent, error) {
 	var lst []*AlertHisEvent
 	err := DB(ctx).Where(where, args...).Find(&lst).Error
@@ -223,6 +300,12 @@ func AlertHisEventGet(ctx *ctx.Context, where string, args ...interface{}) (*Ale
 
 func AlertHisEventGetById(ctx *ctx.Context, id int64) (*AlertHisEvent, error) {
 	return AlertHisEventGet(ctx, "id=?", id)
+}
+
+func AlertHisEventGetByIds(ctx *ctx.Context, ids []int64) ([]AlertHisEvent, error) {
+	var lst []AlertHisEvent
+	err := DB(ctx).Model(&AlertHisEvent{}).Where("id in ?", ids).Find(&lst).Error
+	return lst, err
 }
 
 func (m *AlertHisEvent) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {

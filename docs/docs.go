@@ -15,6 +15,376 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/n9e/alert-cur-events/batch-del": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "批量删除当前告警",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "历史告警和当前告警-西航"
+                ],
+                "summary": "批量删除当前告警",
+                "parameters": [
+                    {
+                        "description": "add query",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/alert-cur-events/export-xls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "EXCEL导出资产",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "历史告警和当前告警-西航"
+                ],
+                "summary": "EXCEL导出资产",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "类型",
+                        "name": "ftype",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "类型",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "开始时间",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "结束时间",
+                        "name": "end",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索框",
+                        "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "业务组id",
+                        "name": "group",
+                        "in": "query"
+                    },
+                    {
+                        "description": "add query",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/alert-cur-events/list/xh": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "当前告警过滤器",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "历史告警和当前告警-西航"
+                ],
+                "summary": "当前告警过滤器",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "类型",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "开始时间",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "结束时间",
+                        "name": "end",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索框",
+                        "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "业务组id",
+                        "name": "group",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.AlertHisEvent"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/n9e/alert-his-events/batch-del": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "批量删除历史告警",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "历史告警和当前告警-西航"
+                ],
+                "summary": "批量删除历史告警",
+                "parameters": [
+                    {
+                        "description": "add query",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/alert-his-events/export-xls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "EXCEL导出历史告警",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "历史告警和当前告警-西航"
+                ],
+                "summary": "EXCEL导出历史告警",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "类型",
+                        "name": "ftype",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "类型",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "开始时间",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "结束时间",
+                        "name": "end",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索框",
+                        "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "业务组id",
+                        "name": "group",
+                        "in": "query"
+                    },
+                    {
+                        "description": "add query",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/alert-his-events/list/xh": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "历史告警过滤器",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "历史告警和当前告警-西航"
+                ],
+                "summary": "历史告警过滤器",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "资产ID",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "开始时间",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "结束时间",
+                        "name": "end",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "搜索框",
+                        "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "业务组id",
+                        "name": "group",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.AlertHisEvent"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/n9e/asset-alter/": {
             "put": {
                 "security": [
@@ -2449,6 +2819,188 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/router.loginForm"
                         }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/bigscreen/": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据条件查询",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    ""
+                ],
+                "summary": "查询",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "返回条数",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "查询条件",
+                        "name": "query",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Bigscreen"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "更新",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    ""
+                ],
+                "summary": "更新",
+                "parameters": [
+                    {
+                        "description": "update bigscreen",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Bigscreen"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "创建",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    ""
+                ],
+                "summary": "创建",
+                "parameters": [
+                    {
+                        "description": "add bigscreen",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Bigscreen"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/api/n9e/bigscreen/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键获取",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    ""
+                ],
+                "summary": "获取",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Bigscreen"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "根据主键删除",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    ""
+                ],
+                "summary": "删除",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "主键",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -8852,6 +9404,161 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "models.AlertHisEvent": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "description": "for fe",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "asset_id": {
+                    "type": "integer"
+                },
+                "asset_ip": {
+                    "type": "string"
+                },
+                "asset_name": {
+                    "type": "string"
+                },
+                "callbacks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "cate": {
+                    "type": "string"
+                },
+                "cluster": {
+                    "type": "string"
+                },
+                "datasource_id": {
+                    "type": "integer"
+                },
+                "extra_config": {},
+                "first_trigger_time": {
+                    "description": "连续告警的首次告警时间",
+                    "type": "integer"
+                },
+                "group_id": {
+                    "type": "integer"
+                },
+                "group_name": {
+                    "description": "busi group name",
+                    "type": "string"
+                },
+                "handle_at": {
+                    "description": "创建时间",
+                    "type": "integer"
+                },
+                "handle_by": {
+                    "description": "创建人",
+                    "type": "string"
+                },
+                "hash": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_recovered": {
+                    "type": "integer"
+                },
+                "last_eval_time": {
+                    "type": "integer"
+                },
+                "notify_channels": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "notify_cur_number": {
+                    "description": "notify: current number",
+                    "type": "integer"
+                },
+                "notify_groups": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "notify_groups_obj": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.UserGroup"
+                    }
+                },
+                "notify_recovered": {
+                    "type": "integer"
+                },
+                "prom_eval_interval": {
+                    "type": "integer"
+                },
+                "prom_for_duration": {
+                    "type": "integer"
+                },
+                "prom_ql": {
+                    "type": "string"
+                },
+                "recover_time": {
+                    "type": "integer"
+                },
+                "remark": {
+                    "description": "备注",
+                    "type": "string"
+                },
+                "rule_algo": {
+                    "type": "string"
+                },
+                "rule_config": {
+                    "description": "rule config for fe"
+                },
+                "rule_id": {
+                    "type": "integer"
+                },
+                "rule_name": {
+                    "type": "string"
+                },
+                "rule_note": {
+                    "type": "string"
+                },
+                "rule_prod": {
+                    "type": "string"
+                },
+                "runbook_url": {
+                    "type": "string"
+                },
+                "severity": {
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "状态",
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "target_ident": {
+                    "type": "string"
+                },
+                "target_note": {
+                    "type": "string"
+                },
+                "trigger_time": {
+                    "type": "integer"
+                },
+                "trigger_value": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Asset": {
             "type": "object",
             "properties": {
@@ -9750,7 +10457,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "extra_props": {
-                    "$ref": "#/definitions/models.ExtraProp"
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/models.ExtraPropPart"
+                    }
                 },
                 "form": {
                     "type": "array",
@@ -9875,6 +10585,24 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Bigscreen": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "type": "string"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "type:*int         comment:主键        version:2023-10-08 15:31",
+                    "type": "integer"
+                },
+                "title": {
                     "type": "string"
                 }
             }
@@ -10761,41 +11489,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ExtraProp": {
-            "type": "object",
-            "properties": {
-                "bios": {
-                    "$ref": "#/definitions/models.ExtraPropPart"
-                },
-                "board": {
-                    "$ref": "#/definitions/models.ExtraPropPart"
-                },
-                "bus": {
-                    "$ref": "#/definitions/models.ExtraPropPart"
-                },
-                "cpu": {
-                    "$ref": "#/definitions/models.ExtraPropPart"
-                },
-                "device": {
-                    "$ref": "#/definitions/models.ExtraPropPart"
-                },
-                "disk": {
-                    "$ref": "#/definitions/models.ExtraPropPart"
-                },
-                "memory": {
-                    "$ref": "#/definitions/models.ExtraPropPart"
-                },
-                "net": {
-                    "$ref": "#/definitions/models.ExtraPropPart"
-                },
-                "os": {
-                    "$ref": "#/definitions/models.ExtraPropPart"
-                },
-                "power": {
-                    "$ref": "#/definitions/models.ExtraPropPart"
-                }
-            }
-        },
         "models.ExtraPropPart": {
             "type": "object",
             "properties": {
@@ -11300,6 +11993,32 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UserGroup": {
+            "type": "object",
+            "properties": {
+                "create_at": {
+                    "type": "integer"
+                },
+                "create_by": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "update_at": {
+                    "type": "integer"
+                },
+                "update_by": {
                     "type": "string"
                 }
             }
