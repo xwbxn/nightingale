@@ -14,18 +14,17 @@ import (
 // group: AssetsExpansion
 // version:2023-9-20 11:23
 type AssetsExpansion struct {
-	Id             int64          `gorm:"column:id;primaryKey" json:"id" `                          //type:*int     comment:主键        version:2023-9-20 11:23
-	AssetsId       int64          `gorm:"column:assets_id" json:"assets_id" `                       //type:*int     comment:资产id      version:2023-9-20 14:33
-	ConfigCategory string         `gorm:"column:config_category" json:"config_category" `           //type:string       comment:配置类别(1:基本信息,2:硬件配置,3:网络配置)    version:2023-10-08 11:44
-	GroupId        string         `gorm:"column:group_id" json:"group_id" `                         //type:string       comment:分组ID                                        version:2023-10-08 11:44
-	NameCn         string         `gorm:"column:name_cn" json:"name_cn" `                           //type:string   comment:属性名称    version:2023-9-20 11:23
-	Name           string         `gorm:"column:name" json:"name" `                                 //type:string   comment:英文名称    version:2023-9-20 11:23
-	Value          string         `gorm:"column:value" json:"value" `                               //type:string   comment:属性值      version:2023-9-20 11:23
-	CreatedBy      string         `gorm:"column:created_by" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人      version:2023-9-20 11:23
-	CreatedAt      int64          `gorm:"column:created_at" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间    version:2023-9-20 11:23
-	UpdatedBy      string         `gorm:"column:updated_by" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人      version:2023-9-20 11:23
-	UpdatedAt      int64          `gorm:"column:updated_at" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间    version:2023-9-20 11:23
-	DeletedAt      gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"` //type:string   comment:删除时间    version:2023-9-20 11:23
+	Id             int64  `gorm:"column:id;primaryKey" json:"id" `                          //type:*int     comment:主键        version:2023-9-20 11:23
+	AssetsId       int64  `gorm:"column:assets_id" json:"assets_id" `                       //type:*int     comment:资产id      version:2023-9-20 14:33
+	ConfigCategory string `gorm:"column:config_category" json:"config_category" `           //type:string       comment:配置类别(1:基本信息,2:硬件配置,3:网络配置)    version:2023-10-08 11:44
+	GroupId        string `gorm:"column:group_id" json:"group_id" `                         //type:string       comment:分组ID                                        version:2023-10-08 11:44
+	NameCn         string `gorm:"column:name_cn" json:"name_cn" `                           //type:string   comment:属性名称    version:2023-9-20 11:23
+	Name           string `gorm:"column:name" json:"name" `                                 //type:string   comment:英文名称    version:2023-9-20 11:23
+	Value          string `gorm:"column:value" json:"value" `                               //type:string   comment:属性值      version:2023-9-20 11:23
+	CreatedBy      string `gorm:"column:created_by" json:"created_by" swaggerignore:"true"` //type:string   comment:创建人      version:2023-9-20 11:23
+	CreatedAt      int64  `gorm:"column:created_at" json:"created_at" swaggerignore:"true"` //type:*int     comment:创建时间    version:2023-9-20 11:23
+	UpdatedBy      string `gorm:"column:updated_by" json:"updated_by" swaggerignore:"true"` //type:string   comment:更新人      version:2023-9-20 11:23
+	UpdatedAt      int64  `gorm:"column:updated_at" json:"updated_at" swaggerignore:"true"` //type:*int     comment:更新时间    version:2023-9-20 11:23
 }
 
 // TableName 表名:assets_expansion，资产扩展-西航。

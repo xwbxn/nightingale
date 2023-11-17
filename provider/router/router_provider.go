@@ -129,6 +129,11 @@ func convertToResponse(rt *Router, assets []*models.Asset) httpRemoteProviderRes
 				}
 
 				v["labels"] = labels
+				if val, exists := v["instances"]; exists {
+					for _, ins := range val.([]interface{}) {
+						ins.(map[string]interface{})["labels"] = labels
+					}
+				}
 
 				cfg, err := toml.Marshal(v)
 				if err != nil {
@@ -168,7 +173,9 @@ func convertToResponse(rt *Router, assets []*models.Asset) httpRemoteProviderRes
 
 			var configs map[string]interface{}
 			toml.Unmarshal([]byte(asset.Configs), &configs)
-			configs["instances"].([]interface{})[0].(map[string]interface{})["labels"] = labels
+			for _, ins := range configs["instances"].([]interface{}) {
+				ins.(map[string]interface{})["labels"] = labels
+			}
 
 			cfg, err := toml.Marshal(configs)
 			if err != nil {

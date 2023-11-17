@@ -83,3 +83,7 @@ ip_ext = false
 [linux_sysctl_fs]
 # # collect interval
 # interval = 15
+
+[w_aviation]
+# # collect interval
+# interval = 15

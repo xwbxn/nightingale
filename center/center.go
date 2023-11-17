@@ -27,6 +27,7 @@ import (
 	"github.com/ccfos/nightingale/v6/storage"
 
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
+	"github.com/ccfos/nightingale/v6/center/attrs"
 	centerrt "github.com/ccfos/nightingale/v6/center/router"
 	providerrt "github.com/ccfos/nightingale/v6/provider/router"
 	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
@@ -94,6 +95,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, notifyConfigCache, promClients, redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, assetCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, idents, writers, ctx)
 	providerRouter := providerrt.New(config.HTTP, targetCache, busiGroupCache, assetCache, ctx)
+	attrs.StartAttrSync(ctx, promClients, assetCache)
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 
