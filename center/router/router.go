@@ -731,6 +731,18 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/xh/monitoring/:id", rt.auth(), rt.user(), rt.monitoringDel)
 		pages.POST("/xh/monitoring/status", rt.auth(), rt.user(), rt.monitoringStatusUpdate)
 		pages.POST("/xh/monitoring/data", rt.auth(), rt.user(), rt.monitoringData)
+
+		//用户配置
+		pages.GET("/user-config", rt.auth(), rt.admin(), rt.userConfigGets)
+		//pages.GET("/user-config/:id", rt.auth(), rt.admin(), rt.userConfigGet)
+		pages.GET("/user-config/getInfo", rt.userLogoGet)		
+		pages.POST("/user-config/picture", rt.auth(), rt.admin(), rt.userPictureAdd)
+		pages.PUT("/user-config/logo", rt.auth(), rt.admin(), rt.logoPut)
+		pages.PUT("/user-config", rt.auth(), rt.admin(), rt.userConfigPut)
+		pages.DELETE("/user-config/:id", rt.auth(), rt.admin(), rt.userConfigDel)
+
+		//静态图片
+		pages.Static("/images", "./etc/picture/logo")
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {
