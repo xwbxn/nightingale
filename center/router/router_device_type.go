@@ -189,5 +189,5 @@ func (rt *Router) templetDeviceType(c *gin.Context) {
 
 	datas = append(datas, models.DeviceType{})
 
-	excels.NewMyExcel("设备类型导入模板").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+	excels.NewMyExcel("设备类型导入模板").ExportTempletToWeb(datas, nil, "cn", "source", 1, rt.Ctx, c)
 }

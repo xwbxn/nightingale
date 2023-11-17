@@ -13,7 +13,7 @@ import (
 	"github.com/toolkits/pkg/ginx"
 )
 
-func ExportTxt(c *gin.Context, txts []string) {
+func ExportTxt(c *gin.Context, txts []string, fileName string) {
 	// 将结构体数组导出为txt文件
 	file, err := os.Create("data.txt")
 	if err != nil {
@@ -45,7 +45,7 @@ func ExportTxt(c *gin.Context, txts []string) {
 	c.Header("Content-Type", "text/plain")
 	//设置文件名称
 	rand.Seed(time.Now().UnixNano())
-	name := "资产信息" + strconv.FormatInt(rand.Int63n(time.Now().Unix()), 10)
+	name := "fileName" + strconv.FormatInt(rand.Int63n(time.Now().Unix()), 10)
 	c.Header("Content-Disposition", "attachment; filename="+url.QueryEscape(name))
 	c.File(file.Name())
 	ginx.NewRender(c)

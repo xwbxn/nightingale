@@ -338,7 +338,7 @@ func (rt *Router) exportDeviceModels(c *gin.Context) {
 		excels.NewMyExcel("设备型号数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
 	} else {
 		datas = append(datas, models.DeviceModel{})
-		excels.NewMyExcel("设备型号数据").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+		excels.NewMyExcel("设备型号数据").ExportTempletToWeb(datas, nil, "cn", "source", 0, rt.Ctx, c)
 	}
 
 }
@@ -357,5 +357,5 @@ func (rt *Router) templetDeviceModels(c *gin.Context) {
 
 	datas = append(datas, models.DeviceModel{})
 
-	excels.NewMyExcel("设备型号模板").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+	excels.NewMyExcel("设备型号模板").ExportTempletToWeb(datas, nil, "cn", "source", 1, rt.Ctx, c)
 }

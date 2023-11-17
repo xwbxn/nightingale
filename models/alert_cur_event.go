@@ -74,10 +74,11 @@ type AlterImport struct {
 	RuleName         string `json:"rule_name" cn:"规则标题" xml:"rule_name"`
 	AssetName        string `json:"asset_name" cn:"资产名称" xml:"asset_name"`
 	AssetIp          string `json:"asset_ip" cn:"资产IP" xml:"asset_ip"`
-	Severity         string `json:"severity" cn:"告警级别" xml:"severity" validate:"omitempty,oneof=0 1 2 3" source:"type=option,value=[nil;紧急;一般;事件]"`
+	Severity         string `json:"severity" cn:"告警级别" xml:"severity" validate:"omitempty,oneof=0 1 2 3" source:"type=option,value=[请输入告警级别;紧急;一般;事件]"`
 	PromSql          string `json:"prom_sql" cn:"指标" xml:"prom_sql"`
-	TriggerTime      string `json:"trigger_time" cn:"触发时间" xml:"trigger_time" source:"type=date,value=2006-01-02 15:04:05"`
+	TriggerTime      string `json:"trigger_time" cn:"触发时间" xml:"trigger_time" `
 	TriggerValue     string `json:"trigger_value" cn:"触发时值" xml:"trigger_value"`
+	RecoverTime      string `json:"recover_time" cn:"恢复时间" xml:"recover_time" `
 	PromEvalInterval int    `json:"prom_eval_interval" cn:"执行频率/s" xml:"prom_eval_interval"`
 	PromForDuration  int    `json:"prom_for_duration" cn:"持续时长/s" xml:"prom_for_duration"`
 }
@@ -365,7 +366,11 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int
 }
 
 func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
-	session := DB(ctx).Where("trigger_time between ? and ?", stime, etime)
+	session := DB(ctx)
+
+	if stime != 0 {
+		session = session.Where("trigger_time between ? and ?", stime, etime)
+	}
 
 	if len(prods) != 0 {
 		session = session.Where("rule_prod in ?", prods)
@@ -476,7 +481,7 @@ func AlertCurEventGetByIds(ctx *ctx.Context, ids []int64) ([]*AlertCurEvent, err
 		return lst, nil
 	}
 
-	err := DB(ctx).Where("id in ?", ids).Order("id desc").Find(&lst).Error
+	err := DB(ctx).Debug().Where("id in ?", ids).Order("id desc").Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()
@@ -704,7 +709,7 @@ func AlertFeListByAssetId(ctx *ctx.Context, where string) ([]*FeAlert, error) {
 }
 
 //西航
-func AlertCurEventXHTotal(ctx *ctx.Context, fType, start, end, group int64, ids []int64, query string) (int64, error) {
+func AlertEventXHTotal(ctx *ctx.Context, alertType, severity, group, start, end int64, ids []int64, query string) (int64, error) {
 	session := DB(ctx)
 	if start != -1 {
 		session = session.Where("trigger_time >= ?", start)
@@ -712,25 +717,34 @@ func AlertCurEventXHTotal(ctx *ctx.Context, fType, start, end, group int64, ids 
 	if end != -1 {
 		session = session.Where("trigger_time <= ?", end)
 	}
-	if group == -1 {
+	if severity != -1 {
+		session = session.Where("severity = ?", severity)
+	}
+	if group != -1 {
 		session = session.Where("group_id = ?", group)
 	}
 	if query != "" {
 		query = "%" + query + "%"
-		if fType == -1 {
-			session = session.Where("asset_id in ? or id like ? or rule_name like ? or severity like ?", ids, query, query, query)
-		} else if fType == 1 {
-			session = session.Where("severity like ?", query)
-		} else if fType == 2 {
-			session = session.Where("asset_id in ?", ids)
-		}
+		// if fType == -1 {
+		session = session.Where("asset_id in ? or id like ? or rule_name like ? or severity like ?", ids, query, query, query)
+		// } else if fType == 1 {
+		// 	session = session.Where("severity like ?", query)
+		// } else if fType == 2 {
+		// 	session = session.Where("asset_id in ?", ids)
+		// }
 	}
 	var num int64
-	err := session.Model(&AlertCurEvent{}).Count(&num).Error
+	var err error
+	if alertType == 1 {
+		err = session.Model(&AlertCurEvent{}).Count(&num).Error
+	} else if alertType == 2 {
+		err = session.Model(&AlertHisEvent{}).Count(&num).Error
+	}
+
 	return num, err
 }
 
-func AlertCurEventXHGets(ctx *ctx.Context, fType, start, end, group int64, ids []int64, query string, limit, offset int) ([]AlertCurEvent, error) {
+func AlertEventXHGets[T any](ctx *ctx.Context, alertType, severity, group, start, end int64, ids []int64, query string, limit, offset int) ([]T, error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
@@ -742,25 +756,32 @@ func AlertCurEventXHGets(ctx *ctx.Context, fType, start, end, group int64, ids [
 	if end != -1 {
 		session = session.Where("trigger_time <= ?", end)
 	}
-	if group == -1 {
+	if severity != -1 {
+		session = session.Where("severity = ?", severity)
+	}
+	if group != -1 {
 		session = session.Where("group_id = ?", group)
 	}
 	if query != "" {
 		query = "%" + query + "%"
-		if fType == -1 {
-			session = session.Where("asset_id in ? or id like ? or rule_name like ? or severity like ?", ids, query, query, query)
-		} else if fType == 1 {
-			session = session.Where("severity like ?", query)
-		} else if fType == 2 {
-			session = session.Where("asset_id in ?", ids)
-		}
+		// if fType == -1 {
+		session = session.Where("asset_id in ? or id like ? or rule_name like ? or severity like ?", ids, query, query, query)
+		// } else if fType == 1 {
+		// 	session = session.Where("severity like ?", query)
+		// } else if fType == 2 {
+		// 	session = session.Where("asset_id in ?", ids)
+		// }
 	}
-	var lst []AlertCurEvent
-	err := session.Model(&AlertCurEvent{}).Find(&lst).Error
-
-	for index := range lst {
-		lst[index].DB2FE()
+	var lst []T
+	var err error
+	if alertType == 1 {
+		err = session.Model(&AlertCurEvent{}).Find(&lst).Error
+	} else if alertType == 2 {
+		err = session.Where("is_recovered != 0").Model(&AlertHisEvent{}).Find(&lst).Error
 	}
+	// for index := range lst {
+	// 	lst[index].DB2FE()
+	// }
 	return lst, err
 
 }

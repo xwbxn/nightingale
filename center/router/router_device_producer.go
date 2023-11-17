@@ -334,7 +334,7 @@ func (rt *Router) downloadDeviceProducer(c *gin.Context) {
 			excels.NewMyExcel(prodType+"数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
 		} else {
 			datas = append(datas, models.ProduceroVo{})
-			excels.NewMyExcel(prodType+"数据").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+			excels.NewMyExcel(prodType+"数据").ExportTempletToWeb(datas, nil, "cn", "source", 0, rt.Ctx, c)
 		}
 	} else if prodType == "third_party_maintenance" {
 		var lst []models.MaintenanceVo
@@ -352,7 +352,7 @@ func (rt *Router) downloadDeviceProducer(c *gin.Context) {
 			excels.NewMyExcel(prodType+"数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
 		} else {
 			datas = append(datas, models.MaintenanceVo{})
-			excels.NewMyExcel(prodType+"数据").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+			excels.NewMyExcel(prodType+"数据").ExportTempletToWeb(datas, nil, "cn", "source", 0, rt.Ctx, c)
 		}
 	} else if prodType == "supplier" {
 		var lst []models.SupplierVo
@@ -370,7 +370,7 @@ func (rt *Router) downloadDeviceProducer(c *gin.Context) {
 			excels.NewMyExcel(prodType+"数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
 		} else {
 			datas = append(datas, models.SupplierVo{})
-			excels.NewMyExcel(prodType+"数据").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+			excels.NewMyExcel(prodType+"数据").ExportTempletToWeb(datas, nil, "cn", "source", 0, rt.Ctx, c)
 		}
 	} else if prodType == "component_brand" {
 		var lst []models.PartVo
@@ -388,7 +388,7 @@ func (rt *Router) downloadDeviceProducer(c *gin.Context) {
 			excels.NewMyExcel(prodType+"数据").ExportDataInfo(datas, "cn", rt.Ctx, c)
 		} else {
 			datas = append(datas, models.PartVo{})
-			excels.NewMyExcel(prodType+"数据").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+			excels.NewMyExcel(prodType+"数据").ExportTempletToWeb(datas, nil, "cn", "source", 0, rt.Ctx, c)
 		}
 	}
 }
@@ -433,7 +433,7 @@ func (rt *Router) templetDeviceProducer(c *gin.Context) {
 	m["supplier"] = "供应商"
 	m["component_brand"] = "部件品牌"
 
-	excels.NewMyExcel(m[prodType]+"模板").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+	excels.NewMyExcel(m[prodType]+"模板").ExportTempletToWeb(datas, nil, "cn", "source", 1, rt.Ctx, c)
 }
 
 // @Summary      更新设备厂商

@@ -180,5 +180,5 @@ func (rt *Router) templetStoreroomManagement(c *gin.Context) {
 
 	datas = append(datas, models.StoreroomManagement{})
 
-	excels.NewMyExcel("库房信息导入模板").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+	excels.NewMyExcel("库房信息导入模板").ExportTempletToWeb(datas, nil, "cn", "source", 1, rt.Ctx, c)
 }

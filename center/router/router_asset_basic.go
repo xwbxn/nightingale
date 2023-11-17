@@ -732,7 +732,7 @@ func (rt *Router) templeAsset(c *gin.Context) {
 		}
 	}
 
-	excels.NewMyExcel("设备模板").ExportTempletToWeb(datas, m, "cn", "source", rt.Ctx, c)
+	excels.NewMyExcel("设备模板").ExportTempletToWeb(datas, m, "cn", "source", 1, rt.Ctx, c)
 }
 
 // @Summary      EXCEL导入资产

@@ -226,7 +226,7 @@ func (rt *Router) templetDistributionFrame(c *gin.Context) {
 
 	datas = append(datas, models.DistributionFrame{})
 
-	excels.NewMyExcel("设备厂商模板").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+	excels.NewMyExcel("设备厂商模板").ExportTempletToWeb(datas, nil, "cn", "source", 1, rt.Ctx, c)
 }
 
 // @Summary      查询连接配线架信息（配线架类型/编号、机柜编号）

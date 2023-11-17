@@ -234,7 +234,7 @@ func (rt *Router) templeAssetNetWork(c *gin.Context) {
 
 	datas = append(datas, models.AssetNetWork{})
 
-	excels.NewMyExcel("网络配置").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+	excels.NewMyExcel("网络配置").ExportTempletToWeb(datas, nil, "cn", "source", 1, rt.Ctx, c)
 }
 
 // @Summary      EXCEL导入网络配置
@@ -478,7 +478,7 @@ func (rt *Router) exportAssetNetWork(c *gin.Context) {
 	datas := make([]interface{}, 0)
 	if len(assetNetWorkLst) <= 0 {
 		datas = append(datas, models.AssetNetWork{})
-		excels.NewMyExcel("网络配置").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+		excels.NewMyExcel("网络配置").ExportTempletToWeb(datas, nil, "cn", "source", 0, rt.Ctx, c)
 	} else {
 		for _, v := range assetNetWorkLst {
 			datas = append(datas, v)

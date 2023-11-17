@@ -336,15 +336,15 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		// card logic
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.alertCurEventsList)
-		pages.GET("/alert-cur-events/list/xh", rt.auth(), rt.alertCurEventsListXH)
+		pages.GET("/alert-events/list/xh", rt.auth(), rt.alertEventsListXH)
 		pages.GET("/alert-cur-events/card", rt.auth(), rt.alertCurEventsCard)
 		pages.POST("/alert-cur-events/card/details", rt.auth(), rt.alertCurEventsCardDetails)
 		pages.GET("/alert-his-events/list", rt.auth(), rt.alertHisEventsList)
-		pages.GET("/alert-his-events/list/xh", rt.auth(), rt.alertHisEventsListXH)
+		// pages.GET("/alert-his-events/list/xh", rt.auth(), rt.alertHisEventsListXH)
 		pages.POST("/alert-his-events/batch-del", rt.auth(), rt.admin(), rt.alertHisEventBatchDel)
 		pages.POST("/alert-cur-events/batch-del", rt.auth(), rt.admin(), rt.alertCurEventBatchDel)
-		pages.POST("/alert-cur-events/export-xls", rt.auth(), rt.admin(), rt.exportCurEventXH)
-		pages.POST("/alert-his-events/export-xls", rt.auth(), rt.admin(), rt.exportHisEventXH)
+		pages.POST("/alert-events/export-xls", rt.auth(), rt.admin(), rt.exportEventXH)
+		// pages.POST("/alert-his-events/export-xls", rt.auth(), rt.admin(), rt.exportHisEventXH)
 		pages.DELETE("/alert-cur-events", rt.auth(), rt.user(), rt.perm("/alert-cur-events/del"), rt.alertCurEventDel)
 
 		pages.POST("/alert-his-event/solve/:eid", rt.auth(), rt.user(), rt.alertHisEventSolve) //人工解决异常接口
@@ -735,7 +735,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		//用户配置
 		pages.GET("/user-config", rt.auth(), rt.admin(), rt.userConfigGets)
 		//pages.GET("/user-config/:id", rt.auth(), rt.admin(), rt.userConfigGet)
-		pages.GET("/user-config/getInfo", rt.userLogoGet)		
+		pages.GET("/user-config/getInfo", rt.userLogoGet)
 		pages.POST("/user-config/picture", rt.auth(), rt.admin(), rt.userPictureAdd)
 		pages.PUT("/user-config/logo", rt.auth(), rt.admin(), rt.logoPut)
 		pages.PUT("/user-config", rt.auth(), rt.admin(), rt.userConfigPut)

@@ -215,7 +215,7 @@ func AlertHisEventXHTotal(ctx *ctx.Context, fType, start, end, group int64, ids 
 	if end != -1 {
 		session = session.Where("trigger_time <= ?", end)
 	}
-	if group == -1 {
+	if group != -1 {
 		session = session.Where("group_id = ?", group)
 	}
 	if query != "" {
@@ -229,7 +229,7 @@ func AlertHisEventXHTotal(ctx *ctx.Context, fType, start, end, group int64, ids 
 		}
 	}
 	var num int64
-	err := session.Model(&AlertHisEvent{}).Count(&num).Error
+	err := session.Debug().Model(&AlertHisEvent{}).Count(&num).Error
 	return num, err
 }
 
@@ -245,7 +245,7 @@ func AlertHisEventXHGets(ctx *ctx.Context, fType, start, end, group int64, ids [
 	if end != -1 {
 		session = session.Where("trigger_time <= ?", end)
 	}
-	if group == -1 {
+	if group != -1 {
 		session = session.Where("group_id = ?", group)
 	}
 	if query != "" {
@@ -259,7 +259,7 @@ func AlertHisEventXHGets(ctx *ctx.Context, fType, start, end, group int64, ids [
 		}
 	}
 	var lst []AlertHisEvent
-	err := session.Model(&AlertHisEvent{}).Find(&lst).Error
+	err := session.Debug().Model(&AlertHisEvent{}).Find(&lst).Error
 
 	for index := range lst {
 		lst[index].DB2FE()
