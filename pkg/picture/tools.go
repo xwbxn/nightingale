@@ -36,6 +36,29 @@ func GeneratePictureName(fileType, suffix string) (filePath string, err error) {
 	return path + name, nil
 }
 
+//生成Logo图片名称
+func GenerateLogoName(fileType, suffix string) (filePath string, err error, fakePath string) {
+	path := "etc/picture/logo/"
+
+	_, err = PathExists(path)
+	if err != nil {
+		return "", err, ""
+	}
+
+	name := fileType + "." + suffix
+
+	if _, err := os.Stat(path + name); err == nil{
+		err := os.Remove(path + name)
+		if err != nil{
+			return "Logo文件删除失败", err, ""
+		}
+	}
+
+	fakePath = "images/" + name
+
+	return path + name, nil, fakePath
+}
+
 // PathExists 判断文件夹是否存在
 func PathExists(path string) (bool, error) {
 	_, err := os.Stat(path)

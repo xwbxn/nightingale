@@ -720,7 +720,7 @@ func (rt *Router) templeAssetXH(c *gin.Context) {
 
 	datas := make([]interface{}, 0)
 	datas = append(datas, models.Asset{})
-	excels.NewMyExcel("资产信息").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+	excels.NewMyExcel("资产信息").ExportTempletToWeb(datas, nil, "cn", "source", 1, rt.Ctx, c)
 }
 
 // @Summary      EXCEL导入资产
@@ -845,20 +845,17 @@ func (rt *Router) exportAssetXH(c *gin.Context) {
 			datas = append(datas, v)
 
 		}
+	} else {
+
 	}
 	if fType == 1 {
-		excels.NewMyExcel("资产信息").ExportDataInfo(datas, "cn", rt.Ctx, c)
+		if len(lst) == 0 {
+			datas = append(datas, models.Asset{})
+			excels.NewMyExcel("资产信息").ExportTempletToWeb(datas, nil, "cn", "source", 0, rt.Ctx, c)
+		} else {
+			excels.NewMyExcel("资产信息").ExportDataInfo(datas, "cn", rt.Ctx, c)
+		}
 	} else if fType == 2 {
-		// 创建用于写入XML文件的临时文件
-		// file, err := os.CreateTemp("", "data.xml")
-		// if err != nil {
-		// 	ginx.Bomb(http.StatusBadRequest, "导出失败")
-		// 	return
-		// }
-		// defer os.Remove(file.Name())
-		// 创建XML编码器，将数据写入文件
-		// encoder := xml.NewEncoder(file)
-		// encoder.Indent("", "  ")
 
 		var assetsImport []models.AssetImport
 		for _, val := range lst {
@@ -879,46 +876,11 @@ func (rt *Router) exportAssetXH(c *gin.Context) {
 		dataXml := AssetXml{
 			AssetData: assetsImport,
 		}
-		xmltool.ExportXml(c, dataXml)
-		// procInst := xml.ProcInst{
-		// 	Target: "xml",
-		// 	Inst:   []byte("version=\"1.0\" encoding=\"UTF-8\"\n"),
-		// }
-		// if err := encoder.EncodeToken(procInst); err != nil {
-		// 	ginx.Bomb(http.StatusBadRequest, "导出失败")
-		// }
-		// err = encoder.Encode(da)
-
-		// if err != nil {
-		// 	ginx.Bomb(http.StatusBadRequest, "导出失败")
-		// }
-		// encoder.Flush()
-		// file.Close()
-		// fmt.Println("XML导出成功！")
-		// //设置文件类型
-		// c.Header("Content-Type", "application/xml;charset=utf8")
-		// //设置文件名称
-		// rand.Seed(time.Now().UnixNano())
-		// name := "资产信息" + strconv.FormatInt(rand.Int63n(time.Now().Unix()), 10)
-		// c.Header("Content-Disposition", "attachment; filename="+url.QueryEscape(name))
-		// c.File(file.Name())
-		// ginx.NewRender(c)
+		xmltool.ExportXml(c, dataXml, "资产信息")
 	} else if fType == 3 {
-		// 将结构体数组导出为txt文件
-		// file, err := os.Create("asset.txt")
-		// if err != nil {
-		// 	fmt.Println("创建文件失败:", err)
-		// 	return
-		// }
-		// defer file.Close()
 		dataTxt := make([]string, 0)
 		str := "名称\t类型\tIP\t厂商\t资产位置\t状态\n"
 		dataTxt = append(dataTxt, str)
-		// _, err = io.WriteString(file, str)
-		// if err != nil {
-		// 	fmt.Println("写入文件失败:", err)
-		// 	return
-		// }
 		for _, asset := range lst {
 			status := ""
 			if asset.Status == 0 {
@@ -928,21 +890,8 @@ func (rt *Router) exportAssetXH(c *gin.Context) {
 			}
 			str = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\n", asset.Name, asset.Type, asset.Ip, asset.Manufacturers, asset.Position, status)
 			dataTxt = append(dataTxt, str)
-			// _, err := io.WriteString(file, str)
-			// if err != nil {
-			// 	fmt.Println("写入文件失败:", err)
-			// 	return
-			// }
 		}
-		txt.ExportTxt(c, dataTxt)
-		// //设置文件类型
-		// c.Header("Content-Type", "text/plain")
-		// //设置文件名称
-		// rand.Seed(time.Now().UnixNano())
-		// name := "资产信息" + strconv.FormatInt(rand.Int63n(time.Now().Unix()), 10)
-		// c.Header("Content-Disposition", "attachment; filename="+url.QueryEscape(name))
-		// c.File(file.Name())
-		// ginx.NewRender(c)
+		txt.ExportTxt(c, dataTxt, "资产信息")
 	}
 
 }

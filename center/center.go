@@ -25,6 +25,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
+	"github.com/toolkits/pkg/logger"
 
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	"github.com/ccfos/nightingale/v6/center/attrs"
@@ -32,6 +33,8 @@ import (
 	providerrt "github.com/ccfos/nightingale/v6/provider/router"
 	pushgwrt "github.com/ccfos/nightingale/v6/pushgw/router"
 )
+
+
 
 func Initialize(configDir string, cryptoKey string) (func(), error) {
 	config, err := conf.InitConfig(configDir, cryptoKey)
@@ -57,6 +60,58 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	ctx := ctx.NewContext(context.Background(), db, true)
 	models.InitRoot(ctx)
 	migrate.Migrate(db)
+
+	logLever := map[int]string{
+		1: "DEBUG",
+		2: "INFO",
+		3: "WARNING",
+		4: "ERROR",
+	}
+
+	logLeverT := map[string]int{
+		"DEBUG": 1,
+		"INFO": 2,
+		"WARNING": 3,
+		"ERROR": 4,
+	}
+
+	var lst *models.UserConfig
+	err = ctx.DB.Where("id", 1).Find(&lst).Error
+	if lst != nil{
+		if lst.LogLever != logLeverT[config.Log.Level]{
+			// 热修改logger日志等级
+			logger.SetSeverity(logLever[lst.LogLever])
+		}
+		if lst.HttpHost != config.HTTP.Host{
+			config.HTTP.Host = lst.HttpHost
+		}
+		if 8000 <= lst.HttpPort && lst.HttpPort <= 65535{
+			if int(lst.HttpPort) != config.HTTP.Port{
+				config.HTTP.Port = int(lst.HttpPort)
+			}
+		}
+		if (lst.Captcha != 2) != config.HTTP.ShowCaptcha.Enable {
+				config.HTTP.ShowCaptcha = httpx.ShowCaptcha{Enable: lst.Captcha != 2}
+		}
+		if (lst.ApiService!= 2) != config.HTTP.APIForService.Enable {
+			config.HTTP.APIForService = httpx.BasicAuths{Enable: lst.ApiService!= 2}
+		}
+		if lst.AccessExpired != config.HTTP.JWTAuth.AccessExpired {
+			config.HTTP.JWTAuth.AccessExpired = lst.AccessExpired
+		}
+		if lst.RefreshExpired != config.HTTP.JWTAuth.RefreshExpired{
+			config.HTTP.JWTAuth.RefreshExpired = lst.RefreshExpired
+		}
+		if (lst.OpenRsa!= 2) != config.HTTP.RSA.OpenRSA{
+				config.HTTP.RSA.OpenRSA = lst.OpenRsa!= 2
+			}
+	}
+	
+	
+
+	if err != nil {
+		return nil, err
+	}
 
 	redis, err := storage.NewRedis(config.Redis)
 	if err != nil {

@@ -301,7 +301,7 @@ func (rt *Router) exportDeviceScraps(c *gin.Context) {
 	datas := make([]interface{}, 0)
 	if len(deviceScraps) == 0 {
 		datas = append(datas, models.DeviceScrap{})
-		excels.NewMyExcel("资产报废数据").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+		excels.NewMyExcel("资产报废数据").ExportTempletToWeb(datas, nil, "cn", "source", 0, rt.Ctx, c)
 	} else {
 		for _, v := range deviceScraps {
 			datas = append(datas, v)

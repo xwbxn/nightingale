@@ -252,5 +252,5 @@ func (rt *Router) templetSparePartBasic(c *gin.Context) {
 
 	datas = append(datas, models.SparePartBasic{})
 
-	excels.NewMyExcel("备件基础信息导入模板").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+	excels.NewMyExcel("备件基础信息导入模板").ExportTempletToWeb(datas, nil, "cn", "source", 1, rt.Ctx, c)
 }

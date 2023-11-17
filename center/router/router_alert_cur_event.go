@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 func parseAggrRules(c *gin.Context) []*models.AggrRule {
@@ -234,12 +235,13 @@ func (rt *Router) alertCurEventGet(c *gin.Context) {
 	ginx.NewRender(c).Data(event, nil)
 }
 
-// @Summary      当前告警过滤器
-// @Description  当前告警过滤器
+// @Summary      告警过滤器
+// @Description  告警过滤器
 // @Tags         历史告警和当前告警-西航
 // @Accept       json
 // @Produce      json
-// @Param        type query   int     false  "类型"
+// @Param        alert_type query   int     false  "告警类型"
+// @Param        severity query   int     false  "告警等级"
 // @Param        start query   int     false  "开始时间"
 // @Param        end query   int     false  "结束时间"
 // @Param        query query   string     false  "搜索框"
@@ -247,56 +249,96 @@ func (rt *Router) alertCurEventGet(c *gin.Context) {
 // @Param        limit query   int     false  "条数"
 // @Param        page query   int     false  "页码"
 // @Success      200  {array}  models.AlertHisEvent
-// @Router       /api/n9e/alert-cur-events/list/xh [get]
+// @Router       /api/n9e/alert-events/list/xh [get]
 // @Security     ApiKeyAuth
-func (rt *Router) alertCurEventsListXH(c *gin.Context) {
+func (rt *Router) alertEventsListXH(c *gin.Context) {
 	// stime, etime := getTimeRange(c)
 
-	fType := ginx.QueryInt64(c, "type", -1)
+	alertType := ginx.QueryInt64(c, "alert_type", -1)
 	start := ginx.QueryInt64(c, "start", -1)
 	end := ginx.QueryInt64(c, "end", -1)
-	query := ginx.QueryStr(c, "query", "")
 	group := ginx.QueryInt64(c, "group", -1)
+	query := ginx.QueryStr(c, "query", "")
+	severity := ginx.QueryInt64(c, "severity", -1)
 	limit := ginx.QueryInt(c, "limit", 20)
 	page := ginx.QueryInt(c, "page", 1)
 	ids := make([]int64, 0)
+	logger.Debug(alertType)
 
 	if query != "" {
 		assets := rt.assetCache.GetAll()
 		for _, asset := range assets {
-			if fType == -1 {
-				if strings.Contains(asset.Name, query) || strings.Contains(asset.Type, query) || strings.Contains(asset.Ip, query) {
-					ids = append(ids, asset.Id)
-				}
-			} else if fType == 2 {
-				if strings.Contains(asset.Type, query) {
-					ids = append(ids, asset.Id)
-				}
+			// if fType == -1 {
+			if strings.Contains(asset.Name, query) || strings.Contains(asset.Type, query) || strings.Contains(asset.Ip, query) {
+				ids = append(ids, asset.Id)
+			}
+			// } else if fType == 2 {
+			// 	if strings.Contains(asset.Type, query) {
+			// 		ids = append(ids, asset.Id)
+			// 	}
+			// }
+		}
+	}
+
+	total, err := models.AlertEventXHTotal(rt.Ctx, alertType, severity, group, start, end, ids, query)
+	ginx.Dangerous(err)
+
+	if alertType == 1 {
+		list, err := models.AlertEventXHGets[models.AlertCurEvent](rt.Ctx, alertType, severity, group, start, end, ids, query, limit, (page-1)*limit)
+		ginx.Dangerous(err)
+		for index := range list {
+			list[index].DB2FE()
+		}
+		cache := make(map[int64]*models.UserGroup)
+		for i := 0; i < len(list); i++ {
+			list[i].FillNotifyGroups(rt.Ctx, cache)
+			if list[i].AssetId != 0 {
+				asset, err := rt.assetCache.Get(list[i].AssetId)
+				ginx.Dangerous(err)
+				list[i].AssetName = asset.Name
+				list[i].AssetIp = asset.Ip
 			}
 		}
-	}
-
-	total, err := models.AlertCurEventXHTotal(rt.Ctx, fType, start, end, group, ids, query)
-	ginx.Dangerous(err)
-
-	list, err := models.AlertCurEventXHGets(rt.Ctx, fType, start, end, group, ids, query, limit, (page-1)*limit)
-	ginx.Dangerous(err)
-
-	cache := make(map[int64]*models.UserGroup)
-	for i := 0; i < len(list); i++ {
-		list[i].FillNotifyGroups(rt.Ctx, cache)
-		if list[i].AssetId != 0 {
-			asset, err := rt.assetCache.Get(list[i].AssetId)
-			ginx.Dangerous(err)
-			list[i].AssetName = asset.Name
-			list[i].AssetIp = asset.Ip
+		ginx.NewRender(c).Data(gin.H{
+			"list":  list,
+			"total": total,
+		}, nil)
+	} else if alertType == 2 {
+		list, err := models.AlertEventXHGets[models.AlertHisEvent](rt.Ctx, alertType, severity, group, start, end, ids, query, limit, (page-1)*limit)
+		ginx.Dangerous(err)
+		for index := range list {
+			list[index].DB2FE()
 		}
+		cache := make(map[int64]*models.UserGroup)
+		for i := 0; i < len(list); i++ {
+			list[i].FillNotifyGroups(rt.Ctx, cache)
+			if list[i].AssetId != 0 {
+				asset, err := rt.assetCache.Get(list[i].AssetId)
+				ginx.Dangerous(err)
+				list[i].AssetName = asset.Name
+				list[i].AssetIp = asset.Ip
+			}
+		}
+		ginx.NewRender(c).Data(gin.H{
+			"list":  list,
+			"total": total,
+		}, nil)
 	}
+	// cache := make(map[int64]*models.UserGroup)
+	// for i := 0; i < len(list); i++ {
+	// 	list[i].FillNotifyGroups(rt.Ctx, cache)
+	// 	if list[i].AssetId != 0 {
+	// 		asset, err := rt.assetCache.Get(list[i].AssetId)
+	// 		ginx.Dangerous(err)
+	// 		list[i].AssetName = asset.Name
+	// 		list[i].AssetIp = asset.Ip
+	// 	}
+	// }
 
-	ginx.NewRender(c).Data(gin.H{
-		"list":  list,
-		"total": total,
-	}, nil)
+	// ginx.NewRender(c).Data(gin.H{
+	// 	"list":  list,
+	// 	"total": total,
+	// }, nil)
 }
 
 // @Summary      批量删除当前告警
@@ -329,107 +371,177 @@ func (rt *Router) alertCurEventBatchDel(c *gin.Context) {
 	ginx.NewRender(c).Message(err)
 }
 
-// @Summary      EXCEL导出当前告警
-// @Description  EXCEL导出当前告警
+// @Summary      EXCEL导出告警
+// @Description  EXCEL导出告警
 // @Tags         历史告警和当前告警-西航
 // @Accept       json
 // @Produce      json
-// @Param        ftype query   int     false  "类型"
-// @Param        type query   int     false  "类型"
+// @Param        ftype query   int     false  "文件类型"
+// @Param        alert_type query   int     false  "告警类型"
+// @Param        severity query   int     false  "告警等级"
 // @Param        start query   int     false  "开始时间"
 // @Param        end query   int     false  "结束时间"
 // @Param        query query   string     false  "搜索框"
 // @Param        group query   int     false  "业务组id"
-// @Param        body  body   map[string]interface{} true "add query"
+// @Param        body  body   map[string]interface{} false "add query"
 // @Success      200
-// @Router       /api/n9e/alert-cur-events/export-xls [post]
+// @Router       /api/n9e/alert-events/export-xls [post]
 // @Security     ApiKeyAuth
-func (rt *Router) exportCurEventXH(c *gin.Context) {
+func (rt *Router) exportEventXH(c *gin.Context) {
 
 	fileType := ginx.QueryInt64(c, "ftype", -1)
+	alertType := ginx.QueryInt64(c, "alert_type", -1)
 
 	var f map[string]interface{}
 	ginx.BindJSON(c, &f)
-	var list []models.AlertCurEvent
+	alterlst := make([]models.AlterImport, 0)
+	cache := make(map[int64]*models.UserGroup)
 	var err error
+	fName := ""
 
 	idsTemp, idsOk := f["ids"]
 	ids := make([]int64, 0)
-	// var err error
-	if idsOk {
-		for _, val := range idsTemp.([]interface{}) {
-			ids = append(ids, int64(val.(float64)))
-		}
-		lstP, err := models.AlertCurEventGetByIds(rt.Ctx, ids)
-		ginx.Dangerous(err)
-		for _, val := range lstP {
-			list = append(list, *val)
-		}
-	} else {
-		fType := ginx.QueryInt64(c, "type", -1)
-		start := ginx.QueryInt64(c, "start", -1)
-		end := ginx.QueryInt64(c, "end", -1)
-		query := ginx.QueryStr(c, "query", "")
-		group := ginx.QueryInt64(c, "group", -1)
+	if alertType == 1 {
+		fName = "当前告警信息"
+		var list []models.AlertCurEvent
+		if idsOk {
+			for _, val := range idsTemp.([]interface{}) {
+				ids = append(ids, int64(val.(float64)))
+			}
+			lstP, err := models.AlertCurEventGetByIds(rt.Ctx, ids)
+			ginx.Dangerous(err)
+			for _, val := range lstP {
+				list = append(list, *val)
+			}
+		} else {
+			start := ginx.QueryInt64(c, "start", -1)
+			end := ginx.QueryInt64(c, "end", -1)
+			group := ginx.QueryInt64(c, "group", -1)
+			query := ginx.QueryStr(c, "query", "")
+			severity := ginx.QueryInt64(c, "severity", -1)
+			ids := make([]int64, 0)
 
-		if query != "" {
-			assets := rt.assetCache.GetAll()
-			for _, asset := range assets {
-				if fType == -1 {
+			if query != "" {
+				assets := rt.assetCache.GetAll()
+				for _, asset := range assets {
 					if strings.Contains(asset.Name, query) || strings.Contains(asset.Type, query) || strings.Contains(asset.Ip, query) {
-						ids = append(ids, asset.Id)
-					}
-				} else if fType == 2 {
-					if strings.Contains(asset.Type, query) {
 						ids = append(ids, asset.Id)
 					}
 				}
 			}
-		}
 
-		list, err = models.AlertCurEventXHGets(rt.Ctx, fType, start, end, group, ids, query, -1, -1)
-		ginx.Dangerous(err)
-
-	}
-	cache := make(map[int64]*models.UserGroup)
-	for i := 0; i < len(list); i++ {
-		list[i].FillNotifyGroups(rt.Ctx, cache)
-		if list[i].AssetId != 0 {
-			asset, err := rt.assetCache.Get(list[i].AssetId)
+			list, err = models.AlertEventXHGets[models.AlertCurEvent](rt.Ctx, alertType, severity, group, start, end, ids, query, -1, -1)
 			ginx.Dangerous(err)
-			list[i].AssetName = asset.Name
-			list[i].AssetIp = asset.Ip
+
+		}
+		for i := 0; i < len(list); i++ {
+			list[i].FillNotifyGroups(rt.Ctx, cache)
+			if list[i].AssetId != 0 {
+				asset, err := rt.assetCache.Get(list[i].AssetId)
+				ginx.Dangerous(err)
+				list[i].AssetName = asset.Name
+				list[i].AssetIp = asset.Ip
+			}
+		}
+		for _, val := range list {
+			alertRule, err := models.AlertRuleGetById(rt.Ctx, val.RuleId)
+			ginx.Dangerous(err)
+			promSql := ""
+			if alertRule != nil {
+				promSql = alertRule.RuleConfigCn
+			}
+			alterlst = append(alterlst, models.AlterImport{
+				RuleName:         val.RuleName,
+				AssetName:        val.AssetName,
+				AssetIp:          val.AssetIp,
+				Severity:         strconv.Itoa(val.Severity),
+				TriggerTime:      time.Unix(val.TriggerTime, 0).Format("2006-01-02 15:04:05"),
+				TriggerValue:     val.TriggerValue,
+				PromSql:          promSql,
+				PromEvalInterval: val.PromEvalInterval,
+				PromForDuration:  val.PromForDuration,
+			})
+		}
+	} else if alertType == 2 {
+		fName = "历史告警信息"
+		var list []models.AlertHisEvent
+		if idsOk {
+			for _, val := range idsTemp.([]interface{}) {
+				ids = append(ids, int64(val.(float64)))
+			}
+			list, err = models.AlertHisEventGetByIds(rt.Ctx, ids)
+			ginx.Dangerous(err)
+		} else {
+			start := ginx.QueryInt64(c, "start", -1)
+			end := ginx.QueryInt64(c, "end", -1)
+			group := ginx.QueryInt64(c, "group", -1)
+			query := ginx.QueryStr(c, "query", "")
+			severity := ginx.QueryInt64(c, "severity", -1)
+			ids := make([]int64, 0)
+
+			if query != "" {
+				assets := rt.assetCache.GetAll()
+				for _, asset := range assets {
+					if strings.Contains(asset.Name, query) || strings.Contains(asset.Type, query) || strings.Contains(asset.Ip, query) {
+						ids = append(ids, asset.Id)
+					}
+				}
+			}
+
+			list, err = models.AlertEventXHGets[models.AlertHisEvent](rt.Ctx, alertType, severity, group, start, end, ids, query, -1, -1)
+			ginx.Dangerous(err)
+
+		}
+		for i := 0; i < len(list); i++ {
+			list[i].FillNotifyGroups(rt.Ctx, cache)
+			if list[i].AssetId != 0 {
+				asset, err := rt.assetCache.Get(list[i].AssetId)
+				ginx.Dangerous(err)
+				list[i].AssetName = asset.Name
+				list[i].AssetIp = asset.Ip
+			}
+		}
+		for _, val := range list {
+			alertRule, err := models.AlertRuleGetById(rt.Ctx, val.RuleId)
+			ginx.Dangerous(err)
+			promSql := ""
+			if alertRule != nil {
+				promSql = alertRule.RuleConfigCn
+			}
+			recoverTime := time.Unix(val.RecoverTime, 0).Format("2006-01-02 15:04:05")
+			if val.RecoverTime == 0 {
+				recoverTime = ""
+			}
+			alterlst = append(alterlst, models.AlterImport{
+				RuleName:         val.RuleName,
+				AssetName:        val.AssetName,
+				AssetIp:          val.AssetIp,
+				Severity:         strconv.Itoa(val.Severity),
+				TriggerTime:      time.Unix(val.TriggerTime, 0).Format("2006-01-02 15:04:05"),
+				TriggerValue:     val.TriggerValue,
+				RecoverTime:      recoverTime,
+				PromSql:          promSql,
+				PromEvalInterval: val.PromEvalInterval,
+				PromForDuration:  val.PromForDuration,
+			})
 		}
 	}
-	alterlst := make([]models.AlterImport, 0)
-	for _, val := range list {
-		alertRule, err := models.AlertRuleGetById(rt.Ctx, val.RuleId)
-		ginx.Dangerous(err)
-		promSql := ""
-		if alertRule != nil {
-			promSql = alertRule.RuleConfigCn
-		}
-		alterlst = append(alterlst, models.AlterImport{
-			RuleName:         val.RuleName,
-			AssetName:        val.AssetName,
-			AssetIp:          val.AssetIp,
-			Severity:         strconv.Itoa(val.Severity),
-			TriggerTime:      strconv.FormatInt(val.TriggerTime, 10),
-			TriggerValue:     val.TriggerValue,
-			PromSql:          promSql,
-			PromEvalInterval: val.PromEvalInterval,
-			PromForDuration:  val.PromForDuration,
-		})
-	}
+	logger.Debug(alterlst)
 	datas := make([]interface{}, 0)
-	if len(list) > 0 {
+	if len(alterlst) > 0 {
 		for _, v := range alterlst {
 			datas = append(datas, v)
 
 		}
+	} else {
+		datas = append(datas, models.AlterImport{})
 	}
 	if fileType == 1 {
-		excels.NewMyExcel("当前告警信息").ExportDataInfo(datas, "cn", rt.Ctx, c)
+		if len(alterlst) == 0 {
+			excels.NewMyExcel(fName).ExportTempletToWeb(datas, nil, "cn", "source", 0, rt.Ctx, c)
+		} else {
+			excels.NewMyExcel(fName).ExportDataInfo(datas, "cn", rt.Ctx, c)
+		}
 	} else if fileType == 2 {
 		for index, alter := range alterlst {
 			if alter.Severity == "1" {
@@ -439,17 +551,16 @@ func (rt *Router) exportCurEventXH(c *gin.Context) {
 			} else if alter.Severity == "3" {
 				alterlst[index].Severity = "事件"
 			}
-			trigger_time, _ := strconv.ParseInt(alter.TriggerTime, 10, 64)
-			alterlst[index].TriggerTime = time.Unix(trigger_time, 0).Format("2006-01-02 15:04:05")
+			alterlst[index].TriggerTime = alter.TriggerTime
 		}
 
 		dataXml := models.AlterXml{
 			AlterData: alterlst,
 		}
-		xmltool.ExportXml(c, dataXml)
+		xmltool.ExportXml(c, dataXml, fName)
 	} else if fileType == 3 {
 		dataTxt := make([]string, 0)
-		str := "规则标题\t资产名称\t资产IP\t告警级别\t指标\t触发时间\t触发时值\t执行频率/s\t持续时长/s\n"
+		str := "规则标题\t资产名称\t资产IP\t告警级别\t指标\t触发时间\t触发时值\t恢复时间\t执行频率/s\t持续时长/s\n"
 		dataTxt = append(dataTxt, str)
 		for _, alter := range alterlst {
 			severity := ""
@@ -460,16 +571,13 @@ func (rt *Router) exportCurEventXH(c *gin.Context) {
 			} else if alter.Severity == "3" {
 				severity = "事件"
 			}
-			// time.Parse("2006-01-02 15:04:05", alter.TriggerTime)
-			// time.Unix(alter.TriggerTime, 0).Format("2006-01-02 15:04:05")
-			trigger_time, _ := strconv.ParseInt(alter.TriggerTime, 10, 64)
-			str = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\n",
+			str = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\n",
 				alter.RuleName, alter.AssetName, alter.AssetIp, severity, alter.PromSql,
-				time.Unix(trigger_time, 0).Format("2006-01-02 15:04:05"), alter.TriggerValue,
-				alter.PromEvalInterval, alter.PromForDuration)
+				alter.TriggerTime, alter.TriggerValue,
+				alter.RecoverTime, alter.PromEvalInterval, alter.PromForDuration)
 			dataTxt = append(dataTxt, str)
 		}
-		txt.ExportTxt(c, dataTxt)
+		txt.ExportTxt(c, dataTxt, fName)
 	}
 
 }

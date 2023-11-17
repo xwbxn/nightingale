@@ -211,5 +211,5 @@ func (rt *Router) templetpdu(c *gin.Context) {
 
 	datas = append(datas, models.Pdu{})
 
-	excels.NewMyExcel("PDU模板").ExportTempletToWeb(datas, nil, "cn", "source", rt.Ctx, c)
+	excels.NewMyExcel("PDU模板").ExportTempletToWeb(datas, nil, "cn", "source", 1, rt.Ctx, c)
 }

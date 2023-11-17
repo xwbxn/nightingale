@@ -16,7 +16,7 @@ import (
 
 // func exportTemplet()
 
-func ExportXml[T any](c *gin.Context, xmls T) {
+func ExportXml[T any](c *gin.Context, xmls T, fileName string) {
 	// 创建用于写入XML文件的临时文件
 	file, err := os.CreateTemp("", "data.xml")
 	if err != nil {
@@ -48,7 +48,7 @@ func ExportXml[T any](c *gin.Context, xmls T) {
 	c.Header("Content-Type", "application/xml;charset=utf8")
 	//设置文件名称
 	rand.Seed(time.Now().UnixNano())
-	name := "资产信息" + strconv.FormatInt(rand.Int63n(time.Now().Unix()), 10)
+	name := fileName + strconv.FormatInt(rand.Int63n(time.Now().Unix()), 10)
 	c.Header("Content-Disposition", "attachment; filename="+url.QueryEscape(name))
 	c.File(file.Name())
 	ginx.NewRender(c)

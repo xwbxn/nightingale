@@ -280,8 +280,6 @@ func (l *lzExcelExport) ExportDataInfo(data []interface{}, tagName string, ctx *
 							// logger.Debug(currentValue)
 							rangs := strings.Split(currentValue, ";")
 							for idx := 0; idx < len(rangs); idx++ {
-								logger.Debug(v.Field(i).Interface())
-								logger.Debug(v.Field(i).Type())
 								if v.Field(i).Type().Name() == "string" {
 									if fmt.Sprintf("%d", idx) == v.Field(i).Interface() {
 										out[t.Field(i).Name] = rangs[idx]
@@ -303,11 +301,8 @@ func (l *lzExcelExport) ExportDataInfo(data []interface{}, tagName string, ctx *
 								// }
 							}
 						} else if m["type"] == "date" {
-							logger.Debug(v.Field(i).Interface())
 							trigger_time, _ := strconv.ParseInt(v.Field(i).Interface().(string), 10, 64)
 							out[t.Field(i).Name] = time.Unix(trigger_time, 0).Format("2006-01-02 15:04:05")
-							logger.Debug(out[t.Field(i).Name])
-							logger.Debug(out)
 						} else {
 							out[t.Field(i).Name] = v.Field(i).Interface()
 						}
@@ -464,7 +459,7 @@ func (l *lzExcelExport) ExportDataSelect(data []interface{}, selectFields map[st
 }
 
 //导出到浏览器。此处使用的gin框架 其他框架可自行修改ctx
-func (l *lzExcelExport) ExportTempletToWeb(data []interface{}, expansions []map[string]string, tagName string, optionTagName string, ctx *ctx.Context, c *gin.Context) {
+func (l *lzExcelExport) ExportTempletToWeb(data []interface{}, expansions []map[string]string, tagName, optionTagName string, num int64, ctx *ctx.Context, c *gin.Context) {
 
 	dataKey := make([]map[string]string, 0) //表头
 
@@ -499,7 +494,7 @@ func (l *lzExcelExport) ExportTempletToWeb(data []interface{}, expansions []map[
 		}
 	}
 
-	l.exportTemplet(dataKey, expansions, data, ctx)
+	l.exportTemplet(dataKey, expansions, data, ctx, num)
 	buffer, _ := l.file.WriteToBuffer()
 	//设置文件类型
 	c.Header("Content-Type", "application/vnd.ms-excel;charset=utf8")
@@ -760,9 +755,14 @@ func (l *lzExcelExport) export(params []map[string]string, data []map[string]int
 	l.writeData(params, data)
 }
 
-func (l *lzExcelExport) exportTemplet(params []map[string]string, expansions []map[string]string, data []interface{}, ctx *ctx.Context) {
+func (l *lzExcelExport) exportTemplet(params []map[string]string, expansions []map[string]string, data []interface{}, ctx *ctx.Context, num int64) {
 	l.writeTop(params, expansions)
-	l.writeTemplet(params, data, ctx)
+	// logger.Debug(num)
+	// logger.Debug(data...)
+	if num > 0 {
+		// logger.Debug(num)
+		l.writeTemplet(params, data, ctx)
+	}
 }
 
 func createFile() *excelize.File {
