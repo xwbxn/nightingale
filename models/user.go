@@ -50,11 +50,11 @@ var (
 // version:2023-07-11 15:14
 type UserInfo struct {
 	Id             int64          `json:"id" gorm:"primaryKey"`
-	Username       string         `json:"username"`
-	Nickname       string         `json:"nickname"`
-	Password       string         `json:"-"`
-	Phone          string         `json:"phone"`
-	Email          string         `json:"email"`
+	Username       string         `json:"username" cn:"用户名"`
+	Nickname       string         `json:"nickname" cn:"显示名"`
+	Password       string         `json:"-" cn:"密码"`
+	Phone          string         `json:"phone" cn:""`
+	Email          string         `json:"email" cn:""`
 	Portrait       string         `json:"portrait"`
 	Roles          string         `json:"-"`                             // 这个字段写入数据库
 	RolesLst       []string       `json:"roles" gorm:"-"`                // 这个字段和前端交互
@@ -92,6 +92,19 @@ type User struct {
 	Status         int64          `json:"status"`                          //用户状态（1：启用；0：禁用）
 	OrganizationId int64          `json:"organization_id"`                 //组织id
 	DeletedAt      gorm.DeletedAt `json:"deleted_at" swaggerignore:"true"` //逻辑删除字段
+}
+
+type UserImport struct {
+	Username   string       `json:"username" cn:"用户名"`
+	Nickname   string       `json:"nickname" cn:"显示名"`
+	Password   string       `json:"-" cn:"密码"`
+	IsPassword string       `json:"-" cn:"确认密码"`
+	Phone      string       `json:"phone" cn:"手机号"`
+	Email      string       `json:"email" cn:"邮箱"`
+	Role1      string       `json:"-" cn:"角色1" source:"type=table,table=role,property=id,field=name"`
+	Role2      string       `json:"-" cn:"角色2" source:"type=table,table=role,property=id,field=name"`
+	Role3      string       `json:"-" cn:"角色3" source:"type=table,table=role,property=id,field=name"`
+	Contacts   ormx.JSONObj `json:"contacts"`
 }
 
 type userNameVo struct {
@@ -170,7 +183,7 @@ func (u *User) Verify() error {
 	return nil
 }
 
-func (u *User) Add(ctx *ctx.Context) error {
+func (u User) Add(ctx *ctx.Context) error {
 	user, err := UserGetByUsername(ctx, u.Username)
 	if err != nil {
 		return errors.WithMessage(err, "failed to query user")
@@ -184,6 +197,19 @@ func (u *User) Add(ctx *ctx.Context) error {
 	u.CreateAt = now
 	u.UpdateAt = now
 	return Insert(ctx, u)
+}
+
+func (u *User) AddTx(ctx *ctx.Context, tx *gorm.DB) error {
+
+	now := time.Now().Unix()
+	u.CreateAt = now
+	u.UpdateAt = now
+	u.Status = 0
+	err := DB(ctx).Create(&u).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return nil
 }
 
 func (u *User) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {

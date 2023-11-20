@@ -121,7 +121,14 @@ func (rt *Router) assetsAddXH(c *gin.Context) {
 		memo = memoT.(string)
 	}
 
+	var group int64 = 0
+	groupT, groupOk := f["group_id"]
+	if groupOk {
+		group = int64(groupT.(float64))
+	}
+
 	var assets = models.Asset{
+		GroupId:       group,
 		Name:          f["name"].(string),
 		Type:          f["type"].(string),
 		Ip:            f["ip"].(string),
@@ -207,7 +214,7 @@ func (rt *Router) assetPutXH(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 
 	if oldAssets == nil {
-		ginx.Bomb(http.StatusOK, "assets not found")
+		ginx.Bomb(http.StatusOK, "资产不存在")
 	}
 	if oldAssets.Ip != f["ip"].(string) {
 		num, err := models.AssetsCountMap(rt.Ctx, map[string]interface{}{"ip": f["ip"]})
@@ -227,7 +234,13 @@ func (rt *Router) assetPutXH(c *gin.Context) {
 	if memoOk {
 		memo = memoT.(string)
 	}
+	var group int64 = 0
+	groupT, groupOk := f["group_id"]
+	if groupOk {
+		group = int64(groupT.(float64))
+	}
 
+	oldAssets.GroupId = group
 	oldAssets.Name = f["name"].(string)
 	oldAssets.Type = f["type"].(string)
 	oldAssets.Ip = f["ip"].(string)
@@ -237,7 +250,7 @@ func (rt *Router) assetPutXH(c *gin.Context) {
 	oldAssets.UpdateAt = time.Now().Unix()
 	oldAssets.UpdateBy = me.Username
 
-	err = oldAssets.Update(rt.Ctx, "name", "type", "ip", "manufacturers", "os", "cpu", "memory", "plugin_version", "position", "asset_status", "directory_id", "memo", "update_at", "update_by")
+	err = oldAssets.Update(rt.Ctx, "group_id", "name", "type", "ip", "manufacturers", "os", "cpu", "memory", "plugin_version", "position", "asset_status", "directory_id", "memo", "update_at", "update_by")
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Message(err)
@@ -274,7 +287,6 @@ func (rt *Router) assetDel(c *gin.Context) {
 // @Security     ApiKeyAuth
 func (rt *Router) assetGetById(c *gin.Context) {
 	id := ginx.QueryInt64(c, "asset", -1)
-	logger.Debug(id)
 	if id == -1 {
 		ginx.Bomb(http.StatusOK, "参数错误")
 	}
@@ -310,9 +322,6 @@ func (rt *Router) assetGetById(c *gin.Context) {
 		exps, err := models.AssetsExpansionGetsMap(rt.Ctx, map[string]interface{}{"assets_id": asset.Id})
 		ginx.Dangerous(err)
 		lst[index].Exps = exps
-	}
-	for _, val := range lst {
-		logger.Debug(val.Metrics)
 	}
 
 	ginx.NewRender(c).Data(lst[0], nil)
@@ -358,12 +367,15 @@ func (rt *Router) assetGetFilter(c *gin.Context) {
 			query = "%" + queryTemp.(string) + "%"
 		}
 
-		if filter.(string) == "1" || filter.(string) == "4" {
-			queryType = "name"
-		} else if filter.(string) == "2" {
-			queryType = "ip"
-		} else if filter.(string) == "3" {
-			queryType = "type"
+		// if filter.(string) == "1" || filter.(string) == "4" {
+		// 	queryType = "name"
+		// } else if filter.(string) == "2" {
+		// 	queryType = "ip"
+		// } else if filter.(string) == "3" {
+		// 	queryType = "type"
+		// }
+		if filter.(string) == "group" {
+			queryType = "group_id"
 		}
 	} else {
 		if queryOk {
