@@ -164,3 +164,10 @@ func UserGroupStatistics(ctx *ctx.Context) (*Statistics, error) {
 
 	return stats[0], nil
 }
+
+//根据用户id查询用户组名称
+func UserGroupGetsByUserId(ctx *ctx.Context, userId int64) ([]string, error) {
+	var names []string
+	err := DB(ctx).Model(&UserGroupMember{}).Joins("LEFT JOIN user_group ON user_group_member.group_id = user_group.id").Pluck("user_group.name", &names).Error
+	return names, err
+}

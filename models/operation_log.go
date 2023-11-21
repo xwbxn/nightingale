@@ -29,7 +29,7 @@ type OperationLog struct {
 	CreatedAt   int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int         comment:创建时间      version:2023-10-21 09:10
 	UpdatedBy   string         `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string       comment:更新人        version:2023-10-21 09:10
 	UpdatedAt   int64          `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int         comment:更新时间      version:2023-10-21 09:10
-	DeletedAt   gorm.DeletedAt `gorm:"column:DELETED_AT" json:"deleted_at" `                     //type:*time.Time   comment:删除时间      version:2023-10-21 09:10
+	DeletedAt   gorm.DeletedAt `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"` //type:*time.Time   comment:删除时间      version:2023-10-21 09:10
 }
 
 // TableName 表名:operation_log，操作日志。

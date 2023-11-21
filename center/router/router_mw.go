@@ -139,6 +139,14 @@ func (rt *Router) user() gin.HandlerFunc {
 	}
 }
 
+func (rt *Router) thirdUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// clientIp := c.ClientIP()
+		// pwd := c.Request.Header.Get("thirdUser")
+
+	}
+}
+
 func (rt *Router) userGroupWrite() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		me := c.MustGet("user").(*models.User)

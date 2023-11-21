@@ -227,7 +227,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/self/profile", rt.auth(), rt.user(), rt.selfProfilePut)
 		pages.PUT("/self/password", rt.auth(), rt.user(), rt.selfPasswordPut)
 
-		pages.GET("/users", rt.auth(), rt.user(), rt.perm("/users"), rt.userGets)
+		pages.GET("/users", rt.auth(), rt.admin(), rt.perm("/users"), rt.userGets)
+		pages.GET("/users/xh", rt.auth(), rt.admin(), rt.userGetsXH)
 		pages.POST("/users", rt.auth(), rt.admin(), rt.userAddPost)
 		pages.GET("/user/:id/profile", rt.auth(), rt.userProfileGet)
 		pages.GET("/user/getNames", rt.auth(), rt.userNameGets)
@@ -753,6 +754,9 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		//静态图片
 		pages.Static("/images", "./etc/picture/logo")
+
+		//接口访问设置
+		pages.GET("/xh/assets/out", rt.auth(), rt.user(), rt.assetGetAll)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

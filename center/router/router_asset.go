@@ -430,6 +430,53 @@ func (rt *Router) assetGetFilter(c *gin.Context) {
 	}, nil)
 }
 
+// @Summary      全量资产信息-西航
+// @Description  全量资产信息-西航
+// @Tags         资产-西航
+// @Accept       json
+// @Produce      json
+// @Success      200
+// @Router       /api/n9e/xh/assets/out [get]
+// @Security     ApiKeyAuth
+func (rt *Router) assetGetAll(c *gin.Context) {
+
+	lst, err := models.AssetsGetsFilter(rt.Ctx, "", "", "", -1, -1)
+	ginx.Dangerous(err)
+
+	for index, asset := range lst {
+		atype, ok := rt.assetCache.GetType(asset.Type)
+		if ok {
+			asset.Dashboard = strings.ReplaceAll(atype.Dashboard, "${id}", fmt.Sprintf("%d", asset.Id))
+		}
+		health, ok := rt.assetCache.Get(asset.Id)
+		if ok {
+			asset.Health = health.Health
+		}
+		assetType, _ := rt.assetCache.GetType(asset.Type)
+		assetC, assetCOk := rt.assetCache.Get(asset.Id)
+		if assetCOk {
+			metrics := make([]map[string]interface{}, 0)
+
+			if len(assetType.Metrics) > 0 {
+				for _, val := range assetType.Metrics {
+					value, valueOk := assetC.Metrics[val.Name]
+					if valueOk {
+						metrics = append(metrics, map[string]interface{}{"label": val.Metrics, "val": value["value"]})
+					}
+				}
+			}
+
+			lst[index].MetricsList = metrics
+		}
+
+		exps, err := models.AssetsExpansionGetsMap(rt.Ctx, map[string]interface{}{"assets_id": asset.Id})
+		ginx.Dangerous(err)
+		lst[index].Exps = exps
+	}
+
+	ginx.NewRender(c).Data(lst, nil)
+}
+
 type UpdateBody struct {
 	Ids   []int64     `json:"ids"`
 	Name  string      `json:"name"`
