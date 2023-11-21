@@ -744,6 +744,13 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/user-config", rt.auth(), rt.admin(), rt.userConfigPut)
 		pages.DELETE("/user-config/:id", rt.auth(), rt.admin(), rt.userConfigDel)
 
+		//操作日志
+		pages.GET("/operation-log", rt.auth(), rt.admin(), rt.operationLogGets)
+		pages.GET("/operation-log/:id", rt.auth(), rt.admin(), rt.operationLogGet)
+		pages.POST("/operation-log", rt.auth(), rt.admin(), rt.operationLogAdd)
+		pages.PUT("/operation-log", rt.auth(), rt.admin(), rt.operationLogPut)
+		pages.DELETE("/operation-log/:id", rt.auth(), rt.admin(), rt.operationLogDel)
+
 		//静态图片
 		pages.Static("/images", "./etc/picture/logo")
 	}

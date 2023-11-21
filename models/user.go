@@ -766,9 +766,11 @@ func UserMap(ctx *ctx.Context, where map[string]interface{}, query string, limit
 	str.WriteString("roles like ?")
 	vals = append(vals, query)
 
-	err = session.Debug().Model(&User{}).Joins("LEFT JOIN user_group_member ugm ON ugm.user_id = users.id").
-		Joins("LEFT JOIN user_group ug ON ugm.group_id = ug.id").Select("users.*,GROUP_CONCAT(ug.name) AS name").Where(where).
-		Where(str.String(), vals...).Group("users.id").Find(&lst).Error
+	err = session.Debug().Model(&User{}).Where(where).Where(str.String(), vals...).Find(&lst).Error
+
+	// err = session.Debug().Model(&User{}).Joins("LEFT JOIN user_group_member ugm ON ugm.user_id = users.id").
+	// 	Joins("LEFT JOIN user_group ug ON ugm.group_id = ug.id").Select("users.*,GROUP_CONCAT(ug.name) AS name").Where(where).
+	// 	Where(str.String(), vals...).Group("users.id").Find(&lst).Error
 
 	for i := 0; i < len(lst); i++ {
 		lst[i].RolesLst = strings.Fields(lst[i].Roles)

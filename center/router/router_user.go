@@ -39,19 +39,19 @@ func (rt *Router) userFindAll(c *gin.Context) {
 // @Router       /api/n9e/users/update-property/ [post]
 // @Security     ApiKeyAuth
 func (rt *Router) userGets(c *gin.Context) {
-	page := ginx.QueryInt(c, "page", 1)
+	page := ginx.QueryInt(c, "p", 1)
 	limit := ginx.QueryInt(c, "limit", 20)
 	organizationId := ginx.QueryInt64(c, "organization_id", -1)
-	status := ginx.QueryInt64(c, "status", -1)
+	// status := ginx.QueryInt64(c, "status", -1)
 	query := ginx.QueryStr(c, "query", "")
 
 	m := make(map[string]interface{})
 	if organizationId != -1 {
 		m["organization_id"] = organizationId
 	}
-	if status != -1 {
-		m["status"] = status
-	}
+	// if status != -1 {
+	// 	m["status"] = status
+	// }
 
 	total, err := models.UserCountMap(rt.Ctx, m, query)
 	ginx.Dangerous(err)
