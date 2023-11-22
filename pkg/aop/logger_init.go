@@ -55,6 +55,16 @@ func LoggerToFile() gin.HandlerFunc {
 		// 请求方式
 		reqMethod := c.Request.Method
 
+		params := c.Params
+
+		key := c.Keys
+
+		accepted := c.Accepted
+
+		url := c.Request.URL
+
+		body := c.Request.PostForm
+
 		// 请求路由
 		reqUri := c.Request.RequestURI
 
@@ -64,6 +74,8 @@ func LoggerToFile() gin.HandlerFunc {
 		// 请求IP
 		clientIP := c.ClientIP()
 
+		// remoteIP, _ := c.Request.Response.Location()
+
 		// 日志格式
 		logger.WithFields(logrus.Fields{
 			"status_code":  statusCode,
@@ -71,6 +83,12 @@ func LoggerToFile() gin.HandlerFunc {
 			"client_ip":    clientIP,
 			"req_method":   reqMethod,
 			"req_uri":      reqUri,
+			"params":       params,
+			"key":          key,
+			"accepted":     accepted,
+			"url":          url,
+			"body":         body,
+			// "remoteIP":     remoteIP,
 		}).Info()
 	}
 }

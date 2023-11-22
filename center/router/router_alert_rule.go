@@ -33,6 +33,70 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 	ginx.NewRender(c).Data(ars, err)
 }
 
+// @Summary      告警规则过滤器
+// @Description  告警规则过滤器
+// @Tags         告警规则
+// @Accept       json
+// @Produce      json
+// @Param        busiGroupId query   int     false  "busiGroupId"
+// @Param        filter query   int     false  "告警等级（1：告警级别；2：资产类型；3：资产id）"
+// @Param        query query   string     false  "搜索框"
+// @Param        limit query   int     false  "条数"
+// @Param        page query   int     false  "页码"
+// @Success      200  {array}  models.AlertHisEvent
+// @Router       /api/n9e/busi-group/{id}/alert-rules/xh [get]
+// @Security     ApiKeyAuth
+func (rt *Router) alertRuleGetsXH(c *gin.Context) {
+	busiGroupId := ginx.UrlParamInt64(c, "id")
+	filter := ginx.QueryStr(c, "filter", "")
+	query := ginx.QueryStr(c, "query", "")
+	limit := ginx.QueryInt(c, "limit", 20)
+	page := ginx.QueryInt(c, "page", 1)
+	ids := make([]int64, 0)
+	if filter != "" && query == "" {
+		ginx.Bomb(http.StatusOK, "参数错误")
+	}
+
+	if query != "" {
+		assets := rt.assetCache.GetAll()
+		if filter == "" {
+			for _, asset := range assets {
+				if strings.Contains(asset.Name, query) || strings.Contains(asset.Type, query) || strings.Contains(asset.Ip, query) {
+					ids = append(ids, asset.Id)
+				}
+			}
+		} else if filter == "2" {
+			for _, asset := range assets {
+				if strings.Contains(asset.Type, query) {
+					ids = append(ids, asset.Id)
+				}
+			}
+		}
+	}
+	total, err := models.AlertRuleGetsTotal(rt.Ctx, busiGroupId, filter, query, ids)
+	ginx.Dangerous(err)
+
+	ars, err := models.AlertRuleGetsFilter(rt.Ctx, busiGroupId, filter, query, ids, limit, (page - 1*limit))
+	ginx.Dangerous(err)
+	if err == nil {
+		cache := make(map[int64]*models.UserGroup)
+		for i := 0; i < len(ars); i++ {
+			ars[i].FillNotifyGroups(rt.Ctx, cache)
+			ars[i].FillSeverities()
+			if ars[i].AssetId != 0 {
+				asset, err := rt.assetCache.Get(ars[i].AssetId)
+				ginx.Dangerous(err)
+				ars[i].AssetName = asset.Name
+				ars[i].AssetIp = asset.Ip
+			}
+		}
+	}
+	ginx.NewRender(c).Data(gin.H{
+		"list":  ars,
+		"total": total,
+	}, err)
+}
+
 func (rt *Router) alertRulesGetByService(c *gin.Context) {
 	prods := []string{}
 	prodStr := ginx.QueryStr(c, "prods", "")

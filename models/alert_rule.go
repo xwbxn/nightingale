@@ -1000,3 +1000,49 @@ func AlertRuleDelTxByAssetId(tx *gorm.DB, assetId []string) error {
 	}
 	return err
 }
+
+func AlertRuleGetsFilter(ctx *ctx.Context, groupId int64, filter, query string, ids []int64, limit, offset int) ([]AlertRule, error) {
+	session := DB(ctx).Where("group_id=?", groupId)
+	if limit > -1 {
+		session = session.Limit(limit).Offset(offset).Order("id DESC")
+	}
+	query = "%" + query + "%"
+	if filter == "1" {
+		session = session.Where("severity like ?", query)
+	} else if filter == "2" {
+		session = session.Where("asset_id in ?", ids)
+	} else if filter == "3" {
+		session = session.Where("asset_id like ?", query)
+	} else if filter == "" {
+		session = session.Where("id like ? or name like ? or asset_id like ? or severity like ? or asset_id in ?", query, query, query, query, ids)
+	}
+
+	var lst []AlertRule
+	err := session.Model(&AlertRule{}).Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+		}
+	}
+
+	return lst, err
+}
+
+func AlertRuleGetsTotal(ctx *ctx.Context, groupId int64, filter, query string, ids []int64) (int64, error) {
+	session := DB(ctx).Where("group_id=?", groupId)
+	query = "%" + query + "%"
+	if filter == "1" {
+		session = session.Where("severity like ?", query)
+	} else if filter == "2" {
+		session = session.Where("asset_id in ?", ids)
+	} else if filter == "3" {
+		session = session.Where("asset_id like ?", query)
+	} else if filter == "" {
+		session = session.Where("id like ? or name like ? or asset_id like ? or severity like ? or asset_id in ?", query, query, query, query, ids)
+	}
+
+	var num int64
+	err := session.Model(&AlertRule{}).Count(&num).Error
+
+	return num, err
+}

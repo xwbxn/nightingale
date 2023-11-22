@@ -4,10 +4,14 @@
 package router
 
 import (
+	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/ccfos/nightingale/v6/models"
+	excels "github.com/ccfos/nightingale/v6/pkg/excel"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 
 	"github.com/gin-gonic/gin"
@@ -27,38 +31,55 @@ func (rt *Router) userFindAll(c *gin.Context) {
 // @Produce      json
 // @Param        page query   int     false  "页码"
 // @Param        limit query   int     false  "条数"
-// @Param        organization_id  query   int64     false  "组织id"
+// @Param        user_group_id  query   int64     false  "用户组id"
+// @Param        role  query   string     false  "角色"
 // @Param        status  query   int64     false  "状态"
 // @Param        query  query   string     false  "搜索栏"
 // @Success      200  {array}  models.User
 // @Success      200
-// @Router       /api/n9e/users/update-property/ [post]
+// @Router       /api/n9e/users/xh [get]
 // @Security     ApiKeyAuth
-func (rt *Router) userGets(c *gin.Context) {
+func (rt *Router) userGetsXH(c *gin.Context) {
 	page := ginx.QueryInt(c, "page", 1)
 	limit := ginx.QueryInt(c, "limit", 20)
-	organizationId := ginx.QueryInt64(c, "organization_id", -1)
+	useGroupId := ginx.QueryInt64(c, "user_group_id", -1)
+	role := ginx.QueryStr(c, "role", "")
 	status := ginx.QueryInt64(c, "status", -1)
 	query := ginx.QueryStr(c, "query", "")
+	userIds := make([]int64, 0)
+	var err error
 
-	m := make(map[string]interface{})
-	if organizationId != -1 {
-		m["organization_id"] = organizationId
-	}
-	if status != -1 {
-		m["status"] = status
+	if useGroupId != -1 {
+		userIds, err = models.MemberIds(rt.Ctx, useGroupId)
+		ginx.Dangerous(err)
 	}
 
-	total, err := models.UserCountMap(rt.Ctx, m, query)
+	total, err := models.UserCountMap(rt.Ctx, role, query, useGroupId, status, userIds)
 	ginx.Dangerous(err)
 
-	list, err := models.UserMap(rt.Ctx, m, query, limit, (page-1)*limit)
+	list, err := models.UserMap(rt.Ctx, role, query, useGroupId, status, userIds, limit, (page-1)*limit)
 	ginx.Dangerous(err)
 
 	user := c.MustGet("user").(*models.User)
-	logger.Debug(list)
-	logger.Debug(total)
-	logger.Debug(user.IsAdmin())
+
+	ginx.NewRender(c).Data(gin.H{
+		"list":  list,
+		"total": total,
+		"admin": user.IsAdmin(),
+	}, nil)
+}
+
+func (rt *Router) userGets(c *gin.Context) {
+	limit := ginx.QueryInt(c, "limit", 20)
+	query := ginx.QueryStr(c, "query", "")
+
+	total, err := models.UserTotal(rt.Ctx, query)
+	ginx.Dangerous(err)
+
+	list, err := models.UserGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
+	ginx.Dangerous(err)
+
+	user := c.MustGet("user").(*models.User)
 
 	ginx.NewRender(c).Data(gin.H{
 		"list":  list,
@@ -245,4 +266,104 @@ func (rt *Router) userDels(c *gin.Context) {
 	err := models.UpdateBatchDel(rt.Ctx, ids)
 
 	ginx.NewRender(c).Message(err)
+}
+
+// @Summary      导入用户模板
+// @Description  导入用户模板
+// @Tags         人员信息
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  models.UserImport
+// @Router       /api/n9e/xh/users/templet [post]
+// @Security     ApiKeyAuth
+func (rt *Router) templeUserXH(c *gin.Context) {
+
+	datas := make([]interface{}, 0)
+	datas = append(datas, models.UserImport{})
+	excels.NewMyExcel("用户信息").ExportTempletToWeb(datas, nil, "cn", "source", 1, rt.Ctx, c)
+}
+
+// @Summary      EXCEL导入用户信息
+// @Description  EXCEL导入用户信息
+// @Tags         人员信息
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        file formData file true "file"
+// @Success      200
+// @Router       /api/n9e/xh/users/import-xls [post]
+// @Security     ApiKeyAuth
+func (rt *Router) importUserXH(c *gin.Context) {
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, "上传文件出错")
+	}
+	//读excel流
+	xlsx, err := excelize.OpenReader(file)
+	if err != nil {
+		ginx.Bomb(http.StatusBadRequest, "读取excel文件失败")
+	}
+
+	//解析excel的数据
+	userImports, _, lxRrr := excels.ReadExce[models.UserImport](xlsx, rt.Ctx)
+	if lxRrr != nil {
+		ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
+		return
+	}
+	logger.Debug(userImports)
+	me := c.MustGet("user").(*models.User)
+	// contacts := make(map[string]string)
+	contacts, _ := json.Marshal(map[string]string{})
+	tx := models.DB(rt.Ctx).Begin()
+	for index, entity := range userImports {
+
+		if entity.Password != entity.IsPassword {
+			ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index)+"行数据，密码不一致")
+		}
+
+		password, err := models.CryptoPass(rt.Ctx, entity.Password)
+		ginx.Dangerous(err)
+
+		roles := ""
+		if entity.Role1 != "" {
+			roles += entity.Role1
+		}
+		if entity.Role2 != "" && entity.Role1 != entity.Role2 {
+			roles += " "
+			roles += entity.Role2
+		}
+		if entity.Role3 != "" && entity.Role1 != entity.Role3 && entity.Role2 != entity.Role3 {
+			roles += " "
+			roles += entity.Role3
+		}
+		entity.Contacts.UnmarshalJSON(contacts)
+
+		u := models.User{
+			Username:       entity.Username,
+			Password:       password,
+			Nickname:       entity.Nickname,
+			Phone:          entity.Phone,
+			Email:          entity.Email,
+			Portrait:       "",
+			Roles:          roles,
+			Status:         0,
+			OrganizationId: 0,
+			Contacts:       entity.Contacts,
+			CreateBy:       me.Username,
+			UpdateBy:       me.Username,
+		}
+
+		// 校验
+		olduser, err := models.UserGetByUsername(rt.Ctx, u.Username)
+		if err != nil {
+			tx.Rollback()
+		}
+		ginx.Dangerous(err)
+
+		if olduser != nil {
+			ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index)+"数据，用户名已存在")
+		}
+		err = u.AddTx(rt.Ctx, tx)
+	}
+	tx.Commit()
+	ginx.NewRender(c).Data(err, nil)
 }

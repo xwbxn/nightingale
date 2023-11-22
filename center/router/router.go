@@ -227,7 +227,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/self/profile", rt.auth(), rt.user(), rt.selfProfilePut)
 		pages.PUT("/self/password", rt.auth(), rt.user(), rt.selfPasswordPut)
 
-		pages.GET("/users", rt.auth(), rt.user(), rt.perm("/users"), rt.userGets)
+		pages.GET("/users", rt.auth(), rt.admin(), rt.perm("/users"), rt.userGets)
+		pages.GET("/users/xh", rt.auth(), rt.admin(), rt.userGetsXH)
 		pages.POST("/users", rt.auth(), rt.admin(), rt.userAddPost)
 		pages.GET("/user/:id/profile", rt.auth(), rt.userProfileGet)
 		pages.GET("/user/getNames", rt.auth(), rt.userNameGets)
@@ -236,6 +237,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/user/:id", rt.auth(), rt.admin(), rt.userDel)
 		pages.POST("/users/update-property", rt.auth(), rt.admin(), rt.userPropertyUpdate) //批量修改用户状态/组织
 		pages.POST("/users/batch-del", rt.auth(), rt.admin(), rt.userDels)                 //批量删除用户
+		pages.POST("/xh/users/templet", rt.auth(), rt.user(), rt.templeUserXH)
+		pages.POST("/xh/users/import-xls", rt.auth(), rt.user(), rt.importUserXH)
 
 		pages.GET("/metric-views", rt.auth(), rt.metricViewGets)
 		pages.DELETE("/metric-views", rt.auth(), rt.user(), rt.metricViewDel)
@@ -298,6 +301,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/alert-rules/builtin/list", rt.auth(), rt.user(), rt.builtinAlertRules)
 
 		pages.GET("/busi-group/:id/alert-rules", rt.auth(), rt.user(), rt.perm("/alert-rules"), rt.alertRuleGets)
+		pages.GET("/busi-group/:id/alert-rules/xh", rt.auth(), rt.user(), rt.alertRuleGetsXH)
 		pages.POST("/busi-group/:id/alert-rules", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.bgrw(), rt.alertRuleAddByFE)
 		pages.POST("/busi-group/:id/alert-rules/import", rt.auth(), rt.user(), rt.perm("/alert-rules/add"), rt.bgrw(), rt.alertRuleAddByImport)
 		pages.DELETE("/busi-group/:id/alert-rules", rt.auth(), rt.user(), rt.perm("/alert-rules/del"), rt.bgrw(), rt.alertRuleDel)
@@ -759,8 +763,18 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/user-config", rt.auth(), rt.admin(), rt.userConfigPut)
 		pages.DELETE("/user-config/:id", rt.auth(), rt.admin(), rt.userConfigDel)
 
+		//操作日志
+		pages.GET("/operation-log", rt.auth(), rt.admin(), rt.operationLogGets)
+		pages.GET("/operation-log/:id", rt.auth(), rt.admin(), rt.operationLogGet)
+		pages.POST("/operation-log", rt.auth(), rt.admin(), rt.operationLogAdd)
+		pages.PUT("/operation-log", rt.auth(), rt.admin(), rt.operationLogPut)
+		pages.DELETE("/operation-log/:id", rt.auth(), rt.admin(), rt.operationLogDel)
+
 		//静态图片
 		pages.Static("/images", "./etc/picture/logo")
+
+		//接口访问设置
+		pages.GET("/xh/assets/out", rt.auth(), rt.user(), rt.assetGetAll)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

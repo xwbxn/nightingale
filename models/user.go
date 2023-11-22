@@ -50,11 +50,11 @@ var (
 // version:2023-07-11 15:14
 type UserInfo struct {
 	Id             int64          `json:"id" gorm:"primaryKey"`
-	Username       string         `json:"username"`
-	Nickname       string         `json:"nickname"`
-	Password       string         `json:"-"`
-	Phone          string         `json:"phone"`
-	Email          string         `json:"email"`
+	Username       string         `json:"username" cn:"用户名"`
+	Nickname       string         `json:"nickname" cn:"显示名"`
+	Password       string         `json:"-" cn:"密码"`
+	Phone          string         `json:"phone" cn:""`
+	Email          string         `json:"email" cn:""`
 	Portrait       string         `json:"portrait"`
 	Roles          string         `json:"-"`                             // 这个字段写入数据库
 	RolesLst       []string       `json:"roles" gorm:"-"`                // 这个字段和前端交互
@@ -68,8 +68,8 @@ type UserInfo struct {
 	Status         int64          `json:"status"`                          //用户状态（1：启用；0：禁用）
 	OrganizationId int64          `json:"organization_id"`                 //组织id
 	DeletedAt      gorm.DeletedAt `json:"deleted_at" swaggerignore:"true"` //逻辑删除字段
-	Name           string         `json:"name"`
-	GroupName      []string       `json:"group_name"`
+	Name           string         `json:"name" gorm:"-"`
+	GroupName      []string       `json:"group_name" gorm:"-"`
 }
 
 type User struct {
@@ -92,6 +92,19 @@ type User struct {
 	Status         int64          `json:"status"`                          //用户状态（1：启用；0：禁用）
 	OrganizationId int64          `json:"organization_id"`                 //组织id
 	DeletedAt      gorm.DeletedAt `json:"deleted_at" swaggerignore:"true"` //逻辑删除字段
+}
+
+type UserImport struct {
+	Username   string       `json:"username" cn:"用户名"`
+	Nickname   string       `json:"nickname" cn:"显示名"`
+	Password   string       `json:"-" cn:"密码"`
+	IsPassword string       `json:"-" cn:"确认密码"`
+	Phone      string       `json:"phone" cn:"手机号"`
+	Email      string       `json:"email" cn:"邮箱"`
+	Role1      string       `json:"-" cn:"角色1" source:"type=table,table=role,property=id,field=name"`
+	Role2      string       `json:"-" cn:"角色2" source:"type=table,table=role,property=id,field=name"`
+	Role3      string       `json:"-" cn:"角色3" source:"type=table,table=role,property=id,field=name"`
+	Contacts   ormx.JSONObj `json:"contacts" swaggerignore:"true"`
 }
 
 type userNameVo struct {
@@ -170,7 +183,7 @@ func (u *User) Verify() error {
 	return nil
 }
 
-func (u *User) Add(ctx *ctx.Context) error {
+func (u User) Add(ctx *ctx.Context) error {
 	user, err := UserGetByUsername(ctx, u.Username)
 	if err != nil {
 		return errors.WithMessage(err, "failed to query user")
@@ -184,6 +197,19 @@ func (u *User) Add(ctx *ctx.Context) error {
 	u.CreateAt = now
 	u.UpdateAt = now
 	return Insert(ctx, u)
+}
+
+func (u *User) AddTx(ctx *ctx.Context, tx *gorm.DB) error {
+
+	now := time.Now().Unix()
+	u.CreateAt = now
+	u.UpdateAt = now
+	u.Status = 0
+	err := DB(ctx).Create(&u).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return nil
 }
 
 func (u *User) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {
@@ -700,55 +726,86 @@ func UserNameGets(ctx *ctx.Context) ([]userNameVo, error) {
 }
 
 //过滤器统计数量
-func UserCountMap(ctx *ctx.Context, where map[string]interface{}, query string) (num int64, err error) {
-	query = "%" + query + "%"
-	var str strings.Builder
-	vals := make([]interface{}, 0)
-	str.WriteString("username like ? or ")
-	vals = append(vals, query)
-	str.WriteString("nickname like ? or ")
-	vals = append(vals, query)
-	str.WriteString("phone like ? or ")
-	vals = append(vals, query)
-	str.WriteString("email like ? or ")
-	vals = append(vals, query)
-	str.WriteString("roles like ?")
-	vals = append(vals, query)
+func UserCountMap(ctx *ctx.Context, role, query string, useGroupId, status int64, ids []int64) (num int64, err error) {
+	session := DB(ctx)
+	if query != "" {
+		query = "%" + query + "%"
+		var str strings.Builder
+		vals := make([]interface{}, 0)
+		str.WriteString("username like ? or ")
+		vals = append(vals, query)
+		str.WriteString("nickname like ? or ")
+		vals = append(vals, query)
+		str.WriteString("phone like ? or ")
+		vals = append(vals, query)
+		str.WriteString("email like ? or ")
+		vals = append(vals, query)
+		str.WriteString("roles like ?")
+		vals = append(vals, query)
+		session = session.Where(str.String(), vals...)
+	}
+	if status != -1 {
+		session = session.Where("status = ?", status)
+	}
+	if useGroupId != -1 {
+		session = session.Where("id in ?", ids)
+	}
+	if role != "" {
+		session = session.Where("roles like ?", "%"+role+"%")
+	}
 
-	err = DB(ctx).Debug().Model(&User{}).Where(where).Where(str.String(), vals...).Count(&num).Error
+	err = session.Debug().Model(&User{}).Count(&num).Error
 	return num, err
 }
 
-func UserMap(ctx *ctx.Context, where map[string]interface{}, query string, limit, offset int) (lst []UserInfo, err error) {
+func UserMap(ctx *ctx.Context, role, query string, useGroupId, status int64, ids []int64, limit, offset int) (lst []UserInfo, err error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
 		session = session.Limit(limit).Offset(offset).Order("username")
 	}
 
-	query = "%" + query + "%"
-	var str strings.Builder
-	vals := make([]interface{}, 0)
-	str.WriteString("username like ? or ")
-	vals = append(vals, query)
-	str.WriteString("nickname like ? or ")
-	vals = append(vals, query)
-	str.WriteString("phone like ? or ")
-	vals = append(vals, query)
-	str.WriteString("email like ? or ")
-	vals = append(vals, query)
-	str.WriteString("roles like ?")
-	vals = append(vals, query)
+	if query != "" {
+		query = "%" + query + "%"
+		var str strings.Builder
+		vals := make([]interface{}, 0)
+		str.WriteString("username like ? or ")
+		vals = append(vals, query)
+		str.WriteString("nickname like ? or ")
+		vals = append(vals, query)
+		str.WriteString("phone like ? or ")
+		vals = append(vals, query)
+		str.WriteString("email like ? or ")
+		vals = append(vals, query)
+		str.WriteString("roles like ?")
+		vals = append(vals, query)
+		session = session.Where(str.String(), vals...)
+	}
+	if status != -1 {
+		session = session.Where("status = ?", status)
+	}
+	if useGroupId != -1 {
+		session = session.Where("id in ?", ids)
+	}
+	if role != "" {
+		session = session.Where("roles like ?", "%"+role+"%")
+	}
 
-	err = session.Debug().Model(&User{}).Joins("LEFT JOIN user_group_member ugm ON ugm.user_id = users.id").
-		Joins("LEFT JOIN user_group ug ON ugm.group_id = ug.id").Select("users.*,GROUP_CONCAT(ug.name) AS name").Where(where).
-		Where(str.String(), vals...).Group("users.id").Find(&lst).Error
+	err = session.Debug().Model(&User{}).Find(&lst).Error
+
+	// err = session.Debug().Model(&User{}).Joins("LEFT JOIN user_group_member ugm ON ugm.user_id = users.id").
+	// 	Joins("LEFT JOIN user_group ug ON ugm.group_id = ug.id").Select("users.*,GROUP_CONCAT(ug.name) AS name").Where(where).
+	// 	Where(str.String(), vals...).Group("users.id").Find(&lst).Error
 
 	for i := 0; i < len(lst); i++ {
 		lst[i].RolesLst = strings.Fields(lst[i].Roles)
 		lst[i].Admin = lst[i].IsAdmin()
 		lst[i].Password = ""
-		lst[i].GroupName = strings.Split(lst[i].Name, ",")
+		names, err := UserGroupGetsByUserId(ctx, lst[i].Id)
+		if err != nil {
+			return nil, err
+		}
+		lst[i].GroupName = names
 	}
 
 	return lst, err
