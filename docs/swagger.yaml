@@ -105,6 +105,29 @@ definitions:
       trigger_value:
         type: string
     type: object
+  models.ApiService:
+    properties:
+      datasource_id:
+        description: type:*int     comment:数据源;promql 需要指定数据源   version:2023-10-20
+          16:47
+        type: integer
+      deleted_at:
+        description: type:*int     comment:删除时间                       version:2023-10-20
+          16:47
+        type: integer
+      id:
+        description: type:*int     comment:主键                           version:2023-10-20
+          16:47
+        type: integer
+      name:
+        type: string
+      script:
+        type: string
+      type:
+        type: string
+      url:
+        type: string
+    type: object
   models.Asset:
     properties:
       configs:
@@ -868,10 +891,13 @@ definitions:
     properties:
       config:
         type: string
+      deleted_at:
+        description: type:*int     comment:删除时间    version:2023-10-21 10:37
+        type: integer
       desc:
         type: string
       id:
-        description: type:*int         comment:主键        version:2023-10-08 15:31
+        description: type:*int     comment:主键        version:2023-10-21 10:37
         type: integer
       title:
         type: string
@@ -1619,6 +1645,15 @@ definitions:
       url:
         type: string
     type: object
+  models.LogoConfig:
+    properties:
+      login_title:
+        type: string
+      logo_title:
+        type: string
+      logo_top:
+        type: string
+    type: object
   models.MaintenanceServiceConfig:
     properties:
       deadline:
@@ -1908,6 +1943,49 @@ definitions:
       username:
         type: string
     type: object
+  models.UserConfig:
+    properties:
+      access_expired:
+        description: type:*int         comment:token有效期（用户登录）    version:2023-10-13
+          10:09
+        type: integer
+      api_service:
+        description: type:*int         comment:APIForService              version:2023-10-13
+          10:09
+        type: integer
+      captcha:
+        description: type:*int         comment:启用验证码                 version:2023-10-13
+          10:09
+        type: integer
+      http_host:
+        type: string
+      http_port:
+        description: type:*int         comment:HTTP监听端口               version:2023-10-13
+          10:09
+        type: integer
+      id:
+        description: type:BIGINT       comment:配置主键                   version:2023-10-13
+          10:09
+        type: integer
+      log_lever:
+        description: type:*int         comment:日志等级                   version:2023-10-13
+          10:09
+        type: integer
+      login_title:
+        type: string
+      logo_title:
+        type: string
+      logo_top:
+        type: string
+      open_rsa:
+        description: type:*int         comment:启用加密                   version:2023-10-13
+          10:09
+        type: integer
+      refresh_expired:
+        description: type:*int         comment:token有效期（长期展示）    version:2023-10-13
+          10:09
+        type: integer
+    type: object
   models.UserGroup:
     properties:
       create_at:
@@ -1976,6 +2054,13 @@ definitions:
       name:
         type: string
       value: {}
+    type: object
+  router.apiServiceFE:
+    properties:
+      code:
+        type: integer
+      name:
+        type: string
     type: object
   router.assetsForm:
     properties:
@@ -2057,19 +2142,23 @@ paths:
       summary: 批量删除当前告警
       tags:
       - 历史告警和当前告警-西航
-  /api/n9e/alert-cur-events/export-xls:
+  /api/n9e/alert-events/export-xls:
     post:
       consumes:
       - application/json
-      description: EXCEL导出资产
+      description: EXCEL导出告警
       parameters:
-      - description: 类型
+      - description: 文件类型
         in: query
         name: ftype
         type: integer
-      - description: 类型
+      - description: 告警类型
         in: query
-        name: type
+        name: alert_type
+        type: integer
+      - description: 告警等级
+        in: query
+        name: severity
         type: integer
       - description: 开始时间
         in: query
@@ -2090,7 +2179,6 @@ paths:
       - description: add query
         in: body
         name: body
-        required: true
         schema:
           additionalProperties: true
           type: object
@@ -2101,18 +2189,22 @@ paths:
           description: OK
       security:
       - ApiKeyAuth: []
-      summary: EXCEL导出资产
+      summary: EXCEL导出告警
       tags:
       - 历史告警和当前告警-西航
-  /api/n9e/alert-cur-events/list/xh:
+  /api/n9e/alert-events/list/xh:
     get:
       consumes:
       - application/json
-      description: 当前告警过滤器
+      description: 告警过滤器
       parameters:
-      - description: 类型
+      - description: 告警类型
         in: query
-        name: type
+        name: alert_type
+        type: integer
+      - description: 告警等级
+        in: query
+        name: severity
         type: integer
       - description: 开始时间
         in: query
@@ -2149,7 +2241,7 @@ paths:
             type: array
       security:
       - ApiKeyAuth: []
-      summary: 当前告警过滤器
+      summary: 告警过滤器
       tags:
       - 历史告警和当前告警-西航
   /api/n9e/alert-his-events/batch-del:
@@ -2175,87 +2267,20 @@ paths:
       summary: 批量删除历史告警
       tags:
       - 历史告警和当前告警-西航
-  /api/n9e/alert-his-events/export-xls:
-    post:
-      consumes:
-      - application/json
-      description: EXCEL导出历史告警
-      parameters:
-      - description: 类型
-        in: query
-        name: ftype
-        type: integer
-      - description: 类型
-        in: query
-        name: type
-        type: integer
-      - description: 开始时间
-        in: query
-        name: start
-        type: integer
-      - description: 结束时间
-        in: query
-        name: end
-        type: integer
-      - description: 搜索框
-        in: query
-        name: query
-        type: string
-      - description: 业务组id
-        in: query
-        name: group
-        type: integer
-      - description: add query
-        in: body
-        name: body
-        required: true
-        schema:
-          additionalProperties: true
-          type: object
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-      security:
-      - ApiKeyAuth: []
-      summary: EXCEL导出历史告警
-      tags:
-      - 历史告警和当前告警-西航
-  /api/n9e/alert-his-events/list/xh:
+  /api/n9e/api-service/:
     get:
       consumes:
       - application/json
-      description: 历史告警过滤器
+      description: 根据条件查询接口管理
       parameters:
-      - description: 资产ID
-        in: query
-        name: type
-        type: integer
-      - description: 开始时间
-        in: query
-        name: start
-        type: integer
-      - description: 结束时间
-        in: query
-        name: end
-        type: integer
-      - description: 搜索框
-        in: query
-        name: query
-        type: string
-      - description: 业务组id
-        in: query
-        name: group
-        type: integer
-      - description: 条数
+      - description: 返回条数
         in: query
         name: limit
         type: integer
-      - description: 页码
+      - description: 查询条件
         in: query
-        name: page
-        type: integer
+        name: query
+        type: string
       produces:
       - application/json
       responses:
@@ -2263,13 +2288,138 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.AlertHisEvent'
+              $ref: '#/definitions/models.ApiService'
             type: array
       security:
       - ApiKeyAuth: []
-      summary: 历史告警过滤器
+      summary: 查询接口管理
       tags:
-      - 历史告警和当前告警-西航
+      - 接口管理
+    post:
+      consumes:
+      - application/json
+      description: 创建接口管理
+      parameters:
+      - description: add apiService
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ApiService'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建接口管理
+      tags:
+      - 接口管理
+    put:
+      consumes:
+      - application/json
+      description: 更新接口管理
+      parameters:
+      - description: update apiService
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.ApiService'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新接口管理
+      tags:
+      - 接口管理
+  /api/n9e/api-service/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除接口管理
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除接口管理
+      tags:
+      - 接口管理
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取接口管理
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ApiService'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取接口管理
+      tags:
+      - 接口管理
+  /api/n9e/api-service/{id}/execute:
+    get:
+      consumes:
+      - application/json
+      description: 执行接口
+      parameters:
+      - description: 接口id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 执行接口
+      tags:
+      - 接口管理
+  /api/n9e/api-service/options:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询接口管理
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/router.apiServiceFE'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询接口列表
+      tags:
+      - 接口管理
   /api/n9e/asset-alter/:
     post:
       consumes:
@@ -7308,6 +7458,175 @@ paths:
       summary: 导入最新探针
       tags:
       - 探针版本
+  /api/n9e/user-config/:
+    get:
+      consumes:
+      - application/json
+      description: 根据条件查询用户配置
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.UserConfig'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询用户配置
+      tags:
+      - 用户配置
+    post:
+      consumes:
+      - application/json
+      description: 创建用户配置
+      parameters:
+      - description: add userConfig
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserConfig'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 创建用户配置
+      tags:
+      - 用户配置
+    put:
+      consumes:
+      - application/json
+      description: 更新用户配置
+      parameters:
+      - description: update userConfig
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserConfig'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新用户配置
+      tags:
+      - 用户配置
+  /api/n9e/user-config/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据主键删除用户配置
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 删除用户配置
+      tags:
+      - 用户配置
+    get:
+      consumes:
+      - application/json
+      description: 根据主键获取用户配置
+      parameters:
+      - description: 主键
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserConfig'
+      security:
+      - ApiKeyAuth: []
+      summary: 获取用户配置
+      tags:
+      - 用户配置
+  /api/n9e/user-config/getInfo:
+    get:
+      consumes:
+      - application/json
+      description: 查询logo信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.LogoConfig'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: 查询logo信息
+      tags:
+      - 用户配置
+  /api/n9e/user-config/logo:
+    put:
+      consumes:
+      - application/json
+      description: 更新用户Logo
+      parameters:
+      - description: 更新Logo信息
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.LogoConfig'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 更新用户Logo
+      tags:
+      - 用户配置
+  /api/n9e/user-config/picture:
+    post:
+      consumes:
+      - application/json
+      description: 选择图片上传
+      parameters:
+      - description: 图片
+        in: formData
+        name: picture
+        type: file
+      - description: 图片名称
+        in: query
+        name: logoName
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: 选择图片上传
+      tags:
+      - 用户配置
   /api/n9e/user/getNames/:
     get:
       consumes:

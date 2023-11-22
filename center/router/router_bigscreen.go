@@ -127,34 +127,3 @@ func (rt *Router) bigscreenDel(c *gin.Context) {
 	}
 	ginx.NewRender(c).Message(bigscreen.Del(rt.Ctx))
 }
-
-type Data struct {
-	Name  string `json:"name"`
-	Value int64  `json:"value"`
-}
-
-type Serie struct {
-	SeriesName string `json:"seriesName"`
-	Data       []Data `json:"data"`
-}
-
-type ChartData struct {
-	Series []Serie `json:"series"`
-}
-
-func (rt *Router) bigScreenData(c *gin.Context) {
-	var data ChartData
-	data.Series = make([]Serie, 0)
-	var s Serie
-	s.SeriesName = "CPU利用率"
-	s.Data = append(s.Data, Data{Name: "16:01", Value: 50})
-	s.Data = append(s.Data, Data{Name: "16:02", Value: 54})
-	s.Data = append(s.Data, Data{Name: "16:03", Value: 55})
-	s.Data = append(s.Data, Data{Name: "16:04", Value: 50})
-	s.Data = append(s.Data, Data{Name: "16:05", Value: 60})
-	s.Data = append(s.Data, Data{Name: "16:06", Value: 50})
-	s.Data = append(s.Data, Data{Name: "16:07", Value: 70})
-
-	data.Series = append(data.Series, s)
-	ginx.NewRender(c).Data(data, nil)
-}

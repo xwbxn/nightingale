@@ -4,10 +4,13 @@
 package models
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/prom"
+	"github.com/prometheus/prometheus/model/labels"
 	"gorm.io/gorm"
 )
 
@@ -225,4 +228,9 @@ func MonitoringUpdateStatus(ctx *ctx.Context, ids []int64, status, oType int64) 
 		return DB(ctx).Debug().Model(&Monitoring{}).Where("id in ?", ids).Updates(map[string]interface{}{"is_alarm": status}).Error
 	}
 	return nil
+}
+
+func (m *Monitoring) CompilePromQL() string {
+	// TODO: 如果这里的资产是全局资产，那么不需要注入标签
+	return prom.InjectLabel(m.MonitoringSql, "asset_id", strconv.Itoa(int(m.AssetId)), labels.MatchEqual)
 }

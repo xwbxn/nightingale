@@ -428,6 +428,23 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/assets/bgid", rt.auth(), rt.user(), rt.perm("/assets/put"), rt.assetUpdateBgid)
 		pages.PUT("/assets/note", rt.auth(), rt.user(), rt.perm("/assets/note"), rt.assetUpdateNote)
 		pages.PUT("/assets/orgnazation", rt.auth(), rt.user(), rt.assetUpdateOrganization) // 批量修改资产组织ID
+
+		// 大屏接口管理
+		pages.GET("/api-service", rt.auth(), rt.admin(), rt.apiServiceGets)
+		pages.GET("/api-service/:id", rt.auth(), rt.admin(), rt.apiServiceGet)
+		pages.GET("/api-service/:id/execute", rt.auth(), rt.admin(), rt.apiServiceExecute)
+		pages.POST("/api-service", rt.auth(), rt.admin(), rt.apiServiceAdd)
+		pages.PUT("/api-service", rt.auth(), rt.admin(), rt.apiServicePut)
+		pages.DELETE("/api-service/:id", rt.auth(), rt.admin(), rt.apiServiceDel)
+		pages.GET("/api-service/options", rt.auth(), rt.admin(), rt.apiServiceGetsOptions)
+
+		// 大屏管理
+		pages.GET("/bigscreen", rt.auth(), rt.admin(), rt.bigscreenGets)
+		pages.GET("/bigscreen/:id", rt.auth(), rt.admin(), rt.bigscreenGet)
+		pages.POST("/bigscreen", rt.auth(), rt.admin(), rt.bigscreenAdd)
+		pages.PUT("/bigscreen", rt.auth(), rt.admin(), rt.bigscreenPut)
+		pages.DELETE("/bigscreen/:id", rt.auth(), rt.admin(), rt.bigscreenDel)
+
 		//西航
 		pages.POST("/xh/assets", rt.auth(), rt.user(), rt.assetsAddXH)
 		pages.PUT("/xh/assets", rt.auth(), rt.user(), rt.assetPutXH)
@@ -731,6 +748,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/xh/monitoring/:id", rt.auth(), rt.user(), rt.monitoringDel)
 		pages.POST("/xh/monitoring/status", rt.auth(), rt.user(), rt.monitoringStatusUpdate)
 		pages.POST("/xh/monitoring/data", rt.auth(), rt.user(), rt.monitoringData)
+		pages.GET("/monitoring/options", rt.auth(), rt.user(), rt.monitoringGetOptions)
 
 		//用户配置
 		pages.GET("/user-config", rt.auth(), rt.admin(), rt.userConfigGets)

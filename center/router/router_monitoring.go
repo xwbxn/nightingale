@@ -402,3 +402,37 @@ func (rt *Router) monitoringData(c *gin.Context) {
 	}
 	ginx.NewRender(c).Data(values, err)
 }
+
+type monitoringOption struct {
+	Label    string             `json:"label"`
+	Value    string             `json:"value"`
+	PromQL   string             `json:"promql"`
+	Children []monitoringOption `json:"children"`
+}
+
+// 获取监控指标前端选择列表
+func (rt *Router) monitoringGetOptions(c *gin.Context) {
+	lst, err := models.MonitoringGetsAll(rt.Ctx)
+	ginx.Dangerous(err)
+
+	assets, err := models.AssetGetsAll(rt.Ctx)
+	ginx.Dangerous(err)
+
+	data := make([]monitoringOption, len(assets))
+	for i, asset := range assets {
+		data[i].Label = asset.Name
+		data[i].Value = strconv.Itoa(int(asset.Id))
+		data[i].Children = make([]monitoringOption, 0)
+		for _, m := range lst {
+			if m.AssetId == asset.Id {
+				data[i].Children = append(data[i].Children, monitoringOption{
+					Label:  m.MonitoringName,
+					Value:  m.CompilePromQL(),
+					PromQL: m.CompilePromQL(),
+				})
+			}
+		}
+	}
+
+	ginx.NewRender(c).Data(data, nil)
+}
