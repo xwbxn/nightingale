@@ -2,6 +2,7 @@ package attrs
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -58,204 +59,70 @@ func (as *Attr) syncAttrs() {
 	assets := as.AssetCache.GetAll()
 	for _, asset := range assets {
 		if asset.Type == HOST {
-			as.updateCpuAttrs(asset)
-			as.updateMemAttrs(asset)
-			as.updateBoardAttrs(asset)
-			as.updateBIOSAttrs(asset)
+			as.updateExtraProps(asset)
 		}
 	}
 }
 
-func (as *Attr) updateCpuAttrs(asset *models.Asset) {
-	cate := "cpu"
-	client := as.Client.GetCli(DEFAULT_CLIENT)
-	promql := prom_tool.InjectLabel("w_aviation_cpu_percent", "asset_id", strconv.Itoa(int(asset.Id)), labels.MatchEqual)
-	logger.Debugf("update attr promql: %s", promql)
-	value, _, _ := client.Query(context.Background(), promql, time.Now())
-	items, ok := value.(model.Vector)
-	if !ok || items.Len() == 0 {
+func (as *Attr) updateExtraProps(asset *models.Asset) {
+	atype, ok := as.AssetCache.GetType(asset.Type)
+	if !ok {
+		logger.Error("asset type not exists: ", asset.Id)
 		return
 	}
 
-	tx := as.Ctx.DB.Begin()
-	err := models.AssetsExpansionDelMap(tx, map[string]interface{}{"assets_id": asset.Id, "config_category": cate})
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	for _, v := range items {
-		uid := uuid.New().String()
+	client := as.Client.GetCli(DEFAULT_CLIENT)
+	for cate, prop := range atype.ExtraProps {
+		if len(prop.Props) == 0 {
+			logger.Warning("资产类型无扩展属性: ", asset.Type, cate)
+			continue
+		}
+
+		promql := fmt.Sprintf("w_aviation_%s", cate) // 这里的基础属性使用了w_aviation插件，采集指标的后缀名称与assets.yaml中一致
+		promql = prom_tool.InjectLabel(promql, "asset_id", strconv.Itoa(int(asset.Id)), labels.MatchEqual)
+		value, warning, err := client.Query(context.Background(), promql, time.Now())
+		if len(warning) > 0 {
+			logger.Error("查询资产错误: ", err.Error())
+			continue
+		}
+		values, ok := value.(model.Vector)
+		if !ok {
+			logger.Error("查询资产错误-: ", values)
+			continue
+		}
+		if len(values) == 0 {
+			logger.Error("查询资产错误, 未查到资产信息: ", promql)
+			continue
+		}
+
 		var attrs []models.AssetsExpansion
-		for labelName, labelValue := range v.Metric {
-			if labelName == "cpu_model" {
-				attr := createAttr(asset.Id, cate, "型号", "model", uid, string(labelValue))
-				attrs = append(attrs, attr)
-			}
-			if labelName == "cpu_arch" {
-				attr := createAttr(asset.Id, cate, "架构", "arch", uid, string(labelValue))
-				attrs = append(attrs, attr)
-			}
-			if labelName == "cpu_cores" {
-				attr := createAttr(asset.Id, cate, "物理核数量", "core_count", uid, string(labelValue))
-				attrs = append(attrs, attr)
-			}
-			if labelName == "cpu_threads" {
-				attr := createAttr(asset.Id, cate, "逻辑核数量", "thread_count", uid, string(labelValue))
-				attrs = append(attrs, attr)
-			}
-			if labelName == "cpu_Mhz" {
-				attr := createAttr(asset.Id, cate, "最大主频(Mhz)", "max_frequency", uid, string(labelValue))
-				attrs = append(attrs, attr)
+		for _, item := range values {
+			uid := uuid.New().String()
+			for _, p := range prop.Props[0].Items {
+				l := item.Metric
+				v, exists := l[model.LabelName(p.Name)]
+				safeVal := strings.ReplaceAll(string(v), "\\", "/")
+				if exists {
+					attr := createAttr(asset.Id, cate, p.Label, p.Name, uid, safeVal)
+					attrs = append(attrs, attr)
+				}
 			}
 		}
 
+		tx := as.Ctx.DB.Begin()
+		err = models.AssetsExpansionDelMap(tx, map[string]interface{}{"assets_id": asset.Id, "config_category": cate})
+		if err != nil {
+			logger.Error(err)
+			return
+		}
 		err = models.AssetsExpansionAddTx(tx, attrs)
 		if err != nil {
 			logger.Error(err)
 			continue
 		}
+		tx.Commit()
 
 	}
-	tx.Commit()
-}
-
-func (as *Attr) updateMemAttrs(asset *models.Asset) {
-	cate := "memory"
-	client := as.Client.GetCli(DEFAULT_CLIENT)
-	promql := prom_tool.InjectLabel("w_aviation_mem_usedpercent", "asset_id", strconv.Itoa(int(asset.Id)), labels.MatchEqual)
-	logger.Debugf("update attr promql: %s", promql)
-	value, _, _ := client.Query(context.Background(), promql, time.Now())
-	items, ok := value.(model.Vector)
-	if !ok || items.Len() == 0 {
-		return
-	}
-
-	tx := as.Ctx.DB.Begin()
-	err := models.AssetsExpansionDelMap(tx, map[string]interface{}{"assets_id": asset.Id, "config_category": cate})
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	for _, v := range items {
-		uid := uuid.New().String()
-		var attrs []models.AssetsExpansion
-		for labelName, labelValue := range v.Metric {
-			if labelName == "mem_mf" {
-				attr := createAttr(asset.Id, cate, "品牌", "brand", uid, string(labelValue))
-				attrs = append(attrs, attr)
-			}
-			if labelName == "mem_speed" {
-				attr := createAttr(asset.Id, cate, "主频", "frequency", uid, string(labelValue))
-				attrs = append(attrs, attr)
-			}
-			if strings.HasPrefix(string(labelName), "mem_total") {
-				attr := createAttr(asset.Id, cate, "容量", "capacity", uid, string(labelValue))
-				attrs = append(attrs, attr)
-			}
-			if labelName == "mem_type" {
-				attr := createAttr(asset.Id, cate, "类型", "type", uid, string(labelValue))
-				attrs = append(attrs, attr)
-			}
-		}
-
-		err = models.AssetsExpansionAddTx(tx, attrs)
-		if err != nil {
-			logger.Error(err)
-			continue
-		}
-
-	}
-	tx.Commit()
-}
-
-func (as *Attr) updateBoardAttrs(asset *models.Asset) {
-	cate := "board"
-	client := as.Client.GetCli(DEFAULT_CLIENT)
-	promql := prom_tool.InjectLabel("w_aviation_BaseBoard", "asset_id", strconv.Itoa(int(asset.Id)), labels.MatchEqual)
-	logger.Debugf("update attr promql: %s", promql)
-	value, _, _ := client.Query(context.Background(), promql, time.Now())
-	items, ok := value.(model.Vector)
-	if !ok || items.Len() == 0 {
-		return
-	}
-
-	tx := as.Ctx.DB.Begin()
-	err := models.AssetsExpansionDelMap(tx, map[string]interface{}{"assets_id": asset.Id, "config_category": cate})
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	for _, v := range items {
-		uid := uuid.New().String()
-		var attrs []models.AssetsExpansion
-		for labelName, labelValue := range v.Metric {
-			if labelName == "Manufacturer" {
-				attr := createAttr(asset.Id, cate, "厂商", "manufacturers", uid, string(labelValue))
-				attrs = append(attrs, attr)
-			}
-			if labelName == "SerialNumber" {
-				attr := createAttr(asset.Id, cate, "序列号", "serial_num", uid, string(labelValue))
-				attrs = append(attrs, attr)
-			}
-			if labelName == "Product" {
-				attr := createAttr(asset.Id, cate, "版本", "version", uid, string(labelValue))
-				attrs = append(attrs, attr)
-			}
-		}
-
-		err = models.AssetsExpansionAddTx(tx, attrs)
-		if err != nil {
-			logger.Error(err)
-			continue
-		}
-
-	}
-	tx.Commit()
-}
-
-func (as *Attr) updateBIOSAttrs(asset *models.Asset) {
-	cate := "bios"
-	client := as.Client.GetCli(DEFAULT_CLIENT)
-	promql := prom_tool.InjectLabel("w_aviation_BIOS", "asset_id", strconv.Itoa(int(asset.Id)), labels.MatchEqual)
-	logger.Debugf("update attr promql: %s", promql)
-	value, _, _ := client.Query(context.Background(), promql, time.Now())
-	items, ok := value.(model.Vector)
-	if !ok || items.Len() == 0 {
-		return
-	}
-
-	tx := as.Ctx.DB.Begin()
-	err := models.AssetsExpansionDelMap(tx, map[string]interface{}{"assets_id": asset.Id, "config_category": cate})
-	if err != nil {
-		logger.Error(err)
-		return
-	}
-	for _, v := range items {
-		uid := uuid.New().String()
-		var attrs []models.AssetsExpansion
-		for labelName, labelValue := range v.Metric {
-			if labelName == "Manufacturer" {
-				attr := createAttr(asset.Id, cate, "厂商", "manufacturers", uid, string(labelValue))
-				attrs = append(attrs, attr)
-			}
-			if labelName == "SMBIOSBIOSVersion" {
-				attr := createAttr(asset.Id, cate, "版本", "version", uid, string(labelValue))
-				attrs = append(attrs, attr)
-			}
-			if labelName == "ReleaseDate" {
-				attr := createAttr(asset.Id, cate, "发行日期", "release_date", uid, string(labelValue)[0:8])
-				attrs = append(attrs, attr)
-			}
-		}
-
-		err = models.AssetsExpansionAddTx(tx, attrs)
-		if err != nil {
-			logger.Error(err)
-			continue
-		}
-
-	}
-	tx.Commit()
 }
 
 func createAttr(assetId int64, cc string, namecn string, name string, uid string, value string) models.AssetsExpansion {

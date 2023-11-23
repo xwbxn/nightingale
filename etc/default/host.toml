@@ -86,4 +86,5 @@ ip_ext = false
 
 [w_aviation]
 # # collect interval
-# interval = 15
+interval = 60
+[[w_aviation.instances]]
