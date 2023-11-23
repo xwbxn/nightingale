@@ -120,6 +120,11 @@ func (rt *Router) assetsAddXH(c *gin.Context) {
 	if memoOk {
 		memo = memoT.(string)
 	}
+	manufacturers := ""
+	manufacturersT, manufacturersOk := f["manufacturers"]
+	if manufacturersOk {
+		manufacturers = manufacturersT.(string)
+	}
 
 	var group int64 = 0
 	groupT, groupOk := f["group_id"]
@@ -132,7 +137,7 @@ func (rt *Router) assetsAddXH(c *gin.Context) {
 		Name:          f["name"].(string),
 		Type:          f["type"].(string),
 		Ip:            f["ip"].(string),
-		Manufacturers: f["manufacturers"].(string),
+		Manufacturers: manufacturers,
 		Position:      position,
 		Memo:          memo,
 		CreateBy:      me.Username,
@@ -234,6 +239,11 @@ func (rt *Router) assetPutXH(c *gin.Context) {
 	if memoOk {
 		memo = memoT.(string)
 	}
+	manufacturers := ""
+	manufacturersT, manufacturersOk := f["manufacturers"]
+	if manufacturersOk {
+		manufacturers = manufacturersT.(string)
+	}
 	var group int64 = 0
 	groupT, groupOk := f["group_id"]
 	if groupOk {
@@ -244,7 +254,7 @@ func (rt *Router) assetPutXH(c *gin.Context) {
 	oldAssets.Name = f["name"].(string)
 	oldAssets.Type = f["type"].(string)
 	oldAssets.Ip = f["ip"].(string)
-	oldAssets.Manufacturers = f["manufacturers"].(string)
+	oldAssets.Manufacturers = manufacturers
 	oldAssets.Position = position
 	oldAssets.Memo = memo
 	oldAssets.UpdateAt = time.Now().Unix()

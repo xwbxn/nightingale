@@ -100,7 +100,7 @@ func GinEngine(mode string, cfg Config) *gin.Engine {
 		c.String(200, "pong")
 	})
 
-	r.GET("/alert/ws", ws.WsHandler)
+	r.GET("/alert/ws/:id", ws.WsHandler)
 
 	r.GET("/pid", func(c *gin.Context) {
 		c.String(200, fmt.Sprintf("%d", os.Getpid()))

@@ -1321,28 +1321,23 @@ CREATE TABLE `monitoring`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `operation_log`;
 CREATE TABLE `operation_log`  (
-  `OPER_ID` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '日志主键',
-  `TITLE` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '模块标题',
-  `BUSINESS_TYPE` int(0) DEFAULT 0 COMMENT '业务类型（0其它 1新增 2修改 3删除）',
-  `METHOD` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '方法名称',
-  `REQUEST_METHOD` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '请求方式',
-  `OPERATOR_TYPE` int(0) DEFAULT 0 COMMENT '操作类别（0其它 1后台用户 2手机端用户）',
-  `OPER_NAME` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '操作人员',
-  `DEPT_NAME` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '部门名称',
+  `ID` bigint(0) NOT NULL AUTO_INCREMENT COMMENT '日志主键',
+  `TYPE` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '类型',
+  `OBJECT` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '0' COMMENT '对象',
+  `DESCRIPTION` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '描述',
+  `USER` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '用户',
+  `OPER_TIME` int(0) DEFAULT 0 COMMENT '执行时间',
   `OPER_URL` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '请求URL',
-  `OPER_IP` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '主机地址',
-  `OPER_LOCATION` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '操作地点',
   `OPER_PARAM` varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '请求参数',
   `JSON_RESULT` varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '返回参数',
-  `STATUS` int(0) DEFAULT 0 COMMENT '操作状态（0正常 1异常）',
+  `STATUS` int(0) DEFAULT 0 COMMENT '操作状态码',
   `ERROR_MSG` varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '错误消息',
-  `OPER_TIME` int(0) DEFAULT NULL COMMENT '操作时间',
   `CREATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '创建人',
   `CREATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
   `UPDATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '更新人',
   `UPDATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '更新时间',
   `DELETED_AT` datetime(0) DEFAULT NULL COMMENT '删除时间',
-  PRIMARY KEY (`OPER_ID`) USING BTREE
+  PRIMARY KEY (`ID`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '操作日志' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
@@ -1481,3 +1476,42 @@ CREATE TABLE `user_config`  (
 -- Records of user_config
 -- ----------------------------
 INSERT INTO `user_config` VALUES (1, 1, '0.0.0.0', 17000, 2, 1, 999999, 10080, 2, 'yugu', 'images/logo_top.png', 'images/logo_title.png', '0', 0, '0', 1700200695, NULL);
+
+
+-- ----------------------------
+-- Table structure for api_service
+-- ----------------------------
+DROP TABLE IF EXISTS `api_service`;
+CREATE TABLE `api_service`  (
+  `ID` int(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `CREATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '创建人',
+  `CREATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
+  `UPDATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '更新人',
+  `UPDATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '更新时间',
+  `DELETED_AT` int(0) DEFAULT NULL COMMENT '删除时间',
+  `NAME` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '名称',
+  `TYPE` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '类型;sql or promql',
+  `DATASOURCE_ID` int(0) DEFAULT NULL COMMENT '数据源;promql 需要指定数据源',
+  `URL` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'URL',
+  `SCRIPT` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '执行脚本',
+  PRIMARY KEY (`ID`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '接口管理' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for bigscreen
+-- ----------------------------
+DROP TABLE IF EXISTS `bigscreen`;
+CREATE TABLE `bigscreen`  (
+  `ID` int(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `CREATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '创建人',
+  `CREATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
+  `UPDATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '更新人',
+  `UPDATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '更新时间',
+  `DELETED_AT` int(0) DEFAULT NULL COMMENT '删除时间',
+  `TITLE` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '标题',
+  `DESC` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '简介',
+  `CONFIG` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT '配置',
+  PRIMARY KEY (`ID`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+SET FOREIGN_KEY_CHECKS = 1;
