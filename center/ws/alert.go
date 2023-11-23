@@ -1,13 +1,16 @@
 package ws
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/toolkits/pkg/ginx"
 )
 
 var (
@@ -29,6 +32,14 @@ var upGrader = websocket.Upgrader{
 func WsHandler(c *gin.Context) {
 	var conn *websocket.Conn
 	var err error
+
+	idStr := ginx.UrlParamStr(c, "id")
+	u64, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	id := uint(u64)
 
 	conn, err = upGrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -59,7 +70,7 @@ func WsHandler(c *gin.Context) {
 	// }
 
 	// // 将 conn 保存到字典  以上注释部分暂时不用，以后根据分配的Id来完善消息推送
-	addClient(1, conn)
+	addClient(id, conn)
 }
 
 func addClient(id uint, conn *websocket.Conn) {

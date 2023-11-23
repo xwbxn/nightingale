@@ -3,6 +3,7 @@ package sender
 import (
 	"bytes"
 	"html/template"
+	"strings"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/memsto"
@@ -45,6 +46,20 @@ func NewSender(key string, tpls map[string]*template.Template, smtp aconf.SMTPCo
 
 func BuildMessageContext(rule *models.AlertRule, events []*models.AlertCurEvent, uids []int64, userCache *memsto.UserCacheType) MessageContext {
 	users := userCache.GetByUserIds(uids)
+	//重构监控指标
+	strLst := make([]string, 0)
+	strLst = append(strLst, "资产名称："+events[0].AssetName)
+	for _, val := range events[0].TagsJSON {
+		strVal := strings.Split(val, "=")
+		if strVal[0] == "agent_ip" {
+			strLst = append(strLst, "资产IP："+strVal[1])
+
+		} else if strVal[0] == "asset_type" {
+			strLst = append(strLst, "资产类型："+strVal[1])
+		}
+	}
+	strLst = append(strLst, "告警信息："+rule.RuleConfigCn)
+	events[0].TagsJSON = strLst
 	return MessageContext{
 		Rule:   rule,
 		Events: events,

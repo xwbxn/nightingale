@@ -774,7 +774,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.Static("/images", "./etc/picture/logo")
 
 		//接口访问设置
-		pages.GET("/xh/assets/out", rt.auth(), rt.user(), rt.assetGetAll)
+		pages.GET("/xh/assets/out", rt.auth(), rt.thirdUser(), rt.assetGetAll)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

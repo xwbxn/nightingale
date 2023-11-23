@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/center/ws"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
@@ -411,6 +412,17 @@ func EventPersist(ctx *ctx.Context, event *AlertCurEvent) error {
 				if err := event.Add(ctx); err != nil {
 					return fmt.Errorf("add cur event err:%v", err)
 				}
+				asset, err := AssetGetById(ctx, event.AssetId)
+				if err != nil || asset == nil {
+					return fmt.Errorf("get asset err:%v", err)
+				}
+				event.AssetName = asset.Name
+				event.AssetIp = asset.Ip
+				events := make([]*AlertCurEvent, 0)
+				events = append(events, event)
+				logger.Debug(events[0].AssetName)
+
+				ws.SetMessage(2, MakeFeAlert(events)) //socket推送内容 guoxp
 			}
 		}
 
@@ -484,8 +496,6 @@ func AlertHisCountFilter(ctx *ctx.Context, where map[string]interface{}, dateRan
 				str := "asset_id=" + strconv.FormatInt(val, 10)
 				idsStr = append(idsStr, str)
 			}
-			logger.Debug(ids)
-			logger.Debug(idsStr)
 			// session = session.Or(sql, idsStr)
 		}
 
@@ -528,8 +538,6 @@ func AlertHisFilter(ctx *ctx.Context, where map[string]interface{}, dateRange in
 				str := "asset_id=" + strconv.FormatInt(val, 10)
 				idsStr = append(idsStr, str)
 			}
-			logger.Debug(ids)
-			logger.Debug(idsStr)
 		}
 		session = session.Where(sql, idsStr...)
 

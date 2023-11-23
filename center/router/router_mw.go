@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -141,9 +142,27 @@ func (rt *Router) user() gin.HandlerFunc {
 
 func (rt *Router) thirdUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// clientIp := c.ClientIP()
-		// pwd := c.Request.Header.Get("thirdUser")
+		clientIp := c.ClientIP()
+		pwd := c.Request.Header.Get("thirdUser")
 
+		jsonData, err := rt.Redis.Get(rt.Ctx.Ctx, "apiAuth").Bytes()
+		if err != nil {
+			if err.Error() != "redis: nil" {
+				ginx.Dangerous(err)
+			}
+		}
+		data := make(map[string]string)
+		err = json.Unmarshal(jsonData, &data)
+		ginx.Dangerous(err)
+
+		userPwd, userPwdOk := data[clientIp]
+		if !userPwdOk {
+			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+		}
+		if pwd != userPwd {
+			ginx.Bomb(http.StatusUnauthorized, "unauthorized")
+		}
+		c.Next()
 	}
 }
 

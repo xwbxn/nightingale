@@ -25,6 +25,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pushgw/idents"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
 	"github.com/ccfos/nightingale/v6/storage"
+	"github.com/toolkits/pkg/logger"
 
 	alertrt "github.com/ccfos/nightingale/v6/alert/router"
 	"github.com/ccfos/nightingale/v6/center/attrs"
@@ -58,27 +59,27 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	models.InitRoot(ctx)
 	migrate.Migrate(db)
 
-	// logLever := map[int]string{
-	// 	1: "DEBUG",
-	// 	2: "INFO",
-	// 	3: "WARNING",
-	// 	4: "ERROR",
-	// }
+	logLever := map[int]string{
+		1: "DEBUG",
+		2: "INFO",
+		3: "WARNING",
+		4: "ERROR",
+	}
 
-	// logLeverT := map[string]int{
-	// 	"DEBUG": 1,
-	// 	"INFO": 2,
-	// 	"WARNING": 3,
-	// 	"ERROR": 4,
-	// }
+	logLeverT := map[string]int{
+		"DEBUG":   1,
+		"INFO":    2,
+		"WARNING": 3,
+		"ERROR":   4,
+	}
 
 	var lst *models.UserConfig
 	err = ctx.DB.Where("id", 1).Find(&lst).Error
 	if lst != nil {
-		// if lst.LogLever != logLeverT[config.Log.Level]{
-		// 	// 热修改logger日志等级
-		// 	logger.SetSeverity(logLever[lst.LogLever])
-		// }
+		if lst.LogLever != logLeverT[config.Log.Level] {
+			// 热修改logger日志等级
+			logger.SetSeverity(logLever[lst.LogLever])
+		}
 		if lst.HttpHost != config.HTTP.Host {
 			config.HTTP.Host = lst.HttpHost
 		}
