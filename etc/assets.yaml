@@ -47,6 +47,7 @@ config:
     extra_props:
       cpu:
         label: CPU信息
+        sort: 1
         props:
           - name: cpu
             label: CPU信息
@@ -74,6 +75,7 @@ config:
 
       memory:
         label: 内存信息
+        sort: 2
         props:
           - name: memory
             label: 内存信息
@@ -95,6 +97,7 @@ config:
         
       disk:
         label: 磁盘信息
+        sort: 3
         props:
           - name: disk
             label: 磁盘信息
@@ -113,6 +116,7 @@ config:
 
       net:
         label: 网络信息
+        sort: 4
         props:
           - name: interface
             label: 网络接口
@@ -137,6 +141,7 @@ config:
               
       board:
         label: 主板信息
+        sort: 5
         props:
           - name: board
             label: 主板信息
@@ -155,6 +160,7 @@ config:
 
       bios:
         label: 固件信息
+        sort: 6
         props:
           - name: bios
             label: 固件信息
@@ -173,6 +179,7 @@ config:
 
       bus:
         label: 主机控制器
+        sort: 7
         props:
           - name: devices
             label: 控制器
@@ -191,6 +198,7 @@ config:
 
       os:
         label: 操作系统
+        sort: 8
         props:
           - name: os
             label: 操作系统
@@ -212,6 +220,7 @@ config:
 
       power:
         label: 电源信息
+        sort: 9
         props:
           - name: power_supply
             label: 电源
@@ -244,6 +253,7 @@ config:
     extra_props:
       device:
         label: 接口信息
+        sort: 1
         props:
           - name: interface
             label: 网络接口
@@ -292,6 +302,7 @@ config:
                     value: 7
       snmp:
         label: SNMP属性
+        sort: 2
         props:
           - name: snmp
             label: snmp属性
@@ -317,6 +328,7 @@ config:
     extra_props:
       connection:
         label: 连接属性
+        sort: 1
         props:
           - name: connection
             label: 连接属性

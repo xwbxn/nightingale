@@ -113,6 +113,90 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 	ginx.NewRender(c).Data(cards, nil)
 }
 
+// @Summary      告警过滤器
+// @Description  告警过滤器
+// @Tags         历史告警和当前告警-西航
+// @Accept       json
+// @Produce      json
+// @Param        filter    query    string  false  "筛选框(“severity”：告警级别；“group_id”：业务组)"
+// @Param        query    query    string  false  "搜索框"
+// @Param        start    query    int64  false  "开始时间"
+// @Param        end    query    int64  false  "结束时间"
+// @Success      200  {array}  AlertCard
+// @Router       /api/n9e/alert-events/list/xh [get]
+// @Security     ApiKeyAuth
+func (rt *Router) alertCurEventsCardXH(c *gin.Context) {
+	filter := ginx.QueryStr(c, "filter", "")
+	query := ginx.QueryStr(c, "query", "")
+	start := ginx.QueryInt64(c, "start", -1)
+	end := ginx.QueryInt64(c, "end", -1)
+	dsIds := queryDatasourceIds(c)
+	rules := parseAggrRules(c)
+
+	prod := ginx.QueryStr(c, "prods", "")
+	if prod == "" {
+		prod = ginx.QueryStr(c, "rule_prods", "")
+	}
+	prods := []string{}
+	if prod != "" {
+		prods = strings.Split(prod, ",")
+	}
+
+	cate := ginx.QueryStr(c, "cate", "$all")
+	cates := []string{}
+	if cate != "$all" {
+		cates = strings.Split(cate, ",")
+	}
+
+	if filter == "" && query != "" {
+		ginx.Bomb(http.StatusOK, "参数错误")
+	}
+
+	// 最多获取50000个，获取太多也没啥意义
+	list, err := models.AlertCurEventGetsNew(rt.Ctx, prods, filter, query, dsIds, cates, start, end, 50000, 0)
+	ginx.Dangerous(err)
+
+	cardmap := make(map[string]*AlertCard)
+	for _, event := range list {
+		title := event.GenCardTitle(rules)
+		if _, has := cardmap[title]; has {
+			cardmap[title].Total++
+			cardmap[title].EventIds = append(cardmap[title].EventIds, event.Id)
+			if event.Severity < cardmap[title].Severity {
+				cardmap[title].Severity = event.Severity
+			}
+		} else {
+			cardmap[title] = &AlertCard{
+				Total:    1,
+				EventIds: []int64{event.Id},
+				Title:    title,
+				Severity: event.Severity,
+			}
+		}
+	}
+
+	titles := make([]string, 0, len(cardmap))
+	for title := range cardmap {
+		titles = append(titles, title)
+	}
+
+	sort.Strings(titles)
+
+	cards := make([]*AlertCard, len(titles))
+	for i := 0; i < len(titles); i++ {
+		cards[i] = cardmap[titles[i]]
+	}
+
+	sort.SliceStable(cards, func(i, j int) bool {
+		if cards[i].Severity != cards[j].Severity {
+			return cards[i].Severity < cards[j].Severity
+		}
+		return cards[i].Total > cards[j].Total
+	})
+
+	ginx.NewRender(c).Data(cards, nil)
+}
+
 type AlertCard struct {
 	Title    string  `json:"title"`
 	Total    int     `json:"total"`
@@ -241,11 +325,10 @@ func (rt *Router) alertCurEventGet(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        alert_type query   int     false  "告警类型"
-// @Param        severity query   int     false  "告警等级"
 // @Param        start query   int     false  "开始时间"
 // @Param        end query   int     false  "结束时间"
 // @Param        query query   string     false  "搜索框"
-// @Param        group query   int     false  "业务组id"
+// @Param        filter    query    string  false  "筛选框(“ip”：IP地址；“severity”：告警级别；“group_id”：业务组；“rule_name”：规则名称；“name”：资产名称；“alert_rule”：告警规则)"
 // @Param        limit query   int     false  "条数"
 // @Param        page query   int     false  "页码"
 // @Success      200  {array}  models.AlertHisEvent
@@ -257,34 +340,51 @@ func (rt *Router) alertEventsListXH(c *gin.Context) {
 	alertType := ginx.QueryInt64(c, "alert_type", -1)
 	start := ginx.QueryInt64(c, "start", -1)
 	end := ginx.QueryInt64(c, "end", -1)
-	group := ginx.QueryInt64(c, "group", -1)
+	// group := ginx.QueryInt64(c, "group", -1)
+	filter := ginx.QueryStr(c, "filter", "")
 	query := ginx.QueryStr(c, "query", "")
-	severity := ginx.QueryInt64(c, "severity", -1)
+	// severity := ginx.QueryInt64(c, "severity", -1)
 	limit := ginx.QueryInt(c, "limit", 20)
 	page := ginx.QueryInt(c, "page", 1)
 	ids := make([]int64, 0)
 	logger.Debug(alertType)
 
-	if query != "" {
+	if filter == "ip" {
 		assets := rt.assetCache.GetAll()
 		for _, asset := range assets {
-			// if fType == -1 {
-			if strings.Contains(asset.Name, query) || strings.Contains(asset.Type, query) || strings.Contains(asset.Ip, query) {
+			if strings.Contains(asset.Ip, query) {
 				ids = append(ids, asset.Id)
 			}
-			// } else if fType == 2 {
-			// 	if strings.Contains(asset.Type, query) {
-			// 		ids = append(ids, asset.Id)
-			// 	}
-			// }
+		}
+	} else if filter == "name" {
+		assets := rt.assetCache.GetAll()
+		for _, asset := range assets {
+			if strings.Contains(asset.Name, query) {
+				ids = append(ids, asset.Id)
+			}
 		}
 	}
 
-	total, err := models.AlertEventXHTotal(rt.Ctx, alertType, severity, group, start, end, ids, query)
+	// if query != "" {
+	// 	assets := rt.assetCache.GetAll()
+	// 	for _, asset := range assets {
+	// 		// if fType == -1 {
+	// 		if strings.Contains(asset.Name, query) || strings.Contains(asset.Type, query) || strings.Contains(asset.Ip, query) {
+	// 			ids = append(ids, asset.Id)
+	// 		}
+	// 		// } else if fType == 2 {
+	// 		// 	if strings.Contains(asset.Type, query) {
+	// 		// 		ids = append(ids, asset.Id)
+	// 		// 	}
+	// 		// }
+	// 	}
+	// }
+
+	total, err := models.AlertEventXHTotalNew(rt.Ctx, alertType, start, end, ids, filter, query)
 	ginx.Dangerous(err)
 
 	if alertType == 1 {
-		list, err := models.AlertEventXHGets[models.AlertCurEvent](rt.Ctx, alertType, severity, group, start, end, ids, query, limit, (page-1)*limit)
+		list, err := models.AlertEventXHGetsNew[models.AlertCurEvent](rt.Ctx, alertType, start, end, ids, filter, query, limit, (page-1)*limit)
 		ginx.Dangerous(err)
 		for index := range list {
 			list[index].DB2FE()
@@ -304,7 +404,7 @@ func (rt *Router) alertEventsListXH(c *gin.Context) {
 			"total": total,
 		}, nil)
 	} else if alertType == 2 {
-		list, err := models.AlertEventXHGets[models.AlertHisEvent](rt.Ctx, alertType, severity, group, start, end, ids, query, limit, (page-1)*limit)
+		list, err := models.AlertEventXHGetsNew[models.AlertHisEvent](rt.Ctx, alertType, start, end, ids, filter, query, limit, (page-1)*limit)
 		ginx.Dangerous(err)
 		for index := range list {
 			list[index].DB2FE()

@@ -61,33 +61,46 @@ func (rt *Router) monitoringGetByAssetId(c *gin.Context) {
 // @Tags         监控
 // @Accept       json
 // @Produce      json
+// @Param        assetId query   int     false  "资产id"
+// @Param        assetType query   int     false  "资产类型"
 // @Param        page query   int     false  "页码"
 // @Param        limit query   int     false  "条数"
 // @Param        query query   string  false  "搜索栏"
-// @Param        assetType query   string  false  "资产类型"
-// @Param        assetId query   string  false  "资产类型"
-// @Param        datasource query   int  false  "数据源类型"
+// @Param        filter    query    string  false  "筛选框(“monitoring_name”：监控名称;“asset_name”：资产名称;“status”：监控状态;“is_alarm”：是否启用告警)"
 // @Success      200  {array}  models.Monitoring
 // @Router       /api/n9e/xh/monitoring/filter [get]
 // @Security     ApiKeyAuth
 func (rt *Router) monitoringGets(c *gin.Context) {
 	page := ginx.QueryInt(c, "page", 1)
-	assetType := ginx.QueryStr(c, "assetType", "")
 	limit := ginx.QueryInt(c, "limit", 20)
-	query := ginx.QueryStr(c, "query", "")
-	datasource := ginx.QueryInt64(c, "datasource", -1)
+	assetType := ginx.QueryStr(c, "assetType", "")
+	// query := ginx.QueryStr(c, "query", "")
+	// datasource := ginx.QueryInt64(c, "datasource", -1)
 	assetId := ginx.QueryInt64(c, "assetId", -1)
 
-	m := make(map[string]interface{})
+	// m := make(map[string]interface{})
 	// if dataSource != -1 {
 	// 	m["datasource.id"] = dataSource
 	// }
 	// if assetType != ""{
 	// 	m["assets.type"] = assetType
 	// }
-	total, err := models.MonitoringMapCount(rt.Ctx, m, query, assetType, datasource, assetId)
+	// total, err := models.MonitoringMapCount(rt.Ctx, m, query, assetType, datasource, assetId)
+	// ginx.Dangerous(err)
+	// lst, err := models.MonitoringMapGets(rt.Ctx, m, query, limit, (page-1)*limit, assetType, datasource, assetId)
+	// ginx.Dangerous(err)
+
+	// ginx.NewRender(c).Data(gin.H{
+	// 	"list":  lst,
+	// 	"total": total,
+	// }, nil)
+
+	filter := ginx.QueryStr(c, "filter", "")
+	query := ginx.QueryStr(c, "query", "")
+
+	total, err := models.MonitoringMapCountNew(rt.Ctx, filter, query, assetType, assetId)
 	ginx.Dangerous(err)
-	lst, err := models.MonitoringMapGets(rt.Ctx, m, query, limit, (page-1)*limit, assetType, datasource, assetId)
+	lst, err := models.MonitoringMapGetsNew(rt.Ctx, filter, query, assetType, assetId, limit, (page-1)*limit)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{

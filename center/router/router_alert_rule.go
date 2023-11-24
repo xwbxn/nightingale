@@ -39,7 +39,7 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        busiGroupId query   int     false  "busiGroupId"
-// @Param        filter query   int     false  "告警等级（1：告警级别；2：资产类型；3：资产id）"
+// @Param        filter query   int     false  "“ip”：IP地址；“severity”：告警级别；“rule_name”：规则名称；“name”：资产名称；“alert_rule”：告警规则；“type”：资产类型)"
 // @Param        query query   string     false  "搜索框"
 // @Param        limit query   int     false  "条数"
 // @Param        page query   int     false  "页码"
@@ -57,26 +57,40 @@ func (rt *Router) alertRuleGetsXH(c *gin.Context) {
 		ginx.Bomb(http.StatusOK, "参数错误")
 	}
 
-	if query != "" {
+	// if query != "" {
+	// 	assets := rt.assetCache.GetAll()
+	// 	if filter == "" {
+	// 		for _, asset := range assets {
+	// 			if strings.Contains(asset.Name, query) || strings.Contains(asset.Type, query) || strings.Contains(asset.Ip, query) {
+	// 				ids = append(ids, asset.Id)
+	// 			}
+	// 		}
+	// 	} else if filter == "2" {
+	// 		for _, asset := range assets {
+	// 			if strings.Contains(asset.Type, query) {
+	// 				ids = append(ids, asset.Id)
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	if filter == "ip" || filter == "name" || filter == "type" {
 		assets := rt.assetCache.GetAll()
-		if filter == "" {
-			for _, asset := range assets {
-				if strings.Contains(asset.Name, query) || strings.Contains(asset.Type, query) || strings.Contains(asset.Ip, query) {
-					ids = append(ids, asset.Id)
-				}
-			}
-		} else if filter == "2" {
-			for _, asset := range assets {
-				if strings.Contains(asset.Type, query) {
-					ids = append(ids, asset.Id)
-				}
+		for _, asset := range assets {
+			if filter == "ip" && strings.Contains(asset.Ip, query) {
+				ids = append(ids, asset.Id)
+			} else if filter == "name" && strings.Contains(asset.Name, query) {
+				ids = append(ids, asset.Id)
+			} else if filter == "type" && strings.Contains(asset.Type, query) {
+				ids = append(ids, asset.Id)
 			}
 		}
 	}
-	total, err := models.AlertRuleGetsTotal(rt.Ctx, busiGroupId, filter, query, ids)
+
+	total, err := models.AlertRuleGetsTotalNew(rt.Ctx, busiGroupId, filter, query, ids)
 	ginx.Dangerous(err)
 
-	ars, err := models.AlertRuleGetsFilter(rt.Ctx, busiGroupId, filter, query, ids, limit, (page - 1*limit))
+	ars, err := models.AlertRuleGetsFilterNew(rt.Ctx, busiGroupId, filter, query, ids, limit, (page - 1*limit))
 	ginx.Dangerous(err)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)

@@ -454,7 +454,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/xh/assets", rt.auth(), rt.user(), rt.assetPutXH)
 		pages.PUT("/xh/assets/batch-update", rt.auth(), rt.user(), rt.assetUpdateXH)
 		pages.POST("/xh/assets/batch-del", rt.auth(), rt.user(), rt.assetDelXH)
-		pages.POST("/xh/assets/filter", rt.auth(), rt.user(), rt.assetGetFilter)
+		pages.GET("/xh/assets/filter", rt.auth(), rt.user(), rt.assetGetFilter)
 		pages.GET("/xh/assets/xml", rt.auth(), rt.user(), rt.xmlceshi)
 		pages.GET("/xh/assets/id", rt.auth(), rt.user(), rt.assetGetById)
 		pages.POST("/xh/asset/import-xls", rt.auth(), rt.user(), rt.importAssetXH)
@@ -775,6 +775,10 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		//接口访问设置
 		pages.GET("/xh/assets/out", rt.auth(), rt.thirdUser(), rt.assetGetAll)
+
+		//系统日志
+		pages.GET("/xh/sys-log/filter", rt.auth(), rt.user(), rt.systemLogGets)
+		pages.POST("/xh/sys-log/export-xls", rt.auth(), rt.admin(), rt.exportSystemLogXH)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

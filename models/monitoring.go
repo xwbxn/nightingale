@@ -11,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/prometheus/prometheus/model/labels"
+	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
 
@@ -137,6 +138,78 @@ func MonitoringMapGets(ctx *ctx.Context, where map[string]interface{}, query str
 
 	err = session.Debug().Model(&Monitoring{}).
 		Select("monitoring.*").Where(str.String(), vals...).Find(&lst).Error
+
+	return lst, err
+}
+
+// 根据条件统计个数(new)
+func MonitoringMapCountNew(ctx *ctx.Context, filter, query, assetType string, assetId int64) (num int64, err error) {
+
+	session := DB(ctx)
+	if filter == "monitoring_name" {
+		session = session.Where("MONITORING_NAME like ? ", "%"+query+"%")
+	} else if filter == "asset_name" {
+		ids, err := AssetIdByName(ctx, "%"+query+"%")
+		if err != nil {
+			return 0, err
+		}
+		session = session.Where("ASSET_ID in? ", ids)
+	} else if filter == "status" {
+		session = session.Where("STATUS like ? ", "%"+query+"%")
+	} else if filter == "is_alarm" {
+		session = session.Where("IS_ALARM like? ", "%"+query+"%")
+	}
+	if assetId != -1 {
+		session = session.Where("ASSET_ID = ? ", assetId)
+	}
+	if assetType != "" {
+		logger.Debug(assetType)
+		ids, err := AssetIdByType(ctx, "%"+assetType+"%")
+		if err != nil {
+			return 0, err
+		}
+		session = session.Where("ASSET_ID in? ", ids)
+	}
+
+	err = session.Debug().Model(&Monitoring{}).Count(&num).Error
+
+	return num, err
+}
+
+// 条件查询(new)
+func MonitoringMapGetsNew(ctx *ctx.Context, filter, query, assetType string, assetId int64, limit, offset int) (lst []Monitoring, err error) {
+	session := DB(ctx)
+
+	// 分页
+	if limit > -1 {
+		session = session.Limit(limit).Offset(offset).Order("id")
+	}
+
+	if filter == "monitoring_name" {
+		session = session.Where("MONITORING_NAME like ? ", "%"+query+"%")
+	} else if filter == "asset_name" {
+		ids, err := AssetIdByName(ctx, "%"+query+"%")
+		if err != nil {
+			return lst, err
+		}
+		session = session.Where("ASSET_ID in? ", ids)
+	} else if filter == "status" {
+		session = session.Where("STATUS like ? ", "%"+query+"%")
+	} else if filter == "is_alarm" {
+		session = session.Where("IS_ALARM like? ", "%"+query+"%")
+	}
+	if assetId != -1 {
+		session = session.Where("ASSET_ID = ? ", assetId)
+	}
+	if assetType != "" {
+		ids, err := AssetIdByType(ctx, "%"+assetType+"%")
+		if err != nil {
+			return lst, err
+		}
+		session = session.Where("ASSET_ID in? ", ids)
+	}
+
+	err = session.Debug().Model(&Monitoring{}).Find(&lst).Error
 
 	return lst, err
 }

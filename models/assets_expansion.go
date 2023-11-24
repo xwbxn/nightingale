@@ -80,6 +80,14 @@ func AssetsExpansionGetsMap(ctx *ctx.Context, where map[string]interface{}) ([]A
 	return lst, err
 }
 
+// 根据map查询AssetIds
+func AssetsExpansionGetAssetIdMap(ctx *ctx.Context, where map[string]interface{}) ([]int64, error) {
+	var lst []int64
+	err := DB(ctx).Where(where).Distinct().Pluck("assetI_id", &lst).Error
+
+	return lst, err
+}
+
 // 增加资产扩展-西航
 func (a *AssetsExpansion) Add(ctx *ctx.Context) error {
 	// 这里写AssetsExpansion的业务逻辑，通过error返回错误

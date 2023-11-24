@@ -81,7 +81,8 @@ type BaseProp struct {
 }
 
 type ExtraPropPart struct {
-	Label string `json:"label"  yaml:"label"`
+	Label string `json:"label" yaml:"label"`
+	Sort  int64  `json:"sort" yaml:"sort"`
 	Props []*struct {
 		Name       string `json:"name" yaml:"name"`
 		Label      string `json:"label" yaml:"label"`
@@ -611,10 +612,86 @@ func AssetsGetsFilter(ctx *ctx.Context, aType string, query, queryType string, l
 	return lst, err
 }
 
+// 根据filter统计数量(new)
+func AssetsCountFilterNew(ctx *ctx.Context, filter, query string) (num int64, err error) {
+	session := DB(ctx)
+
+	if filter == "ip" {
+		session = session.Where("ip like ?", "%"+query+"%")
+	} else if filter == "name" {
+		session = session.Where("name like?", "%"+query+"%")
+	} else if filter == "status" {
+		session = session.Where("status like ?", "%"+query+"%")
+	} else if filter == "group_id" {
+		session = session.Where("group_id like ?", "%"+query+"%")
+	} else if filter == "position" {
+		session = session.Where("position like ?", "%"+query+"%")
+	} else if filter == "manufacturers" {
+		session = session.Where("manufacturers like?", "%"+query+"%")
+	} else if filter == "type" {
+		session = session.Where("type like?", "%"+query+"%")
+	} else if filter == "os" {
+		ids, err := AssetsExpansionGetAssetIdMap(ctx, map[string]interface{}{"config_category": "os", "value": "%" + query + "%"})
+		if err != nil {
+			return 0, err
+		}
+		session = session.Where("id in ?", ids)
+	}
+	err = session.Debug().Model(&Asset{}).Count(&num).Error
+	return num, err
+}
+
+// 根据filter查询(new)
+func AssetsGetsFilterNew(ctx *ctx.Context, filter, query string, limit, offset int) (lst []Asset, err error) {
+	session := DB(ctx)
+	// 分页
+	if limit > -1 {
+		session = session.Limit(limit).Offset(offset).Order("id DESC")
+	}
+	if filter == "ip" {
+		session = session.Where("ip like ?", "%"+query+"%")
+	} else if filter == "name" {
+		session = session.Where("name like?", "%"+query+"%")
+	} else if filter == "status" {
+		session = session.Where("status like ?", "%"+query+"%")
+	} else if filter == "group_id" {
+		session = session.Where("group_id like ?", "%"+query+"%")
+	} else if filter == "position" {
+		session = session.Where("position like ?", "%"+query+"%")
+	} else if filter == "manufacturers" {
+		session = session.Where("manufacturers like?", "%"+query+"%")
+	} else if filter == "type" {
+		session = session.Where("type like?", "%"+query+"%")
+	} else if filter == "os" {
+		ids, err := AssetsExpansionGetAssetIdMap(ctx, map[string]interface{}{"config_category": "os", "value": "%" + query + "%"})
+		if err != nil {
+			return lst, err
+		}
+		session = session.Where("id in ?", ids)
+	}
+
+	err = session.Debug().Model(&Asset{}).Find(&lst).Error
+	return lst, err
+}
+
 // 根据资产名称、类型、IP地址模糊匹配
 func AssetIdByNameTypeIp(ctx *ctx.Context, query string) (ids []int64, err error) {
 	query = "%" + query + "%"
 	err = DB(ctx).Model(&Asset{}).Distinct().Where("name like ? or type like ? or ip like ?", query, query, query).Pluck("id", &ids).Error
+	return ids, err
+}
+
+// 根据资产名称模糊匹配
+func AssetIdByName(ctx *ctx.Context, query string) (ids []int64, err error) {
+	query = "%" + query + "%"
+	err = DB(ctx).Model(&Asset{}).Distinct().Where("name like ?", query).Pluck("id", &ids).Error
+	return ids, err
+}
+
+// 根据资产类型模糊匹配
+func AssetIdByType(ctx *ctx.Context, query string) (ids []int64, err error) {
+	query = "%" + query + "%"
+	err = DB(ctx).Model(&Asset{}).Distinct().Where("type like ?", query).Pluck("id", &ids).Error
 	return ids, err
 }
 

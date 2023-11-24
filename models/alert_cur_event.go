@@ -412,6 +412,42 @@ func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int6
 	return lst, err
 }
 
+func AlertCurEventGetsNew(ctx *ctx.Context, prods []string, filter, query string, dsIds []int64, cates []string, start, end int64, limit, offset int) ([]AlertCurEvent, error) {
+	session := DB(ctx)
+	if len(prods) != 0 {
+		session = session.Where("rule_prod in ?", prods)
+	}
+
+	if start != 0 {
+		session = session.Where("trigger_time >= ?", start)
+	}
+	if end != 0 {
+		session = session.Where("trigger_time <= ?", end)
+	}
+	if filter == "severity" {
+		session = session.Where("severity like ?", "%"+query+"%")
+	} else if filter == "group_id" {
+		session = session.Where("group_id like ?", "%"+query+"%")
+	}
+	if len(dsIds) > 0 {
+		session = session.Where("datasource_id in ?", dsIds)
+	}
+	if len(cates) > 0 {
+		session = session.Where("cate in ?", cates)
+	}
+
+	var lst []AlertCurEvent
+	err := session.Order("id desc").Limit(limit).Offset(offset).Find(&lst).Error
+
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+		}
+	}
+
+	return lst, err
+}
+
 func AlertCurEventDel(ctx *ctx.Context, ids []int64) error {
 	if len(ids) == 0 {
 		return nil
@@ -742,6 +778,100 @@ func AlertEventXHTotal(ctx *ctx.Context, alertType, severity, group, start, end 
 	}
 
 	return num, err
+}
+
+//西航（new）
+func AlertEventXHTotalNew(ctx *ctx.Context, alertType, start, end int64, ids []int64, filter, query string) (int64, error) {
+	session := DB(ctx)
+	if start != -1 {
+		session = session.Where("trigger_time >= ?", start)
+	}
+	if end != -1 {
+		session = session.Where("trigger_time <= ?", end)
+	}
+	if filter == "severity" {
+		session = session.Where("severity like ?", "%"+filter+"%")
+	} else if filter == "rule_name" {
+		ruleIds, err := AlertRuleIdByName(ctx, "%"+filter+"%")
+		if err != nil {
+			return 0, err
+		}
+		session = session.Where("rule_id in?", ruleIds)
+	} else if filter == "group_id" {
+		session = session.Where("group_id like ?", "%"+filter+"%")
+	} else if filter == "alert_rule" {
+		ruleIds, err := AlertRuleIdByAlertRule(ctx, "%"+filter+"%")
+		if err != nil {
+			return 0, err
+		}
+		session = session.Where("rule_id in?", ruleIds)
+	} else if filter == "ip" || filter == "name" {
+		session = session.Where("asset_id in?", ids)
+	}
+	// if query != "" {
+	// 	query = "%" + query + "%"
+	// 	// if fType == -1 {
+	// 	session = session.Where("asset_id in ? or id like ? or rule_name like ? or severity like ?", ids, query, query, query)
+	// 	// } else if fType == 1 {
+	// 	// 	session = session.Where("severity like ?", query)
+	// 	// } else if fType == 2 {
+	// 	// 	session = session.Where("asset_id in ?", ids)
+	// 	// }
+	// }
+	var num int64
+	var err error
+	if alertType == 1 {
+		err = session.Debug().Model(&AlertCurEvent{}).Count(&num).Error
+	} else if alertType == 2 {
+		err = session.Debug().Model(&AlertHisEvent{}).Count(&num).Error
+	}
+
+	return num, err
+}
+
+func AlertEventXHGetsNew[T any](ctx *ctx.Context, alertType, start, end int64, ids []int64, filter, query string, limit, offset int) (t []T, err error) {
+	session := DB(ctx)
+	// 分页
+	if limit > -1 {
+		session = session.Limit(limit).Offset(offset).Order("id DESC")
+	}
+	if start != -1 {
+		session = session.Where("trigger_time >= ?", start)
+	}
+	if end != -1 {
+		session = session.Where("trigger_time <= ?", end)
+	}
+	if filter == "severity" {
+		session = session.Where("severity like ?", "%"+filter+"%")
+	} else if filter == "rule_name" {
+		ruleIds, err := AlertRuleIdByName(ctx, "%"+filter+"%")
+		if err != nil {
+			return t, err
+		}
+		session = session.Where("rule_id in?", ruleIds)
+	} else if filter == "group_id" {
+		session = session.Where("group_id like ?", "%"+filter+"%")
+	} else if filter == "alert_rule" {
+		ruleIds, err := AlertRuleIdByAlertRule(ctx, "%"+filter+"%")
+		if err != nil {
+			return t, err
+		}
+		session = session.Where("rule_id in?", ruleIds)
+	} else if filter == "ip" || filter == "name" {
+		session = session.Where("asset_id in?", ids)
+	}
+	// var lst []T
+	// var err error
+	if alertType == 1 {
+		err = session.Debug().Model(&AlertCurEvent{}).Find(&t).Error
+	} else if alertType == 2 {
+		err = session.Debug().Where("is_recovered != 0").Model(&AlertHisEvent{}).Find(&t).Error
+	}
+	// for index := range lst {
+	// 	lst[index].DB2FE()
+	// }
+	return t, err
+
 }
 
 func AlertEventXHGets[T any](ctx *ctx.Context, alertType, severity, group, start, end int64, ids []int64, query string, limit, offset int) ([]T, error) {

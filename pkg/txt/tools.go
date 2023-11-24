@@ -45,7 +45,7 @@ func ExportTxt(c *gin.Context, txts []string, fileName string) {
 	c.Header("Content-Type", "text/plain")
 	//设置文件名称
 	rand.Seed(time.Now().UnixNano())
-	name := "fileName" + strconv.FormatInt(rand.Int63n(time.Now().Unix()), 10)
+	name := fileName + strconv.FormatInt(rand.Int63n(time.Now().Unix()), 10)
 	c.Header("Content-Disposition", "attachment; filename="+url.QueryEscape(name))
 	c.File(file.Name())
 	ginx.NewRender(c)

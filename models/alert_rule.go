@@ -1046,3 +1046,63 @@ func AlertRuleGetsTotal(ctx *ctx.Context, groupId int64, filter, query string, i
 
 	return num, err
 }
+
+func AlertRuleGetsFilterNew(ctx *ctx.Context, groupId int64, filter, query string, ids []int64, limit, offset int) ([]AlertRule, error) {
+	session := DB(ctx).Where("group_id=?", groupId)
+	if limit > -1 {
+		session = session.Limit(limit).Offset(offset).Order("id DESC")
+	}
+	query = "%" + query + "%"
+	if filter == "severity" {
+		session = session.Where("severity like ?", query)
+	} else if filter == "ip" || filter == "name" || filter == "type" {
+		session = session.Where("asset_id in ?", ids)
+	} else if filter == "rule_name" {
+		session = session.Where("name like ?", query)
+	} else if filter == "alert_rule" {
+		session = session.Where("rule_config_cn like ?", query)
+	}
+
+	var lst []AlertRule
+	err := session.Model(&AlertRule{}).Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+		}
+	}
+
+	return lst, err
+}
+
+func AlertRuleGetsTotalNew(ctx *ctx.Context, groupId int64, filter, query string, ids []int64) (int64, error) {
+	session := DB(ctx).Where("group_id=?", groupId)
+	query = "%" + query + "%"
+	if filter == "severity" {
+		session = session.Where("severity like ?", query)
+	} else if filter == "ip" || filter == "name" || filter == "type" {
+		session = session.Where("asset_id in ?", ids)
+	} else if filter == "rule_name" {
+		session = session.Where("name like ?", query)
+	} else if filter == "alert_rule" {
+		session = session.Where("rule_config_cn like ?", query)
+	}
+
+	var num int64
+	err := session.Model(&AlertRule{}).Count(&num).Error
+
+	return num, err
+}
+
+// 根据规则名称模糊匹配
+func AlertRuleIdByName(ctx *ctx.Context, query string) (ids []int64, err error) {
+	query = "%" + query + "%"
+	err = DB(ctx).Model(&AlertRule{}).Distinct().Where("name like ?", query).Pluck("id", &ids).Error
+	return ids, err
+}
+
+// 根据告警规则模糊匹配
+func AlertRuleIdByAlertRule(ctx *ctx.Context, query string) (ids []int64, err error) {
+	query = "%" + query + "%"
+	err = DB(ctx).Model(&AlertRule{}).Distinct().Where("rule_config_cn like ?", query).Pluck("id", &ids).Error
+	return ids, err
+}
