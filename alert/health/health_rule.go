@@ -3,12 +3,15 @@ package health
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
+	pm "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
+	"github.com/prometheus/prometheus/model/labels"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
@@ -62,7 +65,6 @@ func (hrc *HealthRuleContext) Start() {
 			case <-hrc.quit:
 				return
 			default:
-				hrc.TypeHealthCheck()
 				hrc.AssetMetricsCheck()
 				time.Sleep(time.Duration(interval) * time.Second)
 			}
@@ -74,62 +76,31 @@ func (hrc *HealthRuleContext) AssetMetricsCheck() {
 	assetsOfType := hrc.assetCache.GetByType(hrc.assetType.Name)
 	for _, asset := range assetsOfType {
 		metrics := []*models.Metrics{}
-		if asset.OptinalMetricsJson != nil {
-			metrics = append(metrics, asset.OptinalMetricsJson...)
-		}
 		if hrc.assetType.Metrics != nil {
 			metrics = append(metrics, hrc.assetType.Metrics...)
 		}
 		if len(metrics) == 0 {
-			logger.Errorf("health_check: asset %d metrics is nil or empty", asset.Id)
+			logger.Warningf("health: asset %d metrics is nil or empty", asset.Id)
 			continue
 		}
 
 		for _, m := range metrics {
+			pm.InjectLabel(m.Metrics, "asset_id", strconv.Itoa(int(asset.Id)), labels.MatchEqual)
 			value, warnings, err := hrc.promClients.GetCli(hrc.datasourceId).Query(context.Background(), m.Metrics, time.Now())
 			if err != nil {
-				logger.Errorf("metrics_check:%s promql:%s, error:%v", hrc.Key(), m.Metrics, err)
+				logger.Errorf("health:%s promql:%s, error:%v", hrc.Key(), m.Metrics, err)
 				return
 			}
 
 			if len(warnings) > 0 {
-				logger.Errorf("metrics_check:%s promql:%s, warnings:%v", hrc.Key(), m.Metrics, warnings)
+				logger.Errorf("health:%s promql:%s, warnings:%v", hrc.Key(), m.Metrics, warnings)
 				return
 			}
-			ConvertMetricTimeSeries(value, m, assetsOfType)
+			ts := ConvertMetricTimeSeries(value, m, asset)
+			for _, series := range ts {
+				hrc.writers.PushSample("health_check", series)
+			}
 		}
-	}
-}
-
-func (hrc *HealthRuleContext) TypeHealthCheck() {
-	if hrc.assetType.Metrics == nil || len(hrc.assetType.Metrics) == 0 {
-		logger.Errorf("health_check:%s metrics is nil or empty", hrc.Key())
-		return
-	}
-
-	if hrc.promClients.IsNil(hrc.datasourceId) {
-		logger.Errorf("health_check:%s reader client is nil", hrc.Key())
-		return
-	}
-
-	// 健康状态使用类型指标的第一个
-	metric := hrc.assetType.Metrics[0]
-	promql := metric.Metrics
-	value, warnings, err := hrc.promClients.GetCli(hrc.datasourceId).Query(context.Background(), promql, time.Now())
-	if err != nil {
-		logger.Errorf("health_check:%s promql:%s, error:%v", hrc.Key(), promql, err)
-		return
-	}
-
-	if len(warnings) > 0 {
-		logger.Errorf("health_check:%s promql:%s, warnings:%v", hrc.Key(), promql, warnings)
-		return
-	}
-
-	assetsOfType := hrc.assetCache.GetByType(hrc.assetType.Name)
-	ts := ConvertHealthCheckSeries(value, metric, assetsOfType)
-	for _, series := range ts {
-		hrc.writers.PushSample("health_check", series)
 	}
 }
 

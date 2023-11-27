@@ -2,7 +2,6 @@ package health
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
@@ -15,47 +14,29 @@ const (
 	LabelName     = "__name__"
 	AssetId       = "asset_id"
 	AssetInstance = "instance"
-	HealthMetric  = "asset_health"
+	HealthMetric  = "asset_up"
 )
 
-func ConvertHealthCheckSeries(value model.Value, mts *models.Metrics, assets []*models.Asset) (lst []*prompb.TimeSeries) {
-	result, ok := value.(model.Vector)
-	if !ok {
-		return
-	}
-
-	for _, asset := range assets {
-		health := 0
-		for _, resultValue := range result {
-			if strings.Contains(fmt.Sprintf("%d", asset.Id), string(resultValue.Metric[AssetId])) {
-				health = 1
-				break
-			}
-		}
-		ts := convertHealthSeries(asset, health)
-		lst = append(lst, ts)
-	}
-	return
-}
-
-func ConvertMetricTimeSeries(value model.Value, mts *models.Metrics, assets []*models.Asset) {
+func ConvertMetricTimeSeries(value model.Value, mts *models.Metrics, asset *models.Asset) (lst []*prompb.TimeSeries) {
 	// 用于健康检查使用的是query接口，返回一定是Vector类型
 	result, ok := value.(model.Vector)
 	if !ok {
 		return
 	}
 
-	for _, asset := range assets {
-		for _, resultValue := range result {
-			if strings.Contains(fmt.Sprintf("%d", asset.Id), string(resultValue.Metric[AssetId])) {
-				asset.Metrics[mts.Name] = map[string]string{
-					"label": string(resultValue.Metric[LabelName]),
-					"value": fmt.Sprintf("%f", resultValue.Value),
-					"name":  mts.Name,
-				}
-			}
+	health := 0
+	for _, resultValue := range result {
+		health = 1
+		asset.Metrics[mts.Name] = map[string]string{
+			"label": string(resultValue.Metric[LabelName]),
+			"value": fmt.Sprintf("%f", resultValue.Value),
+			"name":  mts.Name,
 		}
 	}
+	ts := convertHealthSeries(asset, health)
+	lst = append(lst, ts)
+
+	return
 }
 
 func convertHealthSeries(asset *models.Asset, health int) (ts *prompb.TimeSeries) {
