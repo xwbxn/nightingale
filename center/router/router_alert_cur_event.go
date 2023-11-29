@@ -113,25 +113,30 @@ func (rt *Router) alertCurEventsCard(c *gin.Context) {
 	ginx.NewRender(c).Data(cards, nil)
 }
 
-// @Summary      告警过滤器
-// @Description  告警过滤器
+// @Summary      告警过滤器卡片
+// @Description  告警过滤器卡片
 // @Tags         历史告警和当前告警-西航
 // @Accept       json
 // @Produce      json
+// @Param        group_id    query    int64  false  "业务组"
 // @Param        filter    query    string  false  "筛选框(“severity”：告警级别；“group_id”：业务组)"
 // @Param        query    query    string  false  "搜索框"
 // @Param        start    query    int64  false  "开始时间"
 // @Param        end    query    int64  false  "结束时间"
 // @Success      200  {array}  AlertCard
-// @Router       /api/n9e/alert-events/list/xh [get]
+// @Router       /api/n9e/alert-cur-events/card/xh [get]
 // @Security     ApiKeyAuth
 func (rt *Router) alertCurEventsCardXH(c *gin.Context) {
+	group := ginx.QueryInt64(c, "group_id", -1)
 	filter := ginx.QueryStr(c, "filter", "")
 	query := ginx.QueryStr(c, "query", "")
 	start := ginx.QueryInt64(c, "start", -1)
 	end := ginx.QueryInt64(c, "end", -1)
 	dsIds := queryDatasourceIds(c)
-	rules := parseAggrRules(c)
+	// rules := parseAggrRules(c)
+	if group == -1 {
+		ginx.Bomb(http.StatusOK, "参数错误")
+	}
 
 	prod := ginx.QueryStr(c, "prods", "")
 	if prod == "" {
@@ -153,38 +158,28 @@ func (rt *Router) alertCurEventsCardXH(c *gin.Context) {
 	}
 
 	// 最多获取50000个，获取太多也没啥意义
-	list, err := models.AlertCurEventGetsNew(rt.Ctx, prods, filter, query, dsIds, cates, start, end, 50000, 0)
+	list, err := models.AlertCurEventGetsNew(rt.Ctx, prods, filter, query, dsIds, cates, start, end, group, 50000, 0)
 	ginx.Dangerous(err)
 
-	cardmap := make(map[string]*AlertCard)
+	cardmap := make(map[int64]AlertCard)
 	for _, event := range list {
-		title := event.GenCardTitle(rules)
-		if _, has := cardmap[title]; has {
-			cardmap[title].Total++
-			cardmap[title].EventIds = append(cardmap[title].EventIds, event.Id)
-			if event.Severity < cardmap[title].Severity {
-				cardmap[title].Severity = event.Severity
-			}
+		alertCard, alertCardOk := cardmap[int64(event.Severity)]
+		if alertCardOk {
+			alertCard.Total++
+			alertCard.EventIds = append(alertCard.EventIds, event.Id)
+			cardmap[int64(event.Severity)] = alertCard
 		} else {
-			cardmap[title] = &AlertCard{
-				Total:    1,
-				EventIds: []int64{event.Id},
-				Title:    title,
-				Severity: event.Severity,
-			}
+			var alertCardNew AlertCard
+			alertCardNew.Total = 1
+			alertCardNew.EventIds = []int64{event.Id}
+			alertCardNew.Severity = event.Severity
+			cardmap[int64(event.Severity)] = alertCardNew
 		}
+
 	}
-
-	titles := make([]string, 0, len(cardmap))
-	for title := range cardmap {
-		titles = append(titles, title)
-	}
-
-	sort.Strings(titles)
-
-	cards := make([]*AlertCard, len(titles))
-	for i := 0; i < len(titles); i++ {
-		cards[i] = cardmap[titles[i]]
+	cards := make([]AlertCard, 0)
+	for _, val := range cardmap {
+		cards = append(cards, val)
 	}
 
 	sort.SliceStable(cards, func(i, j int) bool {

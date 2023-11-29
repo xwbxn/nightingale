@@ -342,6 +342,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/alert-cur-events/list", rt.auth(), rt.alertCurEventsList)
 		pages.GET("/alert-events/list/xh", rt.auth(), rt.alertEventsListXH)
 		pages.GET("/alert-cur-events/card", rt.auth(), rt.alertCurEventsCard)
+		pages.GET("/alert-cur-events/card/xh", rt.auth(), rt.alertCurEventsCardXH)
 		pages.POST("/alert-cur-events/card/details", rt.auth(), rt.alertCurEventsCardDetails)
 		pages.GET("/alert-his-events/list", rt.auth(), rt.alertHisEventsList)
 		// pages.GET("/alert-his-events/list/xh", rt.auth(), rt.alertHisEventsListXH)
@@ -779,6 +780,13 @@ func (rt *Router) Config(r *gin.Engine) {
 		//系统日志
 		pages.GET("/xh/sys-log/filter", rt.auth(), rt.user(), rt.systemLogGets)
 		pages.POST("/xh/sys-log/export-xls", rt.auth(), rt.admin(), rt.exportSystemLogXH)
+
+		//许可管理
+		pages.POST("/xh/license/add-file", rt.auth(), rt.admin(), rt.licenseAddXH)
+		pages.GET("/xh/license/list", rt.auth(), rt.admin(), rt.licenseGetsXH)
+		pages.PUT("/xh/license/update", rt.auth(), rt.admin(), rt.licenseUpdateXH)
+		pages.POST("/xh/license-config", rt.auth(), rt.admin(), rt.licenseConfigAdd)
+		pages.PUT("/xh/license-config", rt.auth(), rt.admin(), rt.licenseConfigPut)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

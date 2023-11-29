@@ -48,6 +48,7 @@ type AlertRule struct {
 	RuleConfig            string            `json:"-" gorm:"rule_config"`                 // rule config
 	RuleConfigCn          string            `json:"rule_config_cn" gorm:"rule_config_cn"` // rule config
 	RuleConfigJson        interface{}       `json:"rule_config" gorm:"-"`                 // rule config for fe
+	RuleConfigFe          string            `json:"rule_config_fe" gorm:"rule_config_fe"` // rule config for fe
 	PromEvalInterval      int               `json:"prom_eval_interval"`                   // unit:s
 	EnableStime           string            `json:"-"`                                    // split by space: "00:00 10:00 12:00"
 	EnableStimeJSON       string            `json:"enable_stime" gorm:"-"`                // for fe
@@ -267,7 +268,7 @@ func (ar *AlertRule) Add(ctx *ctx.Context) error {
 	}
 
 	if exists {
-		return errors.New("AlertRule already exists")
+		return errors.New("在同一资产下，告警名称不能重复")
 	}
 
 	now := time.Now().Unix()
@@ -551,6 +552,11 @@ func (ar *AlertRule) FE2DB(ctx *ctx.Context) error {
 		}
 	} else {
 		logger.Debug(ar.RuleConfigJson)
+		// configOld, err := json.Marshal(ar.RuleConfigJson)
+		// if err != nil {
+		// 	return fmt.Errorf("格式化数据错误:%v", err)
+		// }
+		// ar.RuleConfigJsonFe = string(configOld)
 		query := ar.RuleConfigJson.(map[string]interface{})
 		// mon, monOk := query["queries"]["monitor_id"]
 
@@ -1064,7 +1070,7 @@ func AlertRuleGetsFilterNew(ctx *ctx.Context, groupId int64, filter, query strin
 	}
 
 	var lst []AlertRule
-	err := session.Model(&AlertRule{}).Find(&lst).Error
+	err := session.Debug().Model(&AlertRule{}).Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()
@@ -1088,7 +1094,7 @@ func AlertRuleGetsTotalNew(ctx *ctx.Context, groupId int64, filter, query string
 	}
 
 	var num int64
-	err := session.Model(&AlertRule{}).Count(&num).Error
+	err := session.Debug().Model(&AlertRule{}).Count(&num).Error
 
 	return num, err
 }

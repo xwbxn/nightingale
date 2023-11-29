@@ -613,8 +613,12 @@ func AssetsGetsFilter(ctx *ctx.Context, aType string, query, queryType string, l
 }
 
 // 根据filter统计数量(new)
-func AssetsCountFilterNew(ctx *ctx.Context, filter, query string) (num int64, err error) {
+func AssetsCountFilterNew(ctx *ctx.Context, filter, query, aType string) (num int64, err error) {
 	session := DB(ctx)
+
+	if aType != "" {
+		session = session.Where("type like ?", "%"+aType+"%")
+	}
 
 	if filter == "ip" {
 		session = session.Where("ip like ?", "%"+query+"%")
@@ -628,8 +632,8 @@ func AssetsCountFilterNew(ctx *ctx.Context, filter, query string) (num int64, er
 		session = session.Where("position like ?", "%"+query+"%")
 	} else if filter == "manufacturers" {
 		session = session.Where("manufacturers like?", "%"+query+"%")
-	} else if filter == "type" {
-		session = session.Where("type like?", "%"+query+"%")
+		// } else if filter == "type" {
+		// 	session = session.Where("type like?", "%"+query+"%")
 	} else if filter == "os" {
 		ids, err := AssetsExpansionGetAssetIdMap(ctx, map[string]interface{}{"config_category": "os", "value": "%" + query + "%"})
 		if err != nil {
@@ -642,12 +646,17 @@ func AssetsCountFilterNew(ctx *ctx.Context, filter, query string) (num int64, er
 }
 
 // 根据filter查询(new)
-func AssetsGetsFilterNew(ctx *ctx.Context, filter, query string, limit, offset int) (lst []Asset, err error) {
+func AssetsGetsFilterNew(ctx *ctx.Context, filter, query, aType string, limit, offset int) (lst []Asset, err error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
 		session = session.Limit(limit).Offset(offset).Order("id DESC")
 	}
+
+	if aType != "" {
+		session = session.Where("type like ?", "%"+aType+"%")
+	}
+
 	if filter == "ip" {
 		session = session.Where("ip like ?", "%"+query+"%")
 	} else if filter == "name" {
@@ -660,8 +669,8 @@ func AssetsGetsFilterNew(ctx *ctx.Context, filter, query string, limit, offset i
 		session = session.Where("position like ?", "%"+query+"%")
 	} else if filter == "manufacturers" {
 		session = session.Where("manufacturers like?", "%"+query+"%")
-	} else if filter == "type" {
-		session = session.Where("type like?", "%"+query+"%")
+		// } else if filter == "type" {
+		// 	session = session.Where("type like?", "%"+query+"%")
 	} else if filter == "os" {
 		ids, err := AssetsExpansionGetAssetIdMap(ctx, map[string]interface{}{"config_category": "os", "value": "%" + query + "%"})
 		if err != nil {

@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/i18n"
+	"github.com/toolkits/pkg/logger"
 )
 
 // Return all, front-end search and paging
@@ -38,8 +39,8 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 // @Tags         告警规则
 // @Accept       json
 // @Produce      json
-// @Param        busiGroupId query   int     false  "busiGroupId"
-// @Param        filter query   int     false  "“ip”：IP地址；“severity”：告警级别；“rule_name”：规则名称；“name”：资产名称；“alert_rule”：告警规则；“type”：资产类型)"
+// @Param        id path   int     false  "busiGroupId"
+// @Param        filter query   string     false  "“ip”：IP地址；“severity”：告警级别；“rule_name”：规则名称；“name”：资产名称；“alert_rule”：告警规则；“type”：资产类型)"
 // @Param        query query   string     false  "搜索框"
 // @Param        limit query   int     false  "条数"
 // @Param        page query   int     false  "页码"
@@ -147,13 +148,13 @@ func (rt *Router) alertRuleAddByFE(c *gin.Context) {
 
 	count := len(lst)
 	if count == 0 {
-		ginx.Bomb(http.StatusBadRequest, "input json is empty")
+		ginx.Bomb(http.StatusBadRequest, "参数为空")
 	}
 
 	bgid := ginx.UrlParamInt64(c, "id")
-	reterr := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
+	reterr, err := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
 
-	ginx.NewRender(c).Data(reterr, nil)
+	ginx.NewRender(c).Data(reterr, err)
 }
 
 func (rt *Router) alertRuleAddByImport(c *gin.Context) {
@@ -164,13 +165,13 @@ func (rt *Router) alertRuleAddByImport(c *gin.Context) {
 
 	count := len(lst)
 	if count == 0 {
-		ginx.Bomb(http.StatusBadRequest, "input json is empty")
+		ginx.Bomb(http.StatusBadRequest, "参数为空")
 	}
 
 	bgid := ginx.UrlParamInt64(c, "id")
-	reterr := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
+	reterr, err := rt.alertRuleAdd(lst, username, bgid, c.GetHeader("X-Language"))
 
-	ginx.NewRender(c).Data(reterr, nil)
+	ginx.NewRender(c).Data(reterr, err)
 }
 
 func (rt *Router) alertRuleAddByService(c *gin.Context) {
@@ -179,16 +180,17 @@ func (rt *Router) alertRuleAddByService(c *gin.Context) {
 
 	count := len(lst)
 	if count == 0 {
-		ginx.Bomb(http.StatusBadRequest, "input json is empty")
+		ginx.Bomb(http.StatusBadRequest, "参数为空")
 	}
-	reterr := rt.alertRuleAddForService(lst, "")
-	ginx.NewRender(c).Data(reterr, nil)
+	reterr, err := rt.alertRuleAddForService(lst, "")
+	ginx.NewRender(c).Data(reterr, err)
 }
 
-func (rt *Router) alertRuleAddForService(lst []models.AlertRule, username string) map[string]string {
+func (rt *Router) alertRuleAddForService(lst []models.AlertRule, username string) (map[string]string, error) {
 	count := len(lst)
 	// alert rule name -> error string
 	reterr := make(map[string]string)
+	var err error
 	for i := 0; i < count; i++ {
 		lst[i].Id = 0
 		if username != "" {
@@ -196,24 +198,22 @@ func (rt *Router) alertRuleAddForService(lst []models.AlertRule, username string
 			lst[i].UpdateBy = username
 		}
 
-		if err := lst[i].FE2DB(rt.Ctx); err != nil {
-			reterr[lst[i].Name] = err.Error()
+		if err = lst[i].FE2DB(rt.Ctx); err != nil {
 			continue
 		}
 
-		if err := lst[i].Add(rt.Ctx); err != nil {
-			reterr[lst[i].Name] = err.Error()
-		} else {
+		if err = lst[i].Add(rt.Ctx); err == nil {
 			reterr[lst[i].Name] = ""
 		}
 	}
-	return reterr
+	return reterr, err
 }
 
-func (rt *Router) alertRuleAdd(lst []models.AlertRule, username string, bgid int64, lang string) map[string]string {
+func (rt *Router) alertRuleAdd(lst []models.AlertRule, username string, bgid int64, lang string) (map[string]string, error) {
 	count := len(lst)
 	// alert rule name -> error string
 	reterr := make(map[string]string)
+	var err error
 	for i := 0; i < count; i++ {
 		lst[i].Id = 0
 		lst[i].GroupId = bgid
@@ -222,18 +222,16 @@ func (rt *Router) alertRuleAdd(lst []models.AlertRule, username string, bgid int
 			lst[i].UpdateBy = username
 		}
 
-		if err := lst[i].FE2DB(rt.Ctx); err != nil {
-			reterr[lst[i].Name] = i18n.Sprintf(lang, err.Error())
+		if err = lst[i].FE2DB(rt.Ctx); err != nil {
 			continue
 		}
 
-		if err := lst[i].Add(rt.Ctx); err != nil {
-			reterr[lst[i].Name] = i18n.Sprintf(lang, err.Error())
-		} else {
+		logger.Debug(lst[i])
+		if err = lst[i].Add(rt.Ctx); err == nil {
 			reterr[lst[i].Name] = ""
 		}
 	}
-	return reterr
+	return reterr, err
 }
 
 func (rt *Router) alertRuleDel(c *gin.Context) {
