@@ -117,15 +117,9 @@ func ApiServiceGetByUrl(ctx *ctx.Context, url string) (*ApiService, error) {
 	return obj, nil
 }
 
-// 执行查询
-type DataPoint struct {
-	Name  string  `json:"name"`
-	Value float64 `json:"value"`
-}
-
 type Serie struct {
-	SeriesName string      `json:"seriesName"`
-	DataPoint  []DataPoint `json:"data"`
+	SeriesName string                   `json:"seriesName"`
+	DataPoint  []map[string]interface{} `json:"data"`
 }
 
 type Series struct {
@@ -137,8 +131,8 @@ func (as *ApiService) Execute(ctx *ctx.Context, api prom.API) (interface{}, erro
 		Series: make([]Serie, 0),
 	}
 	if as.Type == "sql" {
-		dataPoint := make([]DataPoint, 0)
-		err := DB(ctx).Raw(as.Script).Scan(&dataPoint).Error
+		var dataPoint []map[string]interface{}
+		err := DB(ctx).Raw(as.Script).Find(&dataPoint).Error
 		if err != nil {
 			return nil, err
 		}
@@ -167,12 +161,12 @@ func (as *ApiService) Execute(ctx *ctx.Context, api prom.API) (interface{}, erro
 		for _, item := range items {
 			s := Serie{
 				SeriesName: as.Name,
-				DataPoint:  make([]DataPoint, 0),
+				DataPoint:  make([]map[string]interface{}, 0),
 			}
 			for _, v := range item.Values {
-				s.DataPoint = append(s.DataPoint, DataPoint{
-					Name:  v.Timestamp.Time().Format(time.Kitchen),
-					Value: float64(v.Value),
+				s.DataPoint = append(s.DataPoint, map[string]interface{}{
+					"name":  v.Timestamp.Time().Format(time.Kitchen),
+					"value": float64(v.Value),
 				})
 			}
 			series.Series = append(series.Series, s)

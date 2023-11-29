@@ -62,7 +62,8 @@ type CaptchaReqBody struct {
 
 // 生成图形验证码
 func (rt *Router) generateCaptcha(c *gin.Context) {
-	var driver = captcha.NewDriverMath(60, 200, 0, captcha.OptionShowHollowLine, nil, nil, []string{"wqy-microhei.ttc"})
+	//  var driver = captcha.NewDriverMath(60, 200, 0, captcha.OptionShowHollowLine, nil, nil, []string{"wqy-microhei.ttc"})
+	var driver = captcha.NewDriverString(60, 200, 4, captcha.OptionShowHollowLine, 4, captcha.TxtAlphabet+captcha.TxtNumbers, nil, nil, []string{"wqy-microhei.ttc"})
 	cc := captcha.NewCaptcha(driver, rt.newCaptchaRedisStore())
 	//data:image/png;base64
 	id, b64s, err := cc.Generate()
