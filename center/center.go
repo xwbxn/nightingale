@@ -131,6 +131,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	assetCache := memsto.NewAssetCache(ctx, syncStats)
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
+	// licenseCache := memsto.NewLicenseCache(ctx, syncStats)
 
 	promClients := prom.NewPromClient(ctx, config.Alert.Heartbeat)
 

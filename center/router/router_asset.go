@@ -342,7 +342,8 @@ func (rt *Router) assetGetById(c *gin.Context) {
 // @Tags         资产-西航
 // @Accept       json
 // @Produce      json
-// @Param        filter    query    string  false  "筛选框(“ip”：IP地址；“name”：资产名称；“type”：资产类型；“manufacturers”：厂商；“os”操作系统；“group_id”：业务组；“position”：资产位置)"
+// @Param        type    query    string  false  "资产类型"
+// @Param        filter    query    string  false  "筛选框(“ip”：IP地址；“name”：资产名称；“manufacturers”：厂商；“os”操作系统；“group_id”：业务组；“position”：资产位置)"
 // @Param        query    query    string  false  "搜索框"
 // @Param        page    query    int  false  "页码"
 // @Param        limit    query    int  false  "条数"
@@ -409,15 +410,16 @@ func (rt *Router) assetGetFilter(c *gin.Context) {
 	filter := ginx.QueryStr(c, "filter", "")
 	query := ginx.QueryStr(c, "query", "")
 	page := ginx.QueryInt(c, "page", 1)
+	aType := ginx.QueryStr(c, "type", "")
 	limit := ginx.QueryInt(c, "limit", 20)
 	if filter == "" && query != "" {
 		ginx.Bomb(http.StatusOK, "参数错误")
 	}
 
-	total, err := models.AssetsCountFilterNew(rt.Ctx, filter, query)
+	total, err := models.AssetsCountFilterNew(rt.Ctx, filter, query, aType)
 	ginx.Dangerous(err)
 
-	lst, err := models.AssetsGetsFilterNew(rt.Ctx, filter, query, limit, (page-1)*limit)
+	lst, err := models.AssetsGetsFilterNew(rt.Ctx, filter, query, aType, limit, (page-1)*limit)
 	ginx.Dangerous(err)
 
 	for index, asset := range lst {

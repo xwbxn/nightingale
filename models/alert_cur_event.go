@@ -412,22 +412,23 @@ func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int6
 	return lst, err
 }
 
-func AlertCurEventGetsNew(ctx *ctx.Context, prods []string, filter, query string, dsIds []int64, cates []string, start, end int64, limit, offset int) ([]AlertCurEvent, error) {
+func AlertCurEventGetsNew(ctx *ctx.Context, prods []string, filter, query string, dsIds []int64, cates []string, start, end, group int64, limit, offset int) ([]AlertCurEvent, error) {
 	session := DB(ctx)
 	if len(prods) != 0 {
 		session = session.Where("rule_prod in ?", prods)
 	}
 
-	if start != 0 {
+	if start != -1 {
 		session = session.Where("trigger_time >= ?", start)
 	}
-	if end != 0 {
+	if end != -1 {
 		session = session.Where("trigger_time <= ?", end)
+	}
+	if group != -1 {
+		session = session.Where("group_id = ?", group)
 	}
 	if filter == "severity" {
 		session = session.Where("severity like ?", "%"+query+"%")
-	} else if filter == "group_id" {
-		session = session.Where("group_id like ?", "%"+query+"%")
 	}
 	if len(dsIds) > 0 {
 		session = session.Where("datasource_id in ?", dsIds)
@@ -437,7 +438,7 @@ func AlertCurEventGetsNew(ctx *ctx.Context, prods []string, filter, query string
 	}
 
 	var lst []AlertCurEvent
-	err := session.Order("id desc").Limit(limit).Offset(offset).Find(&lst).Error
+	err := session.Debug().Order("id desc").Limit(limit).Offset(offset).Find(&lst).Error
 
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
@@ -823,7 +824,7 @@ func AlertEventXHTotalNew(ctx *ctx.Context, alertType, start, end int64, ids []i
 	if alertType == 1 {
 		err = session.Debug().Model(&AlertCurEvent{}).Count(&num).Error
 	} else if alertType == 2 {
-		err = session.Debug().Model(&AlertHisEvent{}).Count(&num).Error
+		err = session.Debug().Where("is_recovered != 0").Model(&AlertHisEvent{}).Count(&num).Error
 	}
 
 	return num, err

@@ -272,7 +272,9 @@ CREATE TABLE `alert_rule` (
     `severity` tinyint(1) not null comment '1:Emergency 2:Warning 3:Notice',
     `disabled` tinyint(1) not null comment '0:enabled 1:disabled',
     `prom_for_duration` int not null comment 'prometheus for, unit:s',
-    `rule_config` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null comment 'rule_config',
+    `rule_config_cn` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT 'rule_config_cn',
+    `rule_config` text  CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null comment 'rule_config',
+    `rule_config_fe` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci comment 'rule_config',
     `prom_ql` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null comment 'promql',
     `prom_eval_interval` int not null comment 'evaluate interval',
     `enable_stime` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '00:00',
@@ -1514,3 +1516,21 @@ CREATE TABLE `bigscreen`  (
   PRIMARY KEY (`ID`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
+
+-- ----------------------------
+-- Table structure for license_config
+-- ----------------------------
+DROP TABLE IF EXISTS `license_config`;
+CREATE TABLE `license_config`  (
+  `ID` int(0) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `DAYS` int(0) DEFAULT NULL COMMENT '剩余天数',
+  `NODES` int(0) DEFAULT NULL COMMENT '剩余节点数',
+  `FREQUENCY` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '提醒频率',
+  `EMAIL` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '邮箱',
+  `CREATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '创建人',
+  `CREATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
+  `UPDATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '更新人',
+  `UPDATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '更新时间',
+  `DELETED_AT` datetime(0) DEFAULT NULL COMMENT '删除时间',
+  PRIMARY KEY (`ID`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '许可配置' ROW_FORMAT = Dynamic;
