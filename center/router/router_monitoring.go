@@ -147,23 +147,47 @@ func (rt *Router) monitoringAdd(c *gin.Context) {
 	var f models.Monitoring
 	ginx.BindJSON(c, &f)
 	me := c.MustGet("user").(*models.User)
+	now := time.Now().Unix()
+	var err error
 
-	var monitor = models.Monitoring{
-		AssetId:        f.AssetId,
-		MonitoringName: f.MonitoringName,
-		DatasourceId:   f.DatasourceId,
-		MonitoringSql:  f.MonitoringSql,
-		Status:         f.Status,
-		TargetId:       f.TargetId,
-		Remark:         f.Remark,
-		CreatedBy:      me.Username,
-		CreatedAt:      time.Now().Unix(),
-		UpdatedBy:      me.Username,
-		UpdatedAt:      time.Now().Unix(),
+	if len(f.AssetIds) == 0 {
+		var monitor = models.Monitoring{
+			AssetId:        f.AssetId,
+			MonitoringName: f.MonitoringName,
+			DatasourceId:   f.DatasourceId,
+			MonitoringSql:  f.MonitoringSql,
+			Status:         f.Status,
+			TargetId:       f.TargetId,
+			Remark:         f.Remark,
+			CreatedBy:      me.Username,
+			CreatedAt:      now,
+			UpdatedBy:      me.Username,
+			UpdatedAt:      now,
+		}
+
+		// 更新模型
+		err = monitor.Add(rt.Ctx)
+	} else {
+		tx := models.DB(rt.Ctx).Begin()
+		for _, id := range f.AssetIds {
+			var monitor = models.Monitoring{
+				AssetId:        id,
+				MonitoringName: f.MonitoringName,
+				DatasourceId:   f.DatasourceId,
+				MonitoringSql:  f.MonitoringSql,
+				Status:         f.Status,
+				TargetId:       f.TargetId,
+				Remark:         f.Remark,
+				CreatedBy:      me.Username,
+				CreatedAt:      now,
+				UpdatedBy:      me.Username,
+				UpdatedAt:      now,
+			}
+			err = monitor.AddTx(tx)
+		}
+		tx.Commit()
 	}
 
-	// 更新模型
-	err := monitor.Add(rt.Ctx)
 	ginx.NewRender(c).Message(err)
 }
 
@@ -214,6 +238,40 @@ func (rt *Router) monitoringDel(c *gin.Context) {
 		return
 	}
 	ginx.NewRender(c).Message(monitoring.Del(rt.Ctx))
+}
+
+// @Summary      批量删除监控-西航
+// @Description  批量删除监控-西航
+// @Tags         监控
+// @Accept       json
+// @Produce      json
+// @Param        body  body  map[string]string   true "add ids"
+// @Success      200
+// @Router       /api/n9e/xh/monitoring/batch-del/ [post]
+// @Security     ApiKeyAuth
+func (rt *Router) monitoringDelXH(c *gin.Context) {
+	var f map[string]interface{}
+	ginx.BindJSON(c, &f)
+
+	idsTemp, idsOk := f["ids"]
+	ids := make([]string, 0)
+	// var err error
+	if idsOk {
+		for _, val := range idsTemp.([]interface{}) {
+			ids = append(ids, val.(string))
+		}
+	} else {
+		ginx.Bomb(http.StatusOK, "参数错误")
+	}
+	tx := models.DB(rt.Ctx).Begin()
+	//删除监控
+	err := models.BatchDelTx(tx, ids)
+	ginx.Dangerous(err)
+	//删除资产告警规则
+	err = models.AlertRuleDelTxByMonId(tx, ids)
+	tx.Commit()
+
+	ginx.NewRender(c).Message(err)
 }
 
 // @Summary      监控开关

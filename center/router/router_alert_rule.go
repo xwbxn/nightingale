@@ -26,8 +26,10 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 			if ars[i].AssetId != 0 {
 				asset, err := rt.assetCache.Get(ars[i].AssetId)
 				ginx.Dangerous(err)
-				ars[i].AssetName = asset.Name
-				ars[i].AssetIp = asset.Ip
+				if asset != nil {
+					ars[i].AssetName = asset.Name
+					ars[i].AssetIp = asset.Ip
+				}
 			}
 		}
 	}
@@ -101,8 +103,10 @@ func (rt *Router) alertRuleGetsXH(c *gin.Context) {
 			if ars[i].AssetId != 0 {
 				asset, err := rt.assetCache.Get(ars[i].AssetId)
 				ginx.Dangerous(err)
-				ars[i].AssetName = asset.Name
-				ars[i].AssetIp = asset.Ip
+				if asset != nil {
+					ars[i].AssetName = asset.Name
+					ars[i].AssetIp = asset.Ip
+				}
 			}
 		}
 	}
@@ -355,8 +359,10 @@ func (rt *Router) alertRuleGet(c *gin.Context) {
 	if ar.AssetId != 0 {
 		asset, err := rt.assetCache.Get(ar.AssetId)
 		ginx.Dangerous(err)
-		ar.AssetName = asset.Name
-		ar.AssetIp = asset.Ip
+		if asset != nil {
+			ar.AssetName = asset.Name
+			ar.AssetIp = asset.Ip
+		}
 	}
 
 	ginx.NewRender(c).Data(ar, err)
@@ -386,8 +392,10 @@ func (rt *Router) alertRuleGetsByIds(c *gin.Context) {
 		if ars[index].AssetId != 0 {
 			asset, err := rt.assetCache.Get(ars[index].AssetId)
 			ginx.Dangerous(err)
-			ars[index].AssetName = asset.Name
-			ars[index].AssetIp = asset.Ip
+			if asset != nil {
+				ars[index].AssetName = asset.Name
+				ars[index].AssetIp = asset.Ip
+			}
 		}
 	}
 

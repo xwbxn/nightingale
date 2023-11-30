@@ -751,6 +751,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/xh/monitoring", rt.auth(), rt.user(), rt.monitoringAdd)
 		pages.PUT("/xh/monitoring", rt.auth(), rt.user(), rt.monitoringPut)
 		pages.DELETE("/xh/monitoring/:id", rt.auth(), rt.user(), rt.monitoringDel)
+		pages.POST("/xh/monitoring/batch-del", rt.auth(), rt.user(), rt.monitoringDelXH)
 		pages.POST("/xh/monitoring/status", rt.auth(), rt.user(), rt.monitoringStatusUpdate)
 		pages.POST("/xh/monitoring/data", rt.auth(), rt.user(), rt.monitoringData)
 		pages.GET("/monitoring/options", rt.auth(), rt.user(), rt.monitoringGetOptions)
@@ -787,6 +788,8 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/xh/license/update", rt.auth(), rt.admin(), rt.licenseUpdateXH)
 		pages.POST("/xh/license-config", rt.auth(), rt.admin(), rt.licenseConfigAdd)
 		pages.PUT("/xh/license-config", rt.auth(), rt.admin(), rt.licenseConfigPut)
+		pages.GET("/xh/license-config", rt.auth(), rt.admin(), rt.licenseConfigGetsXH)
+		pages.POST("/xh/license/export-xls", rt.auth(), rt.admin(), rt.exportLicenseXH)
 	}
 
 	r.GET("/api/n9e/versions", func(c *gin.Context) {

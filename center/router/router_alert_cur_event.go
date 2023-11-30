@@ -211,8 +211,10 @@ func (rt *Router) alertCurEventsCardDetails(c *gin.Context) {
 			if list[i].AssetId != 0 {
 				asset, err := rt.assetCache.Get(list[i].AssetId)
 				ginx.Dangerous(err)
-				list[i].AssetName = asset.Name
-				list[i].AssetIp = asset.Ip
+				if asset != nil {
+					list[i].AssetName = asset.Name
+					list[i].AssetIp = asset.Ip
+				}
 			}
 		}
 	}
@@ -264,8 +266,10 @@ func (rt *Router) alertCurEventsList(c *gin.Context) {
 		if list[i].AssetId != 0 {
 			asset, err := rt.assetCache.Get(list[i].AssetId)
 			ginx.Dangerous(err)
-			list[i].AssetName = asset.Name
-			list[i].AssetIp = asset.Ip
+			if asset != nil {
+				list[i].AssetName = asset.Name
+				list[i].AssetIp = asset.Ip
+			}
 		}
 	}
 
@@ -307,8 +311,10 @@ func (rt *Router) alertCurEventGet(c *gin.Context) {
 	if event.AssetId != 0 {
 		asset, err := rt.assetCache.Get(event.AssetId)
 		ginx.Dangerous(err)
-		event.AssetName = asset.Name
-		event.AssetIp = asset.Ip
+		if asset != nil {
+			event.AssetName = asset.Name
+			event.AssetIp = asset.Ip
+		}
 	}
 
 	ginx.NewRender(c).Data(event, nil)
@@ -390,8 +396,10 @@ func (rt *Router) alertEventsListXH(c *gin.Context) {
 			if list[i].AssetId != 0 {
 				asset, err := rt.assetCache.Get(list[i].AssetId)
 				ginx.Dangerous(err)
-				list[i].AssetName = asset.Name
-				list[i].AssetIp = asset.Ip
+				if asset != nil {
+					list[i].AssetName = asset.Name
+					list[i].AssetIp = asset.Ip
+				}
 			}
 		}
 		ginx.NewRender(c).Data(gin.H{
@@ -410,8 +418,10 @@ func (rt *Router) alertEventsListXH(c *gin.Context) {
 			if list[i].AssetId != 0 {
 				asset, err := rt.assetCache.Get(list[i].AssetId)
 				ginx.Dangerous(err)
-				list[i].AssetName = asset.Name
-				list[i].AssetIp = asset.Ip
+				if asset != nil {
+					list[i].AssetName = asset.Name
+					list[i].AssetIp = asset.Ip
+				}
 			}
 		}
 		ginx.NewRender(c).Data(gin.H{
@@ -534,8 +544,10 @@ func (rt *Router) exportEventXH(c *gin.Context) {
 			if list[i].AssetId != 0 {
 				asset, err := rt.assetCache.Get(list[i].AssetId)
 				ginx.Dangerous(err)
-				list[i].AssetName = asset.Name
-				list[i].AssetIp = asset.Ip
+				if asset != nil {
+					list[i].AssetName = asset.Name
+					list[i].AssetIp = asset.Ip
+				}
 			}
 		}
 		for _, val := range list {
@@ -592,8 +604,10 @@ func (rt *Router) exportEventXH(c *gin.Context) {
 			if list[i].AssetId != 0 {
 				asset, err := rt.assetCache.Get(list[i].AssetId)
 				ginx.Dangerous(err)
-				list[i].AssetName = asset.Name
-				list[i].AssetIp = asset.Ip
+				if asset != nil {
+					list[i].AssetName = asset.Name
+					list[i].AssetIp = asset.Ip
+				}
 			}
 		}
 		for _, val := range list {

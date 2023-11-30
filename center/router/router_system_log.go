@@ -221,42 +221,6 @@ func (rt *Router) exportSystemLogXH(c *gin.Context) {
 		}
 
 	}
-	// // 创建一个缓冲区
-	// buf := new(bytes.Buffer)
-
-	// // 创建一个zip文件写入器
-	// zipWriter := zip.NewWriter(buf)
-
-	// // 遍历文件列表，将每个文件添加到zip文件中
-	// for _, file := range files {
-	// 	// 打开文件
-	// 	f, err := os.Open(file)
-	// 	ginx.Dangerous(err)
-	// 	defer f.Close()
-
-	// 	// 获取文件信息
-	// 	info, err := f.Stat()
-	// 	ginx.Dangerous(err)
-
-	// 	// 创建一个zip文件头
-	// 	header, err := zip.FileInfoHeader(info)
-	// 	ginx.Dangerous(err)
-
-	// 	// 设置zip文件头中的文件名
-	// 	header.Name = file
-
-	// 	// 将zip文件头写入zip文件中
-	// 	writer, err := zipWriter.CreateHeader(header)
-	// 	ginx.Dangerous(err)
-
-	// 	// 将文件内容写入zip文件中
-	// 	_, err = io.Copy(writer, f)
-	// 	ginx.Dangerous(err)
-	// }
-
-	// // 关闭zip文件写入器
-	// err := zipWriter.Close()
-	// ginx.Dangerous(err)
 
 	// 创建临时文件来存储压缩包
 

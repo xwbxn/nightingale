@@ -9,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/process"
 	"github.com/ccfos/nightingale/v6/center/cconf"
 	"github.com/ccfos/nightingale/v6/center/cstats"
+	"github.com/ccfos/nightingale/v6/center/license"
 	"github.com/ccfos/nightingale/v6/center/metas"
 	"github.com/ccfos/nightingale/v6/center/sso"
 	"github.com/ccfos/nightingale/v6/conf"
@@ -131,7 +132,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	assetCache := memsto.NewAssetCache(ctx, syncStats)
 	userCache := memsto.NewUserCache(ctx, syncStats)
 	userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
-	// licenseCache := memsto.NewLicenseCache(ctx, syncStats)
+	licenseCache := memsto.NewLicenseCache(ctx, syncStats)
 
 	promClients := prom.NewPromClient(ctx, config.Alert.Heartbeat)
 
@@ -148,6 +149,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, idents, writers, ctx)
 	providerRouter := providerrt.New(config.HTTP, targetCache, busiGroupCache, assetCache, ctx)
 	attrs.StartAttrSync(ctx, promClients, assetCache)
+	license.NewScheduler(licenseCache, notifyConfigCache) //license检测
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 

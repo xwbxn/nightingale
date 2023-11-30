@@ -1,17 +1,12 @@
 package router
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/asn1"
-	"encoding/json"
-	"encoding/pem"
-	"fmt"
+	"archive/zip"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -22,17 +17,6 @@ import (
 	"github.com/toolkits/pkg/logger"
 )
 
-var PASSWORD = []byte("mypassword")
-
-type License struct {
-	Id             int64  `json:"id"`
-	SerialNumber   string `json:"serial_number"`
-	StartTime      int64  `json:"start_time"`
-	EndTime        int64  `json:"end_time"`
-	PermissionNode int64  `json:"permission_node"`
-	UsedNode       int64  `json:"used_node"`
-}
-
 // @Summary      获取证书列表
 // @Description  获取证书列表
 // @Tags         许可管理
@@ -42,80 +26,8 @@ type License struct {
 // @Router       /api/n9e/xh/license/list [get]
 // @Security     ApiKeyAuth
 func (rt *Router) licenseGetsXH(c *gin.Context) {
-	fileInfos, err := ioutil.ReadDir("etc/license/crt/")
-	if err != nil {
-		ginx.Bomb(http.StatusOK, "文件读取失败")
-	}
-	licenses := make([]License, 0)
-	for _, fileInfo := range fileInfos {
-		if strings.Contains(fileInfo.Name(), ".bak") {
-			continue
-		}
-		var license License
-		crtData, err := ioutil.ReadFile("etc/license/crt/" + fileInfo.Name())
-		if err != nil {
-			ginx.Bomb(http.StatusOK, "文件读取失败")
-		}
-		keyData, err := ioutil.ReadFile("etc/license/key/" + strings.Split(fileInfo.Name(), ".")[0] + ".key")
-		if err != nil {
-			ginx.Bomb(http.StatusOK, "文件读取失败")
-		}
-		// 解密证书并获取证书
-		certBlock, _ := pem.Decode(crtData)
-		// if certBlock == nil || certBlock.Type != "CERTIFICAET" {
-		// 	ginx.Bomb(http.StatusOK, "证书文件格式错误")
-		// 	return
-		// }
-
-		certificate, err := x509.ParseCertificate(certBlock.Bytes)
-		if err != nil {
-			ginx.Bomb(http.StatusOK, "证书格式化失败")
-		}
-		id, _ := strconv.ParseInt(strings.Split(strings.Split(fileInfo.Name(), ".")[0], "-")[1], 10, 64)
-		license.Id = id
-		license.StartTime = certificate.NotBefore.Unix()
-		license.EndTime = certificate.NotAfter.Unix()
-
-		var value []byte
-		for _, val := range certificate.Extensions {
-			if val.Id.String() == "1.2.3.4" {
-
-				_, err := asn1.Unmarshal(val.Value, &value)
-				if err != nil {
-					ginx.Bomb(http.StatusOK, "额外属性解析失败")
-				}
-				break
-			}
-		}
-
-		// 解密私钥PEM并获取私钥
-		keytBlock, _ := pem.Decode(keyData)
-		// if keytBlock == nil || keytBlock.Type != "RSA PRIVATE KEY" {
-		// 	ginx.Bomb(http.StatusOK, "私钥文件格式错误")
-		// }
-		decryptedPrivateKey, err := x509.DecryptPEMBlock(keytBlock, PASSWORD)
-		if err != nil {
-			ginx.Bomb(http.StatusOK, "私钥解密失败")
-		}
-		privateKey, err := x509.ParsePKCS1PrivateKey(decryptedPrivateKey)
-		if err != nil {
-			ginx.Bomb(http.StatusOK, "私钥格式化失败")
-		}
-		decryptedText, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, value)
-		if err != nil {
-			ginx.Bomb(http.StatusOK, "解密失败")
-		}
-		md := make(map[string]interface{})
-		err = json.Unmarshal(decryptedText, &md)
-		if err != nil {
-			fmt.Println("额外信息解析失败：", err)
-		}
-		logger.Debug(md)
-		license.SerialNumber = md["serialNumber"].(string)
-		license.PermissionNode = int64(md["permissionNode"].(float64))
-		licenses = append(licenses, license)
-	}
-	ginx.NewRender(c).Data(licenses, nil)
+	licenses, err := models.LicenseGets()
+	ginx.NewRender(c).Data(licenses, err)
 }
 
 // @Summary      上传证书
@@ -271,4 +183,94 @@ func (rt *Router) licenseConfigPut(c *gin.Context) {
 
 	// 可修改"*"为字段名称，实现更新部分字段功能
 	ginx.NewRender(c).Message(old.Update(rt.Ctx, f))
+}
+
+// @Summary      获取许可配置
+// @Description  获取许可配置
+// @Tags         许可管理
+// @Accept       json
+// @Produce      json
+// @Success      200
+// @Router       /api/n9e/xh/license-config [get]
+// @Security     ApiKeyAuth
+func (rt *Router) licenseConfigGetsXH(c *gin.Context) {
+	licenseConfig, err := models.LicenseConfigGets(rt.Ctx)
+	ginx.NewRender(c).Data(licenseConfig, err)
+}
+
+// @Summary      批量导出证书
+// @Description  批量导出证书
+// @Tags         许可管理
+// @Accept       json
+// @Produce      json
+// @Param        body  body   map[string]interface{} false "{“ids”:[111, 222]}"
+// @Success      200
+// @Router       /api/n9e/xh/license/export-xls [post]
+// @Security     ApiKeyAuth
+func (rt *Router) exportLicenseXH(c *gin.Context) {
+	var f map[string]interface{}
+	ginx.BindJSON(c, &f)
+
+	idsTemp, idsOk := f["ids"]
+	ids := make([]int64, 0)
+	if idsOk {
+		for _, val := range idsTemp.([]interface{}) {
+			ids = append(ids, int64(val.(float64)))
+		}
+	}
+
+	// 创建临时文件来存储压缩包
+
+	zipFile, err := os.CreateTemp("", "download*.zip")
+	ginx.Dangerous(err)
+	defer os.Remove(zipFile.Name())
+
+	// 创建 Zip Writer
+	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+
+	// licenses := make([]*License, 0)
+	fileInfos, err := ioutil.ReadDir("etc/license/crt/")
+	if err != nil {
+		ginx.Bomb(http.StatusOK, "文件读取失败")
+	}
+	for _, fileInfo := range fileInfos {
+		for _, id := range ids {
+			if strings.Contains(fileInfo.Name(), ".bak") {
+				continue
+			}
+			if strings.Contains(fileInfo.Name(), strconv.FormatInt(id, 10)) {
+				file, err := os.Open("etc/license/crt/" + fileInfo.Name())
+				ginx.Dangerous(err)
+				defer file.Close()
+				// 创建 Zip 文件
+				zipEntry, err := zipWriter.Create(filepath.Base("etc/license/crt/" + fileInfo.Name()))
+				ginx.Dangerous(err)
+				// 将文件内容复制到 Zip 文件中
+				_, err = io.Copy(zipEntry, file)
+				ginx.Dangerous(err)
+
+				//写入key
+				file, err = os.Open("etc/license/key/" + strings.Split(fileInfo.Name(), ".")[0] + ".key")
+				ginx.Dangerous(err)
+				defer file.Close()
+				// 创建 Zip 文件
+				zipEntry, err = zipWriter.Create(filepath.Base("etc/license/key/" + strings.Split(fileInfo.Name(), ".")[0] + ".key"))
+				ginx.Dangerous(err)
+				// 将文件内容复制到 Zip 文件中
+				_, err = io.Copy(zipEntry, file)
+				ginx.Dangerous(err)
+			}
+		}
+	}
+
+	// 关闭zip文件写入器
+	err = zipWriter.Close()
+	ginx.Dangerous(err)
+	// 设置响应头，告诉浏览器返回的是一个压缩包文件
+	c.Header("Content-Type", "application/octet-stream")
+	// 设置文件下载的名称
+	c.Header("Content-Disposition", "attachment; filename=licenses.zip")
+	// 将临时文件内容写入响应体
+	c.File(zipFile.Name())
 }

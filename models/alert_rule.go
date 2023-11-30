@@ -1007,6 +1007,19 @@ func AlertRuleDelTxByAssetId(tx *gorm.DB, assetId []string) error {
 	return err
 }
 
+// 根据asset_id批量删除告警规则（事务）
+func AlertRuleDelTxByMonId(tx *gorm.DB, ids []string) error {
+	for _, id := range ids {
+		str := `"monitor_id":` + id
+		err := tx.Debug().Where("rule_config_fe like ?", str).Delete(&AlertRule{}).Error
+		if err != nil {
+			tx.Rollback()
+		}
+	}
+
+	return nil
+}
+
 func AlertRuleGetsFilter(ctx *ctx.Context, groupId int64, filter, query string, ids []int64, limit, offset int) ([]AlertRule, error) {
 	session := DB(ctx).Where("group_id=?", groupId)
 	if limit > -1 {
