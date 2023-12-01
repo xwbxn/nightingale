@@ -473,6 +473,8 @@ func (rt *Router) alertCurEventBatchDel(c *gin.Context) {
 	ginx.Dangerous(err)
 	err = models.AlertHisEventDelByIdsTx(tx, ids)
 
+	tx.Commit()
+
 	ginx.NewRender(c).Message(err)
 }
 
