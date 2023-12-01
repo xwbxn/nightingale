@@ -346,7 +346,7 @@ config:
                 type: input
               - name: password
                 label: 密码
-                type: input
+                type: password
   - name: Redis
     category: "业务资产"
     plugin: redis
@@ -359,13 +359,20 @@ config:
     form:
       - label: 地址
         name: address
+        type: input
+        required: true
       - label: 端口
         name: port
+        type: input
+        required: true
       - label: 用户名
         name: user
+        type: input
+        required: true
       - label: 密码
+        required: true
         name: password
-        password: true
+        type: password
 
   - name: Web服务
     category: "业务资产"

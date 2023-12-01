@@ -6,7 +6,6 @@ package models
 import (
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
@@ -23,6 +22,7 @@ import (
 type Monitoring struct {
 	Id             int64          `gorm:"column:ID;primaryKey" json:"id" `                          //type:BIGINT       comment:主键        version:2023-10-08 16:45
 	AssetId        int64          `gorm:"column:ASSET_ID" json:"asset_id" `                         //type:BIGINT       comment:资产id      version:2023-10-08 16:45
+	AssetIds       []int64        `gorm:"-" json:"asset_ids" `                                      //批量添加，对前端
 	MonitoringName string         `gorm:"column:MONITORING_NAME" json:"monitoring_name" `           //type:string       comment:监控名称    version:2023-10-08 16:45
 	DatasourceId   int64          `gorm:"column:DATASOURCE_ID" json:"datasource_id" `               //type:BIGINT       comment:数据源名称    version:2023-10-08 16:45
 	MonitoringSql  string         `gorm:"column:MONITORING_SQL" json:"monitoring_sql" `             //type:string       comment:监控脚本    version:2023-10-08 16:45
@@ -49,7 +49,7 @@ func MonitoringAllGets(ctx *ctx.Context, query string, limit, offset int) ([]Mon
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
-		session = session.Limit(limit).Offset(offset).Order("id")
+		session = session.Limit(limit).Offset(offset).Order("id DESC")
 	}
 
 	// 这里使用列名的硬编码构造查询参数, 避免从前台传入造成注入风险
@@ -259,16 +259,31 @@ func (m *Monitoring) Add(ctx *ctx.Context) error {
 		return err
 	}
 
-	now := time.Now().Unix()
-	m.CreatedAt = now
-	m.UpdatedAt = now
-
 	return DB(ctx).Create(m).Error
+}
+
+// 增加监控
+func (m *Monitoring) AddTx(tx *gorm.DB) error {
+	// 这里写Monitoring的业务逻辑，通过error返回错误
+	if err := m.Verify(); err != nil {
+		tx.Rollback()
+	}
+
+	err := tx.Create(m).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
 }
 
 // 删除监控
 func (m *Monitoring) Del(ctx *ctx.Context) error {
 	return DB(ctx).Debug().Where("id=?", m.Id).Delete(&Monitoring{}).Error
+}
+
+// 删除监控
+func BatchDelTx(tx *gorm.DB, ids []string) error {
+	return tx.Debug().Where("id in ?", ids).Delete(&Monitoring{}).Error
 }
 
 // 根据asset_id批量删除监控（事务）

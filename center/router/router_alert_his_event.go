@@ -65,8 +65,10 @@ func (rt *Router) alertHisEventsList(c *gin.Context) {
 		if list[i].AssetId != 0 {
 			asset, err := rt.assetCache.Get(list[i].AssetId)
 			ginx.Dangerous(err)
-			list[i].AssetName = asset.Name
-			list[i].AssetIp = asset.Ip
+			if asset != nil {
+				list[i].AssetName = asset.Name
+				list[i].AssetIp = asset.Ip
+			}
 		}
 	}
 
@@ -149,8 +151,10 @@ func (rt *Router) alertHisEventGet(c *gin.Context) {
 	if event.AssetId != 0 {
 		asset, err := rt.assetCache.Get(event.AssetId)
 		ginx.Dangerous(err)
-		event.AssetName = asset.Name
-		event.AssetIp = asset.Ip
+		if asset != nil {
+			event.AssetName = asset.Name
+			event.AssetIp = asset.Ip
+		}
 	}
 
 	ginx.NewRender(c).Data(event, err)

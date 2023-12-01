@@ -477,6 +477,11 @@ func (l *lzExcelExport) ExportTempletToWeb(data []interface{}, expansions []map[
 		for i := 0; i < t.NumField(); i++ {
 
 			fieldInfo := t.Field(i)
+			ignoreTag, ignoreOk := fieldInfo.Tag.Lookup("ignore")
+			if ignoreOk && ignoreTag == "true" {
+				continue
+			}
+
 			cnTag, cnOk := fieldInfo.Tag.Lookup(tagName)
 			if cnOk {
 				var is_num string = "0"
@@ -640,6 +645,7 @@ func (l *lzExcelExport) writeTemplet(params []map[string]string, data []interfac
 	for i := 0; i < t.NumField(); i++ {
 		fieldInfo := t.Field(i)
 		_, cnOK := fieldInfo.Tag.Lookup("cn")
+		ignoreTag, ignoreOk := fieldInfo.Tag.Lookup("ignore")
 		sourceTag, sourceOk := fieldInfo.Tag.Lookup("source")
 
 		if (num-1)/26 == 2 {
@@ -648,6 +654,9 @@ func (l *lzExcelExport) writeTemplet(params []map[string]string, data []interfac
 			prefixWord = "A"
 		}
 		if cnOK {
+			if ignoreOk && ignoreTag == "true" {
+				continue
+			}
 			line := prefixWord + fmt.Sprintf("%c%v", word, j)
 			var isNum string = "0"
 			switch fieldType := fieldInfo.Type.Kind(); fieldType {

@@ -24,13 +24,13 @@ import (
 type Asset struct {
 	Id                 int64          `json:"id" gorm:"primaryKey"`
 	Ident              string         `json:"ident"`
-	GroupId            int64          `json:"group_id"`
 	Name               string         `json:"name" cn:"名称" xml:"name"`
 	Type               string         `json:"type" cn:"类型" xml:"type" source:"type=cache"`
 	Ip                 string         `json:"ip" cn:"IP" xml:""`
 	Manufacturers      string         `json:"manufacturers" cn:"厂商" xml:"manufacturers"`
 	Position           string         `json:"position" cn:"资产位置" xml:"position"`
-	Status             int64          `json:"status" xml:"status" cn:"状态" validate:"omitempty,oneof=0 1" source:"type=option,value=[下线;正常]"` //0: 未生效, 1: 已生效
+	Status             int64          `json:"status" xml:"status" cn:"状态" validate:"omitempty,oneof=0 1" source:"type=option,value=[下线;正常]" ignore:"true"` //0: 未生效, 1: 已生效
+	GroupId            int64          `json:"group_id" cn:"业务组" source:"type=table,table=busi_group,property=id,field=name"`
 	Label              string         `json:"label"`
 	Tags               string         `json:"-"`
 	TagsJSON           []string       `json:"tags" gorm:"-"`
@@ -64,7 +64,7 @@ type AssetImport struct {
 	Manufacturers string `json:"manufacturers" cn:"厂商" xml:"manufacturers"`
 	Position      string `json:"position" cn:"资产位置" xml:"position"`
 	Status        string `json:"status" xml:"status" cn:"状态"` //0: 未生效, 1: 已生效
-
+	Group         string `json:"group" xml:"group" cn:"业务组"`
 }
 
 type Metrics struct {
@@ -738,4 +738,25 @@ func AssetGetByIds(ctx *ctx.Context, ids []int64) ([]Asset, error) {
 	var lst []Asset
 	err := DB(ctx).Model(&Asset{}).Where("id in ?", ids).Find(&lst).Error
 	return lst, err
+}
+
+//数据校验
+func Verify(asset Asset) error {
+	//非空字段校验
+	if asset.Name == "" {
+		return errors.New("名称不能为空")
+	} else if asset.Ip == "" {
+		return errors.New("IP不能为空")
+	} else if asset.Type == "" {
+		return errors.New("类型不能为空")
+	} else if asset.GroupId == 0 {
+		return errors.New("业务组不能为空")
+	}
+	//IP格式校验
+	err := net.ParseIP(asset.Ip)
+	if err == nil {
+		return errors.New("IP格式不正确")
+	}
+	//TODO IP唯一性校验
+	return nil
 }

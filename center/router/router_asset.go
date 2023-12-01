@@ -143,6 +143,11 @@ func (rt *Router) assetsAddXH(c *gin.Context) {
 		CreateBy:      me.Username,
 		CreateAt:      time.Now().Unix(),
 	}
+	//校验
+	err = models.Verify(assets)
+	if err != nil {
+		ginx.Bomb(http.StatusOK, err.Error())
+	}
 
 	id, err := assets.AddXH(rt.Ctx)
 	ginx.Dangerous(err)
@@ -779,20 +784,17 @@ func (rt *Router) importAssetXH(c *gin.Context) {
 	//解析excel的数据
 	assetImports, _, lxRrr := excels.ReadExce[models.Asset](xlsx, rt.Ctx)
 	if lxRrr != nil {
-		ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
+		ginx.Bomb(http.StatusOK, "解析excel文件失败")
 		return
 	}
-	logger.Debug(assetImports)
 	me := c.MustGet("user").(*models.User)
 	var qty int = 0
 	for index, entity := range assetImports {
 
 		//校验
-		num, err := models.AssetsCountMap(rt.Ctx, map[string]interface{}{"ip": entity.Ip})
-		ginx.Dangerous(err)
-		if num > 0 {
-			str := "第" + strconv.Itoa(index) + "数据，IP已存在"
-			ginx.Bomb(http.StatusOK, str)
+		err := models.Verify(entity)
+		if err != nil {
+			ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index)+"数据,"+err.Error())
 		}
 
 		// 循环体
@@ -878,8 +880,6 @@ func (rt *Router) exportAssetXH(c *gin.Context) {
 			datas = append(datas, v)
 
 		}
-	} else {
-
 	}
 	if fType == 1 {
 		if len(lst) == 0 {
@@ -902,6 +902,9 @@ func (rt *Router) exportAssetXH(c *gin.Context) {
 			} else if val.Status == 1 {
 				assetImport.Status = "正常"
 			}
+			group, err := models.BusiGroupGetById(rt.Ctx, val.GroupId)
+			ginx.Dangerous(err)
+			assetImport.Group = group.Name
 
 			assetImport.Type = val.Type
 			assetsImport = append(assetsImport, assetImport)
@@ -912,7 +915,7 @@ func (rt *Router) exportAssetXH(c *gin.Context) {
 		xmltool.ExportXml(c, dataXml, "资产信息")
 	} else if fType == 3 {
 		dataTxt := make([]string, 0)
-		str := "名称\t类型\tIP\t厂商\t资产位置\t状态\n"
+		str := "名称\t类型\tIP\t厂商\t资产位置\t状态\t业务组\n"
 		dataTxt = append(dataTxt, str)
 		for _, asset := range lst {
 			status := ""
@@ -921,7 +924,11 @@ func (rt *Router) exportAssetXH(c *gin.Context) {
 			} else if asset.Status == 1 {
 				status = "正常"
 			}
-			str = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\n", asset.Name, asset.Type, asset.Ip, asset.Manufacturers, asset.Position, status)
+
+			group, err := models.BusiGroupGetById(rt.Ctx, asset.GroupId)
+			ginx.Dangerous(err)
+
+			str = fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\n", asset.Name, asset.Type, asset.Ip, asset.Manufacturers, asset.Position, status, group.Name)
 			dataTxt = append(dataTxt, str)
 		}
 		txt.ExportTxt(c, dataTxt, "资产信息")
