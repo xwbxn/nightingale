@@ -351,61 +351,6 @@ func (rt *Router) assetGetById(c *gin.Context) {
 // @Router       /api/n9e/xh/assets/filter [get]
 // @Security     ApiKeyAuth
 func (rt *Router) assetGetFilter(c *gin.Context) {
-	// var f map[string]interface{}
-	// ginx.BindJSON(c, &f)
-
-	// //分页参数
-	// limitT, limitOk := f["limit"]
-	// limit := 20
-	// if limitOk {
-	// 	limit = int(limitT.(float64))
-	// }
-	// pageT, pageOk := f["page"]
-	// page := 1
-	// if pageOk {
-	// 	page = int(pageT.(float64))
-	// }
-
-	// query := ""
-	// queryTemp, queryOk := f["query"]
-	// // if !queryOk {
-	// // 	query = ""
-	// // }
-
-	// queryType := ""
-	// filter, filterOk := f["filter"]
-	// if filterOk {
-	// 	if !queryOk {
-	// 		ginx.Bomb(http.StatusBadRequest, "参数为空")
-	// 	} else {
-	// 		query = "%" + queryTemp.(string) + "%"
-	// 	}
-
-	// 	// if filter.(string) == "1" || filter.(string) == "4" {
-	// 	// 	queryType = "name"
-	// 	// } else if filter.(string) == "2" {
-	// 	// 	queryType = "ip"
-	// 	// } else if filter.(string) == "3" {
-	// 	// 	queryType = "type"
-	// 	// }
-	// 	if filter.(string) == "group" {
-	// 		queryType = "group_id"
-	// 	}
-	// } else {
-	// 	if queryOk {
-	// 		query = "%" + queryTemp.(string) + "%"
-	// 	}
-	// }
-	// aType := ""
-	// typeT, typeOk := f["type"]
-	// if typeOk {
-	// 	aType = typeT.(string)
-	// }
-	// total, err := models.AssetsCountFilter(rt.Ctx, aType, query, queryType)
-	// ginx.Dangerous(err)
-
-	// lst, err := models.AssetsGetsFilter(rt.Ctx, aType, query, queryType, limit, (page-1)*limit)
-	// ginx.Dangerous(err)
 
 	filter := ginx.QueryStr(c, "filter", "")
 	query := ginx.QueryStr(c, "query", "")
@@ -752,7 +697,7 @@ type Person struct {
 	Gender string `xml:"gender"`
 }
 
-//导入xml
+// 导入xml
 // @Summary      导出xml（测试）
 // @Description  导出xml
 // @Tags         资产-西航

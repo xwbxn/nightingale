@@ -646,7 +646,7 @@ func AssetsCountFilterNew(ctx *ctx.Context, filter, query, aType string) (num in
 }
 
 // 根据filter查询(new)
-func AssetsGetsFilterNew(ctx *ctx.Context, filter, query, aType string, limit, offset int) (lst []Asset, err error) {
+func AssetsGetsFilterNew(ctx *ctx.Context, filter, query, aType string, limit, offset int) (lst []*Asset, err error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
