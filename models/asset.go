@@ -89,10 +89,11 @@ type ExtraPropPart struct {
 		Type       string `json:"type" yaml:"type"`
 		ItemsLimit int64  `json:"items_limit" yaml:"items_limit"`
 		Items      []*struct {
-			Name    string `json:"name" yaml:"name"`
-			Label   string `json:"label" yaml:"label"`
-			Type    string `json:"type" yaml:"type"`
-			Options []*struct {
+			Name     string `json:"name" yaml:"name"`
+			Label    string `json:"label" yaml:"label"`
+			Required bool   `json:"required" yaml:"required"`
+			Type     string `json:"type" yaml:"type"`
+			Options  []*struct {
 				Label string `json:"label" yaml:"label"`
 				Value string `json:"value" yaml:"value"`
 			} `json:"options" yaml:"options"`
