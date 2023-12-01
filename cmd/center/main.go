@@ -21,6 +21,7 @@ var (
 	showVersion = flag.Bool("version", false, "Show version.")
 	configDir   = flag.String("configs", osx.GetEnv("N9E_CONFIGS", "etc"), "Specify configuration directory.(env:N9E_CONFIGS)")
 	cryptoKey   = flag.String("crypto-key", "", "Specify the secret key for configuration file field encryption.")
+	debug       = flag.Bool("debug", false, "debug mode")
 )
 
 // create another main() to run the overseer process
@@ -33,13 +34,17 @@ func main() {
 		os.Exit(0)
 	}
 
-	overseer.Run(overseer.Config{
-		Program: startLauncher,
-		Fetcher: &fetcher.File{
-			Path: "etc/update/n9e",
-		},
-		Debug: true,
-	})
+	if *debug {
+		program()
+	} else {
+		overseer.Run(overseer.Config{
+			Program: startLauncher,
+			Fetcher: &fetcher.File{
+				Path: "etc/update/n9e",
+			},
+			Debug: false,
+		})
+	}
 }
 
 func startLauncher(state overseer.State) {

@@ -11,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/logger"
+	"github.com/xwb1989/sqlparser"
 )
 
 // ApiService  接口管理。
@@ -117,6 +118,24 @@ func ApiServiceGetByUrl(ctx *ctx.Context, url string) (*ApiService, error) {
 	return obj, nil
 }
 
+func (as *ApiService) IsDangerous() bool {
+	if as.Type == "promql" {
+		return false
+	}
+	if as.Type == "sql" {
+		stmt, err := sqlparser.Parse(as.Script)
+		if err != nil {
+			return false
+		}
+		switch stmt.(type) {
+		case *sqlparser.Select:
+			return true
+		}
+
+	}
+	return true
+}
+
 type Serie struct {
 	SeriesName string                   `json:"seriesName"`
 	DataPoint  []map[string]interface{} `json:"data"`
@@ -126,11 +145,13 @@ type Series struct {
 	Series []Serie `json:"series"`
 }
 
+// 执行api接口
+// 返回格式Series
 func (as *ApiService) Execute(ctx *ctx.Context, api prom.API) (interface{}, error) {
 	series := Series{
 		Series: make([]Serie, 0),
 	}
-	if as.Type == "sql" {
+	if as.Type == "sql" { //sql模式
 		var dataPoint []map[string]interface{}
 		err := DB(ctx).Raw(as.Script).Find(&dataPoint).Error
 		if err != nil {
@@ -143,7 +164,7 @@ func (as *ApiService) Execute(ctx *ctx.Context, api prom.API) (interface{}, erro
 		}
 		series.Series = append(series.Series, s)
 	}
-	if as.Type == "promql" {
+	if as.Type == "promql" { //promql模式
 		r := prom.Range{
 			Start: time.Now().Add(-30 * time.Minute),
 			End:   time.Now(),

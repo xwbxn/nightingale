@@ -13,10 +13,15 @@ import (
 )
 
 type AssetCacheType struct {
+	// 资产
 	statTotal       int64
 	statLastUpdated int64
-	ctx             *ctx.Context
-	stats           *Stats
+	// 监控
+	mStatTotal       int64
+	mStatLastUpdated int64
+
+	ctx   *ctx.Context
+	stats *Stats
 
 	sync.RWMutex
 	assets map[int64]*models.Asset // key: id
@@ -27,11 +32,13 @@ type AssetCacheType struct {
 
 func NewAssetCache(ctx *ctx.Context, stats *Stats) *AssetCacheType {
 	cache := &AssetCacheType{
-		statTotal:       -1,
-		statLastUpdated: -1,
-		ctx:             ctx,
-		stats:           stats,
-		assets:          make(map[int64]*models.Asset),
+		statTotal:        -1,
+		statLastUpdated:  -1,
+		ctx:              ctx,
+		stats:            stats,
+		assets:           make(map[int64]*models.Asset),
+		mStatTotal:       -1,
+		mStatLastUpdated: -1,
 	}
 	cache.SyncAssets()
 	cache.SyncAssetType()
@@ -42,11 +49,17 @@ func (cache *AssetCacheType) StatChanged(total, lastUpdated int64) bool {
 	if cache.statTotal == total && cache.statLastUpdated == lastUpdated {
 		return false
 	}
-
 	return true
 }
 
-func (cache *AssetCacheType) Set(assets map[int64]*models.Asset, total, lastUpdated int64) {
+func (cache *AssetCacheType) MStatChanged(total, lastUpdated int64) bool {
+	if cache.mStatTotal == total && cache.mStatLastUpdated == lastUpdated {
+		return false
+	}
+	return true
+}
+
+func (cache *AssetCacheType) Set(assets map[int64]*models.Asset, total, lastUpdated, mTotal, mLastUpdated int64) {
 	cache.Lock()
 	cache.assets = assets
 	cache.Unlock()
@@ -54,6 +67,8 @@ func (cache *AssetCacheType) Set(assets map[int64]*models.Asset, total, lastUpda
 	// only one goroutine used, so no need lock
 	cache.statTotal = total
 	cache.statLastUpdated = lastUpdated
+	cache.mStatTotal = mTotal
+	cache.mStatLastUpdated = mLastUpdated
 }
 
 func (cache *AssetCacheType) SetTypes(types map[string]*models.AssetType) {
@@ -156,8 +171,12 @@ func (cache *AssetCacheType) syncAssets() error {
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AssetsStatistics")
 	}
+	mStat, err := models.MonitoringStatistics(cache.ctx)
+	if err != nil {
+		return errors.WithMessage(err, "failed to exec MonitoringStatistics")
+	}
 
-	if !cache.StatChanged(stat.Total, stat.LastUpdated) {
+	if !cache.StatChanged(stat.Total, stat.LastUpdated) && !cache.MStatChanged(mStat.Total, mStat.LastUpdated) {
 		cache.stats.GaugeCronDuration.WithLabelValues("sync_assets").Set(0)
 		cache.stats.GaugeSyncNumber.WithLabelValues("sync_assets").Set(0)
 		logger.Debug("assets not changed")
@@ -167,6 +186,10 @@ func (cache *AssetCacheType) syncAssets() error {
 	lst, err := models.AssetGetsAll(cache.ctx)
 	if err != nil {
 		return errors.WithMessage(err, "failed to exec AssetGetsAll")
+	}
+	mlst, err := models.MonitoringGetsAll(cache.ctx)
+	if err != nil {
+		return errors.WithMessage(err, "failed to exec MonitoringGetsAll")
 	}
 
 	m := make(map[int64]*models.Asset)
@@ -179,12 +202,19 @@ func (cache *AssetCacheType) syncAssets() error {
 		} else {
 			//默认值
 			lst[i].Health = 2
-			lst[i].Metrics = map[string]map[string]string{}
+			lst[i].Metrics = []*models.AssetMetric{}
+		}
+
+		lst[i].Monitorings = make([]models.Monitoring, 0)
+		for _, m := range mlst {
+			if m.AssetId == lst[i].Id {
+				lst[i].Monitorings = append(lst[i].Monitorings, m)
+			}
 		}
 		m[lst[i].Id] = lst[i]
 	}
 
-	cache.Set(m, stat.Total, stat.LastUpdated)
+	cache.Set(m, stat.Total, stat.LastUpdated, mStat.Total, mStat.LastUpdated)
 
 	ms := time.Since(start).Milliseconds()
 	cache.stats.GaugeCronDuration.WithLabelValues("sync_assets").Set(float64(ms))

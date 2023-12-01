@@ -3,49 +3,52 @@ package health
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
-	pm "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
-	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/prompb"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
+)
+
+const (
+	LabelName     = "__name__"
+	AssetId       = "asset_id"
+	AssetInstance = "instance"
+	HealthMetric  = "asset_up"
 )
 
 type HealthRuleContext struct {
 	datasourceId int64
 	quit         chan struct{}
 
-	assetType   *models.AssetType
+	asset       *models.Asset
 	writers     *writer.WritersType
 	promClients *prom.PromClientMap
-	assetCache  *memsto.AssetCacheType
 }
 
-func NewHealthRuleContext(atype *models.AssetType, datasourceId int64, promClients *prom.PromClientMap, writers *writer.WritersType, cache *memsto.AssetCacheType) *HealthRuleContext {
+func NewHealthRuleContext(asset *models.Asset, datasourceId int64, promClients *prom.PromClientMap, writers *writer.WritersType) *HealthRuleContext {
 	return &HealthRuleContext{
 		datasourceId: datasourceId,
 		quit:         make(chan struct{}),
-		assetType:    atype,
+		asset:        asset,
 		promClients:  promClients,
-		assetCache:   cache,
 		writers:      writers,
 	}
 }
 
 func (hrc *HealthRuleContext) Key() string {
-	return fmt.Sprintf("health-%d-%s", hrc.datasourceId, hrc.assetType.Name)
+	return fmt.Sprintf("health-%d-%s", hrc.datasourceId, hrc.asset.Label)
 }
 
 func (hrc *HealthRuleContext) Hash() string {
-	return str.MD5(fmt.Sprintf("%s_%s_%d",
-		hrc.assetType.Name,
-		hrc.assetType.Category,
+	return str.MD5(fmt.Sprintf("%s_%d_%d",
+		hrc.asset.Name,
+		hrc.asset.Id,
 		hrc.datasourceId,
 	))
 }
@@ -57,7 +60,7 @@ func (hrc *HealthRuleContext) Start() {
 	// interval := hrc.rule.PromHealth_checkInterval
 	interval := 15
 	if interval <= 0 {
-		interval = 10
+		interval = 15
 	}
 	go func() {
 		for {
@@ -73,35 +76,70 @@ func (hrc *HealthRuleContext) Start() {
 }
 
 func (hrc *HealthRuleContext) AssetMetricsCheck() {
-	assetsOfType := hrc.assetCache.GetByType(hrc.assetType.Name)
-	for _, asset := range assetsOfType {
-		metrics := []*models.Metrics{}
-		if hrc.assetType.Metrics != nil {
-			metrics = append(metrics, hrc.assetType.Metrics...)
+
+	metrics := []*models.AssetMetric{}
+	for _, m := range hrc.asset.Monitorings {
+		promql := m.CompilePromQL()
+		value, warnings, err := hrc.promClients.GetCli(hrc.datasourceId).Query(context.Background(), promql, time.Now())
+		if err != nil {
+			logger.Errorf("health:%s promql:%s, error:%v", hrc.Key(), promql, err)
+			return
 		}
-		if len(metrics) == 0 {
-			logger.Warningf("health: asset %d metrics is nil or empty", asset.Id)
+		if len(warnings) > 0 {
+			logger.Errorf("health:%s promql:%s, warnings:%v", hrc.Key(), promql, warnings)
+			return
+		}
+		metrics = append(metrics, &models.AssetMetric{
+			Name:      m.MonitoringName,
+			Label:     promql,
+			PromValue: value,
+			Value:     "0",
+		})
+	}
+
+	hrc.asset.Metrics = metrics
+	health := 0
+	for _, m := range hrc.asset.Metrics {
+		result, ok := m.PromValue.(model.Vector)
+		if !ok {
 			continue
 		}
-
-		for _, m := range metrics {
-			pm.InjectLabel(m.Metrics, "asset_id", strconv.Itoa(int(asset.Id)), labels.MatchEqual)
-			value, warnings, err := hrc.promClients.GetCli(hrc.datasourceId).Query(context.Background(), m.Metrics, time.Now())
-			if err != nil {
-				logger.Errorf("health:%s promql:%s, error:%v", hrc.Key(), m.Metrics, err)
-				return
-			}
-
-			if len(warnings) > 0 {
-				logger.Errorf("health:%s promql:%s, warnings:%v", hrc.Key(), m.Metrics, warnings)
-				return
-			}
-			ts := ConvertMetricTimeSeries(value, m, asset)
-			for _, series := range ts {
-				hrc.writers.PushSample("health_check", series)
-			}
+		for _, resultValue := range result {
+			health = 1
+			m.Value = fmt.Sprintf("%f", resultValue.Value)
+			break
 		}
 	}
+
+	hrc.asset.Health = int64(health)
+	hrc.asset.HealthAt = time.Now().Unix()
+
+	ts := convertHealthTimeSeries(hrc, health)
+	hrc.writers.PushSample("health_check", ts)
+}
+
+func convertHealthTimeSeries(hrc *HealthRuleContext, health int) *prompb.TimeSeries {
+	var healthLabels []prompb.Label
+	healthLabels = append(healthLabels, prompb.Label{
+		Name:  LabelName,
+		Value: HealthMetric,
+	})
+	healthLabels = append(healthLabels, prompb.Label{
+		Name:  AssetId,
+		Value: fmt.Sprintf("%d", hrc.asset.Id),
+	})
+	healthLabels = append(healthLabels, prompb.Label{
+		Name:  AssetInstance,
+		Value: hrc.asset.Label,
+	})
+	s := prompb.Sample{}
+	s.Timestamp = time.Now().UnixNano() / 1e6
+	s.Value = float64(health)
+	ts := &prompb.TimeSeries{
+		Labels:  healthLabels,
+		Samples: []prompb.Sample{s},
+	}
+	return ts
 }
 
 func (hrc *HealthRuleContext) Stop() {

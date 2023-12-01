@@ -48,19 +48,19 @@ type MetricJson struct {
 */
 
 type AssetJson struct {
-	Id       int64               `json:"id"`
-	Name     string              `json:"name"`
-	Ip       string              `json:"ip"`
-	Label    string              `json:"label"`
-	Status   int64               `json:"status"`
-	UpdateAt int64               `json:"update_at"`
-	Category string              `json:"category"`
-	Type     string              `json:"type"`
-	Metrics  []map[string]string `json:"metrics"`
-	GroupId  int64               `json:"group_id"`
-	Tags     []string            `json:"tags"`
-	Url      string              `json:"url"`
-	Severity int64               `json:"severity"`
+	Id       int64                 `json:"id"`
+	Name     string                `json:"name"`
+	Ip       string                `json:"ip"`
+	Label    string                `json:"label"`
+	Status   int64                 `json:"status"`
+	UpdateAt int64                 `json:"update_at"`
+	Category string                `json:"category"`
+	Type     string                `json:"type"`
+	Metrics  []*models.AssetMetric `json:"metrics"`
+	GroupId  int64                 `json:"group_id"`
+	Tags     []string              `json:"tags"`
+	Url      string                `json:"url"`
+	Severity int64                 `json:"severity"`
 }
 
 func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
@@ -75,7 +75,11 @@ func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
 	var data []*AssetJson
 	lst := rt.assetCache.GetAll()
 	for _, item := range lst {
-		ar, _ := rt.assetCache.GetType(item.Type)
+		ar, has := rt.assetCache.GetType(item.Type)
+		if !has {
+			logger.Warningf("asset type not found: %s", item.Type)
+			continue
+		}
 
 		if category != "" && ar.Category != category {
 			continue
@@ -85,11 +89,6 @@ func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
 		}
 		if groupId > -1 && item.OrganizationId != groupId { //这里使用orgid作为group返回查询条件
 			continue
-		}
-
-		metrics := []map[string]string{}
-		for _, m := range item.Metrics {
-			metrics = append(metrics, m)
 		}
 
 		ip, name := models.GetIP(item)
@@ -113,7 +112,7 @@ func (rt *Router) getDashboardAssetsByFE(c *gin.Context) {
 			UpdateAt: item.HealthAt,
 			Category: ar.Category,
 			Type:     item.Type,
-			Metrics:  metrics,
+			Metrics:  item.Metrics,
 			GroupId:  item.OrganizationId, //这里使用orgid作为group返回查询条件
 			Tags:     item.TagsJSON,
 			Severity: severity,
@@ -321,8 +320,8 @@ func (rt *Router) getDashboardDataCount(c *gin.Context) {
 		if val.Type == "主机(exporter)" || val.Type == "主机" {
 			for _, m := range val.Metrics {
 
-				if m["name"] == "CPU核数" {
-					flo, err := strconv.ParseFloat(m["value"], 64)
+				if m.Name == "CPU核数" {
+					flo, err := strconv.ParseFloat(m.Value, 64)
 					ginx.Dangerous(err)
 					core += int64(flo)
 				}
@@ -430,29 +429,29 @@ func (rt *Router) AssetDetails(c *gin.Context) {
 		}
 		ar, _ := rt.assetCache.GetType(asset.Type)
 
-		metrics := []map[string]string{}
+		metrics := []*models.AssetMetric{}
 		for _, m := range asset.Metrics {
-			if m["name"] == "入口流量" || m["name"] == "出口流量" || m["name"] == "吞吐量" {
-				netData, err := strconv.ParseFloat(strings.Split(m["value"], ".")[0], 64)
+			if m.Name == "入口流量" || m.Name == "出口流量" || m.Name == "吞吐量" {
+				netData, err := strconv.ParseFloat(strings.Split(m.Value, ".")[0], 64)
 				ginx.Dangerous(err)
 				if netData < math.Pow(10, 3) {
-					m["value"] = strings.Split(m["value"], ".")[0] + "b/s"
+					m.Value = strings.Split(m.Value, ".")[0] + "b/s"
 				} else if netData >= math.Pow(10, 3) && netData < math.Pow(10, 6) {
 					netDT, err := strconv.ParseFloat(fmt.Sprintf("%.2f", netData/math.Pow(10, 3)), 64)
 					ginx.Dangerous(err)
-					m["value"] = strconv.FormatFloat(netDT, 'f', -1, 64) + "Kb/s"
+					m.Value = strconv.FormatFloat(netDT, 'f', -1, 64) + "Kb/s"
 				} else if netData >= math.Pow(10, 6) && netData < math.Pow(10, 9) {
 					netDT, err := strconv.ParseFloat(fmt.Sprintf("%.2f", netData/math.Pow(10, 6)), 64)
 					ginx.Dangerous(err)
-					m["value"] = strconv.FormatFloat(netDT, 'f', -1, 64) + "Mb/s"
+					m.Value = strconv.FormatFloat(netDT, 'f', -1, 64) + "Mb/s"
 				}
-			} else if m["name"] == "CPU使用率" || m["name"] == "内存使用率" {
-				netData, err := strconv.ParseFloat(m["value"], 64)
+			} else if m.Name == "CPU使用率" || m.Name == "内存使用率" {
+				netData, err := strconv.ParseFloat(m.Value, 64)
 				ginx.Dangerous(err)
 				floatVal, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", netData), 64)
-				m["value"] = strconv.FormatFloat(floatVal, 'f', -1, 64) + "%"
-			} else if m["name"] == "CPU核数" || m["name"] == "在线状态" {
-				m["value"] = strings.Split(m["value"], ".")[0]
+				m.Value = strconv.FormatFloat(floatVal, 'f', -1, 64) + "%"
+			} else if m.Name == "CPU核数" || m.Name == "在线状态" {
+				m.Value = strings.Split(m.Value, ".")[0]
 			}
 			metrics = append(metrics, m)
 		}
@@ -489,7 +488,7 @@ func (rt *Router) AssetDetails(c *gin.Context) {
 	ginx.NewRender(c).Data(data, nil)
 }
 
-//告警详情接口
+// 告警详情接口
 // @Summary      告警详情接口
 // @Description  告警详情接口
 // @Tags         大屏展示
@@ -545,7 +544,7 @@ func (rt *Router) AlarmHisQueryGet(c *gin.Context) {
 	ginx.NewRender(c).Data(str, err)
 }
 
-//告警详情接口
+// 告警详情接口
 // @Summary      历史告警搜索删除
 // @Description  历史告警搜索删除
 // @Tags         大屏展示
@@ -647,7 +646,7 @@ func (rt *Router) AlarmHisFilter(c *gin.Context) {
 	}, err)
 }
 
-//告警详情接口
+// 告警详情接口
 // @Summary      历史告警搜索记录
 // @Description  历史告警搜索记录
 // @Tags         大屏展示

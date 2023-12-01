@@ -2,7 +2,6 @@ package models
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -15,46 +14,52 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/prometheus/common/model"
 	"github.com/toolkits/pkg/file"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
 
+type AssetMetric struct {
+	Label     string      `json:"label"`
+	Value     string      `json:"value"`
+	Name      string      `json:"name"`
+	PromValue model.Value `json:"-"`
+}
+
 type Asset struct {
-	Id                 int64          `json:"id" gorm:"primaryKey"`
-	Ident              string         `json:"ident"`
-	Name               string         `json:"name" cn:"名称" xml:"name"`
-	Type               string         `json:"type" cn:"类型" xml:"type" source:"type=cache"`
-	Ip                 string         `json:"ip" cn:"IP" xml:""`
-	Manufacturers      string         `json:"manufacturers" cn:"厂商" xml:"manufacturers"`
-	Position           string         `json:"position" cn:"资产位置" xml:"position"`
-	Status             int64          `json:"status" xml:"status" cn:"状态" validate:"omitempty,oneof=0 1" source:"type=option,value=[下线;正常]" ignore:"true"` //0: 未生效, 1: 已生效
-	GroupId            int64          `json:"group_id" cn:"业务组" source:"type=table,table=busi_group,property=id,field=name"`
-	Label              string         `json:"label"`
-	Tags               string         `json:"-"`
-	TagsJSON           []string       `json:"tags" gorm:"-"`
-	Memo               string         `json:"memo"`
-	Configs            string         `json:"configs"`
-	Params             string         `json:"params"`
-	Plugin             string         `json:"plugin"`
-	CreateAt           int64          `json:"create_at"`
-	CreateBy           string         `json:"create_by"`
-	UpdateAt           int64          `json:"update_at"`
-	UpdateBy           string         `json:"update_by"`
-	OrganizationId     int64          `json:"organization_id"`
-	DirectoryId        int64          `json:"directory_id"`
-	OptionalMetrics    string         `json:"-"`
-	OptinalMetricsJson []*Metrics     `json:"optional_metrics" gorm:"-"` //巡检检查使用
-	Dashboard          string         `json:"dashboard" gorm:"-"`
-	DeletedAt          gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"`
+	Id             int64          `json:"id" gorm:"primaryKey"`
+	Ident          string         `json:"ident"`
+	Name           string         `json:"name" cn:"名称" xml:"name"`
+	Type           string         `json:"type" cn:"类型" xml:"type" source:"type=cache"`
+	Ip             string         `json:"ip" cn:"IP" xml:""`
+	Manufacturers  string         `json:"manufacturers" cn:"厂商" xml:"manufacturers"`
+	Position       string         `json:"position" cn:"资产位置" xml:"position"`
+	Status         int64          `json:"status" xml:"status" cn:"状态" validate:"omitempty,oneof=0 1" source:"type=option,value=[下线;正常]" ignore:"true"` //0: 未生效, 1: 已生效
+	GroupId        int64          `json:"group_id" cn:"业务组" source:"type=table,table=busi_group,property=id,field=name"`
+	Label          string         `json:"label"`
+	Tags           string         `json:"-"`
+	TagsJSON       []string       `json:"tags" gorm:"-"`
+	Memo           string         `json:"memo"`
+	Configs        string         `json:"configs"`
+	Params         string         `json:"params"`
+	Plugin         string         `json:"plugin"`
+	CreateAt       int64          `json:"create_at"`
+	CreateBy       string         `json:"create_by"`
+	UpdateAt       int64          `json:"update_at"`
+	UpdateBy       string         `json:"update_by"`
+	OrganizationId int64          `json:"organization_id"`
+	DirectoryId    int64          `json:"directory_id"`
+	Dashboard      string         `json:"dashboard" gorm:"-"`
+	DeletedAt      gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"`
 
 	//下面的是健康检查使用，在memsto缓存中保存
-	Health      int64                        `json:"health" gorm:"-"` //0: fail 1: ok
-	HealthAt    int64                        `json:"-" gorm:"-"`
-	Metrics     map[string]map[string]string `json:"-" gorm:"-"`
-	Exps        []AssetsExpansion            `json:"exps" gorm:"-"`
-	MetricsList []map[string]interface{}     `json:"metrics_list" gorm:"-"`
+	Health      int64             `json:"health" gorm:"-"` //0: fail 1: ok
+	HealthAt    int64             `json:"-" gorm:"-"`
+	Metrics     []*AssetMetric    `json:"metrics_list" gorm:"-"`
+	Exps        []AssetsExpansion `json:"exps" gorm:"-"`
+	Monitorings []Monitoring      `json:"-" gorm:"-"`
 }
 
 type AssetImport struct {
@@ -65,11 +70,6 @@ type AssetImport struct {
 	Position      string `json:"position" cn:"资产位置" xml:"position"`
 	Status        string `json:"status" xml:"status" cn:"状态"` //0: 未生效, 1: 已生效
 	Group         string `json:"group" xml:"group" cn:"业务组"`
-}
-
-type Metrics struct {
-	Name    string `json:"name"`
-	Metrics string `json:"metrics" yaml:"metrics"`
 }
 
 type BaseProp struct {
@@ -101,16 +101,21 @@ type ExtraPropPart struct {
 }
 
 type AssetType struct {
-	Name            string                    `json:"name"`
-	Plugin          string                    `json:"plugin"`
-	Metrics         []*Metrics                `json:"metrics"`
-	OptionalMetrics []string                  `json:"optional_metrics" yaml:"optional_metrics"`
-	Category        string                    `json:"category"`
-	Form            []map[string]interface{}  `json:"form"`
-	BaseProps       []*BaseProp               `json:"base_props" yaml:"base_props"`
-	ExtraProps      map[string]*ExtraPropPart `json:"extra_props" yaml:"extra_props"`
+	Name       string                    `json:"name"`
+	Plugin     string                    `json:"plugin"`
+	Metrics    []*AssetTypeMetric        `json:"metrics"`
+	Category   string                    `json:"category"`
+	Form       []map[string]interface{}  `json:"form"`
+	BaseProps  []*BaseProp               `json:"base_props" yaml:"base_props"`
+	ExtraProps map[string]*ExtraPropPart `json:"extra_props" yaml:"extra_props"`
 
 	Dashboard string `json:"-"`
+}
+
+type AssetTypeMetric struct {
+	Name    string      `json:"name"`
+	Metrics string      `json:"metrics" yaml:"metrics"`
+	Value   model.Value `json:"-" yaml:"-"`
 }
 
 type AssetConfigs struct {
@@ -517,7 +522,6 @@ func AssetUpdateOrganization(ctx *ctx.Context, ids []string, organize_id int64) 
 }
 
 func (e *Asset) DB2FE() {
-	json.Unmarshal([]byte(e.OptionalMetrics), &e.OptinalMetricsJson)
 }
 
 // 获取某一类资产上月（自然月）环比值
@@ -740,7 +744,7 @@ func AssetGetByIds(ctx *ctx.Context, ids []int64) ([]Asset, error) {
 	return lst, err
 }
 
-//数据校验
+// 数据校验
 func Verify(asset Asset) error {
 	//非空字段校验
 	if asset.Name == "" {

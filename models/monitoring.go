@@ -322,3 +322,15 @@ func (m *Monitoring) CompilePromQL() string {
 	// TODO: 如果这里的资产是全局资产，那么不需要注入标签
 	return prom.InjectLabel(m.MonitoringSql, "asset_id", strconv.Itoa(int(m.AssetId)), labels.MatchEqual)
 }
+
+func MonitoringStatistics(ctx *ctx.Context) (*Statistics, error) {
+	session := DB(ctx).Model(&Monitoring{}).Select("count(*) as total", "max(updated_at) as last_updated")
+
+	var stats []*Statistics
+	err := session.Find(&stats).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return stats[0], nil
+}

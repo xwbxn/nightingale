@@ -91,7 +91,6 @@ func (as *Attr) updateExtraProps(asset *models.Asset) {
 			continue
 		}
 		if len(values) == 0 {
-			logger.Error("查询资产错误, 未查到资产信息: ", promql)
 			continue
 		}
 

@@ -77,7 +77,7 @@ func (s *Set) updateMeta(items map[string]models.HostMeta) {
 	num := 0
 
 	for _, meta := range items {
-		m[meta.Hostname] = meta
+		m[meta.IpAddress] = meta
 		num++
 		if num == 100 {
 			if err := s.updateTargets(m); err != nil {
@@ -99,26 +99,35 @@ func (s *Set) updateTargets(m map[string]models.HostMeta) error {
 		return nil
 	}
 
-	// there are some idents not found in db, so insert them
+	// there are some asset not found in db, so insert them
 	var exists []string
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
 	}
 
-	err := s.ctx.DB.Table("assets").Where("ident in ? and plugin = 'host'", keys).Pluck("ident", &exists).Error
-	if err != nil {
+	// err := s.ctx.DB.Table("assets").Where("ip in ? and plugin = 'host'", keys).Pluck("ip", &exists).Error
+	has, err := models.AssetGet(s.ctx, "ip in ? and plugin = 'host'", keys)
+	if has != nil || err != nil {
 		return err
 	}
 
-	now := time.Now().Unix()
 	news := slice.SubString(keys, exists)
 	for i := 0; i < len(news); i++ {
 		conf, _ := models.AssetGenConfig("主机", make(map[string]interface{}))
 
 		new := m[news[i]]
-		err = s.ctx.DB.Exec("INSERT INTO assets(configs, group_id, ident, name, label, type, memo, create_at, create_by, plugin) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?,?)",
-			conf.String(), 0, new.Hostname, new.Hostname, new.RemoteAddr, "主机", "auto", now, "system", "host").Error
+		asset := models.Asset{
+			Ident:   new.Hostname,
+			Name:    new.Hostname,
+			Label:   new.IpAddress,
+			Type:    "主机",
+			Memo:    "自动注册",
+			Plugin:  "host",
+			Ip:      new.IpAddress,
+			Configs: conf.String(),
+		}
+		_, err := asset.AddXH(s.ctx)
 		if err != nil {
 			logger.Error("failed to insert assets:", news[i], "error:", err)
 		}

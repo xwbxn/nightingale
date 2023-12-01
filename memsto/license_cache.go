@@ -135,7 +135,8 @@ func (cache *LicenseCache) syncLicense() error {
 
 	stat, err := models.LicenseStatistics()
 	if err != nil {
-		return errors.WithMessage(err, "failed to exec LicenseStatistics")
+		logger.Errorf("failed to exec LicenseStatistics: %s", err.Error())
+		return nil
 	}
 
 	if !cache.StatChanged(stat.Total, stat.LastUpdated) {
@@ -147,7 +148,8 @@ func (cache *LicenseCache) syncLicense() error {
 
 	lst, err := models.LicenseCacheGets()
 	if err != nil {
-		return errors.WithMessage(err, "failed to exec LicenseGetsAll")
+		logger.Errorf("failed to exec LicenseGetsAll: %s", err.Error())
+		return nil
 	}
 
 	m := make(map[int64]*models.License)

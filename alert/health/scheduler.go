@@ -2,12 +2,10 @@ package health
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/astats"
-	"github.com/ccfos/nightingale/v6/alert/naming"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
@@ -58,24 +56,12 @@ func (s *Scheduler) LoopSyncHealthRules(ctx context.Context) {
 }
 
 func (s *Scheduler) syncHealthRules() {
-	ids := s.assetCache.GetTypeIds()
+	assets := s.assetCache.GetAll()
 	healthRules := make(map[string]*HealthRuleContext)
-	for _, id := range ids {
-		atype, has := s.assetCache.GetType(id)
-		if !has {
-			continue
-		}
-
-		// datasourceIds := s.promClients.Hit(asset.DatasourceIdsJson)
-		datasourceIds := s.promClients.Hit([]int64{0})
-		for _, dsId := range datasourceIds {
-			if !naming.DatasourceHashRing.IsHit(dsId, fmt.Sprintf("%s", atype.Name), s.aconf.Heartbeat.Endpoint) {
-				continue
-			}
-
-			healthRule := NewHealthRuleContext(atype, dsId, s.promClients, s.writers, s.assetCache)
-			healthRules[healthRule.Hash()] = healthRule
-		}
+	for _, asset := range assets {
+		// TODO: datsourceID 需要可选传入
+		healthRule := NewHealthRuleContext(asset, 1, s.promClients, s.writers)
+		healthRules[healthRule.Hash()] = healthRule
 	}
 
 	for hash, rule := range healthRules {

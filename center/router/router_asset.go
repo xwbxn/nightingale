@@ -1,7 +1,6 @@
 package router
 
 import (
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"net/http"
@@ -155,32 +154,6 @@ func (rt *Router) assetsAddXH(c *gin.Context) {
 	ginx.NewRender(c).Data(id, err)
 }
 
-type optionalMetricsForm struct {
-	Id              int64             `json:"id"`
-	OptionalMetrics []*models.Metrics `json:"optional_metrics"`
-}
-
-func (rt *Router) putOptionalMetrics(c *gin.Context) {
-	var f optionalMetricsForm
-	ginx.BindJSON(c, &f)
-	oldAssets, err := models.AssetGet(rt.Ctx, "id=?", f.Id)
-	ginx.Dangerous(err)
-	me := c.MustGet("user").(*models.User)
-
-	if oldAssets == nil {
-		ginx.Bomb(http.StatusOK, "assets not found")
-	}
-
-	om, err := json.Marshal(f.OptionalMetrics)
-	ginx.Dangerous(err)
-	oldAssets.OptionalMetrics = string(om)
-	oldAssets.UpdateAt = time.Now().Unix()
-	oldAssets.UpdateBy = me.Username
-
-	err = oldAssets.Update(rt.Ctx, "optional_metrics", "update_at", "update_by")
-	ginx.NewRender(c).Message(err)
-}
-
 func (rt *Router) assetPut(c *gin.Context) {
 	var f assetsModel
 	ginx.BindJSON(c, &f)
@@ -319,19 +292,7 @@ func (rt *Router) assetGetById(c *gin.Context) {
 		health, ok := rt.assetCache.Get(asset.Id)
 		if ok {
 			asset.Health = health.Health
-		}
-		assetType, _ := rt.assetCache.GetType(asset.Type)
-		assetC, assetCOk := rt.assetCache.Get(asset.Id)
-		if assetCOk {
-			metrics := make([]map[string]interface{}, 0)
-
-			for _, val := range assetType.Metrics {
-				value, valueOk := assetC.Metrics[val.Name]
-				if valueOk {
-					metrics = append(metrics, map[string]interface{}{"label": val.Metrics, "val": value["value"]})
-				}
-			}
-			lst[index].MetricsList = metrics
+			asset.Metrics = health.Metrics
 		}
 
 		exps, err := models.AssetsExpansionGetsMap(rt.Ctx, map[string]interface{}{"assets_id": asset.Id})
@@ -380,22 +341,7 @@ func (rt *Router) assetGetFilter(c *gin.Context) {
 		health, ok := rt.assetCache.Get(asset.Id)
 		if ok {
 			asset.Health = health.Health
-		}
-		assetType, _ := rt.assetCache.GetType(asset.Type)
-		assetC, assetCOk := rt.assetCache.Get(asset.Id)
-		if assetCOk {
-			metrics := make([]map[string]interface{}, 0)
-
-			if len(assetType.Metrics) > 0 {
-				for _, val := range assetType.Metrics {
-					value, valueOk := assetC.Metrics[val.Name]
-					if valueOk {
-						metrics = append(metrics, map[string]interface{}{"label": val.Metrics, "val": value["value"]})
-					}
-				}
-			}
-
-			lst[index].MetricsList = metrics
+			asset.Metrics = health.Metrics
 		}
 
 		exps, err := models.AssetsExpansionGetsMap(rt.Ctx, map[string]interface{}{"assets_id": asset.Id})
@@ -430,22 +376,7 @@ func (rt *Router) assetGetAll(c *gin.Context) {
 		health, ok := rt.assetCache.Get(asset.Id)
 		if ok {
 			asset.Health = health.Health
-		}
-		assetType, _ := rt.assetCache.GetType(asset.Type)
-		assetC, assetCOk := rt.assetCache.Get(asset.Id)
-		if assetCOk {
-			metrics := make([]map[string]interface{}, 0)
-
-			if len(assetType.Metrics) > 0 {
-				for _, val := range assetType.Metrics {
-					value, valueOk := assetC.Metrics[val.Name]
-					if valueOk {
-						metrics = append(metrics, map[string]interface{}{"label": val.Metrics, "val": value["value"]})
-					}
-				}
-			}
-
-			lst[index].MetricsList = metrics
+			asset.Metrics = health.Metrics
 		}
 
 		exps, err := models.AssetsExpansionGetsMap(rt.Ctx, map[string]interface{}{"assets_id": asset.Id})

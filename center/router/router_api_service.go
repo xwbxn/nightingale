@@ -71,6 +71,10 @@ func (rt *Router) apiServiceAdd(c *gin.Context) {
 	var f models.ApiService
 	ginx.BindJSON(c, &f)
 
+	if f.IsDangerous() {
+		ginx.Bomb(400, "不合法的脚本")
+	}
+
 	// 添加审计信息
 	me := c.MustGet("user").(*models.User)
 	f.CreatedBy = me.Username
@@ -92,6 +96,10 @@ func (rt *Router) apiServiceAdd(c *gin.Context) {
 func (rt *Router) apiServicePut(c *gin.Context) {
 	var f models.ApiService
 	ginx.BindJSON(c, &f)
+
+	if f.IsDangerous() {
+		ginx.Bomb(400, "不合法的脚本")
+	}
 
 	old, err := models.ApiServiceGetById(rt.Ctx, f.Id)
 	ginx.Dangerous(err)
