@@ -16,11 +16,12 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/toolkits/pkg/logger"
+	"golang.org/x/exp/slices"
 )
 
 var DEFAULT_CLIENT int64 = 1
 var attrSync Attr
-var HOST string = "主机"
+var HOST string = "主机设备"
 
 type Attr struct {
 	Ctx        *ctx.Context
@@ -108,19 +109,30 @@ func (as *Attr) updateExtraProps(asset *models.Asset) {
 			}
 		}
 
-		tx := as.Ctx.DB.Begin()
-		err = models.AssetsExpansionDelMap(tx, map[string]interface{}{"assets_id": asset.Id, "config_category": cate})
+		query := map[string]interface{}{"assets_id": asset.Id, "config_category": cate}
+		oldAttrs, err := models.AssetsExpansionGetsMap(as.Ctx, query)
 		if err != nil {
 			logger.Error(err)
-			return
 		}
-		err = models.AssetsExpansionAddTx(tx, attrs)
-		if err != nil {
-			logger.Error(err)
-			continue
-		}
-		tx.Commit()
 
+		notChange := slices.EqualFunc[models.AssetsExpansion](attrs, oldAttrs, func(s1, s2 models.AssetsExpansion) bool {
+			return s1.Hash() == s2.Hash()
+		})
+
+		if !notChange {
+			tx := as.Ctx.DB.Begin()
+			err = models.AssetsExpansionDelMap(tx, map[string]interface{}{"assets_id": asset.Id, "config_category": cate})
+			if err != nil {
+				logger.Error(err)
+				return
+			}
+			err = models.AssetsExpansionAddTx(tx, attrs)
+			if err != nil {
+				logger.Error(err)
+				continue
+			}
+			tx.Commit()
+		}
 	}
 }
 

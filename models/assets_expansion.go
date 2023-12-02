@@ -4,6 +4,9 @@
 package models
 
 import (
+	"crypto/md5"
+	"fmt"
+
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"gorm.io/gorm"
 )
@@ -171,4 +174,9 @@ func AssetsExpansionUpdateTx(tx *gorm.DB, where map[string]interface{}, updateFr
 // 根据条件统计个数
 func AssetsExpansionCount(ctx *ctx.Context, where string, args ...interface{}) (num int64, err error) {
 	return Count(DB(ctx).Model(&AssetsExpansion{}).Where(where, args...))
+}
+
+func (a *AssetsExpansion) Hash() string {
+	hashStr := fmt.Sprintf("%d-%s-%s-%s", a.AssetsId, a.ConfigCategory, a.Name, a.Value)
+	return string(md5.New().Sum([]byte(hashStr)))
 }

@@ -3,7 +3,7 @@
 
 [[instances]]
 address = "{{.address}}:{{.port}}"
-username = "{{.user}}"
+username = "{{.username}}"
 password = "{{.password}}"
 
 extra_status_metrics = true

@@ -50,16 +50,13 @@ type httpRemoteProviderResponse struct {
 //	}
 func (rt *Router) categrafConfigGet(c *gin.Context) {
 	ident := ginx.QueryStr(c, "agent_hostname")
-	version := ginx.QueryStr(c, "version", "")
 
 	provider := rt.AssetCache.GetByIdent(ident)
 	if len(provider) == 0 {
 		ginx.Dangerous("config not found", 404)
 	}
 	resp := convertToResponse(rt, provider)
-	if version != resp.Version {
-		models.AssetSetStatus(rt.Ctx, ident, 1)
-	}
+	models.AssetSetStatus(rt.Ctx, ident, 1)
 	c.JSON(200, resp)
 }
 

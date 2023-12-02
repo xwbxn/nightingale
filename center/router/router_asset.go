@@ -48,22 +48,21 @@ func (rt *Router) assetsGets(c *gin.Context) {
 }
 
 type assetsModel struct {
-	Id              int64  `json:"id"`
-	Version         string `json:"version"`
-	Ident           string `json:"ident"`
-	GroupId         int64  `json:"group_id"`
-	Name            string `json:"name"`
-	Label           string `json:"label"`
-	Tags            string `json:"tags"`
-	Type            string `json:"type"`
-	Ip              string `json:"ip"`
-	Manufacturers   string `json:"manufacturers"`
-	Position        string `json:"position"`
-	Memo            string `json:"memo"`
-	Configs         string `json:"configs"`
-	Params          string `json:"params"`
-	OrganizationId  int64  `json:"organization_id"`
-	OptionalMetrics string `json:"optional_metrics"`
+	Id             int64  `json:"id"`
+	Version        string `json:"version"`
+	Ident          string `json:"ident"`
+	GroupId        int64  `json:"group_id"`
+	Name           string `json:"name"`
+	Label          string `json:"label"`
+	Tags           string `json:"tags"`
+	Type           string `json:"type"`
+	Ip             string `json:"ip"`
+	Manufacturers  string `json:"manufacturers"`
+	Position       string `json:"position"`
+	Memo           string `json:"memo"`
+	Configs        string `json:"configs"`
+	Params         string `json:"params"`
+	OrganizationId int64  `json:"organization_id"`
 }
 
 func (rt *Router) assetsAdd(c *gin.Context) {
@@ -99,46 +98,26 @@ func (rt *Router) assetsAdd(c *gin.Context) {
 // @Router       /api/n9e/xh/assets/ [post]
 // @Security     ApiKeyAuth
 func (rt *Router) assetsAddXH(c *gin.Context) {
-	var f map[string]interface{}
+	var f assetsModel
 	ginx.BindJSON(c, &f)
 	me := c.MustGet("user").(*models.User)
 
-	num, err := models.AssetsCountMap(rt.Ctx, map[string]interface{}{"ip": f["ip"]})
+	// TODO: IP重复规则需要变化
+	num, err := models.AssetsCountMap(rt.Ctx, map[string]interface{}{"ip": f.Ip})
 	ginx.Dangerous(err)
 	if num > 0 {
-		ginx.Bomb(http.StatusOK, "IP已存在")
-	}
-
-	position := ""
-	positionT, positionOk := f["position"]
-	if positionOk {
-		position = positionT.(string)
-	}
-	memo := ""
-	memoT, memoOk := f["memo"]
-	if memoOk {
-		memo = memoT.(string)
-	}
-	manufacturers := ""
-	manufacturersT, manufacturersOk := f["manufacturers"]
-	if manufacturersOk {
-		manufacturers = manufacturersT.(string)
-	}
-
-	var group int64 = 0
-	groupT, groupOk := f["group_id"]
-	if groupOk {
-		group = int64(groupT.(float64))
+		// ginx.Bomb(http.StatusOK, "IP已存在")
 	}
 
 	var assets = models.Asset{
-		GroupId:       group,
-		Name:          f["name"].(string),
-		Type:          f["type"].(string),
-		Ip:            f["ip"].(string),
-		Manufacturers: manufacturers,
-		Position:      position,
-		Memo:          memo,
+		GroupId:       f.GroupId,
+		Name:          f.Name,
+		Type:          f.Type,
+		Ip:            f.Ip,
+		Manufacturers: f.Manufacturers,
+		Position:      f.Position,
+		Params:        f.Params,
+		Memo:          f.Memo,
 		CreateBy:      me.Username,
 		CreateAt:      time.Now().Unix(),
 	}
@@ -188,10 +167,10 @@ func (rt *Router) assetPut(c *gin.Context) {
 // @Router       /api/n9e/xh/assets/ [put]
 // @Security     ApiKeyAuth
 func (rt *Router) assetPutXH(c *gin.Context) {
-	var f map[string]interface{}
+	var f assetsModel
 	ginx.BindJSON(c, &f)
 
-	oldAssets, err := models.AssetGet(rt.Ctx, "id=?", int64(f["id"].(float64)))
+	oldAssets, err := models.AssetGet(rt.Ctx, "id=?", f.Id)
 	ginx.Dangerous(err)
 
 	me := c.MustGet("user").(*models.User)
@@ -199,46 +178,26 @@ func (rt *Router) assetPutXH(c *gin.Context) {
 	if oldAssets == nil {
 		ginx.Bomb(http.StatusOK, "资产不存在")
 	}
-	if oldAssets.Ip != f["ip"].(string) {
-		num, err := models.AssetsCountMap(rt.Ctx, map[string]interface{}{"ip": f["ip"]})
+	if oldAssets.Ip != f.Ip {
+		num, err := models.AssetsCountMap(rt.Ctx, map[string]interface{}{"ip": f.Ip})
 		ginx.Dangerous(err)
 		if num > 0 {
 			ginx.Bomb(http.StatusOK, "IP已存在")
 		}
 	}
 
-	position := ""
-	positionT, positionOk := f["position"]
-	if positionOk {
-		position = positionT.(string)
-	}
-	memo := ""
-	memoT, memoOk := f["memo"]
-	if memoOk {
-		memo = memoT.(string)
-	}
-	manufacturers := ""
-	manufacturersT, manufacturersOk := f["manufacturers"]
-	if manufacturersOk {
-		manufacturers = manufacturersT.(string)
-	}
-	var group int64 = 0
-	groupT, groupOk := f["group_id"]
-	if groupOk {
-		group = int64(groupT.(float64))
-	}
-
-	oldAssets.GroupId = group
-	oldAssets.Name = f["name"].(string)
-	oldAssets.Type = f["type"].(string)
-	oldAssets.Ip = f["ip"].(string)
-	oldAssets.Manufacturers = manufacturers
-	oldAssets.Position = position
-	oldAssets.Memo = memo
+	oldAssets.GroupId = f.GroupId
+	oldAssets.Name = f.Name
+	oldAssets.Type = f.Type
+	oldAssets.Ip = f.Ip
+	oldAssets.Manufacturers = f.Manufacturers
+	oldAssets.Position = f.Position
+	oldAssets.Memo = f.Memo
+	oldAssets.Params = f.Params
 	oldAssets.UpdateAt = time.Now().Unix()
 	oldAssets.UpdateBy = me.Username
 
-	err = oldAssets.Update(rt.Ctx, "group_id", "name", "type", "ip", "manufacturers", "os", "cpu", "memory", "plugin_version", "position", "asset_status", "directory_id", "memo", "update_at", "update_by")
+	err = oldAssets.Update(rt.Ctx, "group_id", "name", "type", "ip", "manufacturers", "position", "params", "memo", "update_at", "update_by")
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Message(err)
@@ -447,9 +406,11 @@ func (rt *Router) assetDefaultConfigGet(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 
 	assetType := ginx.UrlParamStr(c, "type")
-	content, err := models.AssetGenConfig(assetType, f)
+	at, err := models.AssetTypeGet(assetType)
+	ginx.Dangerous(err)
+	content, err := at.GenConfig(f)
 
-	ginx.NewRender(c).Data(map[string]string{"content": content.String()}, err)
+	ginx.NewRender(c).Data(map[string]string{"content": content}, err)
 }
 
 func (rt *Router) assetIdentGetAll(c *gin.Context) {

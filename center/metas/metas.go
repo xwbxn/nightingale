@@ -2,6 +2,7 @@ package metas
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/ccfos/nightingale/v6/storage"
 
 	"github.com/toolkits/pkg/logger"
-	"github.com/toolkits/pkg/slice"
 )
 
 type Set struct {
@@ -99,37 +99,38 @@ func (s *Set) updateTargets(m map[string]models.HostMeta) error {
 		return nil
 	}
 
-	// there are some asset not found in db, so insert them
-	var exists []string
-	keys := make([]string, 0, len(m))
+	// there are some asset not updated in db, so insert them or update
 	for k := range m {
-		keys = append(keys, k)
-	}
-
-	// err := s.ctx.DB.Table("assets").Where("ip in ? and plugin = 'host'", keys).Pluck("ip", &exists).Error
-	has, err := models.AssetGet(s.ctx, "ip in ? and plugin = 'host'", keys)
-	if has != nil || err != nil {
-		return err
-	}
-
-	news := slice.SubString(keys, exists)
-	for i := 0; i < len(news); i++ {
-		conf, _ := models.AssetGenConfig("主机", make(map[string]interface{}))
-
-		new := m[news[i]]
-		asset := models.Asset{
-			Ident:   new.Hostname,
-			Name:    new.Hostname,
-			Label:   new.IpAddress,
-			Type:    "主机",
-			Memo:    "自动注册",
-			Plugin:  "host",
-			Ip:      new.IpAddress,
-			Configs: conf.String(),
-		}
-		_, err := asset.AddXH(s.ctx)
+		exists, err := models.AssetGet(s.ctx, "ip = ? and plugin = 'host'", k)
 		if err != nil {
-			logger.Error("failed to insert assets:", news[i], "error:", err)
+			return err
+		}
+		new := m[k]
+		if exists == nil {
+			//new
+			asset := models.Asset{
+				Ident:  new.Hostname,
+				Name:   new.Hostname,
+				Label:  new.IpAddress,
+				Type:   "主机设备",
+				Memo:   "自动注册",
+				Plugin: "host",
+				Ip:     new.IpAddress,
+			}
+			params, _ := json.Marshal(asset)
+			asset.Params = string(params)
+			// insert
+			_, err = asset.AddXH(s.ctx)
+			if err != nil {
+				logger.Error("failed to insert assets:", k, "error:", err)
+			}
+		} else if exists.Ident == "" || exists.Configs == "" {
+			exists.Ident = new.Hostname
+			exists.UpdateAt = time.Now().Unix()
+			err := exists.Update(s.ctx, "ident", "configs", "update_at")
+			if err != nil {
+				logger.Error("failed to update assets:", k, "error:", err)
+			}
 		}
 	}
 
@@ -137,6 +138,6 @@ func (s *Set) updateTargets(m map[string]models.HostMeta) error {
 	for ident, meta := range m {
 		newMap[models.WrapIdent(ident)] = meta
 	}
-	err = storage.MSet(context.Background(), s.redis, newMap)
+	err := storage.MSet(context.Background(), s.redis, newMap)
 	return err
 }

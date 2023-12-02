@@ -6,11 +6,11 @@ package models
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/prometheus/prometheus/model/labels"
-	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
 
@@ -31,6 +31,7 @@ type Monitoring struct {
 	TargetId       int64          `gorm:"column:TARGET_ID" json:"target_id" `                       //type:*int         comment:采集器      version:2023-10-08 16:45
 	Config         string         `gorm:"column:CONFIG" json:"config" `                             //type:string       comment:配置信息    version:2023-10-13 14:20
 	Remark         string         `gorm:"column:REMARK" json:"remark" `                             //type:string       comment:说明        version:2023-10-08 16:45
+	Unit           string         `gorm:"column:UNIT" json:"unit"`                                  //type:string       comment:单位        version:2023-10-08 16:45
 	CreatedBy      string         `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string       comment:创建人      version:2023-10-08 16:45
 	CreatedAt      int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int         comment:创建时间    version:2023-10-08 16:45
 	UpdatedBy      string         `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string       comment:更新人      version:2023-10-08 16:45
@@ -163,7 +164,6 @@ func MonitoringMapCountNew(ctx *ctx.Context, filter, query, assetType string, as
 		session = session.Where("ASSET_ID = ? ", assetId)
 	}
 	if assetType != "" {
-		logger.Debug(assetType)
 		ids, err := AssetIdByType(ctx, "%"+assetType+"%")
 		if err != nil {
 			return 0, err
@@ -311,9 +311,9 @@ func MonitoringCount(ctx *ctx.Context, where string, args ...interface{}) (num i
 // 批量更改监控状态
 func MonitoringUpdateStatus(ctx *ctx.Context, ids []int64, status, oType int64) error {
 	if oType == 1 {
-		return DB(ctx).Debug().Model(&Monitoring{}).Where("id in ?", ids).Updates(map[string]interface{}{"status": status}).Error
+		return DB(ctx).Debug().Model(&Monitoring{}).Where("id in ?", ids).Updates(map[string]interface{}{"status": status, "updated_at": time.Now().Unix()}).Error
 	} else if oType == 2 {
-		return DB(ctx).Debug().Model(&Monitoring{}).Where("id in ?", ids).Updates(map[string]interface{}{"is_alarm": status}).Error
+		return DB(ctx).Debug().Model(&Monitoring{}).Where("id in ?", ids).Updates(map[string]interface{}{"is_alarm": status, "updated_at": time.Now().Unix()}).Error
 	}
 	return nil
 }

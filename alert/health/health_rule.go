@@ -46,10 +46,17 @@ func (hrc *HealthRuleContext) Key() string {
 }
 
 func (hrc *HealthRuleContext) Hash() string {
-	return str.MD5(fmt.Sprintf("%s_%d_%d",
+	h := []int64{}
+	for _, m := range hrc.asset.Monitorings {
+		h = append(h, m.Id)
+		h = append(h, m.Status)
+		h = append(h, m.UpdatedAt)
+	}
+	return str.MD5(fmt.Sprintf("%s_%d_%d_%v",
 		hrc.asset.Name,
 		hrc.asset.Id,
 		hrc.datasourceId,
+		h,
 	))
 }
 
@@ -79,6 +86,9 @@ func (hrc *HealthRuleContext) AssetMetricsCheck() {
 
 	metrics := []*models.AssetMetric{}
 	for _, m := range hrc.asset.Monitorings {
+		if m.Status == 0 {
+			continue
+		}
 		promql := m.CompilePromQL()
 		value, warnings, err := hrc.promClients.GetCli(hrc.datasourceId).Query(context.Background(), promql, time.Now())
 		if err != nil {

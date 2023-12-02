@@ -29,6 +29,7 @@ require (
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/tidwall/gjson v1.14.0
 	github.com/toolkits/pkg v1.3.3
+	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2
 	golang.org/x/oauth2 v0.12.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gorm.io/driver/mysql v1.4.4
@@ -42,7 +43,6 @@ require (
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/grafana/regexp v0.0.0-20221122212121-6b5c0a4cb7fd // indirect
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
-	github.com/xwb1989/sqlparser v0.0.0-20180606152119-120387863bf2 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1 // indirect
 )

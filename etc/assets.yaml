@@ -11,7 +11,9 @@ base_props: &base_props
     label: 类型
     required: true
     type: select
-    options: ['主机', '网络交换机']
+    options:
+      - label: 主机
+        name: 主机
   - name: manufacturers
     label: 厂商
     required: false
@@ -24,23 +26,33 @@ base_props: &base_props
     label: 状态
     required: true
     type: select
-    options: ['正常', '下线']
+    options:
+      - label: 正常
+        name: 正常
+      - label: 下线
+        name: 下线
 
 config:
-  - name: 主机
-    category: "业务资产"
+  - name: 主机设备
+    category: "设备资产"
     plugin: host
     metrics:
       - name: CPU使用率
         metrics: "cpu_usage_active"
+        rules:
+          - name: CPU使用率过高
+            promql: cpu_usage_active
+            relation: ">"
+            value: 90
+            serverity: 3
       - name: 内存使用率
         metrics: "mem_used_percent"
       - name: 入口流量
-        metrics: 'rate(net_bits_recv[1m])'
+        metrics: 'rate(sum(net_bits_recv[1m]))'
       - name: 出口流量
-        metrics: "rate(net_bits_sent[1m])"
-      - name: CPU核数
-        metrics: "system_n_cpus"
+        metrics: "rate(sum(net_bits_sent[1m]))"
+      - name: 最大分区使用率
+        metrics: "max(disk_used_percent)"
     dashboard: "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Server&id=${id}&viewMode=fullscreen"
     form: []
     base_props: *base_props
@@ -232,24 +244,28 @@ config:
                 label: 状态
                 type: input
 
-  - name: 网络交换机
-    category: "网络设备"
+  - name: 网络设备
+    category: "设备资产"
     plugin: switch_legacy
     metrics:
-      - name: 在线状态
-        metrics: switch_legacy_ping_up
+      - name: 运行时间
+        metrics: switch_legacy_uptime
       - name: CPU使用率
         metrics: switch_legacy_cpu_util
       - name: 内存使用率
         metrics: switch_legacy_mem_util
-      - name: 吞吐量
-        metrics: "sum by(asset_id) (rate(switch_legacy_if_out[5m]))"
+      - name: 吞吐率
+        metrics: "rate(switch_legacy_if_out[5m])"
     dashboard: "/dashboards-built-in/detail?__built-in-cate=SNMP&__built-in-name=Switch&id=${id}&viewMode=fullscreen"
     form:
       - label: 地址
         name: address
+        type: input
+        required: true
       - label: 团体字
         name: community
+        type: password
+        required: true
     base_props: *base_props
     extra_props:
       device:
@@ -301,21 +317,9 @@ config:
                     value: 6
                   - label: lowerLayerDown
                     value: 7
-      snmp:
-        label: SNMP属性
-        sort: 2
-        props:
-          - name: snmp
-            label: snmp属性
-            type: list
-            items_limit: 1
-            items:
-              - name: community
-                label: 团体字
-                type: input
 
   - name: MySQL
-    category: "业务资产"
+    category: "数据库"
     plugin: mysql
     metrics:
       - name: QPS
@@ -324,32 +328,24 @@ config:
         metrics: mysql_global_status_threads_connected
       - name: 活动线程数
         metrics: mysql_global_status_threads_connected
+    form:
+      - name: address
+        label: 地址
+        type: input
+      - name: port
+        label: 端口
+        type: input
+      - name: username
+        label: 用户名
+        type: input
+      - name: password
+        label: 密码
+        type: password
     dashboard: "/dashboards-built-in/detail?__built-in-cate=MySQL&__built-in-name=MySQL&id=${id}&viewMode=fullscreen"
     base_props: *base_props
-    extra_props:
-      connection:
-        label: 连接属性
-        sort: 1
-        props:
-          - name: connection
-            label: 连接属性
-            type: list
-            items_limit: 1
-            items:
-              - name: address
-                label: 地址
-                type: input
-              - name: port
-                label: 端口
-                type: input
-              - name: username
-                label: 用户名
-                type: input
-              - name: password
-                label: 密码
-                type: password
+    
   - name: Redis
-    category: "业务资产"
+    category: "数据库"
     plugin: redis
     metrics:
       - name: 连接数
@@ -375,8 +371,8 @@ config:
         name: password
         type: password
 
-  - name: Web服务
-    category: "业务资产"
+  - name: HTTP服务
+    category: "应用服务"
     plugin: http_response
     metrics:
       - name: 返回状态码
@@ -387,9 +383,11 @@ config:
     form:
       - label: 服务地址
         name: url
+        type: input
+        required: true
 
-  - name: 网络连通(ping)
-    category: "业务资产"
+  - name: 网络端点
+    category: "应用服务"
     plugin: ping
     metrics:
       - name: 返回状态码
@@ -401,9 +399,11 @@ config:
     form:
       - label: IP地址
         name: address
+        type: input
+        required: true
 
-  - name: 服务端口监测
-    category: "业务资产"
+  - name: 网络服务
+    category: "应用服务"
     plugin: net_response
     metrics:
       - name: 端口状态
@@ -413,93 +413,33 @@ config:
     form:
       - label: 协议
         name: protocol
-        items: ["tcp", "udp"]
+        type: select
+        options: 
+          - label: tcp
+            value: tcp
+          - label: udp
+            value: udp
       - label: 地址
         name: address
+        type: input
+        required: true
       - label: 端口
         name: port
-
-  - name: ES集群
-    category: "业务资产"
-    plugin: elastic_search
-    metrics:
-      - name: 返回状态码
-        metrics: elasticsearch_cluster_health_status_code
-
-  - name: DNS解析
-    category: "业务资产"
-    plugin: dns_query
-    metrics:
-      - name: 返回状态码
-        metrics: dns_query_result_code
-    form:
-      - label: 域名
-        name: domain
-
-  - name: victoria-metrics
-    category: "业务资产"
-    plugin: prometheus
-    metrics: []
-    form:
-      - label: 监控Url
-        name: url
-
-  - name: 负载均衡
-    category: "网络设备"
-    plugin: switch_legacy
-    metrics:
-      - name: 在线状态
-        metrics: switch_legacy_ping_up
-    form:
-      - label: 地址
-        name: address
-      - label: 团体字
-        name: community
+        type: input
+        required: true
 
   - name: 防火墙
-    category: "网络设备"
+    category: "安全设备"
     plugin: switch_legacy
     metrics:
-      - name: 在线状态
-        metrics: switch_legacy_ping_up
+      - name: 运行时间
+        metrics: switch_legacy_uptime
     form:
       - label: 地址
         name: address
+        type: input
+        required: true
       - label: 团体字
         name: community
-
-  - name: 上网行为管理
-    category: "网络设备"
-    plugin: switch_legacy
-    metrics:
-      - name: 在线状态
-        metrics: switch_legacy_ping_up
-    form:
-      - label: 地址
-        name: address
-      - label: 团体字
-        name: community
-
-  - name: 入侵防护
-    category: "网络设备"
-    plugin: switch_legacy
-    metrics:
-      - name: 在线状态
-        metrics: switch_legacy_ping_up
-    form:
-      - label: 地址
-        name: address
-      - label: 团体字
-        name: community
-
-  - name: WEB应用防火墙
-    category: "网络设备"
-    plugin: switch_legacy
-    metrics:
-      - name: 在线状态
-        metrics: switch_legacy_ping_up
-    form:
-      - label: 地址
-        name: address
-      - label: 团体字
-        name: community
+        type: password
+        required: true

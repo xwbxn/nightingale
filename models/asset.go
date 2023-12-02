@@ -1,22 +1,17 @@
 package models
 
 import (
-	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net"
-	"path"
 	"regexp"
 	"sort"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/prometheus/common/model"
-	"github.com/toolkits/pkg/file"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
@@ -36,7 +31,8 @@ type Asset struct {
 	Ip             string         `json:"ip" cn:"IP" xml:""`
 	Manufacturers  string         `json:"manufacturers" cn:"厂商" xml:"manufacturers"`
 	Position       string         `json:"position" cn:"资产位置" xml:"position"`
-	Status         int64          `json:"status" xml:"status" cn:"状态" validate:"omitempty,oneof=0 1" source:"type=option,value=[下线;正常]" ignore:"true"` //0: 未生效, 1: 已生效
+	Status         int64          `json:"status" xml:"status" cn:"状态" validate:"omitempty,oneof=0 1" source:"type=option,value=[下线;正常]" ignore:"true"` // 纳管状态 0: 未生效, 1: 已生效
+	StatusAt       int64          `json:"status_at"`
 	GroupId        int64          `json:"group_id" cn:"业务组" source:"type=table,table=busi_group,property=id,field=name"`
 	Label          string         `json:"label"`
 	Tags           string         `json:"-"`
@@ -72,57 +68,6 @@ type AssetImport struct {
 	Group         string `json:"group" xml:"group" cn:"业务组"`
 }
 
-type BaseProp struct {
-	Name     string   `json:"name" yaml:"name"`
-	Label    string   `json:"label"`
-	Required string   `json:"required"`
-	Type     string   `json:"type"`
-	Options  []string `json:"options" yaml:"options"`
-}
-
-type ExtraPropPart struct {
-	Label string `json:"label" yaml:"label"`
-	Sort  int64  `json:"sort" yaml:"sort"`
-	Props []*struct {
-		Name       string `json:"name" yaml:"name"`
-		Label      string `json:"label" yaml:"label"`
-		Type       string `json:"type" yaml:"type"`
-		ItemsLimit int64  `json:"items_limit" yaml:"items_limit"`
-		Items      []*struct {
-			Name     string `json:"name" yaml:"name"`
-			Label    string `json:"label" yaml:"label"`
-			Required bool   `json:"required" yaml:"required"`
-			Type     string `json:"type" yaml:"type"`
-			Options  []*struct {
-				Label string `json:"label" yaml:"label"`
-				Value string `json:"value" yaml:"value"`
-			} `json:"options" yaml:"options"`
-		} `json:"items" yaml:"items"`
-	} `json:"props" yaml:"props"`
-}
-
-type AssetType struct {
-	Name       string                    `json:"name"`
-	Plugin     string                    `json:"plugin"`
-	Metrics    []*AssetTypeMetric        `json:"metrics"`
-	Category   string                    `json:"category"`
-	Form       []map[string]interface{}  `json:"form"`
-	BaseProps  []*BaseProp               `json:"base_props" yaml:"base_props"`
-	ExtraProps map[string]*ExtraPropPart `json:"extra_props" yaml:"extra_props"`
-
-	Dashboard string `json:"-"`
-}
-
-type AssetTypeMetric struct {
-	Name    string      `json:"name"`
-	Metrics string      `json:"metrics" yaml:"metrics"`
-	Value   model.Value `json:"-" yaml:"-"`
-}
-
-type AssetConfigs struct {
-	Config []*AssetType `json:"config"`
-}
-
 func (ins *Asset) TableName() string {
 	return "assets"
 }
@@ -146,17 +91,12 @@ func (ins *Asset) Add(ctx *ctx.Context) error {
 	ins.CreateAt = now
 	ins.UpdateAt = now
 	ins.Status = 0
-	assetTypes, err := AssetTypeGetsAll()
+
+	assetType, err := AssetTypeGet(ins.Type)
 	if err != nil {
 		return err
 	}
-
-	for _, item := range assetTypes {
-		if item.Name == ins.Type {
-			ins.Plugin = item.Plugin
-			break
-		}
-	}
+	ins.Plugin = assetType.Plugin
 
 	if err := Insert(ctx, ins); err != nil {
 		return err
@@ -171,28 +111,26 @@ func (ins *Asset) AddXH(ctx *ctx.Context) (int64, error) {
 		return 0, err
 	}
 
-	if ins.Type == "host" {
-		if exists, err := Exists(DB(ctx).Where("ident = ? and plugin = 'host")); err != nil || exists {
-			return 0, errors.New("duplicate host asset")
-		}
-	}
-
 	now := time.Now().Unix()
 	ins.CreateAt = now
 	ins.UpdateAt = now
 	ins.Status = 0
-	assetTypes, err := AssetTypeGetsAll()
+
+	// 回填plugin
+	assetType, err := AssetTypeGet(ins.Type)
+	if err != nil {
+		return 0, err
+	}
+	ins.Plugin = assetType.Plugin
+	// 生成默认采集配置
+	err = ins.FillConfig(ctx)
 	if err != nil {
 		return 0, err
 	}
 
-	var assetType AssetType
-	for _, item := range assetTypes {
-		if item.Name == ins.Type {
-			ins.Plugin = item.Plugin
-			assetType = *item
-			break
-		}
+	// 填充默认探针 TODO: 硬编码
+	if assetType.Plugin != "host" {
+		ins.Ident = "categraf-server"
 	}
 
 	if err := Insert(ctx, ins); err != nil {
@@ -205,12 +143,52 @@ func (ins *Asset) AddXH(ctx *ctx.Context) (int64, error) {
 			AssetId:        ins.Id,
 			MonitoringName: m.Name,
 			MonitoringSql:  m.Metrics,
-			DatasourceId:   1, //暂定默认为1
+			DatasourceId:   1, // TODO: 硬编码 暂定默认为1
 			CreatedAt:      now,
 			UpdatedAt:      now,
+			Status:         1, // 默认启用
 		}
 		if err := monitoring.Add(ctx); err != nil {
-			logger.Error("新增默认指标错误:", err)
+			logger.Error("新增默认监控错误:", err)
+		}
+
+		for _, r := range m.Rules {
+			rule := AlertRule{
+				AssetId:          ins.Id,
+				GroupId:          ins.GroupId,
+				Cate:             "prometheus",
+				DatasourceIds:    "[1]",
+				Name:             r.Name,
+				Prod:             "metric",
+				PromForDuration:  60,
+				PromEvalInterval: 30,
+				EnableStime:      "00:00",
+				EnableEtime:      "00:00",
+				EnableDaysOfWeek: "0 1 2 3 4 5 6",
+				NotifyRecovered:  1,
+				RuleConfigCn:     m.Name,
+				NotifyRepeatStep: 60,
+				Severity:         int(r.Serverity),
+			}
+			config := map[string][]map[string]interface{}{}
+			config["queries"] = []map[string]interface{}{
+				{
+					"prom_ql":    r.Promql,
+					"severity":   r.Serverity,
+					"monitor_id": monitoring.Id,
+					"relation":   r.Relation,
+					"value":      fmt.Sprintf("%d", r.Value),
+				},
+			}
+			configJson, err := json.Marshal(config)
+			if err != nil {
+				logger.Error("新增默认告警错误:", err)
+			}
+			rule.RuleConfig = string(configJson)
+			rule.RuleConfigFe = string(configJson)
+			if err := rule.Add(ctx); err != nil {
+				logger.Error("新增默认告警错误:", err)
+			}
 		}
 	}
 
@@ -269,11 +247,13 @@ func (ins *Asset) Update(ctx *ctx.Context, selectField interface{}, selectFields
 		return err
 	}
 
-	if err := DB(ctx).Model(ins).Select(selectField, selectFields...).Updates(ins).Error; err != nil {
+	// 生成默认采集配置
+	err := ins.FillConfig(ctx)
+	if err != nil {
 		return err
 	}
 
-	if err := DB(ctx).Model(ins).Select("status").Updates(map[string]interface{}{"status": 0}).Error; err != nil {
+	if err := DB(ctx).Model(ins).Select(selectField, selectFields...).Updates(ins).Error; err != nil {
 		return err
 	}
 
@@ -293,6 +273,24 @@ func (ins *Asset) UpdateTx(tx *gorm.DB, selectField interface{}, selectFields ..
 		tx.Rollback()
 	}
 
+	return nil
+}
+
+func (ins *Asset) FillConfig(ctx *ctx.Context) error {
+	assetType, err := AssetTypeGet(ins.Type)
+	if err != nil {
+		return err
+	}
+	form := map[string]interface{}{}
+	err = json.Unmarshal([]byte(ins.Params), &form)
+	if err != nil {
+		return err
+	}
+	conf, err := assetType.GenConfig(form)
+	if err != nil {
+		return err
+	}
+	ins.Configs = conf
 	return nil
 }
 
@@ -372,36 +370,6 @@ func AssetStatistics(ctx *ctx.Context) (*Statistics, error) {
 	}
 
 	return stats[0], nil
-}
-
-func AssetGenConfig(assetType string, f map[string]interface{}) (bytes.Buffer, error) {
-	assetTypes, err := AssetTypeGetsAll()
-	ginx.Dangerous(err)
-
-	pluginName := ""
-	for _, item := range assetTypes {
-		if item.Name == assetType {
-			pluginName = item.Plugin
-			break
-		}
-	}
-	filepath := path.Join("etc", "default", fmt.Sprintf("%s.toml", pluginName))
-
-	tpl, err := template.ParseFiles(filepath)
-	if err != nil {
-		log.Printf("unable to open config: %s", filepath)
-		return bytes.Buffer{}, err
-	}
-	var content bytes.Buffer
-	tpl.Execute(&content, f)
-	return content, err
-}
-
-func AssetTypeGetsAll() ([]*AssetType, error) {
-	fp := path.Join("etc", "assets.yaml")
-	var assetConfig AssetConfigs
-	err := file.ReadYaml(fp, &assetConfig)
-	return assetConfig.Config, err
 }
 
 func AssetGetTags(ctx *ctx.Context, ids []string) ([]string, error) {
@@ -511,7 +479,8 @@ func AssetUpdateNote(ctx *ctx.Context, ids []string, memo string) error {
 
 func AssetSetStatus(ctx *ctx.Context, ident string, status int64) error {
 	return DB(ctx).Model(&Asset{}).Where("ident = ?", ident).Updates(map[string]interface{}{
-		"status": status,
+		"status":    status,
+		"status_at": time.Now().Unix(),
 	}).Error
 }
 
@@ -523,6 +492,9 @@ func AssetUpdateOrganization(ctx *ctx.Context, ids []string, organize_id int64) 
 }
 
 func (e *Asset) DB2FE() {
+	if e.StatusAt > 0 && time.Now().Unix()-e.StatusAt > 60*2 { // 超过2分钟设置为失联
+		e.Status = 0
+	}
 }
 
 // 获取某一类资产上月（自然月）环比值
