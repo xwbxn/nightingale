@@ -1536,3 +1536,5 @@ CREATE TABLE `license_config`  (
   `DELETED_AT` datetime(0) DEFAULT NULL COMMENT '删除时间',
   PRIMARY KEY (`ID`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '许可配置' ROW_FORMAT = Dynamic;
+
+INSERT INTO `license_config` VALUES (1, 10, 30, 'once', '', 'root', 1701243521, 'root', 1701312136, NULL);

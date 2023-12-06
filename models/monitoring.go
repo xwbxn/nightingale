@@ -292,7 +292,7 @@ func (m *Monitoring) AddTx(tx *gorm.DB) error {
 		tx.Rollback()
 	}
 
-	err := tx.Create(m).Error
+	err := tx.Debug().Create(m).Error
 	if err != nil {
 		tx.Rollback()
 	}

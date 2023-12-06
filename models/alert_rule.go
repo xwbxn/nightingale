@@ -124,10 +124,10 @@ type Trigger struct {
 }
 
 type AlertRuleSimplify struct {
-	Name      string `json:"name"`
-	Relation  string `json:"relation"`
-	Value     int64  `json:"value"`
-	Serverity int    `json:"Serverity"`
+	RuleConfigCn string `json:"rule_config_cn"`
+	Relation     string `json:"relation"`
+	Value        int64  `json:"value"`
+	Severity     int    `json:"severity"`
 }
 
 func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
@@ -218,11 +218,11 @@ func (ar *AlertRule) Verify() error {
 	}
 
 	if str.Dangerous(ar.Name) {
-		return errors.New("Name has invalid characters")
+		return errors.New("告警规则名称不符合命名规范，包含特殊字符")
 	}
 
 	if ar.Name == "" {
-		return errors.New("name is blank")
+		return errors.New("名称为空")
 	}
 
 	if ar.Prod == "" {
@@ -234,7 +234,7 @@ func (ar *AlertRule) Verify() error {
 	}
 
 	if ar.RuleConfig == "" {
-		return errors.New("rule_config is blank")
+		return errors.New("告警规则配置为空")
 	}
 
 	if ar.PromEvalInterval <= 0 {
@@ -283,6 +283,31 @@ func (ar *AlertRule) Add(ctx *ctx.Context) error {
 	ar.UpdateAt = now
 
 	return Insert(ctx, ar)
+}
+
+func (ar *AlertRule) AddTx(ctx *ctx.Context, tx *gorm.DB) error {
+	if err := ar.Verify(); err != nil {
+		return err
+	}
+
+	exists, err := AlertRuleExists(ctx, 0, ar.GroupId, ar.DatasourceIdsJson, ar.Name)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return errors.New("在同一资产下，告警名称不能重复")
+	}
+
+	now := time.Now().Unix()
+	ar.CreateAt = now
+	ar.UpdateAt = now
+
+	err = tx.Debug().Create(ar).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
 }
 
 func (ar *AlertRule) Update(ctx *ctx.Context, arf AlertRule) error {
@@ -1090,6 +1115,8 @@ func AlertRuleGetsFilterNew(ctx *ctx.Context, groupId int64, filter, query strin
 		session = session.Where("name like ?", query)
 	} else if filter == "alert_rule" {
 		session = session.Where("rule_config_cn like ?", query)
+	} else if filter == "asset_id" {
+		session = session.Where("asset_id like ?", query)
 	}
 
 	var lst []AlertRule
@@ -1117,6 +1144,8 @@ func AlertRuleGetsTotalNew(ctx *ctx.Context, groupId int64, filter, query string
 		session = session.Where("name like ?", query)
 	} else if filter == "alert_rule" {
 		session = session.Where("rule_config_cn like ?", query)
+	} else if filter == "asset_id" {
+		session = session.Where("asset_id like ?", query)
 	}
 
 	var num int64
@@ -1137,4 +1166,52 @@ func AlertRuleIdByAlertRule(ctx *ctx.Context, query string) (ids []int64, err er
 	query = "%" + query + "%"
 	err = DB(ctx).Model(&AlertRule{}).Distinct().Where("rule_config_cn like ?", query).Pluck("id", &ids).Error
 	return ids, err
+}
+
+func BuildAlertRule(ctx *ctx.Context, monitoring Monitoring, alertRule AlertRuleSimplify) (*AlertRule, error) {
+
+	lst, err := AssetsGetsMap(ctx, map[string]interface{}{"id": monitoring.AssetId})
+	if err != nil {
+		return &AlertRule{}, err
+	}
+	if len(lst) == 0 {
+		return &AlertRule{}, nil
+	}
+	rule := &AlertRule{
+		AssetId:          monitoring.AssetId,
+		GroupId:          lst[0].GroupId,
+		Cate:             "prometheus",
+		DatasourceIds:    "[1]",
+		Name:             alertRule.RuleConfigCn,
+		Prod:             "metric",
+		PromForDuration:  60,
+		PromEvalInterval: 30,
+		EnableStime:      "00:00",
+		EnableEtime:      "00:00",
+		EnableDaysOfWeek: "0 1 2 3 4 5 6",
+		NotifyRecovered:  1,
+		RuleConfigCn:     alertRule.RuleConfigCn,
+		NotifyRepeatStep: 60,
+		Severity:         alertRule.Severity,
+	}
+	config := map[string][]map[string]interface{}{}
+	config["queries"] = []map[string]interface{}{
+		{
+			"prom_ql":    monitoring.MonitoringSql,
+			"severity":   alertRule.Severity,
+			"monitor_id": monitoring.Id,
+			"relation":   alertRule.Relation,
+			"value":      fmt.Sprintf("%d", alertRule.Value),
+		},
+	}
+	configJson, err := json.Marshal(config)
+	if err != nil {
+		return &AlertRule{}, nil
+	}
+	rule.RuleConfig = string(configJson)
+	rule.RuleConfigFe = string(configJson)
+	// if err := rule.Add(ctx); err != nil {
+	// 	return &AlertRule{}, nil
+	// }
+	return rule, nil
 }

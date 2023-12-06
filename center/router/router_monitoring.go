@@ -177,7 +177,7 @@ func (rt *Router) monitoringAdd(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	now := time.Now().Unix()
 	var err error
-
+	tx := models.DB(rt.Ctx).Begin()
 	if len(f.AssetIds) == 0 {
 		var monitor = models.Monitoring{
 			AssetId:        f.AssetId,
@@ -188,6 +188,7 @@ func (rt *Router) monitoringAdd(c *gin.Context) {
 			TargetId:       f.TargetId,
 			Remark:         f.Remark,
 			Unit:           f.Unit,
+			AlertRules:     f.AlertRules,
 			CreatedBy:      me.Username,
 			CreatedAt:      now,
 			UpdatedBy:      me.Username,
@@ -195,9 +196,23 @@ func (rt *Router) monitoringAdd(c *gin.Context) {
 		}
 
 		// 更新模型
-		err = monitor.Add(rt.Ctx)
+		err = monitor.AddTx(tx)
+		ginx.Dangerous(err)
+
+		for _, alertRuleSimplify := range f.AlertRules {
+			logger.Debug("开始专配")
+			logger.Debug(alertRuleSimplify)
+			alertRule, err := models.BuildAlertRule(rt.Ctx, monitor, alertRuleSimplify)
+			logger.Debug(alertRule)
+			if err != nil {
+				tx.Rollback()
+			}
+			logger.Debug("存表")
+			err = alertRule.AddTx(rt.Ctx, tx)
+			ginx.Dangerous(err)
+		}
 	} else {
-		tx := models.DB(rt.Ctx).Begin()
+
 		for _, id := range f.AssetIds {
 			var monitor = models.Monitoring{
 				AssetId:        id,
@@ -208,16 +223,27 @@ func (rt *Router) monitoringAdd(c *gin.Context) {
 				TargetId:       f.TargetId,
 				Remark:         f.Remark,
 				Unit:           f.Unit,
+				AlertRules:     f.AlertRules,
 				CreatedBy:      me.Username,
 				CreatedAt:      now,
 				UpdatedBy:      me.Username,
 				UpdatedAt:      now,
 			}
 			err = monitor.AddTx(tx)
-		}
-		tx.Commit()
-	}
+			ginx.Dangerous(err)
 
+			for _, alertRuleSimplify := range f.AlertRules {
+				alertRule, err := models.BuildAlertRule(rt.Ctx, monitor, alertRuleSimplify)
+				if err != nil {
+					tx.Rollback()
+				}
+				err = alertRule.AddTx(rt.Ctx, tx)
+				ginx.Dangerous(err)
+			}
+		}
+
+	}
+	tx.Commit()
 	ginx.NewRender(c).Message(err)
 }
 
