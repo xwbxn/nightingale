@@ -4,6 +4,8 @@
 package models
 
 import (
+	"strings"
+
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"gorm.io/gorm"
 )
@@ -104,4 +106,57 @@ func (o *OperationLog) Update(ctx *ctx.Context, updateFrom interface{}, selectFi
 // 根据条件统计个数
 func OperationLogCount(ctx *ctx.Context, where string, args ...interface{}) (num int64, err error) {
 	return Count(DB(ctx).Model(&OperationLog{}).Where(where, args...))
+}
+
+// 过滤器条件统计个数
+func FilterLogCount(ctx *ctx.Context, query string, start int64, end int64,
+	 filterType string, modelType string)(num int64, err error){
+	query = "%" + query + "%"
+	var str strings.Builder
+	vals := make([]interface{}, 0)
+
+	if filterType == ""{
+		
+		str.WriteString(" TYPE like ? or ")
+		vals = append(vals, query)
+		str.WriteString("OBJECT like ? or ")
+		vals = append(vals, query)
+		str.WriteString("DESCRIPTION like ? or ")
+		vals = append(vals, query)
+		str.WriteString("USER like ? ")
+		vals = append(vals, query)
+
+		err = DB(ctx).Debug().Model(&OperationLog{}).Where(str.String(), vals...).
+		Where("`OPER_TIME` BETWEEN ? AND ?", start, end).Count(&num).Error
+	}else{
+		err = DB(ctx).Debug().Model(&OperationLog{}).Where(filterType + " LIKE ? ", query).
+		Where("`OPER_TIME` BETWEEN ? AND ?", start, end).Count(&num).Error
+	}
+	return num, err
+}
+
+// 过滤器条件查询
+func FilterLogGets(ctx *ctx.Context, query string, offset int, limit int,
+	 start int64, end int64, filterType string, modelType string) (lst []OperationLog, err error){
+	query = "%" + query + "%"
+	var str strings.Builder
+	vals := make([]interface{}, 0)
+
+	if filterType == ""{
+		str.WriteString("TYPE like ? or ")
+		vals = append(vals, query)
+		str.WriteString("OBJECT like ? or ")
+		vals = append(vals, query)
+		str.WriteString("DESCRIPTION like ? or ")
+		vals = append(vals, query)
+		str.WriteString("USER like ? ")
+		vals = append(vals, query)
+
+		err = DB(ctx).Debug().Model(&OperationLog{}).Where(str.String(), vals...).
+		Where("`OPER_TIME` BETWEEN ? AND ?",start,end).Limit(limit).Offset(offset).Find(&lst).Error
+	}else{
+		err = DB(ctx).Debug().Model(&OperationLog{}).Where(filterType + " LIKE ? ", query).
+		Where("`OPER_TIME` BETWEEN ? AND ?",start,end).Limit(limit).Offset(offset).Find(&lst).Error
+	}
+	return lst, err
 }

@@ -726,39 +726,140 @@ func UserNameGets(ctx *ctx.Context) ([]userNameVo, error) {
 }
 
 //过滤器统计数量
-func UserCountMap(ctx *ctx.Context, role, query string, useGroupId, status int64, ids []int64) (num int64, err error) {
+func UserFilterCountMap(ctx *ctx.Context, role, query string, status int64, typeF string) (num int64, err error) {
 	session := DB(ctx)
-	if query != "" {
-		query = "%" + query + "%"
-		var str strings.Builder
-		vals := make([]interface{}, 0)
-		str.WriteString("username like ? or ")
-		vals = append(vals, query)
-		str.WriteString("nickname like ? or ")
-		vals = append(vals, query)
-		str.WriteString("phone like ? or ")
-		vals = append(vals, query)
-		str.WriteString("email like ? or ")
-		vals = append(vals, query)
-		str.WriteString("roles like ?")
-		vals = append(vals, query)
-		session = session.Where(str.String(), vals...)
-	}
-	if status != -1 {
-		session = session.Where("status = ?", status)
-	}
-	if useGroupId != -1 {
-		session = session.Where("id in ?", ids)
-	}
-	if role != "" {
-		session = session.Where("roles like ?", "%"+role+"%")
+	query = "%" + query + "%"
+
+	if typeF == ""{
+		if query != "" {
+				var str strings.Builder
+				vals := make([]interface{}, 0)
+				str.WriteString("username like ? or ")
+				vals = append(vals, query)
+				str.WriteString("nickname like ? or ")
+				vals = append(vals, query)
+				str.WriteString("phone like ? or ")
+				vals = append(vals, query)
+				str.WriteString("email like ? or ")
+				vals = append(vals, query)
+				str.WriteString("roles like ?")
+				vals = append(vals, query)
+				session = session.Where(str.String(), vals...)
+			}
+	}else{
+		switch typeF{
+			case "statu":
+				if status != -1 {
+					session = session.Where("status = ? ", status)
+				}
+			case "role":
+				if role != "" {
+					session = session.Where("roles like ? ", "%"+role+"%")
+				}
+			default:
+				session = session.Where(typeF + " like ? ", query)
+		}
 	}
 
 	err = session.Debug().Model(&User{}).Count(&num).Error
 	return num, err
 }
 
-func UserMap(ctx *ctx.Context, role, query string, useGroupId, status int64, ids []int64, limit, offset int) (lst []UserInfo, err error) {
+func UserFilterMap(ctx *ctx.Context, role, query string, status int64, limit, offset int, typeF string) (lst []UserInfo, err error) {
+	session := DB(ctx)
+	query = "%" + query + "%"
+
+	// 分页
+	if limit > -1 {
+		session = session.Limit(limit).Offset(offset).Order("username")
+	}
+
+	if typeF == ""{
+		if query != "" {
+				var str strings.Builder
+				vals := make([]interface{}, 0)
+				str.WriteString("username like ? or ")
+				vals = append(vals, query)
+				str.WriteString("nickname like ? or ")
+				vals = append(vals, query)
+				str.WriteString("phone like ? or ")
+				vals = append(vals, query)
+				str.WriteString("email like ? or ")
+				vals = append(vals, query)
+				str.WriteString("roles like ?")
+				vals = append(vals, query)
+				session = session.Where(str.String(), vals...)
+			}
+	}else{
+		switch typeF{
+			case "statu":
+				if status != -1 {
+					session = session.Where("status = ? ", status)
+				}
+			case "role":
+				if role != "" {
+					session = session.Where("roles like ? ", "%"+role+"%")
+				}
+			default:
+				session = session.Where(typeF + " like ? ", query)
+			}
+	}
+
+	err = session.Debug().Model(&User{}).Find(&lst).Error
+
+	// err = session.Debug().Model(&User{}).Joins("LEFT JOIN user_group_member ugm ON ugm.user_id = users.id").
+	// 	Joins("LEFT JOIN user_group ug ON ugm.group_id = ug.id").Select("users.*,GROUP_CONCAT(ug.name) AS name").Where(where).
+	// 	Where(str.String(), vals...).Group("users.id").Find(&lst).Error
+
+	for i := 0; i < len(lst); i++ {
+		lst[i].RolesLst = strings.Fields(lst[i].Roles)
+		lst[i].Admin = lst[i].IsAdmin()
+		lst[i].Password = ""
+		names, err := UserGroupGetsByUserId(ctx, lst[i].Id)
+		if err != nil {
+			return nil, err
+		}
+		lst[i].GroupName = names
+	}
+
+	return lst, err
+}
+
+//过滤器统计数量
+func UserCountMap(ctx *ctx.Context, role, query string, useGroupId, status int64, ids []int64) (num int64, err error) {
+ session := DB(ctx)
+
+ if query != "" {
+	 query = "%" + query + "%"
+	 var str strings.Builder
+	 vals := make([]interface{}, 0)
+	 str.WriteString("username like ? or ")
+	 vals = append(vals, query)
+	 str.WriteString("nickname like ? or ")
+	 vals = append(vals, query)
+	 str.WriteString("phone like ? or ")
+	 vals = append(vals, query)
+	 str.WriteString("email like ? or ")
+	 vals = append(vals, query)
+	 str.WriteString("roles like ?")
+	 vals = append(vals, query)
+	 session = session.Where(str.String(), vals...)
+ }
+ if status != -1 {
+	 session = session.Where("status = ?", status)
+ }
+ if useGroupId != -1 {
+	 session = session.Where("id in ?", ids)
+ }
+ if role != "" {
+	 session = session.Where("roles like ?", "%"+role+"%")
+ }
+
+ err = session.Debug().Model(&User{}).Count(&num).Error
+ return num, err
+}
+
+func UserMap(ctx *ctx.Context, role, query string, useGroupId, status int64, ids []int64, limit, offset int	) (lst []UserInfo, err error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
