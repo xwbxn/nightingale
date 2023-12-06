@@ -56,6 +56,7 @@ func (rt *Router) alertRuleGetsXH(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)
 	page := ginx.QueryInt(c, "page", 1)
 	ids := make([]int64, 0)
+	logger.Debug(busiGroupId)
 	if filter != "" && query == "" {
 		ginx.Bomb(http.StatusOK, "参数错误")
 	}
@@ -149,6 +150,7 @@ func (rt *Router) alertRuleAddByFE(c *gin.Context) {
 
 	var lst []models.AlertRule
 	ginx.BindJSON(c, &lst)
+	logger.Debug(lst)
 
 	count := len(lst)
 	if count == 0 {

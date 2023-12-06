@@ -102,11 +102,26 @@ func (rt *Router) assetsAddXH(c *gin.Context) {
 	ginx.BindJSON(c, &f)
 	me := c.MustGet("user").(*models.User)
 
-	// TODO: IP重复规则需要变化
-	num, err := models.AssetsCountMap(rt.Ctx, map[string]interface{}{"ip": f.Ip})
-	ginx.Dangerous(err)
-	if num > 0 {
-		// ginx.Bomb(http.StatusOK, "IP已存在")
+	//校验IP是否唯一
+	checkIp := false
+	aTypes := make([]string, 0)
+	aTypeIds := rt.assetCache.GetTypeIds()
+	for _, aTypeId := range aTypeIds {
+		aType, _ := rt.assetCache.GetType(aTypeId)
+		if aType.IpUnique {
+			aTypes = append(aTypes, aType.Name)
+			if aType.Name == f.Type {
+				checkIp = true
+			}
+		}
+	}
+
+	if checkIp {
+		num, err := models.IpCount(rt.Ctx, f.Ip, aTypes)
+		ginx.Dangerous(err)
+		if num > 0 {
+			ginx.Bomb(http.StatusOK, "IP已存在")
+		}
 	}
 
 	var assets = models.Asset{
@@ -122,7 +137,7 @@ func (rt *Router) assetsAddXH(c *gin.Context) {
 		CreateAt:      time.Now().Unix(),
 	}
 	//校验
-	err = models.Verify(assets)
+	err := models.Verify(assets)
 	if err != nil {
 		ginx.Bomb(http.StatusOK, err.Error())
 	}
@@ -179,10 +194,26 @@ func (rt *Router) assetPutXH(c *gin.Context) {
 		ginx.Bomb(http.StatusOK, "资产不存在")
 	}
 	if oldAssets.Ip != f.Ip {
-		num, err := models.AssetsCountMap(rt.Ctx, map[string]interface{}{"ip": f.Ip})
-		ginx.Dangerous(err)
-		if num > 0 {
-			ginx.Bomb(http.StatusOK, "IP已存在")
+		//校验IP是否唯一
+		checkIp := false
+		aTypes := make([]string, 0)
+		aTypeIds := rt.assetCache.GetTypeIds()
+		for _, aTypeId := range aTypeIds {
+			aType, _ := rt.assetCache.GetType(aTypeId)
+			if aType.IpUnique {
+				aTypes = append(aTypes, aType.Name)
+				if aType.Name == f.Type {
+					checkIp = true
+				}
+			}
+		}
+
+		if checkIp {
+			num, err := models.IpCount(rt.Ctx, f.Ip, aTypes)
+			ginx.Dangerous(err)
+			if num > 0 {
+				ginx.Bomb(http.StatusOK, "IP已存在")
+			}
 		}
 	}
 
@@ -681,18 +712,51 @@ func (rt *Router) importAssetXH(c *gin.Context) {
 	}
 	me := c.MustGet("user").(*models.User)
 	var qty int = 0
+
+	aTypes := make([]string, 0)
+	aTypeIds := rt.assetCache.GetTypeIds()
+	for _, aTypeId := range aTypeIds {
+		aType, _ := rt.assetCache.GetType(aTypeId)
+		if aType.IpUnique {
+			aTypes = append(aTypes, aType.Name)
+		}
+	}
+	ids := make([]string, 0)
 	for index, entity := range assetImports {
+
+		//校验IP是否唯一
+		checkIp := false
+		for _, aType := range aTypes {
+			if aType == entity.Type {
+				checkIp = true
+			}
+		}
+
+		if checkIp {
+			num, err := models.IpCount(rt.Ctx, entity.Ip, aTypes)
+			ginx.Dangerous(err)
+			if num > 0 {
+				models.AssetDel(rt.Ctx, ids)
+				ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index)+"行数据,IP("+entity.Ip+")已存在")
+			}
+		}
 
 		//校验
 		err := models.Verify(entity)
 		if err != nil {
-			ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index)+"数据,"+err.Error())
+			models.AssetDel(rt.Ctx, ids)
+			ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index)+"数据(资产名称："+entity.Name+"),"+err.Error())
 		}
 
 		// 循环体
 		var f models.Asset = entity
 		f.CreateBy = me.Username
-		f.AddXH(rt.Ctx)
+		id, err := f.AddXH(rt.Ctx)
+		if err != nil {
+			models.AssetDel(rt.Ctx, ids)
+			ginx.Bomb(http.StatusOK, err.Error())
+		}
+		ids = append(ids, strconv.FormatInt(id, 10))
 		qty++
 	}
 	ginx.NewRender(c).Data(qty, nil)

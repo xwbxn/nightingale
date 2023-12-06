@@ -538,6 +538,12 @@ func AssetsCountMap(ctx *ctx.Context, where map[string]interface{}) (num int64, 
 	return num, err
 }
 
+// 统计ip是否存在
+func IpCount(ctx *ctx.Context, ip string, aTypes []string) (num int64, err error) {
+	err = DB(ctx).Model(&Asset{}).Where("ip = ? and type in ?", ip, aTypes).Count(&num).Error
+	return num, err
+}
+
 // 根据filter统计数量
 func AssetsCountFilter(ctx *ctx.Context, aType string, query, queryType string) (num int64, err error) {
 	session := DB(ctx)
@@ -627,7 +633,7 @@ func AssetsGetsFilterNew(ctx *ctx.Context, filter, query, aType string, limit, o
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
-		session = session.Limit(limit).Offset(offset).Order("id DESC")
+		session = session.Limit(limit).Offset(offset).Order("update_at DESC")
 	}
 
 	if aType != "" {
@@ -734,6 +740,5 @@ func Verify(asset Asset) error {
 	if err == nil {
 		return errors.New("IP格式不正确")
 	}
-	//TODO IP唯一性校验
 	return nil
 }

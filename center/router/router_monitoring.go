@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	models "github.com/ccfos/nightingale/v6/models"
@@ -67,7 +68,7 @@ func (rt *Router) monitoringGetByAssetId(c *gin.Context) {
 // @Param        page query   int     false  "页码"
 // @Param        limit query   int     false  "条数"
 // @Param        query query   string  false  "搜索栏"
-// @Param        filter    query    string  false  "筛选框(“monitoring_name”：监控名称;“asset_name”：资产名称;“status”：监控状态;“is_alarm”：是否启用告警)"
+// @Param        filter    query    string  false  "筛选框(“monitoring_name”：监控名称;“asset_name”：资产名称;“asset_ip”：资产IP;“asset_type”：资产类型;“status”：监控状态;“is_alarm”：是否启用告警)"
 // @Success      200  {array}  models.Monitoring
 // @Router       /api/n9e/xh/monitoring/filter [get]
 // @Security     ApiKeyAuth
@@ -99,9 +100,35 @@ func (rt *Router) monitoringGets(c *gin.Context) {
 	filter := ginx.QueryStr(c, "filter", "")
 	query := ginx.QueryStr(c, "query", "")
 
-	total, err := models.MonitoringMapCountNew(rt.Ctx, filter, query, assetType, assetId)
+	assetIds := make([]int64, 0)
+	assets := rt.assetCache.GetAll()
+	logger.Debug(len(assets))
+	for _, asset := range assets {
+		if assetType != "" && strings.Contains(asset.Type, assetType) {
+			if filter == "asset_ip" && strings.Contains(asset.Ip, query) {
+				assetIds = append(assetIds, asset.Id)
+			} else if filter == "asset_type" && strings.Contains(asset.Type, query) {
+				assetIds = append(assetIds, asset.Id)
+			} else if filter == "asset_name" && strings.Contains(asset.Name, query) {
+				assetIds = append(assetIds, asset.Id)
+			} else if filter == "" {
+				assetIds = append(assetIds, asset.Id)
+			}
+		} else if assetType == "" {
+			if filter == "asset_ip" && strings.Contains(asset.Ip, query) {
+				logger.Debug(asset.Ip)
+				assetIds = append(assetIds, asset.Id)
+			} else if filter == "asset_type" && strings.Contains(asset.Type, query) {
+				assetIds = append(assetIds, asset.Id)
+			} else if filter == "asset_name" && strings.Contains(asset.Name, query) {
+				assetIds = append(assetIds, asset.Id)
+			}
+		}
+	}
+
+	total, err := models.MonitoringMapCountNew(rt.Ctx, filter, query, assetId, assetIds)
 	ginx.Dangerous(err)
-	lst, err := models.MonitoringMapGetsNew(rt.Ctx, filter, query, assetType, assetId, limit, (page-1)*limit)
+	lst, err := models.MonitoringMapGetsNew(rt.Ctx, filter, query, assetId, assetIds, limit, (page-1)*limit)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
@@ -160,6 +187,7 @@ func (rt *Router) monitoringAdd(c *gin.Context) {
 			Status:         f.Status,
 			TargetId:       f.TargetId,
 			Remark:         f.Remark,
+			Unit:           f.Unit,
 			CreatedBy:      me.Username,
 			CreatedAt:      now,
 			UpdatedBy:      me.Username,
@@ -179,6 +207,7 @@ func (rt *Router) monitoringAdd(c *gin.Context) {
 				Status:         f.Status,
 				TargetId:       f.TargetId,
 				Remark:         f.Remark,
+				Unit:           f.Unit,
 				CreatedBy:      me.Username,
 				CreatedAt:      now,
 				UpdatedBy:      me.Username,
@@ -238,7 +267,16 @@ func (rt *Router) monitoringDel(c *gin.Context) {
 		ginx.NewRender(c).Message(nil)
 		return
 	}
-	ginx.NewRender(c).Message(monitoring.Del(rt.Ctx))
+	tx := models.DB(rt.Ctx).Begin()
+	ids := make([]string, 0)
+	ids = append(ids, strconv.FormatInt(monitoring.Id, 10))
+	//删除监控
+	err = models.BatchDelTx(tx, ids)
+	ginx.Dangerous(err)
+	//删除资产告警规则
+	err = models.AlertRuleDelTxByMonId(tx, ids)
+	tx.Commit()
+	ginx.NewRender(c).Message(err)
 }
 
 // @Summary      批量删除监控-西航
@@ -357,7 +395,8 @@ func (rt *Router) monitoringData(c *gin.Context) {
 			return
 		}
 
-		values = append(values, prom.FormatPromValue(value, monitoring.Unit))
+		// values = append(values, prom.FormatPromValue(value, monitoring.Unit))
+		values = append(values, value)
 	}
 	ginx.NewRender(c).Data(values, err)
 }
@@ -394,4 +433,16 @@ func (rt *Router) monitoringGetOptions(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(data, nil)
+}
+
+// @Summary      获取监控指标单位
+// @Description  获取监控指标单位
+// @Tags         监控
+// @Accept       json
+// @Produce      json
+// @Success      200
+// @Router       /api/n9e/xh/monitoring/unit [get]
+// @Security     ApiKeyAuth
+func (rt *Router) monitoringUnit(c *gin.Context) {
+	ginx.NewRender(c).Data(prom.UNIT_LIST, nil)
 }

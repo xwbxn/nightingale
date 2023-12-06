@@ -123,6 +123,13 @@ type Trigger struct {
 	Severity    int         `json:"severity"`
 }
 
+type AlertRuleSimplify struct {
+	Name      string `json:"name"`
+	Relation  string `json:"relation"`
+	Value     int64  `json:"value"`
+	Serverity int    `json:"Serverity"`
+}
+
 func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 	var query []map[string]interface{}
 	for _, q := range queries {
@@ -1067,7 +1074,10 @@ func AlertRuleGetsTotal(ctx *ctx.Context, groupId int64, filter, query string, i
 }
 
 func AlertRuleGetsFilterNew(ctx *ctx.Context, groupId int64, filter, query string, ids []int64, limit, offset int) ([]AlertRule, error) {
-	session := DB(ctx).Where("group_id=?", groupId)
+	session := DB(ctx)
+	if groupId != -1 {
+		session = session.Where("group_id=?", groupId)
+	}
 	if limit > -1 {
 		session = session.Limit(limit).Offset(offset).Order("id DESC")
 	}
@@ -1094,7 +1104,10 @@ func AlertRuleGetsFilterNew(ctx *ctx.Context, groupId int64, filter, query strin
 }
 
 func AlertRuleGetsTotalNew(ctx *ctx.Context, groupId int64, filter, query string, ids []int64) (int64, error) {
-	session := DB(ctx).Where("group_id=?", groupId)
+	session := DB(ctx)
+	if groupId != -1 {
+		session = session.Where("group_id=?", groupId)
+	}
 	query = "%" + query + "%"
 	if filter == "severity" {
 		session = session.Where("severity like ?", query)

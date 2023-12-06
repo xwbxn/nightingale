@@ -18,6 +18,7 @@ type AssetType struct {
 	Metrics    []*AssetTypeMetric        `json:"metrics"`
 	Category   string                    `json:"category"`
 	Form       []*BaseProp               `json:"form"`
+	IpUnique   bool                      `json:"ip_unique"`
 	BaseProps  []*BaseProp               `json:"base_props" yaml:"base_props"`
 	ExtraProps map[string]*ExtraPropPart `json:"extra_props" yaml:"extra_props"`
 

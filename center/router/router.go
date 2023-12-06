@@ -755,6 +755,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/xh/monitoring/status", rt.auth(), rt.user(), rt.monitoringStatusUpdate)
 		pages.POST("/xh/monitoring/data", rt.auth(), rt.user(), rt.monitoringData)
 		pages.GET("/monitoring/options", rt.auth(), rt.user(), rt.monitoringGetOptions)
+		pages.GET("/xh/monitoring/unit", rt.auth(), rt.user(), rt.monitoringUnit)
 
 		//用户配置
 		pages.GET("/user-config", rt.auth(), rt.admin(), rt.userConfigGets)

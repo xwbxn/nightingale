@@ -109,13 +109,14 @@ func (s *Set) updateTargets(m map[string]models.HostMeta) error {
 		if exists == nil {
 			//new
 			asset := models.Asset{
-				Ident:  new.Hostname,
-				Name:   new.Hostname,
-				Label:  new.IpAddress,
-				Type:   "主机设备",
-				Memo:   "自动注册",
-				Plugin: "host",
-				Ip:     new.IpAddress,
+				Ident:   new.Hostname,
+				Name:    new.Hostname,
+				Label:   new.IpAddress,
+				GroupId: 1,
+				Type:    "主机设备",
+				Memo:    "自动注册",
+				Plugin:  "host",
+				Ip:      new.IpAddress,
 			}
 			params, _ := json.Marshal(asset)
 			asset.Params = string(params)

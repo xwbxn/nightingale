@@ -80,6 +80,11 @@ func LoggerToFile() gin.HandlerFunc {
 		reqMethod := c.Request.Method
 
 		params := c.Params
+		// 将 gin.Params 转化为字符串
+		paramsStr := ""
+		for _, param := range params {
+			paramsStr += param.Key + ":" + param.Value + " "
+		}
 
 		key := c.Keys
 
@@ -89,6 +94,12 @@ func LoggerToFile() gin.HandlerFunc {
 
 		body := c.Request.PostForm
 
+		userName := ""
+		user, ok := key["username"]
+		if ok {
+			userName = user.(string)
+		}
+
 		// 请求路由
 		reqUri := c.Request.RequestURI
 
@@ -97,6 +108,8 @@ func LoggerToFile() gin.HandlerFunc {
 
 		// 请求IP
 		clientIP := c.ClientIP()
+
+		err := c.Errors.String()
 
 		// remoteIP, _ := c.Request.Response.Location()
 
@@ -120,24 +133,45 @@ func LoggerToFile() gin.HandlerFunc {
 		operType := GetOperType(reqMethod, reqUri)
 		operObj := GetOperObj(reqUri)
 		operDes := GetOperDes(reqMethod, reqUri, clientIP)
-		operuser := key["username"].(string)
-		var oper_log = OperationLog{
-			Type:        operType,
-			Object:      operObj,
-			Description: operDes,
-			User:        operuser,
-			OperTime:    startTime.Unix(),
-			OperUrl:     reqUri,
-			OperParam:   "",
-			JsonResult:  "",
-			Status:      int64(statusCode),
-			ErrorMsg:    "",
-			CreatedBy:   "root",
-			CreatedAt:   time.Now().Unix(),
-			UpdatedBy:   "",
-			UpdatedAt:   time.Now().Unix(),
-		}
+		// operuser := key["username"].(string)
+		// var operLog = OperationLog{
+		// 	Type:        operType,
+		// 	Object:      operObj,
+		// 	Description: operDes,
+		// 	// User:        operuser,
+		// 	OperTime:   startTime.Unix(),
+		// 	OperUrl:    reqUri,
+		// 	OperParam:  "",
+		// 	JsonResult: "",
+		// 	Status:     int64(statusCode),
+		// 	ErrorMsg:   "",
+		// 	CreatedBy:  "root",
+		// 	CreatedAt:  time.Now().Unix(),
+		// 	UpdatedBy:  "",
+		// 	UpdatedAt:  time.Now().Unix(),
+		// }
+		data := make(map[string]interface{})
+		data["type"] = operType
+		data["object"] = operObj
+		data["user_name"] = userName
+		data["description"] = operDes
+		data["oper_time"] = startTime.Unix()
+		data["oper_url"] = reqUri
+		data["oper_param"] = paramsStr
+		data["json_result"] = ""
+		data["status"] = int64(statusCode)
+		data["error_msg"] = err
+		// data["created_by"] = "root"
+		// data["created_at"] = time.Now().Unix()
+		// data["updated_by"] = ""
+		// data["updated_at"] = time.Now().Unix()
 
+		if strings.Contains(reqUri, "/api/n9e") {
+			if !OperationlogQueue.PushFront(data) {
+				logger.Warningf("event_push_queue: queue is full, event:%+v", data)
+			}
+			logger.Debug("日志进队列了")
+		}
 		// 日志格式
 		logger.WithFields(logrus.Fields{
 			"status_code":  statusCode,
