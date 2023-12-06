@@ -42,8 +42,9 @@ func (rt *Router) alertRuleGets(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        id path   int     false  "busiGroupId"
-// @Param        filter query   string     false  "“ip”：IP地址；“severity”：告警级别；“rule_name”：规则名称；“name”：资产名称；“alert_rule”：告警规则；“type”：资产类型)"
+// @Param        filter query   string     false  "“ip”：IP地址；“severity”：告警级别；“rule_name”：规则名称；“name”：资产名称；“asset_id”：资产id；“alert_rule”：告警规则；“type”：资产类型)"
 // @Param        query query   string     false  "搜索框"
+// @Param        asset_id query   int     false  "资产id"
 // @Param        limit query   int     false  "条数"
 // @Param        page query   int     false  "页码"
 // @Success      200  {array}  models.AlertHisEvent
@@ -53,6 +54,7 @@ func (rt *Router) alertRuleGetsXH(c *gin.Context) {
 	busiGroupId := ginx.UrlParamInt64(c, "id")
 	filter := ginx.QueryStr(c, "filter", "")
 	query := ginx.QueryStr(c, "query", "")
+	assetId := ginx.QueryInt64(c, "asset_id", -1)
 	limit := ginx.QueryInt(c, "limit", 20)
 	page := ginx.QueryInt(c, "page", 1)
 	ids := make([]int64, 0)
