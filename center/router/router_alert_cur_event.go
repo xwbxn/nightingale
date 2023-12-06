@@ -134,7 +134,7 @@ func (rt *Router) alertCurEventsCardXH(c *gin.Context) {
 	end := ginx.QueryInt64(c, "end", -1)
 	dsIds := queryDatasourceIds(c)
 	// rules := parseAggrRules(c)
-	if group == -1 {
+	if group == 0 {
 		ginx.Bomb(http.StatusOK, "参数错误")
 	}
 

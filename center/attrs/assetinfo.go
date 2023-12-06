@@ -56,7 +56,7 @@ func (as *Attr) loopSync(ctx context.Context) {
 }
 
 func (as *Attr) syncAttrs() {
-	logger.Debug("start sync asset attrs")
+	logger.Debug("开始同步资产扩展属性")
 	assets := as.AssetCache.GetAll()
 	for _, asset := range assets {
 		if asset.Type == HOST {
@@ -68,7 +68,7 @@ func (as *Attr) syncAttrs() {
 func (as *Attr) updateExtraProps(asset *models.Asset) {
 	atype, ok := as.AssetCache.GetType(asset.Type)
 	if !ok {
-		logger.Error("asset type not exists: ", asset.Id)
+		logger.Error("资产类型不存在: ", asset.Type)
 		return
 	}
 
@@ -84,12 +84,12 @@ func (as *Attr) updateExtraProps(asset *models.Asset) {
 
 		value, warning, err := client.Query(context.Background(), promql, time.Now())
 		if len(warning) > 0 {
-			logger.Error("查询资产错误: ", err.Error())
+			logger.Errorf("查询资产错误: %s, %s", err.Error(), promql)
 			continue
 		}
 		values, ok := value.(model.Vector)
 		if !ok {
-			logger.Error("查询资产错误-: ", values)
+			logger.Errorf("查询资产错误: %s, %s", values, promql)
 			continue
 		}
 		if len(values) == 0 {
@@ -113,7 +113,7 @@ func (as *Attr) updateExtraProps(asset *models.Asset) {
 		query := map[string]interface{}{"assets_id": asset.Id, "config_category": cate}
 		oldAttrs, err := models.AssetsExpansionGetsMap(as.Ctx, query)
 		if err != nil {
-			logger.Error(err)
+			logger.Errorf("资产查询扩展属性错误: %s", err.Error())
 		}
 
 		notChange := slices.EqualFunc[models.AssetsExpansion](attrs, oldAttrs, func(s1, s2 models.AssetsExpansion) bool {
@@ -124,12 +124,14 @@ func (as *Attr) updateExtraProps(asset *models.Asset) {
 			tx := as.Ctx.DB.Begin()
 			err = models.AssetsExpansionDelMap(tx, map[string]interface{}{"assets_id": asset.Id, "config_category": cate})
 			if err != nil {
-				logger.Error(err)
-				return
+				logger.Errorf("更新资产属性错误: %s", err.Error())
+				tx.Rollback()
+				continue
 			}
 			err = models.AssetsExpansionAddTx(tx, attrs)
 			if err != nil {
-				logger.Error(err)
+				logger.Errorf("更新资产属性错误: %s", err.Error())
+				tx.Rollback()
 				continue
 			}
 			tx.Commit()

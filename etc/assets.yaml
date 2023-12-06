@@ -438,7 +438,7 @@ config:
         required: true
     ip_unique: false
 
-  - name: 防火墙
+  - name: 安全设备
     category: "安全设备"
     plugin: switch_legacy
     metrics:

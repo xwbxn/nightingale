@@ -42,7 +42,7 @@ func NewHealthRuleContext(asset *models.Asset, datasourceId int64, promClients *
 }
 
 func (hrc *HealthRuleContext) Key() string {
-	return fmt.Sprintf("health-%d-%s", hrc.datasourceId, hrc.asset.Label)
+	return fmt.Sprintf("health-%d-%d-%s", hrc.datasourceId, hrc.asset.Id, hrc.asset.Name)
 }
 
 func (hrc *HealthRuleContext) Hash() string {

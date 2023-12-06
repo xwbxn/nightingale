@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/ccfos/nightingale/v6/storage"
@@ -87,7 +88,7 @@ func (rt *Router) captchaVerify(c *gin.Context) {
 	ginx.BindJSON(c, &param)
 
 	//verify the captcha
-	if captchaStore.Verify(param.Id, param.VerifyValue, true) {
+	if captchaStore.Verify(param.Id, strings.ToLower(param.VerifyValue), true) {
 		ginx.NewRender(c).Message("")
 		return
 	}

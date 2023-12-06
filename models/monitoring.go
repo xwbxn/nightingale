@@ -345,6 +345,7 @@ func (m *Monitoring) CompilePromQL() string {
 	promql, err := prom.InjectLabel(m.MonitoringSql, "asset_id", strconv.Itoa(int(m.AssetId)), labels.MatchEqual)
 	if err != nil {
 		promql = ""
+		logger.Error("compile promql error:", m.AssetId, m.MonitoringName, m.MonitoringSql)
 	}
 	return promql
 }
