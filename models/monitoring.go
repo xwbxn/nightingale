@@ -319,8 +319,11 @@ func MonitoringUpdateStatus(ctx *ctx.Context, ids []int64, status, oType int64) 
 }
 
 func (m *Monitoring) CompilePromQL() string {
-	// TODO: 如果这里的资产是全局资产，那么不需要注入标签
-	return prom.InjectLabel(m.MonitoringSql, "asset_id", strconv.Itoa(int(m.AssetId)), labels.MatchEqual)
+	promql, err := prom.InjectLabel(m.MonitoringSql, "asset_id", strconv.Itoa(int(m.AssetId)), labels.MatchEqual)
+	if err != nil {
+		promql = ""
+	}
+	return promql
 }
 
 func MonitoringStatistics(ctx *ctx.Context) (*Statistics, error) {

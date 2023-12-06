@@ -46,8 +46,11 @@ func genMetricLabel(match labels.MatchType, name, value string) *labels.Matcher 
 	return m
 }
 
-func InjectLabel(promql string, label string, value string, op labels.MatchType) string {
-	expr, _ := parser.ParseExpr(promql)
+func InjectLabel(promql string, label string, value string, op labels.MatchType) (string, error) {
+	expr, err := parser.ParseExpr(promql)
+	if err != nil {
+		return "", err
+	}
 	injectLabels(expr, op, label, value)
-	return expr.String()
+	return expr.String(), nil
 }

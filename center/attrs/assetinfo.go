@@ -80,7 +80,8 @@ func (as *Attr) updateExtraProps(asset *models.Asset) {
 		}
 
 		promql := fmt.Sprintf("w_aviation_%s", cate) // 这里的基础属性使用了w_aviation插件，采集指标的后缀名称与assets.yaml中一致
-		promql = prom_tool.InjectLabel(promql, "asset_id", strconv.Itoa(int(asset.Id)), labels.MatchEqual)
+		promql, _ = prom_tool.InjectLabel(promql, "asset_id", strconv.Itoa(int(asset.Id)), labels.MatchEqual)
+
 		value, warning, err := client.Query(context.Background(), promql, time.Now())
 		if len(warning) > 0 {
 			logger.Error("查询资产错误: ", err.Error())

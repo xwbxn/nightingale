@@ -719,7 +719,7 @@ func (rt *Router) exportAssetXH(c *gin.Context) {
 
 	var f map[string]interface{}
 	ginx.BindJSON(c, &f)
-	var lst []models.Asset
+	var lst []*models.Asset
 	var err error
 
 	idsTemp, idsOk := f["ids"]

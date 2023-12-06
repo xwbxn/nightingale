@@ -348,9 +348,10 @@ func (rt *Router) monitoringData(c *gin.Context) {
 
 	values := make([]model.Value, 0)
 	for _, monitoring := range lst {
-		sql := prom.InjectLabel(monitoring.MonitoringSql, "asset_id", fmt.Sprintf("%d", monitoring.AssetId), labels.MatchEqual)
-		value, warnings, err := rt.PromClients.GetCli(monitoring.DatasourceId).QueryRange(context.Background(), sql, r)
+		sql, err := prom.InjectLabel(monitoring.MonitoringSql, "asset_id", fmt.Sprintf("%d", monitoring.AssetId), labels.MatchEqual)
 		ginx.Dangerous(err)
+
+		value, warnings, err := rt.PromClients.GetCli(monitoring.DatasourceId).QueryRange(context.Background(), sql, r)
 
 		if len(warnings) > 0 {
 			logger.Error(err)

@@ -240,6 +240,9 @@ config:
             type: list
             items_limit: 8
             items:
+              - name: sensor
+                label: 传感器
+                type: input
               - name: status
                 label: 状态
                 type: input

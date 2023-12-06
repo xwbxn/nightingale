@@ -195,6 +195,9 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.ExtraConfig = p.rule.ExtraConfigJSON
 	event.PromQl = anomalyPoint.Query
 
+	event.AssetId = p.rule.AssetId
+	event.AssetName = p.tagsMap["asset_name"]
+
 	if from == "inner" {
 		event.LastEvalTime = now
 	} else {

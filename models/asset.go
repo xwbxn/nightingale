@@ -529,6 +529,12 @@ func AssetMom(ctx *ctx.Context, aType string) (num int64, err error) {
 // 根据map查询
 func AssetsGetsMap(ctx *ctx.Context, where map[string]interface{}) (lst []Asset, err error) {
 	err = DB(ctx).Model(&Asset{}).Where(where).Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].TagsJSON = strings.Fields(lst[i].Tags)
+			lst[i].DB2FE()
+		}
+	}
 	return lst, err
 }
 
@@ -563,7 +569,7 @@ func AssetsCountFilter(ctx *ctx.Context, aType string, query, queryType string) 
 }
 
 // 根据filter查询
-func AssetsGetsFilter(ctx *ctx.Context, aType string, query, queryType string, limit, offset int) (lst []Asset, err error) {
+func AssetsGetsFilter(ctx *ctx.Context, aType string, query, queryType string, limit, offset int) (lst []*Asset, err error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
@@ -586,6 +592,14 @@ func AssetsGetsFilter(ctx *ctx.Context, aType string, query, queryType string, l
 	}
 
 	err = session.Model(&Asset{}).Find(&lst).Error
+
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].TagsJSON = strings.Fields(lst[i].Tags)
+			lst[i].DB2FE()
+		}
+	}
+
 	return lst, err
 }
 
@@ -657,6 +671,14 @@ func AssetsGetsFilterNew(ctx *ctx.Context, filter, query, aType string, limit, o
 	}
 
 	err = session.Debug().Model(&Asset{}).Find(&lst).Error
+
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].TagsJSON = strings.Fields(lst[i].Tags)
+			lst[i].DB2FE()
+		}
+	}
+
 	return lst, err
 }
 
@@ -711,9 +733,17 @@ func GetIP(asset *Asset) (ip, name string) {
 }
 
 // 根据ids获得资产
-func AssetGetByIds(ctx *ctx.Context, ids []int64) ([]Asset, error) {
-	var lst []Asset
+func AssetGetByIds(ctx *ctx.Context, ids []int64) ([]*Asset, error) {
+	var lst []*Asset
 	err := DB(ctx).Model(&Asset{}).Where("id in ?", ids).Find(&lst).Error
+
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].TagsJSON = strings.Fields(lst[i].Tags)
+			lst[i].DB2FE()
+		}
+	}
+
 	return lst, err
 }
 

@@ -116,6 +116,7 @@ func convertToResponse(rt *Router, assets []*models.Asset) httpRemoteProviderRes
 					}
 				}
 				labels["instance"] = asset.Label
+				labels["asset_name"] = asset.Name
 
 				//将tags写入到label里，给指标打标
 				for _, tags := range strings.Fields(asset.Tags) {
@@ -159,6 +160,7 @@ func convertToResponse(rt *Router, assets []*models.Asset) httpRemoteProviderRes
 				}
 			}
 			labels["instance"] = asset.Label
+			labels["asset_name"] = asset.Name
 
 			//将tags写入到label里，给指标打标
 			for _, tags := range strings.Fields(asset.Tags) {

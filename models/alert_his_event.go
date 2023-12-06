@@ -207,7 +207,7 @@ func AlertHisEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int6
 	return lst, err
 }
 
-//西航
+// 西航
 func AlertHisEventXHTotal(ctx *ctx.Context, fType, start, end, group int64, ids []int64, query string) (int64, error) {
 	session := DB(ctx)
 	if start != -1 {
@@ -384,12 +384,6 @@ func EventPersist(ctx *ctx.Context, event *AlertCurEvent) error {
 		return fmt.Errorf("event_persist_check_exists_fail: %v rule_id=%d hash=%s", err, event.RuleId, event.Hash)
 	}
 
-	alertRule, err := AlertRuleGetById(ctx, event.RuleId)
-	if err != nil {
-		return err
-	}
-	event.AssetId = alertRule.AssetId
-
 	his := event.ToHis(ctx)
 
 	// 不管是告警还是恢复，全量告警里都要记录
@@ -412,12 +406,6 @@ func EventPersist(ctx *ctx.Context, event *AlertCurEvent) error {
 				if err := event.Add(ctx); err != nil {
 					return fmt.Errorf("add cur event err:%v", err)
 				}
-				asset, err := AssetGetById(ctx, event.AssetId)
-				if err != nil || asset == nil {
-					return fmt.Errorf("get asset err:%v", err)
-				}
-				event.AssetName = asset.Name
-				event.AssetIp = asset.Ip
 				events := make([]*AlertCurEvent, 0)
 				events = append(events, event)
 				logger.Debug(events[0].AssetName)
@@ -445,19 +433,19 @@ func EventPersist(ctx *ctx.Context, event *AlertCurEvent) error {
 	return nil
 }
 
-//统计未处理告警
+// 统计未处理告警
 func AlertHisCount(ctx *ctx.Context) (num int64, err error) {
 	err = DB(ctx).Debug().Model(&AlertHisEvent{}).Where("status != 0").Count(&num).Error
 	return num, err
 }
 
-//map统计历史告警
+// map统计历史告警
 func AlertHisCountMap(ctx *ctx.Context, where map[string]interface{}) (num int64, err error) {
 	err = DB(ctx).Debug().Model(&AlertHisEvent{}).Where(where).Count(&num).Error
 	return num, err
 }
 
-//统计未处理告警
+// 统计未处理告警
 func TodayAlertCount(ctx *ctx.Context) (num int64, err error) {
 	// 获取当前日期
 	now := time.Now()
@@ -469,7 +457,7 @@ func TodayAlertCount(ctx *ctx.Context) (num int64, err error) {
 	return num, err
 }
 
-//过滤器统计历史告警个数
+// 过滤器统计历史告警个数
 func AlertHisCountFilter(ctx *ctx.Context, where map[string]interface{}, dateRange int64, query string, ids []int64) (num int64, err error) {
 	session := DB(ctx)
 	if dateRange != -1 {
@@ -506,7 +494,7 @@ func AlertHisCountFilter(ctx *ctx.Context, where map[string]interface{}, dateRan
 	return num, err
 }
 
-//过滤器统计历史告警
+// 过滤器统计历史告警
 func AlertHisFilter(ctx *ctx.Context, where map[string]interface{}, dateRange int64, query string, ids []int64, limit, offset int) ([]*FeAlert, error) {
 	session := DB(ctx)
 	// 分页
@@ -553,7 +541,7 @@ type RuleIdAndName struct {
 	RuleName string `json:"rule_name"`
 }
 
-//统计所有的ruleName
+// 统计所有的ruleName
 func RuleNameGet(ctx *ctx.Context) (result []RuleIdAndName, err error) {
 	err = DB(ctx).Model(&AlertHisEvent{}).Distinct("rule_id", "rule_name").Find(&result).Error
 	return result, err
@@ -564,7 +552,7 @@ type GroupIdAndName struct {
 	GroupName string `json:"group_name"`
 }
 
-//统计所有的groupName
+// 统计所有的groupName
 func GroupNameGet(ctx *ctx.Context) (result []GroupIdAndName, err error) {
 	err = DB(ctx).Model(&AlertHisEvent{}).Distinct("group_id", "group_name").Find(&result).Error
 	return result, err
