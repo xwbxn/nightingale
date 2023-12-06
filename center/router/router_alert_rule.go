@@ -54,7 +54,6 @@ func (rt *Router) alertRuleGetsXH(c *gin.Context) {
 	busiGroupId := ginx.UrlParamInt64(c, "id")
 	filter := ginx.QueryStr(c, "filter", "")
 	query := ginx.QueryStr(c, "query", "")
-	assetId := ginx.QueryInt64(c, "asset_id", -1)
 	limit := ginx.QueryInt(c, "limit", 20)
 	page := ginx.QueryInt(c, "page", 1)
 	ids := make([]int64, 0)

@@ -1115,6 +1115,8 @@ func AlertRuleGetsFilterNew(ctx *ctx.Context, groupId int64, filter, query strin
 		session = session.Where("name like ?", query)
 	} else if filter == "alert_rule" {
 		session = session.Where("rule_config_cn like ?", query)
+	} else if filter == "asset_id" {
+		session = session.Where("asset_id like ?", query)
 	}
 
 	var lst []AlertRule
