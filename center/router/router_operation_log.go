@@ -5,6 +5,7 @@ package router
 
 import (
 	"net/http"
+	"time"
 
 	models "github.com/ccfos/nightingale/v6/models"
 	"github.com/gin-gonic/gin"
@@ -49,6 +50,48 @@ func (rt *Router) operationLogGets(c *gin.Context) {
 	total, err := models.OperationLogCount(rt.Ctx, query)
 	ginx.Dangerous(err)
 	lst, err := models.OperationLogGets(rt.Ctx, query, limit, ginx.Offset(c, limit))
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Data(gin.H{
+		"list":  lst,
+		"total": total,
+	}, nil)
+}
+
+// @Summary      过滤器查询操作日志
+// @Description  过滤器条件查询操作日志
+// @Tags         操作日志
+// @Accept       json
+// @Produce      json
+// @Param        page query   int     false  "页码"
+// @Param        limit query   int     false  "返回条数"
+// @Param        query query   string  false  "查询条件"
+// @Param        start query   int  false  "开始时间"
+// @Param        end query   int  false  "结束时间"
+// @Param        filterType query string  false  "类型"
+// @Param        modelType query string  false  "模块类型"
+// @Success      200  {array}  models.OperationLog
+// @Router       /api/n9e/operation-log/filter [get]
+// @Security     ApiKeyAuth
+func (rt *Router) operationLogFilterGets(c *gin.Context) {
+	page := ginx.QueryInt(c, "page", 1)
+	limit := ginx.QueryInt(c, "limit", 20)
+	query := ginx.QueryStr(c, "query", "")
+	start := ginx.QueryInt64(c,"start", 0)
+	end := ginx.QueryInt64(c,"end",time.Now().Unix())
+	filterType := ginx.QueryStr(c,"filterType", "")
+	modelTye := ginx.QueryStr(c, "modelType","")
+
+	if end == -1{
+		end = time.Now().Unix()
+	}
+	if end < start {
+			ginx.Bomb(http.StatusOK, "Wrong date range selection")
+		}
+	
+	total, err := models.FilterLogCount(rt.Ctx, query, start, end, filterType, modelTye)
+	ginx.Dangerous(err)
+	lst, err := models.FilterLogGets(rt.Ctx, query, (page-1)*limit, limit, start, end, filterType, modelTye)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{

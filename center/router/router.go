@@ -227,7 +227,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/self/profile", rt.auth(), rt.user(), rt.selfProfilePut)
 		pages.PUT("/self/password", rt.auth(), rt.user(), rt.selfPasswordPut)
 
-		pages.GET("/users", rt.auth(), rt.admin(), rt.perm("/users"), rt.userGets)
+		pages.GET("/users", rt.auth(), rt.admin(), rt.perm("/users"), rt.userFilterGets)
 		pages.GET("/users/xh", rt.auth(), rt.admin(), rt.userGetsXH)
 		pages.POST("/users", rt.auth(), rt.admin(), rt.userAddPost)
 		pages.GET("/user/:id/profile", rt.auth(), rt.userProfileGet)
@@ -768,6 +768,7 @@ func (rt *Router) Config(r *gin.Engine) {
 
 		//操作日志
 		pages.GET("/operation-log", rt.auth(), rt.admin(), rt.operationLogGets)
+		pages.GET("/operation-log/filter", rt.auth(), rt.user(), rt.operationLogFilterGets)
 		pages.GET("/operation-log/:id", rt.auth(), rt.admin(), rt.operationLogGet)
 		pages.POST("/operation-log", rt.auth(), rt.admin(), rt.operationLogAdd)
 		pages.PUT("/operation-log", rt.auth(), rt.admin(), rt.operationLogPut)

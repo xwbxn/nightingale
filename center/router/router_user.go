@@ -88,6 +88,47 @@ func (rt *Router) userGets(c *gin.Context) {
 	}, nil)
 }
 
+// @Summary      用户过滤器查询
+// @Description  用户过滤器查询
+// @Tags         人员信息
+// @Accept       json
+// @Produce      json
+// @Param        page query   int     false  "页码"
+// @Param        limit query   int     false  "条数"
+// @Param        type query   string     false  "类型"
+// @Param        role  query   string     false  "角色"
+// @Param        status  query   int64     false  "状态"
+// @Param        query  query   string     false  "搜索栏"
+// @Success      200  {array}  models.User
+// @Success      200
+// @Router       /api/n9e/users [get]
+// @Security     ApiKeyAuth
+func (rt *Router) userFilterGets(c *gin.Context) {
+	page := ginx.QueryInt(c, "page", 1)
+	limit := ginx.QueryInt(c, "limit", 20)
+	typeF := ginx.QueryStr(c, "type", "")
+	role := ginx.QueryStr(c, "role", "")
+	status := ginx.QueryInt64(c, "status", -1)
+	query := ginx.QueryStr(c, "query", "")
+
+	var err error
+
+
+	total, err := models.UserFilterCountMap(rt.Ctx, role, query, status, typeF)
+	ginx.Dangerous(err)
+
+	list, err := models.UserFilterMap(rt.Ctx, role, query, status, limit, (page-1)*limit, typeF)
+	ginx.Dangerous(err)
+
+	user := c.MustGet("user").(*models.User)
+
+	ginx.NewRender(c).Data(gin.H{
+		"list":  list,
+		"total": total,
+		"admin": user.IsAdmin(),
+	}, nil)
+}
+
 type userAddForm struct {
 	Username       string       `json:"username" binding:"required"`
 	Password       string       `json:"password" binding:"required"`
