@@ -4,6 +4,7 @@ import (
 
 	// "ginDemo/config"
 
+	"sort"
 	"strings"
 	"time"
 
@@ -13,8 +14,10 @@ import (
 	"gorm.io/gorm"
 )
 
-var log_type map[string]string
+var log_obj map[string]string
 var log_post map[string]string
+var log_put map[string]string
+var log_delete map[string]string
 
 type OperationLog struct {
 	Id          int64          `gorm:"column:ID;primaryKey" json:"id" `                          //type:BIGINT       comment:日志主键      version:2023-10-21 09:14
@@ -113,25 +116,33 @@ func LoggerToFile() gin.HandlerFunc {
 
 		// remoteIP, _ := c.Request.Response.Location()
 
-		log_type = map[string]string{
-			"xh/assets": "资产", "xh/monitoring": "监控", "user-config/logo": "图片Logo", "user-config": "用户配置",
-			"alert": "告警", "users": "人员信息", "operation-log": "操作日志", "api-service": "接口管理",
-			"xh/assets-expansion": "扩展", "license-config": "许可管理",
+		log_obj = map[string]string{
+			"xh/assets": "资产", "xh/monitoring": "监控", "alert": "告警", "user-config": "用户配置",
+			"user": "用户信息", "api-service": "接口管理", "/xh/license": "许可管理", "login": "登录",
 		}
 
 		log_post = map[string]string{
 			"xh/assets": "创建资产", "xh/assets/batch-del": "批量删除资产", "xh/assets/batch-update": "批量修改资产",
-			"xh/assets/filter": "资产过滤器", "xh/asset/export-xls": "导出资产", "xh/asset/import-xls": "导入资产", "xh/asset/templet": "导出资产模板",
-			"xh/monitoring": "创建监控", "xh/monitoring/data": "获取监控数据", "xh/monitoring/status": "监控开关",
+			"xh/asset/export-xls": "导出资产", "xh/asset/import-xls": "导入资产", "xh/asset/templet": "导出资产模板",
+			"xh/monitoring": "创建监控", "xh/monitoring/data": "获取监控数据", "xh/monitoring/status": "监控开关", "xh/monitoring/batch-del": "批量删除监控",
 			"alert-cur-events/batch-del": "批量删除当前告警", "alert-his-events/batch-del": "批量删除历史告警",
-			"alert-events/export-xls": "导出告警", "user-config": "创建用户配置", "user-config/picture": "选择图片上传",
+			"alert-events/export-xls": "导出告警", "user-config/picture": "选择图片上传",
 			"users/batch-del": "批量删除用户", "users/update-property": "批量修改用户状态/组织",
-			"users/import-xls": "导入用户信息", "users/templet": "导入用户模板",
-			"operation-log": "创建操作日志", "api-service": "创建接口管理",
+			"users/import-xls": "导入用户信息", "users/templet": "导入用户模板", "users": "创建用户",
+			"api-service": "创建接口管理", "xh/license/add-file": "上传证书", "xh/license-config": "创建许可管理", "xh/license/export-xls": "批量导出证书",
+			"login": "登录",
+		}
+		log_put = map[string]string{
+			"xh/assets": "更新资产", "xh/assets-expansion": "更新资产扩展", "xh/assets/batch-update": "批量修改资产",
+			"xh/monitoring": "更新监控", "user-config": "更新用户配置", "user-config/logo": "更新用户图标",
+			"xh/license/update": "更新证书", "xh/license-config": "更新许可配置", "api-service": "更新接口",
+		}
+		log_delete = map[string]string{
+			"xh/monitoring": "删除监控", "user-config": "删除用户配置", "api-service": "删除接口",
 		}
 
 		operType := GetOperType(reqMethod, reqUri)
-		operObj := GetOperObj(reqUri)
+		operObj := GetOperObj(reqUri, userName)
 		operDes := GetOperDes(reqMethod, reqUri, clientIP)
 		// operuser := key["username"].(string)
 		// var operLog = OperationLog{
@@ -150,13 +161,14 @@ func LoggerToFile() gin.HandlerFunc {
 		// 	UpdatedBy:  "",
 		// 	UpdatedAt:  time.Now().Unix(),
 		// }
+		parts := strings.Split(reqUri, "?")
 		data := make(map[string]interface{})
 		data["type"] = operType
 		data["object"] = operObj
 		data["user_name"] = userName
 		data["description"] = operDes
 		data["oper_time"] = startTime.Unix()
-		data["oper_url"] = reqUri
+		data["oper_url"] = parts[0]
 		data["oper_param"] = paramsStr
 		data["json_result"] = ""
 		data["status"] = int64(statusCode)
@@ -166,7 +178,7 @@ func LoggerToFile() gin.HandlerFunc {
 		// data["updated_by"] = ""
 		// data["updated_at"] = time.Now().Unix()
 
-		if strings.Contains(reqUri, "/api/n9e") {
+		if strings.Contains(reqUri, "/api/n9e") && reqMethod != "GET" && operType != "" {
 			if !OperationlogQueue.PushFront(data) {
 				logger.Warningf("event_push_queue: queue is full, event:%+v", data)
 			}
@@ -212,40 +224,49 @@ func LoggerToMQ() gin.HandlerFunc {
 
 func GetOperType(m string, r string) string {
 	var str strings.Builder
+	order_log_post := orderedMap(log_post)
+	order_log_put := orderedMap(log_put)
+	order_log_delete := orderedMap(log_delete)
 	if m == "PUT" {
-		str.WriteString("更新")
-		for k, v := range log_type {
+		for _, k := range order_log_put {
 			if strings.Contains(r, k) {
-				str.WriteString(v)
-				break
+				str.Reset()
+				str.WriteString(log_put[k])
 			}
 		}
 	} else if m == "DELETE" {
-		str.WriteString("删除")
-		for k, v := range log_type {
+		for _, k := range order_log_delete {
 			if strings.Contains(r, k) {
-				str.WriteString(v)
+				str.Reset()
+				str.WriteString(log_delete[k])
 			}
 		}
 	} else {
-		for k, v := range log_post {
+		for _, k := range order_log_post {
 			if strings.Contains(r, k) {
-				str.WriteString(v)
+				str.Reset()
+				str.WriteString(log_post[k])
 			}
 		}
 	}
 	return str.String()
 }
 
-func GetOperObj(r string) string {
+func GetOperObj(r string, user string) string {
 	var str strings.Builder
-	for k, v := range log_type {
+	for k, v := range log_obj {
 		if strings.Contains(r, k) {
-			str.WriteString(v)
-			break
+			if k == "login" {
+				str.WriteString(user)
+				break
+			} else {
+				str.Reset()
+				str.WriteString(v)
+				str.WriteString("模块")
+				break
+			}
 		}
 	}
-	str.WriteString("模块")
 	return str.String()
 }
 
@@ -256,6 +277,15 @@ func GetOperDes(m string, r string, ip string) string {
 	str.WriteString(",操作IP: ")
 	str.WriteString(ip)
 	return str.String()
+}
+
+func orderedMap(order map[string]string) []string {
+	keys := make([]string, 0, len(order))
+	for k := range order {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 // import (
