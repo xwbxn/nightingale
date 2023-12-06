@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
-	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
 
@@ -123,7 +122,7 @@ func LicenseGets() ([]*License, error) {
 	}
 
 	for _, fileInfo := range fileInfos {
-		if strings.Contains(fileInfo.Name(), ".bak") {
+		if strings.Contains(fileInfo.Name(), ".bak") || strings.Contains(fileInfo.Name(), "readme.txt") {
 			continue
 		}
 		var license License
@@ -147,7 +146,6 @@ func LicenseGets() ([]*License, error) {
 			return licenses, errors.New("证书格式化失败")
 		}
 		id, _ := strconv.ParseInt(strings.Split(strings.Split(fileInfo.Name(), ".")[0], "-")[1], 10, 64)
-		logger.Debug(id)
 		license.Id = id
 		license.StartTime = certificate.NotBefore.Unix()
 		license.EndTime = certificate.NotAfter.Unix()
@@ -210,7 +208,7 @@ func LicenseCacheGets() ([]*License, error) {
 			license.Id = val.Id
 			//待开发
 			license.UsedNode = 0
-			license.TargetVersion = "v1.0.0"
+			license.TargetVersion = val.TargetVersion
 		}
 	}
 	res := make([]*License, 0)
@@ -231,7 +229,6 @@ func LicenseStatistics() (*Statistics, error) {
 	}
 
 	var stats Statistics
-	logger.Debug(int64(len(licenses)))
 	stats.Total = int64(len(licenses))
 	stats.LastUpdated = maxDate
 	return &stats, nil

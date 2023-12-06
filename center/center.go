@@ -11,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/center/cstats"
 	"github.com/ccfos/nightingale/v6/center/license"
 	"github.com/ccfos/nightingale/v6/center/metas"
+	operationlog "github.com/ccfos/nightingale/v6/center/operation_log"
 	"github.com/ccfos/nightingale/v6/center/sso"
 	"github.com/ccfos/nightingale/v6/conf"
 	"github.com/ccfos/nightingale/v6/dumper"
@@ -150,6 +151,9 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	providerRouter := providerrt.New(config.HTTP, targetCache, busiGroupCache, assetCache, ctx)
 	attrs.StartAttrSync(ctx, promClients, assetCache)
 	license.NewScheduler(licenseCache, notifyConfigCache) //license检测
+
+	consumer := operationlog.NewConsumer(ctx)
+	go consumer.LoopConsume()
 
 	r := httpx.GinEngine(config.Global.RunMode, config.HTTP)
 

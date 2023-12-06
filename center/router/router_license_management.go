@@ -236,7 +236,7 @@ func (rt *Router) exportLicenseXH(c *gin.Context) {
 	}
 	for _, fileInfo := range fileInfos {
 		for _, id := range ids {
-			if strings.Contains(fileInfo.Name(), ".bak") {
+			if strings.Contains(fileInfo.Name(), ".bak") || strings.Contains(fileInfo.Name(), "readme.txt") {
 				continue
 			}
 			if strings.Contains(fileInfo.Name(), strconv.FormatInt(id, 10)) {

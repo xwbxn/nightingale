@@ -11,6 +11,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/prometheus/prometheus/model/labels"
+	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
 
@@ -20,23 +21,33 @@ import (
 // group: Monitoring
 // version:2023-10-08 16:45
 type Monitoring struct {
-	Id             int64          `gorm:"column:ID;primaryKey" json:"id" `                          //type:BIGINT       comment:主键        version:2023-10-08 16:45
-	AssetId        int64          `gorm:"column:ASSET_ID" json:"asset_id" `                         //type:BIGINT       comment:资产id      version:2023-10-08 16:45
-	AssetIds       []int64        `gorm:"-" json:"asset_ids" `                                      //批量添加，对前端
-	MonitoringName string         `gorm:"column:MONITORING_NAME" json:"monitoring_name" `           //type:string       comment:监控名称    version:2023-10-08 16:45
-	DatasourceId   int64          `gorm:"column:DATASOURCE_ID" json:"datasource_id" `               //type:BIGINT       comment:数据源名称    version:2023-10-08 16:45
-	MonitoringSql  string         `gorm:"column:MONITORING_SQL" json:"monitoring_sql" `             //type:string       comment:监控脚本    version:2023-10-08 16:45
-	Status         int64          `gorm:"column:STATUS" json:"status" `                             //type:*int         comment:状态        version:2023-10-08 16:45
-	IsAlarm        int64          `gorm:"column:IS_ALARM" json:"is_alarm" `                         //type:*int         comment:是否启用告警    version:2023-10-13 14:27
-	TargetId       int64          `gorm:"column:TARGET_ID" json:"target_id" `                       //type:*int         comment:采集器      version:2023-10-08 16:45
-	Config         string         `gorm:"column:CONFIG" json:"config" `                             //type:string       comment:配置信息    version:2023-10-13 14:20
-	Remark         string         `gorm:"column:REMARK" json:"remark" `                             //type:string       comment:说明        version:2023-10-08 16:45
-	Unit           string         `gorm:"column:UNIT" json:"unit"`                                  //type:string       comment:单位        version:2023-10-08 16:45
-	CreatedBy      string         `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string       comment:创建人      version:2023-10-08 16:45
-	CreatedAt      int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int         comment:创建时间    version:2023-10-08 16:45
-	UpdatedBy      string         `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string       comment:更新人      version:2023-10-08 16:45
-	UpdatedAt      int64          `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int         comment:更新时间    version:2023-10-08 16:45
-	DeletedAt      gorm.DeletedAt `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"` //type:*time.Time   comment:删除时间    version:2023-10-08 16:45
+	Id             int64               `gorm:"column:ID;primaryKey" json:"id" `                          //type:BIGINT       comment:主键        version:2023-10-08 16:45
+	AssetId        int64               `gorm:"column:ASSET_ID" json:"asset_id" `                         //type:BIGINT       comment:资产id      version:2023-10-08 16:45
+	AssetIds       []int64             `gorm:"-" json:"asset_ids" `                                      //批量添加，对前端
+	MonitoringName string              `gorm:"column:MONITORING_NAME" json:"monitoring_name" `           //type:string       comment:监控名称    version:2023-10-08 16:45
+	DatasourceId   int64               `gorm:"column:DATASOURCE_ID" json:"datasource_id" `               //type:BIGINT       comment:数据源名称    version:2023-10-08 16:45
+	MonitoringSql  string              `gorm:"column:MONITORING_SQL" json:"monitoring_sql" `             //type:string       comment:监控脚本    version:2023-10-08 16:45
+	Status         int64               `gorm:"column:STATUS" json:"status" `                             //type:*int         comment:状态        version:2023-10-08 16:45
+	IsAlarm        int64               `gorm:"column:IS_ALARM" json:"is_alarm" `                         //type:*int         comment:是否启用告警    version:2023-10-13 14:27
+	TargetId       int64               `gorm:"column:TARGET_ID" json:"target_id" `                       //type:*int         comment:采集器      version:2023-10-08 16:45
+	Config         string              `gorm:"column:CONFIG" json:"config" `                             //type:string       comment:配置信息    version:2023-10-13 14:20
+	Remark         string              `gorm:"column:REMARK" json:"remark" `                             //type:string       comment:说明        version:2023-10-08 16:45
+	Unit           string              `gorm:"column:UNIT" json:"unit"`                                  //type:string       comment:单位        version:2023-10-08 16:45
+	CreatedBy      string              `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string       comment:创建人      version:2023-10-08 16:45
+	CreatedAt      int64               `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int         comment:创建时间    version:2023-10-08 16:45
+	UpdatedBy      string              `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string       comment:更新人      version:2023-10-08 16:45
+	UpdatedAt      int64               `gorm:"column:UPDATED_AT" json:"updated_at" swaggerignore:"true"` //type:*int         comment:更新时间    version:2023-10-08 16:45
+	DeletedAt      gorm.DeletedAt      `gorm:"column:DELETED_AT" json:"deleted_at" swaggerignore:"true"` //type:*time.Time   comment:删除时间    version:2023-10-08 16:45
+	AlertRules     []AlertRuleSimplify `gorm:"-" json:"alert_rules" `
+}
+
+// MonitoringSimplify  监控简易信息。
+// 说明:
+// 表名:monitoring
+// group: Monitoring
+// version:2023-10-08 16:45
+type MonitoringSimplify struct {
+	Id int64 `json:"id"`
 }
 
 // TableName 表名:monitoring，监控。
@@ -144,32 +155,37 @@ func MonitoringMapGets(ctx *ctx.Context, where map[string]interface{}, query str
 }
 
 // 根据条件统计个数(new)
-func MonitoringMapCountNew(ctx *ctx.Context, filter, query, assetType string, assetId int64) (num int64, err error) {
+func MonitoringMapCountNew(ctx *ctx.Context, filter, query string, assetId int64, assetIds []int64) (num int64, err error) {
 
 	session := DB(ctx)
 	if filter == "monitoring_name" {
 		session = session.Where("MONITORING_NAME like ? ", "%"+query+"%")
-	} else if filter == "asset_name" {
-		ids, err := AssetIdByName(ctx, "%"+query+"%")
-		if err != nil {
-			return 0, err
-		}
-		session = session.Where("ASSET_ID in? ", ids)
+		// } else if filter == "asset_name" {
+		// 	ids, err := AssetIdByName(ctx, "%"+query+"%")
+		// 	if err != nil {
+		// 		return 0, err
+		// 	}
+		// 	session = session.Where("ASSET_ID in? ", ids)
 	} else if filter == "status" {
 		session = session.Where("STATUS like ? ", "%"+query+"%")
 	} else if filter == "is_alarm" {
 		session = session.Where("IS_ALARM like? ", "%"+query+"%")
+	} else if filter == "asset_name" || filter == "asset_type" || filter == "asset_ip" {
+		session = session.Where("ASSET_ID in ? ", assetIds)
 	}
 	if assetId != -1 {
 		session = session.Where("ASSET_ID = ? ", assetId)
 	}
-	if assetType != "" {
-		ids, err := AssetIdByType(ctx, "%"+assetType+"%")
-		if err != nil {
-			return 0, err
-		}
-		session = session.Where("ASSET_ID in? ", ids)
-	}
+	// if assetType != "" {
+	// 	ids, err := AssetIdByType(ctx, "%"+assetType+"%")
+	// 	if err != nil {
+	// 		return 0, err
+	// 	}
+	// 	session = session.Where("ASSET_ID in? ", ids)
+	// }
+	// if len(assetIds) > 0 {
+	// 	session = session.Where("ASSET_ID in ? ", assetIds)
+	// }
 
 	err = session.Debug().Model(&Monitoring{}).Count(&num).Error
 
@@ -177,37 +193,44 @@ func MonitoringMapCountNew(ctx *ctx.Context, filter, query, assetType string, as
 }
 
 // 条件查询(new)
-func MonitoringMapGetsNew(ctx *ctx.Context, filter, query, assetType string, assetId int64, limit, offset int) (lst []Monitoring, err error) {
+func MonitoringMapGetsNew(ctx *ctx.Context, filter, query string, assetId int64, assetIds []int64, limit, offset int) (lst []Monitoring, err error) {
 	session := DB(ctx)
 
 	// 分页
 	if limit > -1 {
-		session = session.Limit(limit).Offset(offset).Order("id")
+		session = session.Limit(limit).Offset(offset).Order("UPDATED_AT DESC")
 	}
 
 	if filter == "monitoring_name" {
 		session = session.Where("MONITORING_NAME like ? ", "%"+query+"%")
-	} else if filter == "asset_name" {
-		ids, err := AssetIdByName(ctx, "%"+query+"%")
-		if err != nil {
-			return lst, err
-		}
-		session = session.Where("ASSET_ID in? ", ids)
+		// } else if filter == "asset_name" {
+		// 	ids, err := AssetIdByName(ctx, "%"+query+"%")
+		// 	if err != nil {
+		// 		return lst, err
+		// 	}
+		// 	session = session.Where("ASSET_ID in? ", ids)
 	} else if filter == "status" {
 		session = session.Where("STATUS like ? ", "%"+query+"%")
 	} else if filter == "is_alarm" {
 		session = session.Where("IS_ALARM like? ", "%"+query+"%")
+	} else if filter == "asset_name" || filter == "asset_type" || filter == "asset_ip" {
+		logger.Debug("42314444444444445433333333333")
+		session = session.Where("ASSET_ID in ? ", assetIds)
 	}
+
 	if assetId != -1 {
 		session = session.Where("ASSET_ID = ? ", assetId)
 	}
-	if assetType != "" {
-		ids, err := AssetIdByType(ctx, "%"+assetType+"%")
-		if err != nil {
-			return lst, err
-		}
-		session = session.Where("ASSET_ID in? ", ids)
-	}
+	// if assetType != "" {
+	// 	ids, err := AssetIdByType(ctx, "%"+assetType+"%")
+	// 	if err != nil {
+	// 		return lst, err
+	// 	}
+	// 	session = session.Where("ASSET_ID in? ", ids)
+	// }
+	// if len(assetIds) > 0 {
+	// 	session = session.Where("ASSET_ID in ? ", assetIds)
+	// }
 
 	err = session.Debug().Model(&Monitoring{}).Find(&lst).Error
 

@@ -791,17 +791,17 @@ func AlertEventXHTotalNew(ctx *ctx.Context, alertType, start, end int64, ids []i
 		session = session.Where("trigger_time <= ?", end)
 	}
 	if filter == "severity" {
-		session = session.Where("severity like ?", "%"+filter+"%")
+		session = session.Where("severity like ?", "%"+query+"%")
 	} else if filter == "rule_name" {
-		ruleIds, err := AlertRuleIdByName(ctx, "%"+filter+"%")
+		ruleIds, err := AlertRuleIdByName(ctx, "%"+query+"%")
 		if err != nil {
 			return 0, err
 		}
 		session = session.Where("rule_id in?", ruleIds)
 	} else if filter == "group_id" {
-		session = session.Where("group_id like ?", "%"+filter+"%")
+		session = session.Where("group_id like ?", "%"+query+"%")
 	} else if filter == "alert_rule" {
-		ruleIds, err := AlertRuleIdByAlertRule(ctx, "%"+filter+"%")
+		ruleIds, err := AlertRuleIdByAlertRule(ctx, "%"+query+"%")
 		if err != nil {
 			return 0, err
 		}
@@ -843,17 +843,17 @@ func AlertEventXHGetsNew[T any](ctx *ctx.Context, alertType, start, end int64, i
 		session = session.Where("trigger_time <= ?", end)
 	}
 	if filter == "severity" {
-		session = session.Where("severity like ?", "%"+filter+"%")
+		session = session.Where("severity like ?", "%"+query+"%")
 	} else if filter == "rule_name" {
-		ruleIds, err := AlertRuleIdByName(ctx, "%"+filter+"%")
+		ruleIds, err := AlertRuleIdByName(ctx, "%"+query+"%")
 		if err != nil {
 			return t, err
 		}
 		session = session.Where("rule_id in?", ruleIds)
 	} else if filter == "group_id" {
-		session = session.Where("group_id like ?", "%"+filter+"%")
+		session = session.Where("group_id like ?", "%"+query+"%")
 	} else if filter == "alert_rule" {
-		ruleIds, err := AlertRuleIdByAlertRule(ctx, "%"+filter+"%")
+		ruleIds, err := AlertRuleIdByAlertRule(ctx, "%"+query+"%")
 		if err != nil {
 			return t, err
 		}
