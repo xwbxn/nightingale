@@ -118,7 +118,7 @@ func LoggerToFile() gin.HandlerFunc {
 
 		log_obj = map[string]string{
 			"xh/assets": "资产", "xh/monitoring": "监控", "alert": "告警", "user-config": "用户配置",
-			"user": "用户信息", "api-service": "接口管理", "/xh/license": "许可管理", "login": "登录",
+			"user": "用户信息", "api-service": "接口管理", "/xh/license": "许可管理", "login": "登录", "operation-log": "操作日志",
 		}
 
 		log_post = map[string]string{
@@ -130,7 +130,7 @@ func LoggerToFile() gin.HandlerFunc {
 			"users/batch-del": "批量删除用户", "users/update-property": "批量修改用户状态/组织",
 			"users/import-xls": "导入用户信息", "users/templet": "导入用户模板", "users": "创建用户",
 			"api-service": "创建接口管理", "xh/license/add-file": "上传证书", "xh/license-config": "创建许可管理", "xh/license/export-xls": "批量导出证书",
-			"login": "登录",
+			"login": "登录", "/operation-log/export-xls": "导出操作日志数据",
 		}
 		log_put = map[string]string{
 			"xh/assets": "更新资产", "xh/assets-expansion": "更新资产扩展", "xh/assets/batch-update": "批量修改资产",
@@ -171,18 +171,19 @@ func LoggerToFile() gin.HandlerFunc {
 		data["oper_url"] = parts[0]
 		data["oper_param"] = paramsStr
 		data["json_result"] = ""
+		data["req_method"] = reqMethod
 		data["status"] = int64(statusCode)
 		data["error_msg"] = err
-		// data["created_by"] = "root"
-		// data["created_at"] = time.Now().Unix()
-		// data["updated_by"] = ""
-		// data["updated_at"] = time.Now().Unix()
 
-		if strings.Contains(reqUri, "/api/n9e") && reqMethod != "GET" && operType != "" {
-			if !OperationlogQueue.PushFront(data) {
-				logger.Warningf("event_push_queue: queue is full, event:%+v", data)
+		if strings.Contains(reqUri, "/api/n9e") && reqMethod != "GET" {
+
+			if operType != "" {
+				if !OperationlogQueue.PushFront(data) {
+					logger.Warningf("event_push_queue: queue is full, event:%+v", data)
+				}
+				logger.Debug("日志进队列了")
 			}
-			logger.Debug("日志进队列了")
+
 		}
 		// 日志格式
 		logger.WithFields(logrus.Fields{
@@ -191,6 +192,7 @@ func LoggerToFile() gin.HandlerFunc {
 			"client_ip":    clientIP,
 			"req_method":   reqMethod,
 			"req_uri":      reqUri,
+			"type":         operType,
 			"params":       params,
 			"key":          key,
 			"accepted":     accepted,

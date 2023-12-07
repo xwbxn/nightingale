@@ -29,6 +29,7 @@ type AlertRule struct {
 	AssetId               int64             `json:"asset_id"`
 	AssetName             string            `json:"asset_name" gorm:"-"`
 	AssetIp               string            `json:"asset_ip" gorm:"-"`
+	MonitoringId          int64             `json:"monitoring_id"`
 	Cate                  string            `json:"cate"`                                 // alert rule cate (prometheus|elasticsearch)
 	DatasourceIds         string            `json:"-" gorm:"datasource_ids"`              // datasource ids
 	DatasourceIdsJson     []int64           `json:"datasource_ids" gorm:"-"`              // for fe
@@ -124,6 +125,7 @@ type Trigger struct {
 }
 
 type AlertRuleSimplify struct {
+	Id           int64  `json:"id"`
 	RuleConfigCn string `json:"rule_config_cn"`
 	Relation     string `json:"relation"`
 	Value        int64  `json:"value"`
@@ -338,6 +340,40 @@ func (ar *AlertRule) Update(ctx *ctx.Context, arf AlertRule) error {
 		return err
 	}
 	return DB(ctx).Model(ar).Select("*").Updates(arf).Error
+}
+
+func (ar *AlertRule) UpdateTx(ctx *ctx.Context, tx *gorm.DB, arf AlertRule) error {
+	if ar.Name != arf.Name {
+		exists, err := AlertRuleExists(ctx, ar.Id, ar.GroupId, ar.DatasourceIdsJson, arf.Name)
+		if err != nil {
+			return err
+		}
+
+		if exists {
+			return errors.New("AlertRule already exists")
+		}
+	}
+
+	err := arf.FE2DB(ctx)
+	if err != nil {
+		return err
+	}
+
+	arf.Id = ar.Id
+	arf.GroupId = ar.GroupId
+	arf.CreateAt = ar.CreateAt
+	arf.CreateBy = ar.CreateBy
+	arf.UpdateAt = time.Now().Unix()
+
+	err = arf.Verify()
+	if err != nil {
+		return err
+	}
+	err = tx.Debug().Model(ar).Select("*").Updates(arf).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
 }
 
 func (ar *AlertRule) UpdateColumn(ctx *ctx.Context, column string, value interface{}) error {
@@ -592,18 +628,17 @@ func (ar *AlertRule) FE2DB(ctx *ctx.Context) error {
 		query := ar.RuleConfigJson.(map[string]interface{})
 		// mon, monOk := query["queries"]["monitor_id"]
 
-		logger.Debug(query["queries"])
 		queries := query["queries"].([]interface{})
-		logger.Debug(queries)
 		for index := range queries {
 			config := queries[index].(map[string]interface{})
 			newConfig := make(map[string]interface{}, 0)
 			mon, monOk := config["monitor_id"]
 			if monOk {
 				monitoring, err := MonitoringGetById(ctx, int64(mon.(float64)))
-				if err != nil {
+				if err != nil || monitoring == nil {
 					return err
 				}
+				ar.MonitoringId = monitoring.Id
 				newConfig["prom_ql"] = monitoring.MonitoringSql + config["relation"].(string) + config["value"].(string)
 				newConfig["severity"] = int64(config["severity"].(float64))
 				queries[index] = newConfig
@@ -1052,6 +1087,15 @@ func AlertRuleDelTxByMonId(tx *gorm.DB, ids []string) error {
 	return nil
 }
 
+func AlertRuleDelTx(tx *gorm.DB, alertRule AlertRule) error {
+	err := tx.Debug().Delete(&alertRule).Error
+	if err != nil {
+		tx.Rollback()
+	}
+
+	return nil
+}
+
 func AlertRuleGetsFilter(ctx *ctx.Context, groupId int64, filter, query string, ids []int64, limit, offset int) ([]AlertRule, error) {
 	session := DB(ctx).Where("group_id=?", groupId)
 	if limit > -1 {
@@ -1193,6 +1237,7 @@ func BuildAlertRule(ctx *ctx.Context, monitoring Monitoring, alertRule AlertRule
 		RuleConfigCn:     alertRule.RuleConfigCn,
 		NotifyRepeatStep: 60,
 		Severity:         alertRule.Severity,
+		MonitoringId:     monitoring.Id,
 	}
 	config := map[string][]map[string]interface{}{}
 	config["queries"] = []map[string]interface{}{
@@ -1214,4 +1259,10 @@ func BuildAlertRule(ctx *ctx.Context, monitoring Monitoring, alertRule AlertRule
 	// 	return &AlertRule{}, nil
 	// }
 	return rule, nil
+}
+
+func AlertRuleGetByMap(ctx *ctx.Context, where map[string]interface{}) ([]AlertRule, error) {
+	var lst []AlertRule
+	err := DB(ctx).Where(where).Find(&lst).Error
+	return lst, err
 }

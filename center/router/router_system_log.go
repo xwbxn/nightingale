@@ -160,7 +160,7 @@ func (rt *Router) systemLogGets(c *gin.Context) {
 // @Param        query    query    string  false  "搜索框"
 // @Param        start    query    int64  false  "开始时间"
 // @Param        end    query    int64  false  "结束时间"
-// @Param        body  body   map[string]interface{} false "{“name”:[“ss.log”, “ee.log”]}"
+// @Param        body  body   map[string]interface{} false "{“names”:[“ss.log”, “ee.log”]}"
 // @Success      200
 // @Router       /api/n9e/xh/sys-log/export-xls [post]
 // @Security     ApiKeyAuth

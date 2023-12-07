@@ -63,6 +63,7 @@ func (e *Consumer) consume(events []interface{}, sema *semaphore.Semaphore) {
 			OperUrl:     event["oper_url"].(string),
 			OperParam:   event["oper_param"].(string),
 			JsonResult:  "",
+			ReqMethod:   event["req_method"].(string),
 			Status:      event["status"].(int64),
 			ErrorMsg:    event["error_msg"].(string),
 			CreatedBy:   event["user_name"].(string),

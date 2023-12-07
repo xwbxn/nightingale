@@ -5,6 +5,7 @@ package router
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -37,6 +38,33 @@ func (rt *Router) monitoringGet(c *gin.Context) {
 	if monitoring == nil {
 		ginx.Bomb(404, "No such monitoring")
 	}
+
+	lst, err := models.AlertRuleGetByMap(rt.Ctx, map[string]interface{}{"monitoring_id": id})
+	ginx.Dangerous(err)
+
+	alertRules := make([]models.AlertRuleSimplify, 0)
+	for _, val := range lst {
+
+		// query := ar.RuleConfigJson.(map[string]interface{})
+		// mon, monOk := query["queries"]["monitor_id"]
+
+		query := make(map[string]interface{})
+		err := json.Unmarshal([]byte(val.RuleConfigFe), &query)
+		ginx.Dangerous(err)
+		queries := query["queries"].([]interface{})
+		config := queries[0].(map[string]interface{})
+
+		logger.Debug(queries)
+		var alertRule models.AlertRuleSimplify
+		alertRule.Id = val.Id
+		alertRule.RuleConfigCn = val.RuleConfigCn
+		alertRule.Relation = config["relation"].(string)
+		alertRule.Severity = int(config["severity"].(float64))
+		value, _ := strconv.ParseInt(config["value"].(string), 10, 64)
+		alertRule.Value = value
+		alertRules = append(alertRules, alertRule)
+	}
+	monitoring.AlertRules = alertRules
 
 	ginx.NewRender(c).Data(monitoring, nil)
 }
@@ -126,9 +154,9 @@ func (rt *Router) monitoringGets(c *gin.Context) {
 		}
 	}
 
-	total, err := models.MonitoringMapCountNew(rt.Ctx, filter, query, assetId, assetIds)
+	total, err := models.MonitoringMapCountNew(rt.Ctx, filter, query, assetType, assetId, assetIds)
 	ginx.Dangerous(err)
-	lst, err := models.MonitoringMapGetsNew(rt.Ctx, filter, query, assetId, assetIds, limit, (page-1)*limit)
+	lst, err := models.MonitoringMapGetsNew(rt.Ctx, filter, query, assetType, assetId, assetIds, limit, (page-1)*limit)
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Data(gin.H{
@@ -271,8 +299,73 @@ func (rt *Router) monitoringPut(c *gin.Context) {
 	me := c.MustGet("user").(*models.User)
 	f.UpdatedBy = me.Username
 
+	tx := models.DB(rt.Ctx).Begin()
+
+	//修改监控
+	err = old.UpdateTx(tx, f, "*")
+	ginx.Dangerous(err)
+
+	lst, err := models.AlertRuleGetByMap(rt.Ctx, map[string]interface{}{"monitoring_id": f.Id})
+	ginx.Dangerous(err)
+
+	m := make(map[int64]models.AlertRule, len(lst))
+	for _, alertRule := range lst {
+		m[alertRule.Id] = alertRule
+	}
+	for _, alertRuleSimplify := range f.AlertRules {
+		alertRule, ok := m[alertRuleSimplify.Id]
+		if ok {
+			if alertRule.RuleConfigCn != alertRuleSimplify.RuleConfigCn || alertRule.Severity != alertRuleSimplify.Severity {
+				config := map[string][]map[string]interface{}{}
+				config["queries"] = []map[string]interface{}{
+					{
+						"severity":   alertRuleSimplify.Severity,
+						"monitor_id": f.Id,
+						"relation":   alertRuleSimplify.Relation,
+						"value":      fmt.Sprintf("%d", alertRuleSimplify.Value),
+					},
+				}
+				configJson, err := json.Marshal(config)
+				ginx.Dangerous(err)
+				alertRule.Name = alertRuleSimplify.RuleConfigCn
+				alertRule.Severity = alertRuleSimplify.Severity
+				alertRule.RuleConfigCn = alertRuleSimplify.RuleConfigCn
+				alertRule.RuleConfig = string(configJson)
+				alertRule.RuleConfigFe = string(configJson)
+				// err = alertRule.FE2DB(rt.Ctx)
+				// ginx.Dangerous(err)
+
+				ar, err := models.AlertRuleGetById(rt.Ctx, alertRule.Id)
+				ginx.Dangerous(err)
+
+				if ar == nil {
+					ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
+					return
+				}
+
+				rt.bgrwCheck(c, ar.GroupId)
+				err = ar.UpdateTx(rt.Ctx, tx, alertRule)
+				ginx.Dangerous(err)
+			}
+			delete(m, alertRule.Id)
+		} else {
+			alertRule, err := models.BuildAlertRule(rt.Ctx, f, alertRuleSimplify)
+			if err != nil {
+				tx.Rollback()
+			}
+			err = alertRule.AddTx(rt.Ctx, tx)
+			ginx.Dangerous(err)
+		}
+
+	}
+	for _, alertRule := range m {
+		err = models.AlertRuleDelTx(tx, alertRule)
+		ginx.Dangerous(err)
+	}
+	tx.Commit()
+
 	// 可修改"*"为字段名称，实现更新部分字段功能
-	ginx.NewRender(c).Message(old.Update(rt.Ctx, f, "*"))
+	ginx.NewRender(c).Message(err)
 }
 
 // @Summary      删除监控
