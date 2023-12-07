@@ -48,21 +48,21 @@ func (rt *Router) assetsGets(c *gin.Context) {
 }
 
 type assetsModel struct {
-	Id             int64  `json:"id"`
-	Version        string `json:"version"`
-	Ident          string `json:"ident"`
-	GroupId        int64  `json:"group_id"`
-	Name           string `json:"name"`
-	Label          string `json:"label"`
-	Tags           string `json:"tags"`
-	Type           string `json:"type"`
-	Ip             string `json:"ip"`
-	Manufacturers  string `json:"manufacturers"`
-	Position       string `json:"position"`
-	Memo           string `json:"memo"`
-	Configs        string `json:"configs"`
-	Params         string `json:"params"`
-	OrganizationId int64  `json:"organization_id"`
+	Id             int64                  `json:"id"`
+	Version        string                 `json:"version"`
+	Ident          string                 `json:"ident"`
+	GroupId        int64                  `json:"group_id"`
+	Name           string                 `json:"name"`
+	Label          string                 `json:"label"`
+	Tags           string                 `json:"tags"`
+	Type           string                 `json:"type"`
+	Ip             string                 `json:"ip"`
+	Manufacturers  string                 `json:"manufacturers"`
+	Position       string                 `json:"position"`
+	Memo           string                 `json:"memo"`
+	Configs        string                 `json:"configs"`
+	ParamsJson     map[string]interface{} `json:"params"`
+	OrganizationId int64                  `json:"organization_id"`
 }
 
 func (rt *Router) assetsAdd(c *gin.Context) {
@@ -78,13 +78,16 @@ func (rt *Router) assetsAdd(c *gin.Context) {
 		Type:           f.Type,
 		Memo:           f.Memo,
 		Configs:        f.Configs,
-		Params:         f.Params,
+		ParamsJson:     f.ParamsJson,
 		CreateBy:       me.Username,
 		CreateAt:       time.Now().Unix(),
 		OrganizationId: f.OrganizationId,
 	}
 
-	err := assets.Add(rt.Ctx)
+	err := assets.FE2DB()
+	ginx.Dangerous(err)
+
+	err = assets.Add(rt.Ctx)
 	ginx.NewRender(c).Message(err)
 }
 
@@ -131,7 +134,7 @@ func (rt *Router) assetsAddXH(c *gin.Context) {
 		Ip:            f.Ip,
 		Manufacturers: f.Manufacturers,
 		Position:      f.Position,
-		Params:        f.Params,
+		ParamsJson:    f.ParamsJson,
 		Memo:          f.Memo,
 		CreateBy:      me.Username,
 		CreateAt:      time.Now().Unix(),
@@ -141,6 +144,9 @@ func (rt *Router) assetsAddXH(c *gin.Context) {
 	if err != nil {
 		ginx.Bomb(http.StatusOK, err.Error())
 	}
+
+	err = assets.FE2DB()
+	ginx.Dangerous(err)
 
 	id, err := assets.AddXH(rt.Ctx)
 	ginx.Dangerous(err)
@@ -164,9 +170,12 @@ func (rt *Router) assetPut(c *gin.Context) {
 	oldAssets.Name = f.Name
 	oldAssets.Configs = f.Configs
 	oldAssets.Memo = f.Memo
-	oldAssets.Params = f.Params
+	oldAssets.ParamsJson = f.ParamsJson
 	oldAssets.UpdateAt = time.Now().Unix()
 	oldAssets.UpdateBy = me.Username
+
+	err = oldAssets.FE2DB()
+	ginx.Dangerous(err)
 
 	err = oldAssets.Update(rt.Ctx, "name", "params", " ident", "label", "configs", "memo", "update_at", "update_by")
 	ginx.NewRender(c).Message(err)
@@ -224,9 +233,11 @@ func (rt *Router) assetPutXH(c *gin.Context) {
 	oldAssets.Manufacturers = f.Manufacturers
 	oldAssets.Position = f.Position
 	oldAssets.Memo = f.Memo
-	oldAssets.Params = f.Params
+	oldAssets.ParamsJson = f.ParamsJson
 	oldAssets.UpdateAt = time.Now().Unix()
 	oldAssets.UpdateBy = me.Username
+
+	err = oldAssets.FE2DB()
 
 	err = oldAssets.Update(rt.Ctx, "group_id", "name", "type", "ip", "manufacturers", "position", "params", "memo", "update_at", "update_by")
 	ginx.Dangerous(err)

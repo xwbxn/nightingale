@@ -40,6 +40,7 @@ config:
       - name: CPU使用率
         metrics: "cpu_usage_active"
         unit: "percent-100"
+        label: "{{cpu}}"
         rules:
           - name: CPU使用率过高
             promql: cpu_usage_active
@@ -49,10 +50,10 @@ config:
       - name: 内存使用率
         metrics: "mem_used_percent"
         unit: "percent-100"
-      - name: 入口流量
+      - name: 入流量
         metrics: 'sum(rate(net_bits_recv[1m]))'
         unit: "bit"
-      - name: 出口流量
+      - name: 出流量
         metrics: "sum(rate(net_bits_sent[1m]))"
         unit: "bit"
       - name: 最大分区使用率

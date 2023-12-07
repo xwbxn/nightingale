@@ -33,6 +33,7 @@ type Monitoring struct {
 	Config         string              `gorm:"column:CONFIG" json:"config" `                             //type:string       comment:配置信息    version:2023-10-13 14:20
 	Remark         string              `gorm:"column:REMARK" json:"remark" `                             //type:string       comment:说明        version:2023-10-08 16:45
 	Unit           string              `gorm:"column:UNIT" json:"unit"`                                  //type:string       comment:单位        version:2023-10-08 16:45
+	Label          string              `gorm:"column:LABEL" json:"label"`                                //type:string       comment:标签        version:2023-10-08 16:45
 	CreatedBy      string              `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string       comment:创建人      version:2023-10-08 16:45
 	CreatedAt      int64               `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int         comment:创建时间    version:2023-10-08 16:45
 	UpdatedBy      string              `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string       comment:更新人      version:2023-10-08 16:45

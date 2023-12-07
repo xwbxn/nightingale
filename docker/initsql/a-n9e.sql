@@ -25,8 +25,7 @@ CREATE TABLE `users` (
     UNIQUE KEY (`username`)
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
--- insert into `users`(id, username, nickname, password, roles, create_at, create_by, update_at, update_by) values(1, 'root', '超管', 'root.2020', 'Admin', unix_timestamp(now()), 'system', unix_timestamp(now()), 'system');
-INSERT INTO `users` VALUES (1, 'root', '超管', '042c05fffc2f49ca29a76223f3a41e83', '', '', '', 'Admin', 1, 1, '{}', 0, 1698905269, 'system', 1698973348, 'root', NULL);
+INSERT INTO `users` VALUES (1, 'admin', '超管', '042c05fffc2f49ca29a76223f3a41e83', '', '', '', 'Admin', 1, 1, '{}', 0, 1698905269, 'system', 1698973348, 'root', NULL);
 
 
 CREATE TABLE `user_group` (
@@ -42,7 +41,7 @@ CREATE TABLE `user_group` (
     KEY (`update_at`)
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
-insert into user_group(id, name, create_at, create_by, update_at, update_by) values(1, 'demo-root-group', unix_timestamp(now()), 'root', unix_timestamp(now()), 'root');
+insert into user_group(id, name, create_at, create_by, update_at, update_by) values(1, '默认用户组', unix_timestamp(now()), 'admin', unix_timestamp(now()), 'admin');
 
 CREATE TABLE `user_group_member` (
     `id` bigint unsigned not null auto_increment,
@@ -166,7 +165,7 @@ CREATE TABLE `busi_group` (
     UNIQUE KEY (`name`)
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
-insert into busi_group(id, name, create_at, create_by, update_at, update_by) values(1, 'Default Busi Group', unix_timestamp(now()), 'root', unix_timestamp(now()), 'root');
+insert into busi_group(id, name, create_at, create_by, update_at, update_by) values(1, '默认业务组', unix_timestamp(now()), 'root', unix_timestamp(now()), 'root');
 
 CREATE TABLE `busi_group_member` (
     `id` bigint unsigned not null auto_increment,
@@ -686,7 +685,7 @@ CREATE TABLE `es_index_pattern` (
     UNIQUE KEY (`datasource_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
-INSERT INTO `datasource`(`id`, `name`, `description`, `category`, `plugin_id`, `plugin_type`, `plugin_type_name`, `cluster_name`, `settings`, `status`, `http`, `auth`) VALUES (1, 'default', '', '', 0, 'prometheus', '', 'default', '{\"write_addr\":\"http://victoria-metrics:8428/api/v1/write\"}', 'enabled', '{\"timeout\":10000,\"dial_timeout\":0,\"tls\":{\"skip_tls_verify\":false},\"max_idle_conns_per_host\":0,\"url\":\"http://victoria-metrics:8428\",\"headers\":{}}', '{\"basic_auth\":false,\"basic_auth_user\":\"vm\",\"basic_auth_password\":\"vmdctbcab\"}');
+INSERT INTO `datasource`(`id`, `name`, `description`, `category`, `plugin_id`, `plugin_type`, `plugin_type_name`, `cluster_name`, `settings`, `status`, `http`, `auth`) VALUES (1, '默认数据源', '', '', 0, 'prometheus', '', '默认集群', '{\"write_addr\":\"http://victoria-metrics:8428/api/v1/write\"}', 'enabled', '{\"timeout\":10000,\"dial_timeout\":0,\"tls\":{\"skip_tls_verify\":false},\"max_idle_conns_per_host\":0,\"url\":\"http://victoria-metrics:8428\",\"headers\":{}}', '{\"basic_auth\":false,\"basic_auth_user\":\"vm\",\"basic_auth_password\":\"vmdctbcab\"}');
 
 
 -- ----------------------------

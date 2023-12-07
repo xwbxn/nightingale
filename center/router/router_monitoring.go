@@ -184,7 +184,7 @@ func (rt *Router) monitoringAdd(c *gin.Context) {
 			MonitoringName: f.MonitoringName,
 			DatasourceId:   f.DatasourceId,
 			MonitoringSql:  f.MonitoringSql,
-			Status:         f.Status,
+			Status:         1, //默认启用
 			TargetId:       f.TargetId,
 			Remark:         f.Remark,
 			Unit:           f.Unit,
@@ -193,6 +193,7 @@ func (rt *Router) monitoringAdd(c *gin.Context) {
 			CreatedAt:      now,
 			UpdatedBy:      me.Username,
 			UpdatedAt:      now,
+			Label:          f.Label,
 		}
 
 		// 更新模型
@@ -212,7 +213,6 @@ func (rt *Router) monitoringAdd(c *gin.Context) {
 			ginx.Dangerous(err)
 		}
 	} else {
-
 		for _, id := range f.AssetIds {
 			var monitor = models.Monitoring{
 				AssetId:        id,
@@ -228,6 +228,7 @@ func (rt *Router) monitoringAdd(c *gin.Context) {
 				CreatedAt:      now,
 				UpdatedBy:      me.Username,
 				UpdatedAt:      now,
+				Label:          f.Label,
 			}
 			err = monitor.AddTx(tx)
 			ginx.Dangerous(err)

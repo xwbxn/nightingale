@@ -3,7 +3,7 @@
 # interval = 15
 
 # # whether collect per cpu
-# collect_per_cpu = false
+collect_per_cpu = true
 
 [disk]
 # # collect interval
@@ -87,7 +87,6 @@ ip_ext = false
 [w_aviation]
 # collect interval
 interval = 60
-
 [[instances]]
 path = "thirdpart/ipmiutil"
 ipmi_timeout = 10

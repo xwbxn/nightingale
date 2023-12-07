@@ -24,31 +24,32 @@ type AssetMetric struct {
 }
 
 type Asset struct {
-	Id             int64          `json:"id" gorm:"primaryKey"`
-	Ident          string         `json:"ident"`
-	Name           string         `json:"name" cn:"名称" xml:"name"`
-	Type           string         `json:"type" cn:"类型" xml:"type" source:"type=cache"`
-	Ip             string         `json:"ip" cn:"IP" xml:""`
-	Manufacturers  string         `json:"manufacturers" cn:"厂商" xml:"manufacturers"`
-	Position       string         `json:"position" cn:"资产位置" xml:"position"`
-	Status         int64          `json:"status" xml:"status" cn:"状态" validate:"omitempty,oneof=0 1" source:"type=option,value=[下线;正常]" ignore:"true"` // 纳管状态 0: 未生效, 1: 已生效
-	StatusAt       int64          `json:"status_at"`
-	GroupId        int64          `json:"group_id" cn:"业务组" source:"type=table,table=busi_group,property=id,field=name"`
-	Label          string         `json:"label"`
-	Tags           string         `json:"-"`
-	TagsJSON       []string       `json:"tags" gorm:"-"`
-	Memo           string         `json:"memo"`
-	Configs        string         `json:"configs"`
-	Params         string         `json:"params"`
-	Plugin         string         `json:"plugin"`
-	CreateAt       int64          `json:"create_at"`
-	CreateBy       string         `json:"create_by"`
-	UpdateAt       int64          `json:"update_at"`
-	UpdateBy       string         `json:"update_by"`
-	OrganizationId int64          `json:"organization_id"`
-	DirectoryId    int64          `json:"directory_id"`
-	Dashboard      string         `json:"dashboard" gorm:"-"`
-	DeletedAt      gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"`
+	Id             int64                  `json:"id" gorm:"primaryKey"`
+	Ident          string                 `json:"ident"`
+	Name           string                 `json:"name" cn:"名称" xml:"name"`
+	Type           string                 `json:"type" cn:"类型" xml:"type" source:"type=cache"`
+	Ip             string                 `json:"ip" cn:"IP" xml:""`
+	Manufacturers  string                 `json:"manufacturers" cn:"厂商" xml:"manufacturers"`
+	Position       string                 `json:"position" cn:"资产位置" xml:"position"`
+	Status         int64                  `json:"status" xml:"status" cn:"状态" validate:"omitempty,oneof=0 1" source:"type=option,value=[下线;正常]" ignore:"true"` // 纳管状态 0: 未生效, 1: 已生效
+	StatusAt       int64                  `json:"status_at"`
+	GroupId        int64                  `json:"group_id" cn:"业务组" source:"type=table,table=busi_group,property=id,field=name"`
+	Label          string                 `json:"label"`
+	Tags           string                 `json:"-"`
+	TagsJSON       []string               `json:"tags" gorm:"-"`
+	Memo           string                 `json:"memo"`
+	Configs        string                 `json:"configs"`
+	Params         string                 `json:"-"`
+	ParamsJson     map[string]interface{} `json:"params" gorm:"-"`
+	Plugin         string                 `json:"plugin"`
+	CreateAt       int64                  `json:"create_at"`
+	CreateBy       string                 `json:"create_by"`
+	UpdateAt       int64                  `json:"update_at"`
+	UpdateBy       string                 `json:"update_by"`
+	OrganizationId int64                  `json:"organization_id"`
+	DirectoryId    int64                  `json:"directory_id"`
+	Dashboard      string                 `json:"dashboard" gorm:"-"`
+	DeletedAt      gorm.DeletedAt         `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"`
 
 	//下面的是健康检查使用，在memsto缓存中保存
 	Health      int64             `json:"health" gorm:"-"` //0: fail 1: ok
@@ -281,12 +282,9 @@ func (ins *Asset) FillConfig(ctx *ctx.Context) error {
 	if err != nil {
 		return err
 	}
-	form := map[string]interface{}{}
-	err = json.Unmarshal([]byte(ins.Params), &form)
-	if err != nil {
-		return err
-	}
-	conf, err := assetType.GenConfig(form)
+	ins.DB2FE()
+
+	conf, err := assetType.GenConfig(ins.ParamsJson)
 	if err != nil {
 		return err
 	}
@@ -495,6 +493,16 @@ func (e *Asset) DB2FE() {
 	if e.StatusAt > 0 && time.Now().Unix()-e.StatusAt > 60*2 { // 超过2分钟设置为失联
 		e.Status = 0
 	}
+	json.Unmarshal([]byte(e.Params), &e.ParamsJson)
+}
+
+func (e *Asset) FE2DB() error {
+	paramsBytes, err := json.Marshal(e.ParamsJson)
+	if err != nil {
+		return err
+	}
+	e.Params = string(paramsBytes)
+	return nil
 }
 
 // 获取某一类资产上月（自然月）环比值
