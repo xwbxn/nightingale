@@ -238,6 +238,7 @@ func (rt *Router) assetPutXH(c *gin.Context) {
 	oldAssets.UpdateBy = me.Username
 
 	err = oldAssets.FE2DB()
+	ginx.Dangerous(err)
 
 	err = oldAssets.Update(rt.Ctx, "group_id", "name", "type", "ip", "manufacturers", "position", "params", "memo", "update_at", "update_by")
 	ginx.Dangerous(err)
@@ -844,7 +845,7 @@ func (rt *Router) exportAssetXH(c *gin.Context) {
 	datas := make([]interface{}, 0)
 	if len(lst) > 0 {
 		for _, v := range lst {
-			datas = append(datas, v)
+			datas = append(datas, *v)
 
 		}
 	}

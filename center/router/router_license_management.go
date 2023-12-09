@@ -98,6 +98,13 @@ func (rt *Router) licenseUpdateXH(c *gin.Context) {
 	key, _, err := c.Request.FormFile("key")
 	ginx.Dangerous(err)
 
+	if crt == nil || key == nil {
+		ginx.Bomb(http.StatusOK, "请上传证书或密钥")
+	}
+	// if strings.Contains(crtHeader.Filename, id) || strings.Contains(keyHeader.Filename, id) {
+	// 	ginx.Bomb(http.StatusOK, "证书或密钥文件已存在")
+	// }
+
 	crtFilePath := "etc/license/crt/xihang-" + id + ".crt"
 	keyFilePath := "etc/license/key/xihang-" + id + ".key"
 
@@ -235,33 +242,58 @@ func (rt *Router) exportLicenseXH(c *gin.Context) {
 		ginx.Bomb(http.StatusOK, "文件读取失败")
 	}
 	for _, fileInfo := range fileInfos {
-		for _, id := range ids {
-			if strings.Contains(fileInfo.Name(), ".bak") || strings.Contains(fileInfo.Name(), "readme.txt") {
-				continue
-			}
-			if strings.Contains(fileInfo.Name(), strconv.FormatInt(id, 10)) {
-				file, err := os.Open("etc/license/crt/" + fileInfo.Name())
-				ginx.Dangerous(err)
-				defer file.Close()
-				// 创建 Zip 文件
-				zipEntry, err := zipWriter.Create(filepath.Base("etc/license/crt/" + fileInfo.Name()))
-				ginx.Dangerous(err)
-				// 将文件内容复制到 Zip 文件中
-				_, err = io.Copy(zipEntry, file)
-				ginx.Dangerous(err)
-
-				//写入key
-				file, err = os.Open("etc/license/key/" + strings.Split(fileInfo.Name(), ".")[0] + ".key")
-				ginx.Dangerous(err)
-				defer file.Close()
-				// 创建 Zip 文件
-				zipEntry, err = zipWriter.Create(filepath.Base("etc/license/key/" + strings.Split(fileInfo.Name(), ".")[0] + ".key"))
-				ginx.Dangerous(err)
-				// 将文件内容复制到 Zip 文件中
-				_, err = io.Copy(zipEntry, file)
-				ginx.Dangerous(err)
-			}
+		if strings.Contains(fileInfo.Name(), ".bak") || strings.Contains(fileInfo.Name(), "readme.txt") {
+			continue
 		}
+		if len(ids) > 0 {
+			for _, id := range ids {
+
+				if strings.Contains(fileInfo.Name(), strconv.FormatInt(id, 10)) {
+					file, err := os.Open("etc/license/crt/" + fileInfo.Name())
+					ginx.Dangerous(err)
+					defer file.Close()
+					// 创建 Zip 文件
+					zipEntry, err := zipWriter.Create(filepath.Base("etc/license/crt/" + fileInfo.Name()))
+					ginx.Dangerous(err)
+					// 将文件内容复制到 Zip 文件中
+					_, err = io.Copy(zipEntry, file)
+					ginx.Dangerous(err)
+
+					//写入key
+					file, err = os.Open("etc/license/key/" + strings.Split(fileInfo.Name(), ".")[0] + ".key")
+					ginx.Dangerous(err)
+					defer file.Close()
+					// 创建 Zip 文件
+					zipEntry, err = zipWriter.Create(filepath.Base("etc/license/key/" + strings.Split(fileInfo.Name(), ".")[0] + ".key"))
+					ginx.Dangerous(err)
+					// 将文件内容复制到 Zip 文件中
+					_, err = io.Copy(zipEntry, file)
+					ginx.Dangerous(err)
+				}
+			}
+		} else {
+			file, err := os.Open("etc/license/crt/" + fileInfo.Name())
+			ginx.Dangerous(err)
+			defer file.Close()
+			// 创建 Zip 文件
+			zipEntry, err := zipWriter.Create(filepath.Base("etc/license/crt/" + fileInfo.Name()))
+			ginx.Dangerous(err)
+			// 将文件内容复制到 Zip 文件中
+			_, err = io.Copy(zipEntry, file)
+			ginx.Dangerous(err)
+
+			//写入key
+			file, err = os.Open("etc/license/key/" + strings.Split(fileInfo.Name(), ".")[0] + ".key")
+			ginx.Dangerous(err)
+			defer file.Close()
+			// 创建 Zip 文件
+			zipEntry, err = zipWriter.Create(filepath.Base("etc/license/key/" + strings.Split(fileInfo.Name(), ".")[0] + ".key"))
+			ginx.Dangerous(err)
+			// 将文件内容复制到 Zip 文件中
+			_, err = io.Copy(zipEntry, file)
+			ginx.Dangerous(err)
+		}
+
 	}
 
 	// 关闭zip文件写入器

@@ -156,7 +156,7 @@ func MonitoringMapGets(ctx *ctx.Context, where map[string]interface{}, query str
 }
 
 // 根据条件统计个数(new)
-func MonitoringMapCountNew(ctx *ctx.Context, filter, query string, assetId int64, assetIds []int64) (num int64, err error) {
+func MonitoringMapCountNew(ctx *ctx.Context, filter, query, assetType string, assetId int64, assetIds []int64) (num int64, err error) {
 
 	session := DB(ctx)
 	if filter == "monitoring_name" {
@@ -177,11 +177,10 @@ func MonitoringMapCountNew(ctx *ctx.Context, filter, query string, assetId int64
 	if assetId != -1 {
 		session = session.Where("ASSET_ID = ? ", assetId)
 	}
-	// if assetType != "" {
-	// 	ids, err := AssetIdByType(ctx, "%"+assetType+"%")
-	// 	if err != nil {
-	// 		return 0, err
-	// 	}
+	if assetType != "" {
+		session = session.Where("ASSET_ID in ? ", assetIds)
+		// 		return 0, err
+	}
 	// 	session = session.Where("ASSET_ID in? ", ids)
 	// }
 	// if len(assetIds) > 0 {
@@ -194,7 +193,7 @@ func MonitoringMapCountNew(ctx *ctx.Context, filter, query string, assetId int64
 }
 
 // 条件查询(new)
-func MonitoringMapGetsNew(ctx *ctx.Context, filter, query string, assetId int64, assetIds []int64, limit, offset int) (lst []Monitoring, err error) {
+func MonitoringMapGetsNew(ctx *ctx.Context, filter, query, assetType string, assetId int64, assetIds []int64, limit, offset int) (lst []Monitoring, err error) {
 	session := DB(ctx)
 
 	// 分页
@@ -222,11 +221,9 @@ func MonitoringMapGetsNew(ctx *ctx.Context, filter, query string, assetId int64,
 	if assetId != -1 {
 		session = session.Where("ASSET_ID = ? ", assetId)
 	}
-	// if assetType != "" {
-	// 	ids, err := AssetIdByType(ctx, "%"+assetType+"%")
-	// 	if err != nil {
-	// 		return lst, err
-	// 	}
+	if assetType != "" {
+		session = session.Where("ASSET_ID in ? ", assetIds)
+	}
 	// 	session = session.Where("ASSET_ID in? ", ids)
 	// }
 	// if len(assetIds) > 0 {
@@ -325,6 +322,18 @@ func (m *Monitoring) Update(ctx *ctx.Context, updateFrom interface{}, selectFiel
 
 	// 实际向库中写入
 	return DB(ctx).Model(m).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
+}
+
+// 更新监控
+func (m *Monitoring) UpdateTx(tx *gorm.DB, updateFrom interface{}, selectField interface{}, selectFields ...interface{}) error {
+	// 这里写Monitoring的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	err := tx.Debug().Model(m).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
+	if err != nil {
+		tx.Rollback()
+	}
+	return err
 }
 
 // 根据条件统计个数

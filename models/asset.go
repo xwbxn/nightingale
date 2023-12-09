@@ -172,6 +172,7 @@ func (ins *Asset) AddXH(ctx *ctx.Context) (int64, error) {
 				RuleConfigCn:     m.Name,
 				NotifyRepeatStep: 60,
 				Severity:         int(r.Serverity),
+				MonitoringId:     monitoring.Id,
 			}
 			config := map[string][]map[string]interface{}{}
 			config["queries"] = []map[string]interface{}{

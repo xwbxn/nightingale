@@ -773,6 +773,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/operation-log", rt.auth(), rt.admin(), rt.operationLogAdd)
 		pages.PUT("/operation-log", rt.auth(), rt.admin(), rt.operationLogPut)
 		pages.DELETE("/operation-log/:id", rt.auth(), rt.admin(), rt.operationLogDel)
+		pages.POST("/operation-log/export-xls", rt.auth(), rt.user(), rt.exportOperationLog)
 
 		//静态图片
 		pages.Static("/images", "./etc/picture/logo")
