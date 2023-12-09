@@ -265,8 +265,8 @@ func MonitoringGetByBatchId(ctx *ctx.Context, ids []int64) ([]Monitoring, error)
 }
 
 // 查询所有
-func MonitoringGetsAll(ctx *ctx.Context) ([]Monitoring, error) {
-	var lst []Monitoring
+func MonitoringGetsAll(ctx *ctx.Context) ([]*Monitoring, error) {
+	var lst []*Monitoring
 	err := DB(ctx).Find(&lst).Error
 
 	return lst, err

@@ -56,7 +56,7 @@ type Asset struct {
 	HealthAt    int64             `json:"-" gorm:"-"`
 	Metrics     []*AssetMetric    `json:"metrics_list" gorm:"-"`
 	Exps        []AssetsExpansion `json:"exps" gorm:"-"`
-	Monitorings []Monitoring      `json:"-" gorm:"-"`
+	Monitorings []*Monitoring     `json:"-" gorm:"-"`
 }
 
 type AssetImport struct {
@@ -148,6 +148,8 @@ func (ins *Asset) AddXH(ctx *ctx.Context) (int64, error) {
 			CreatedAt:      now,
 			UpdatedAt:      now,
 			Status:         1, // 默认启用
+			Label:          m.Label,
+			Unit:           m.Unit,
 		}
 		if err := monitoring.Add(ctx); err != nil {
 			logger.Error("新增默认监控错误:", err)
@@ -174,7 +176,7 @@ func (ins *Asset) AddXH(ctx *ctx.Context) (int64, error) {
 			config := map[string][]map[string]interface{}{}
 			config["queries"] = []map[string]interface{}{
 				{
-					"prom_ql":    r.Promql,
+					"prom_ql":    fmt.Sprintf("%s %s %d", m.Metrics, r.Relation, r.Value),
 					"severity":   r.Serverity,
 					"monitor_id": monitoring.Id,
 					"relation":   r.Relation,
@@ -319,8 +321,7 @@ func AssetGet(ctx *ctx.Context, where string, args ...interface{}) (*Asset, erro
 
 func AssetGets(ctx *ctx.Context, bgid int64, query string, organizationId int64) ([]*Asset, error) {
 	var lst []*Asset
-	// session := DB(ctx).Where("1 = 1")
-	session := DB(ctx).Find(&lst)
+	session := DB(ctx).Where("1 = 1")
 	if bgid >= 0 {
 		session = session.Where("group_id = ?", bgid)
 	}
@@ -535,7 +536,7 @@ func AssetMom(ctx *ctx.Context, aType string) (num int64, err error) {
 }
 
 // 根据map查询
-func AssetsGetsMap(ctx *ctx.Context, where map[string]interface{}) (lst []Asset, err error) {
+func AssetsGetsMap(ctx *ctx.Context, where map[string]interface{}) (lst []*Asset, err error) {
 	err = DB(ctx).Model(&Asset{}).Where(where).Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {

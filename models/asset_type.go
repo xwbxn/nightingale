@@ -30,9 +30,9 @@ type AssetTypeMetric struct {
 	Metrics string      `json:"metrics" yaml:"metrics"`
 	Value   model.Value `json:"-" yaml:"-"`
 	Unit    string      `json:"unit"`
+	Label   string      `json:"label"`
 	Rules   []struct {
 		Name      string
-		Promql    string
 		Serverity int64
 		Relation  string
 		Value     int64

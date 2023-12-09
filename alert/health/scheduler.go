@@ -9,6 +9,7 @@ import (
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
+	"github.com/toolkits/pkg/logger"
 )
 
 type Scheduler struct {
@@ -60,7 +61,7 @@ func (s *Scheduler) syncHealthRules() {
 	healthRules := make(map[string]*HealthRuleContext)
 	for _, asset := range assets {
 		// TODO: datsourceID 需要可选传入
-		healthRule := NewHealthRuleContext(asset, 1, s.promClients, s.writers)
+		healthRule := NewHealthRuleContext(asset, 1, s.promClients, s.writers, s.assetCache)
 		healthRules[healthRule.Hash()] = healthRule
 	}
 
@@ -68,6 +69,7 @@ func (s *Scheduler) syncHealthRules() {
 		if _, has := s.healthRules[hash]; !has {
 			rule.Prepare()
 			rule.Start()
+			logger.Debugf("add health rules: %s, %s", rule.Key(), hash)
 			s.healthRules[hash] = rule
 		}
 	}
@@ -76,6 +78,7 @@ func (s *Scheduler) syncHealthRules() {
 		if _, has := healthRules[hash]; !has {
 			rule.Stop()
 			delete(s.healthRules, hash)
+			logger.Debugf("delete health rules: %s, %s", rule.Key(), hash)
 		}
 	}
 }

@@ -40,5 +40,13 @@ run-pushgw:
 release:
 	goreleaser --skip-validate --skip-publish --snapshot
 
+package: build
+	rm -rf ./release/test/etc
+	mkdir -p ./release/test/etc
+	cp ./etc/assets.yaml ./release/test/etc/assets.yaml
+	cp ./docker/initsql ./release/test -r
+	cp ./etc/default ./release/test/etc -r
+	cp n9e release/test
+	
 version: build
 	gzip -f n9e

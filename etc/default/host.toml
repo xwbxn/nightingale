@@ -87,6 +87,6 @@ ip_ext = false
 [w_aviation]
 # collect interval
 interval = 60
-[[instances]]
+[[w_aviation.instances]]
 path = "thirdpart/ipmiutil"
 ipmi_timeout = 10

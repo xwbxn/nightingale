@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/ccfos/nightingale/v6/pushgw/writer"
@@ -29,15 +30,17 @@ type HealthRuleContext struct {
 	asset       *models.Asset
 	writers     *writer.WritersType
 	promClients *prom.PromClientMap
+	ac          *memsto.AssetCacheType
 }
 
-func NewHealthRuleContext(asset *models.Asset, datasourceId int64, promClients *prom.PromClientMap, writers *writer.WritersType) *HealthRuleContext {
+func NewHealthRuleContext(asset *models.Asset, datasourceId int64, promClients *prom.PromClientMap, writers *writer.WritersType, ac *memsto.AssetCacheType) *HealthRuleContext {
 	return &HealthRuleContext{
 		datasourceId: datasourceId,
 		quit:         make(chan struct{}),
 		asset:        asset,
 		promClients:  promClients,
 		writers:      writers,
+		ac:           ac,
 	}
 }
 
@@ -84,6 +87,7 @@ func (hrc *HealthRuleContext) Start() {
 
 func (hrc *HealthRuleContext) AssetMetricsCheck() {
 
+	logger.Debugf("starting check health: %s", hrc.Key())
 	metrics := []*models.AssetMetric{}
 	for _, m := range hrc.asset.Monitorings {
 		if m.Status == 0 {
@@ -107,22 +111,37 @@ func (hrc *HealthRuleContext) AssetMetricsCheck() {
 		})
 	}
 
-	hrc.asset.Metrics = metrics
+	assetInCache, has := hrc.ac.Get(hrc.asset.Id)
+	if !has {
+		return
+	}
+
+	assetInCache.Metrics = metrics
 	health := 0
-	for _, m := range hrc.asset.Metrics {
-		result, ok := m.PromValue.(model.Vector)
-		if !ok {
-			continue
+	for _, m := range assetInCache.Metrics {
+		vector, ok := m.PromValue.(model.Vector)
+		if ok {
+			for _, resultValue := range vector {
+				health = 1
+				m.Value = fmt.Sprintf("%f", resultValue.Value)
+				break
+			}
 		}
-		for _, resultValue := range result {
-			health = 1
-			m.Value = fmt.Sprintf("%f", resultValue.Value)
-			break
+		matrix, ok := m.PromValue.(model.Matrix)
+		if ok {
+			for _, resultValue := range matrix {
+				if len(resultValue.Values) > 0 {
+					health = 1
+					m.Value = fmt.Sprintf("%f", resultValue.Values[0].Value)
+				}
+				break
+			}
 		}
 	}
 
-	hrc.asset.Health = int64(health)
-	hrc.asset.HealthAt = time.Now().Unix()
+	assetInCache.Health = int64(health)
+	assetInCache.HealthAt = time.Now().Unix()
+	logger.Debugf("processing check health: %s, health: %d, %p", hrc.Key(), health, hrc.asset)
 
 	ts := convertHealthTimeSeries(hrc, health)
 	hrc.writers.PushSample("health_check", ts)

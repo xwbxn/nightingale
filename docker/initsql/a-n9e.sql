@@ -198,12 +198,23 @@ CREATE TABLE `board` (
     KEY(`ident`)
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
+-- ----------------------------
+-- Records of board
+-- ----------------------------
+INSERT INTO `board` VALUES (1, 1, '首页', '', '', 0, 0, 0, 1700618966, 'root', 1701834893, 'root');
+
 -- for dashboard new version
 CREATE TABLE `board_payload` (
     `id` bigint unsigned not null comment 'dashboard id',
     `payload` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null,
     UNIQUE KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of board_payload
+-- ----------------------------
+INSERT INTO `board_payload`(`id`, `payload`) VALUES (1, '{\"var\":[],\"panels\":[{\"type\":\"pien\",\"id\":\"c8a6ad98-183c-45d8-886c-71fb1a6ccf8b\",\"layout\":{\"h\":5,\"w\":8,\"x\":0,\"y\":0,\"i\":\"c8a6ad98-183c-45d8-886c-71fb1a6ccf8b\",\"isResizable\":true},\"version\":\"3.0.0\",\"datasourceCate\":\"api\",\"datasourceValue\":999,\"targets\":[{\"refId\":\"A\",\"expr\":\"/api/n9e/api-service/2/execute\"}],\"transformations\":[{\"id\":\"organize\",\"options\":{}}],\"name\":\"资产健康度\",\"maxPerRow\":4,\"custom\":{\"angleField\":\"value\",\"colorField\":\"name\",\"legend\":{\"layout\":\"vertical\",\"position\":\"right\"},\"innerRadius\":0.65,\"statistic\":{\"title\":{}}},\"options\":{\"standardOptions\":{\"util\":\"none\",\"min\":2,\"max\":3,\"decimals\":4}}},{\"type\":\"pien\",\"id\":\"49cc582a-d756-48cd-8aa6-eca71c7b6900\",\"layout\":{\"h\":5,\"w\":8,\"x\":8,\"y\":0,\"i\":\"49c17483-4007-49ff-85e2-24a48d181a30\",\"isResizable\":true},\"version\":\"3.0.0\",\"datasourceCate\":\"api\",\"datasourceValue\":999,\"targets\":[{\"refId\":\"A\",\"expr\":\"/api/n9e/api-service/3/execute\"}],\"transformations\":[{\"id\":\"organize\",\"options\":{}}],\"name\":\"资产监控状态\",\"maxPerRow\":4,\"custom\":{\"angleField\":\"value\",\"colorField\":\"name\",\"legend\":{\"layout\":\"vertical\",\"position\":\"right\"},\"innerRadius\":0.65,\"statistic\":{\"title\":{}}},\"options\":{\"standardOptions\":{\"util\":\"none\",\"min\":2,\"max\":3,\"decimals\":4}}},{\"type\":\"column\",\"id\":\"6036e42b-d73a-4a57-938d-f32d59d83f0e\",\"layout\":{\"h\":5,\"w\":8,\"x\":16,\"y\":0,\"i\":\"6036e42b-d73a-4a57-938d-f32d59d83f0e\",\"isResizable\":true},\"version\":\"3.0.0\",\"datasourceCate\":\"api\",\"datasourceValue\":999,\"targets\":[{\"refId\":\"A\",\"expr\":\"/api/n9e/api-service/4/execute\"}],\"transformations\":[{\"id\":\"organize\",\"options\":{}}],\"name\":\"资产告警状态\",\"maxPerRow\":4},{\"type\":\"line\",\"id\":\"4292ba06-62c5-482c-8855-7812172a6b2c\",\"layout\":{\"h\":5,\"w\":8,\"x\":0,\"y\":5,\"i\":\"4292ba06-62c5-482c-8855-7812172a6b2c\",\"isResizable\":true},\"version\":\"3.0.0\",\"datasourceCate\":\"api\",\"datasourceValue\":999,\"targets\":[{\"refId\":\"A\",\"expr\":\"/api/n9e/api-service/5/execute\"}],\"transformations\":[{\"id\":\"organize\",\"options\":{}}],\"name\":\"近7日告警趋势\",\"maxPerRow\":4},{\"type\":\"text\",\"id\":\"32e33f5f-9d8c-4d10-96ac-4c22e510b2c0\",\"layout\":{\"h\":5,\"w\":16,\"x\":8,\"y\":5,\"i\":\"32e33f5f-9d8c-4d10-96ac-4c22e510b2c0\",\"isResizable\":true},\"version\":\"3.0.0\",\"name\":\"面板标题\",\"description\":\"\",\"maxPerRow\":4,\"custom\":{\"textColor\":\"#2c9d3d\",\"bgColor\":\"#FFFFFF\",\"textSize\":12,\"justifyContent\":\"center\",\"alignItems\":\"center\",\"content\":\"# 这里留个位置放一张拓扑图\"}},{\"type\":\"barGaugeN\",\"id\":\"c1744489-cf85-43ec-924c-9f20368d53bb\",\"layout\":{\"h\":5,\"w\":8,\"x\":0,\"y\":10,\"i\":\"c1744489-cf85-43ec-924c-9f20368d53bb\",\"isResizable\":true},\"version\":\"3.0.0\",\"datasourceCate\":\"prometheus\",\"datasourceValue\":1,\"targets\":[{\"refId\":\"A\",\"expr\":\"rate(net_bits_recv[5m])\",\"legend\":\"{{instance}}-{{interface}}\",\"instant\":true}],\"transformations\":[{\"id\":\"organize\",\"options\":{}}],\"name\":\"网络监测趋势\",\"maxPerRow\":4,\"custom\":{\"calc\":\"lastNotNull\",\"baseColor\":\"#9470FF\",\"serieWidth\":20,\"sortOrder\":\"desc\"},\"options\":{\"standardOptions\":{}}},{\"type\":\"column\",\"id\":\"d941cae8-4c22-4434-afed-7bac0c37c58a\",\"layout\":{\"h\":5,\"w\":16,\"x\":8,\"y\":10,\"i\":\"d941cae8-4c22-4434-afed-7bac0c37c58a\",\"isResizable\":true},\"version\":\"3.0.0\",\"datasourceCate\":\"api\",\"datasourceValue\":999,\"targets\":[{\"refId\":\"A\",\"expr\":\"/api/n9e/api-service/6/execute\"}],\"transformations\":[{\"id\":\"organize\",\"options\":{}}],\"name\":\"面板标题\",\"maxPerRow\":4}],\"version\":\"3.0.0\",\"links\":[{\"title\":\"link\",\"url\":\"http://host.docker.internal:8888\",\"targetBlank\":false}]}');
+
 
 -- deprecated
 CREATE TABLE `dashboard` (
@@ -456,6 +467,7 @@ CREATE TABLE `alert_cur_event` (
     `rule_config` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null comment 'annotations',
     `tags` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '' comment 'merge data_tags rule_tags, split by ,,',
     `status` tinyint(1) not null default 0 comment '状态',
+    `deleted_at` datetime(0) DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY (`hash`),
     KEY (`rule_id`),
@@ -504,6 +516,7 @@ CREATE TABLE `alert_his_event` (
     `handle_by` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '',
     `handle_at` bigint not null default 0,
     `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '',
+    `deleted_at` datetime(0) DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY (`hash`),
     KEY (`rule_id`),
@@ -685,7 +698,7 @@ CREATE TABLE `es_index_pattern` (
     UNIQUE KEY (`datasource_id`, `name`)
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
-INSERT INTO `datasource`(`id`, `name`, `description`, `category`, `plugin_id`, `plugin_type`, `plugin_type_name`, `cluster_name`, `settings`, `status`, `http`, `auth`) VALUES (1, '默认数据源', '', '', 0, 'prometheus', '', '默认集群', '{\"write_addr\":\"http://victoria-metrics:8428/api/v1/write\"}', 'enabled', '{\"timeout\":10000,\"dial_timeout\":0,\"tls\":{\"skip_tls_verify\":false},\"max_idle_conns_per_host\":0,\"url\":\"http://victoria-metrics:8428\",\"headers\":{}}', '{\"basic_auth\":false,\"basic_auth_user\":\"vm\",\"basic_auth_password\":\"vmdctbcab\"}');
+INSERT INTO `datasource`(`id`, `name`, `description`, `category`, `plugin_id`, `plugin_type`, `plugin_type_name`, `cluster_name`, `settings`, `status`, `http`, `auth`) VALUES (1, '默认数据源', '', '', 0, 'prometheus', '', '默认集群', '{\"write_addr\":\"http://127.0.0.1:8428/api/v1/write\"}', 'enabled', '{\"timeout\":10000,\"dial_timeout\":0,\"tls\":{\"skip_tls_verify\":false},\"max_idle_conns_per_host\":0,\"url\":\"http://127.0.0.1:8428\",\"headers\":{}}', '{\"basic_auth\":false,\"basic_auth_user\":\"vm\",\"basic_auth_password\":\"vmdctbcab\"}');
 
 
 -- ----------------------------
@@ -899,7 +912,7 @@ CREATE TABLE `assets_expansion`  (
   `group_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '分组ID',
   `name_cn` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '属性名称',
   `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '英文名称',
-  `value` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '属性值',
+  `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '属性值',
   `created_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '创建人',
   `created_at` int(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
   `updated_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '更新人',
@@ -1502,6 +1515,17 @@ CREATE TABLE `api_service`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '接口管理' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Records of api_service
+-- ----------------------------
+INSERT INTO `api_service` VALUES (1, 'root', 1700530855, 'root', 1700550729, 0, '资产品牌分布', 'sql', 0, '/asset/brand', 'select count(*) value , type name from assets group by type');
+INSERT INTO `api_service` VALUES (2, 'root', 1701165238, 'root', 1701165277, 0, '资产健康度', 'sql', 0, '/asset_health', 'select t.alert name,count(*) value from (\nselect a.id id, if(exists (select 1 from alert_cur_event ace where ace.asset_id = a.id and ace.deleted_at is null),\'告警\',\'正常\') alert\nfrom  assets a where  a.deleted_at is null ) t\ngroup by t.alert');
+INSERT INTO `api_service` VALUES (3, 'root', 1701165847, 'root', 1701165881, 0, '资产监控状态', 'sql', 0, '/asset_monitor', 'select t.status name,count(*) value from (\nselect a.id id, if(a.`status` = 1,\'正常\',\'离线\') status\nfrom  assets a where  a.deleted_at is null ) t\ngroup by t.status');
+INSERT INTO `api_service` VALUES (4, 'root', 1701221592, 'root', 1701221605, 0, '资产告警状态', 'sql', 0, '/asset_alert', 'select t.alert name, t.type, count(*) value from (\nselect a.id id, a.type type, if(exists (select 1 from alert_cur_event ace where ace.asset_id = a.id and ace.deleted_at is null),\'告警\',\'正常\') alert\nfrom  assets a where  a.deleted_at is null ) t\ngroup by t.alert, t.type');
+INSERT INTO `api_service` VALUES (5, 'root', 1701225213, 'root', 1701225219, 0, '7日内告警统计', 'sql', 0, '/alerts_in_week', 'select dat name, count(*) value from (\nselect FROM_UNIXTIME(trigger_time, \'%Y-%m-%d\') dat from alert_his_event where trigger_time > UNIX_TIMESTAMP(date_sub(now(), interval 7 day)) )t group by t.dat');
+INSERT INTO `api_service` VALUES (6, 'root', 1701226840, '', 1701226840, 0, '品牌故障率', 'sql', 0, '/asset_fault', '\nselect t.brand name, sum(t.error)/count(*) value  from\n(select id, if(manufacturers is null or manufacturers = \'\', \'其他\', manufacturers) brand ,\nif( exists (select 1 from alert_cur_event ace  where ace.asset_id = a.ID), 1 , 0) error\nfrom assets a\nwhere deleted_at is null ) t\ngroup by t.brand');
+
+
+-- ----------------------------
 -- Table structure for bigscreen
 -- ----------------------------
 DROP TABLE IF EXISTS `bigscreen`;
@@ -1511,13 +1535,17 @@ CREATE TABLE `bigscreen`  (
   `CREATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
   `UPDATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '更新人',
   `UPDATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '更新时间',
-  `DELETED_AT` int(0) DEFAULT NULL COMMENT '删除时间',
+  `DELETED_AT` datetime(0) DEFAULT NULL COMMENT '删除时间',
   `TITLE` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '标题',
   `DESC` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '简介',
   `CONFIG` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT '配置',
   PRIMARY KEY (`ID`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
+-- ----------------------------
+-- Records of bigscreen
+-- ----------------------------
+INSERT INTO `bigscreen` VALUES (1, 'root', 1700639591, 'root', 1701413642, NULL, '首页大屏', '首页大屏', '{\"title\":\"首页大屏\",\"gridSize\":10,\"gridBorderColor\":\"#090548\",\"showAuxiliary\":true,\"horizontalNumber\":3,\"verticalNumber\":3,\"interval\":10,\"auxiliaryBorderColor\":\"#1890ff\",\"width\":1920,\"height\":1080,\"backgroundImage\":\"\",\"backgroundColor\":\"#090548\",\"widgets\":[{\"id\":\"fb966a94-cc4a-48a5-bffa-b5a46dc32a3c\",\"code\":\"BorderBox11\",\"configureValue\":{\"title\":\"工控网运维监控系统\",\"titleWidth\":250},\"coordinateValue\":{\"width\":1921,\"height\":1080,\"x\":0,\"y\":0}},{\"id\":\"0e58992d-fac3-420e-9428-07056dacc966\",\"code\":\"Line\",\"configureValue\":{\"styleAnimateInfinite\":false,\"styleAnimationDelay\":0,\"styleAnimationName\":\"\",\"styleAnimationDuration\":1,\"styleAnimationTimingFunction\":\"linear\",\"titleTextShow\":false,\"titleText\":\"\",\"titleTextFontSize\":14,\"titleTextLineHeight\":1.2,\"titleTextFontFamily\":\"Microsoft YaHei\",\"titleTextFontWeight\":\"bold\",\"titleTextColor\":\"#fff\",\"legendShow\":true,\"legendType\":\"plain\",\"legendOrient\":\"horizontal\",\"legendFontSize\":12,\"legendIcon\":\"rect\",\"legendColor\":\"#fff\",\"legendLeft\":\"center\",\"legendTop\":\"top\",\"gridShow\":false,\"gridLeft\":50,\"gridRight\":30,\"gridTop\":30,\"gridBottom\":30,\"gridBorderColor\":\"#ccc\",\"xAxisShow\":true,\"xAxisType\":\"category\",\"xAxisName\":\"\",\"xAxisNameLocation\":\"end\",\"xAxisNameTextStyleFontSize\":12,\"xAxisNameTextStyleLineHeight\":12,\"xAxisNameTextStyleFontFamily\":\"serif\",\"xAxisNameTextStyleFontWeight\":\"normal\",\"xAxisBoundaryGap\":false,\"xAxisNameRotate\":0,\"xAxisLineShow\":true,\"xAxisLabelShow\":true,\"xAxisLabelRotate\":0,\"xAxisSplitLineShow\":true,\"xAxisSplitAreaShow\":false,\"xAxisSplitAreaOpacity\":10,\"xAxisPointerShow\":true,\"xAxisTickShow\":true,\"xAxisAlignWithLabel\":false,\"yAxisShow\":true,\"yAxisType\":\"value\",\"yAxisName\":\"\",\"yAxisNameLocation\":\"end\",\"yAxisNameTextStyleFontSize\":12,\"yAxisNameTextStyleLineHeight\":12,\"yAxisNameTextStyleFontFamily\":\"serif\",\"yAxisNameTextStyleFontWeight\":\"normal\",\"yAxisBoundaryGap\":false,\"yAxisNameRotate\":0,\"yAxisLineShow\":true,\"yAxisLabelShow\":true,\"yAxisLabelRotate\":0,\"yAxisSplitLineShow\":true,\"yAxisSplitAreaShow\":false,\"yAxisSplitAreaOpacity\":10,\"yAxisPointerShow\":false,\"yAxisTickShow\":true,\"yAxisAlignWithLabel\":false,\"axisNameColor\":\"rgba(255,255,255,.2)\",\"axisLineColor\":\"rgba(255,255,255,.2)\",\"axisLabelColor\":\"rgba(255,255,255,.8)\",\"splitLineColor\":\"rgba(255,255,255,.2)\",\"axisPointerColor\":\"red\",\"themeColor1\":\"#fc97af\",\"themeColor2\":\"#87f7cf\",\"themeColor3\":\"#f7f494\",\"themeColor4\":\"#72ccff\",\"themeColor5\":\"#f7c5a0\",\"themeColor6\":\"#d4a4eb\",\"themeColor7\":\"#d2f5a6\",\"themeColor8\":\"#76f2f2\",\"lineWidth\":2,\"lineSmooth\":false,\"lineAreaStyle\":false,\"lineAreaStyleOpacity\":70,\"seriesLabelShow\":false,\"seriesLabelPosition\":\"top\",\"seriesLabelColor\":\"#fff\",\"seriesStackValue\":\"\",\"showSymbol\":true,\"symbol\":\"circle\",\"symbolSize\":4},\"coordinateValue\":{\"width\":500,\"height\":300,\"x\":44,\"y\":109},\"dataValue\":{\"dataType\":\"api\",\"field\":\"series\",\"autoRefresh\":true,\"url\":\"/api/n9e/api-service/2/execute\",\"interval\":15}},{\"id\":\"fc67bd59-ace8-4615-8ca4-6e7522ee0bcd\",\"code\":\"Pie\",\"configureValue\":{\"styleDisplay\":\"block\",\"styleAnimateInfinite\":false,\"styleAnimationDelay\":0,\"styleAnimationName\":\"\",\"styleAnimationDuration\":1,\"styleAnimationTimingFunction\":\"linear\",\"titleTextShow\":false,\"titleText\":\"\",\"titleTextFontSize\":14,\"titleTextLineHeight\":1.2,\"titleTextFontFamily\":\"Microsoft YaHei\",\"titleTextFontWeight\":\"bold\",\"titleTextColor\":\"#fff\",\"legendShow\":true,\"legendType\":\"plain\",\"legendOrient\":\"horizontal\",\"legendFontSize\":12,\"legendIcon\":\"rect\",\"legendColor\":\"#fff\",\"legendLeft\":\"center\",\"legendTop\":\"top\",\"axisNameColor\":\"rgba(255,255,255,.2)\",\"axisLineColor\":\"rgba(255,255,255,.2)\",\"axisLabelColor\":\"rgba(255,255,255,.8)\",\"splitLineColor\":\"rgba(255,255,255,.2)\",\"axisPointerColor\":\"red\",\"themeColor1\":\"#fc97af\",\"themeColor2\":\"#87f7cf\",\"themeColor3\":\"#f7f494\",\"themeColor4\":\"#72ccff\",\"themeColor5\":\"#f7c5a0\",\"themeColor6\":\"#d4a4eb\",\"themeColor7\":\"#d2f5a6\",\"themeColor8\":\"#76f2f2\",\"seriesInsideRadius\":0,\"seriesAutsideRadius\":80,\"seriesRoseType\":false,\"xAxisShow\":false,\"yAxisShow\":false,\"seriesLabelShow\":true,\"seriesLabelPosition\":\"outside\",\"seriesLabelColor\":\"\",\"xAxisType\":\"category\",\"yAxisType\":\"value\"},\"coordinateValue\":{\"width\":500,\"height\":300,\"x\":857,\"y\":506},\"dataValue\":{\"dataType\":\"api\",\"field\":\"series\",\"autoRefresh\":true,\"url\":\"/api/n9e/api-service/3/execute\",\"interval\":15}},{\"id\":\"464a9799-a7e3-46ed-870b-5d729b09d2a7\",\"code\":\"Decoration1\",\"configureValue\":{},\"coordinateValue\":{\"width\":200,\"height\":50,\"x\":19,\"y\":44}},{\"id\":\"a439b611-a96c-4155-96cd-e1df8dd250b7\",\"code\":\"BaseText\",\"configureValue\":{\"styleFontSize\":32,\"styleLetterSpacing\":0,\"styleFontWeight\":\"bold\",\"styleTextAlign\":\"center\",\"styleBackgroundColor\":\"\",\"styleFontFamily\":\"Microsoft YaHei\",\"styleLineHeight\":1,\"styleColor\":\"rgba(239,226,68,1)\",\"styleBoxInset\":false,\"styleBoxShadowX\":0,\"styleBoxShadowY\":0,\"styleBoxShadowF\":0,\"styleBoxShadowC\":\"\",\"styleBorderStyle\":\"none\",\"styleBorderWidth\":0,\"styleBorderColor\":\"\",\"styleBorderTopLeftRadius\":0,\"styleBorderTopRightRadius\":0,\"styleBorderBottomLeftRadius\":0,\"styleBorderBottomRightRadius\":0,\"styleAnimateInfinite\":false,\"styleAnimationDelay\":0,\"styleAnimationName\":\"\",\"styleAnimationDuration\":1,\"styleAnimationTimingFunction\":\"linear\"},\"coordinateValue\":{\"width\":181,\"height\":46,\"x\":177,\"y\":46},\"dataValue\":{\"dataType\":\"mock\",\"field\":\"value\",\"autoRefresh\":false,\"mock\":{\"series\":[{\"seriesName\":\"Email\",\"data\":[{\"name\":\"Mon\",\"value\":\"@integer(100, 300)\"},{\"name\":\"Tue\",\"value\":\"@integer(100, 300)\"},{\"name\":\"Wed\",\"value\":\"@integer(100, 300)\"},{\"name\":\"Thu\",\"value\":\"@integer(100, 300)\"},{\"name\":\"Fri\",\"value\":\"@integer(100, 300)\"},{\"name\":\"Sat\",\"value\":\"@integer(100, 300)\"},{\"name\":\"Sun\",\"value\":\"@integer(100, 300)\"}]}],\"value\":\"纳管资产\"}}}],\"description\":\"这是一个测试大屏\"}');
 
 -- ----------------------------
 -- Table structure for license_config

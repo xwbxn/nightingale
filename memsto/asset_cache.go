@@ -26,8 +26,6 @@ type AssetCacheType struct {
 	sync.RWMutex
 	assets map[int64]*models.Asset // key: id
 	types  map[string]*models.AssetType
-	health map[int64]int64             //暂未使用
-	rules  map[int64]*models.AlertRule // key: rule id //暂未使用
 }
 
 func NewAssetCache(ctx *ctx.Context, stats *Stats) *AssetCacheType {
@@ -176,6 +174,7 @@ func (cache *AssetCacheType) syncAssets() error {
 		return errors.WithMessage(err, "failed to exec MonitoringStatistics")
 	}
 
+	// TODO: 这里经常不刷新，暂时改成每次都刷新
 	if !cache.StatChanged(stat.Total, stat.LastUpdated) && !cache.MStatChanged(mStat.Total, mStat.LastUpdated) {
 		cache.stats.GaugeCronDuration.WithLabelValues("sync_assets").Set(0)
 		cache.stats.GaugeSyncNumber.WithLabelValues("sync_assets").Set(0)
@@ -205,7 +204,7 @@ func (cache *AssetCacheType) syncAssets() error {
 			lst[i].Metrics = []*models.AssetMetric{}
 		}
 
-		lst[i].Monitorings = make([]models.Monitoring, 0)
+		lst[i].Monitorings = make([]*models.Monitoring, 0)
 		for _, m := range mlst {
 			if m.AssetId == lst[i].Id {
 				lst[i].Monitorings = append(lst[i].Monitorings, m)

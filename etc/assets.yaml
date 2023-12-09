@@ -42,23 +42,36 @@ config:
         unit: "percent-100"
         label: "{{cpu}}"
         rules:
-          - name: CPU使用率过高
-            promql: cpu_usage_active
+          - name: "CPU使用率大于90%"
             relation: ">"
             value: 90
             serverity: 3
       - name: 内存使用率
         metrics: "mem_used_percent"
         unit: "percent-100"
-      - name: 入流量
-        metrics: 'sum(rate(net_bits_recv[1m]))'
+        label: "mem_used_percent"
+        rules:
+          - name: "CPU使用率大于80%"
+            relation: ">"
+            value: 80
+            serverity: 3
+      - name: 网卡入流量
+        metrics: 'sum(rate(net_bits_recv[1m])) by (interface)'
         unit: "bit"
-      - name: 出流量
-        metrics: "sum(rate(net_bits_sent[1m]))"
+        label: "{{interface}}"
+      - name: 网卡出流量
+        metrics: "sum(rate(net_bits_sent[1m])) by (interface)"
         unit: "bit"
-      - name: 最大分区使用率
-        metrics: "max(disk_used_percent)"
+        label: "{{interface}}"
+      - name: 分区使用率
+        metrics: "disk_used_percent"
         unit: "percent-100"
+        label: "{{path}}"
+        rules:
+          - name: "分区使用率大于80%"
+            relation: ">"
+            value: 80
+            serverity: 3
     dashboard: "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Server&id=${id}&viewMode=fullscreen"
     form: []
     ip_unique: true
@@ -247,11 +260,11 @@ config:
             type: list
             items_limit: 8
             items:
-              - name: sensor
-                label: 传感器
+              - name: type
+                label: 类型
                 type: input
-              - name: status
-                label: 状态
+              - name: sensor
+                label: 名称
                 type: input
 
   - name: 网络设备
