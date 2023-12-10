@@ -10,8 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	context "github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/prometheus/common/model"
+	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
@@ -77,7 +78,7 @@ func (ins *Asset) Verify() error {
 	return nil
 }
 
-func (ins *Asset) Add(ctx *ctx.Context) error {
+func (ins *Asset) Add(ctx *context.Context) error {
 	if err := ins.Verify(); err != nil {
 		return err
 	}
@@ -107,7 +108,7 @@ func (ins *Asset) Add(ctx *ctx.Context) error {
 }
 
 // 西航
-func (ins *Asset) AddXH(ctx *ctx.Context) (int64, error) {
+func (ins *Asset) AddXH(ctx *context.Context) (int64, error) {
 	if err := ins.Verify(); err != nil {
 		return 0, err
 	}
@@ -134,119 +135,140 @@ func (ins *Asset) AddXH(ctx *ctx.Context) (int64, error) {
 		ins.Ident = "categraf-server"
 	}
 
-	if err := Insert(ctx, ins); err != nil {
-		return 0, err
-	}
-
-	// 将asset.yaml中的默认指标入库，这里未使用事务
-	for _, m := range assetType.Metrics {
-		monitoring := Monitoring{
-			AssetId:        ins.Id,
-			MonitoringName: m.Name,
-			MonitoringSql:  m.Metrics,
-			DatasourceId:   1, // TODO: 硬编码 暂定默认为1
-			CreatedAt:      now,
-			UpdatedAt:      now,
-			Status:         1, // 默认启用
-			Label:          m.Label,
-			Unit:           m.Unit,
+	err = ctx.Transaction(func(ctx *context.Context) error {
+		if err := ins.Add(ctx); err != nil {
+			return err
 		}
-		if err := monitoring.Add(ctx); err != nil {
-			logger.Error("新增默认监控错误:", err)
+		// 将asset.yaml中的默认指标入库
+		for _, m := range assetType.Metrics {
+			monitoring := &Monitoring{
+				AssetId:        ins.Id,
+				MonitoringName: m.Name,
+				MonitoringSql:  m.Metrics,
+				DatasourceId:   1, // TODO: 硬编码 暂定默认为1
+				CreatedAt:      now,
+				UpdatedAt:      now,
+				Status:         1, // 默认启用
+				Label:          m.Label,
+				Unit:           m.Unit,
+			}
+			if err := monitoring.Add(ctx); err != nil {
+				logger.Error("新增默认监控错误:", err)
+				return err
+			}
+
+			for _, r := range m.Rules {
+				rule := AlertRule{
+					AssetId:          ins.Id,
+					GroupId:          ins.GroupId,
+					Cate:             "prometheus",
+					DatasourceIds:    "[1]",
+					Name:             r.Name,
+					Prod:             "metric",
+					PromForDuration:  60,
+					PromEvalInterval: 30,
+					EnableStime:      "00:00",
+					EnableEtime:      "00:00",
+					EnableDaysOfWeek: "0 1 2 3 4 5 6",
+					NotifyRecovered:  1,
+					RuleConfigCn:     m.Name,
+					NotifyRepeatStep: 60,
+					Severity:         int(r.Serverity),
+					MonitoringId:     monitoring.Id,
+				}
+				config := map[string][]map[string]interface{}{}
+				config["queries"] = []map[string]interface{}{
+					{
+						"prom_ql":    fmt.Sprintf("%s %s %d", m.Metrics, r.Relation, r.Value),
+						"severity":   r.Serverity,
+						"monitor_id": monitoring.Id,
+						"relation":   r.Relation,
+						"value":      fmt.Sprintf("%d", r.Value),
+					},
+				}
+				configJson, err := json.Marshal(config)
+				if err != nil {
+					logger.Error("新增默认告警错误:", err)
+					return err
+				}
+				rule.RuleConfig = string(configJson)
+				rule.RuleConfigFe = string(configJson)
+				if err := rule.Add(ctx); err != nil {
+					logger.Error("新增默认告警错误:", err)
+					return err
+				}
+			}
 		}
 
-		for _, r := range m.Rules {
-			rule := AlertRule{
-				AssetId:          ins.Id,
-				GroupId:          ins.GroupId,
-				Cate:             "prometheus",
-				DatasourceIds:    "[1]",
-				Name:             r.Name,
-				Prod:             "metric",
-				PromForDuration:  60,
-				PromEvalInterval: 30,
-				EnableStime:      "00:00",
-				EnableEtime:      "00:00",
-				EnableDaysOfWeek: "0 1 2 3 4 5 6",
-				NotifyRecovered:  1,
-				RuleConfigCn:     m.Name,
-				NotifyRepeatStep: 60,
-				Severity:         int(r.Serverity),
-				MonitoringId:     monitoring.Id,
-			}
-			config := map[string][]map[string]interface{}{}
-			config["queries"] = []map[string]interface{}{
-				{
-					"prom_ql":    fmt.Sprintf("%s %s %d", m.Metrics, r.Relation, r.Value),
-					"severity":   r.Serverity,
-					"monitor_id": monitoring.Id,
-					"relation":   r.Relation,
-					"value":      fmt.Sprintf("%d", r.Value),
-				},
-			}
-			configJson, err := json.Marshal(config)
-			if err != nil {
-				logger.Error("新增默认告警错误:", err)
-			}
-			rule.RuleConfig = string(configJson)
-			rule.RuleConfigFe = string(configJson)
-			if err := rule.Add(ctx); err != nil {
-				logger.Error("新增默认告警错误:", err)
-			}
+		// 为新增资产增加默认看板
+		if err := ins.CreateBoard(ctx); err != nil {
+			return err
 		}
-	}
+		return nil
+	})
 
-	return ins.Id, nil
+	ginx.Dangerous(err)
+	return ins.Id, err
 }
 
-func (ins *Asset) AddTx(tx *gorm.DB) (int64, error) {
-	if err := ins.Verify(); err != nil {
-		return 0, err
+func (ins *Asset) CreateBoard(tx *context.Context) error {
+	board := &Board{
+		GroupId:  ins.GroupId,
+		Name:     fmt.Sprintf("[%s]%s", ins.Ip, ins.Name),
+		Ident:    "",
+		Tags:     "",
+		AssetId:  ins.Id,
+		CreateBy: ins.CreateBy,
+		UpdateBy: ins.UpdateBy,
 	}
 
-	if ins.Type == "host" {
-		if exists, err := Exists(tx.Where("ident = ? and plugin = 'host")); err != nil || exists {
-			return 0, errors.New("duplicate host asset")
-		}
-	}
-
-	now := time.Now().Unix()
-	ins.CreateAt = now
-	ins.UpdateAt = now
-	ins.Status = 0
-	assetTypes, err := AssetTypeGetsAll()
+	err := board.Add(tx)
 	if err != nil {
-		return 0, err
-	}
-
-	for _, item := range assetTypes {
-		if item.Name == ins.Type {
-			ins.Plugin = item.Plugin
-			break
-		}
-	}
-
-	err = tx.Debug().Model(&Asset{}).Create(ins).Error
-	if err != nil {
-		tx.Rollback()
-	}
-
-	// if err := Insert(tx, ins); err != nil {
-	// 	return err
-	// }
-
-	return ins.Id, nil
-}
-
-func (ins *Asset) Del(ctx *ctx.Context) error {
-	if err := DB(ctx).Where("id=?", ins.Id).Delete(&Asset{}).Error; err != nil {
 		return err
 	}
 
-	return nil
+	payload, err := BoardPayloadGetByAssetType(tx, ins.Type)
+	if err == nil {
+		BoardPayloadSave(tx, board.Id, payload)
+	}
+	return err
 }
 
-func (ins *Asset) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {
+func (ins *Asset) Del(ctx *context.Context) error {
+
+	err := ctx.Transaction(func(ctx *context.Context) error {
+		if err := DB(ctx).Where("id=?", ins.Id).Delete(&Asset{}).Error; err != nil {
+			return err
+		}
+		// 扩展属性
+		if err := DB(ctx).Where("asset_id = ?", ins.Id).Delete(&AssetsExpansion{}).Error; err != nil {
+			return err
+		}
+		// 监控
+		if err := DB(ctx).Where("asset_id = ?", ins.Id).Delete(&Monitoring{}).Error; err != nil {
+			return err
+		}
+		// 告警
+		if err := DB(ctx).Where("asset_id = ?", ins.Id).Delete(&AlertRule{}).Error; err != nil {
+			return err
+		}
+		// 看板
+		var bids []int64
+		DB(ctx).Model(&Board{}).Where("asset_id = ?", ins.Id).Pluck("id", &bids)
+		if err := DB(ctx).Where("id in ?", bids).Delete(&Board{}).Error; err != nil {
+			return err
+		}
+		if err := DB(ctx).Where("id in ?", bids).Delete(&BoardPayload{}).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
+}
+
+func (ins *Asset) Update(ctx *context.Context, selectField interface{}, selectFields ...interface{}) error {
 	if err := ins.Verify(); err != nil {
 		return err
 	}
@@ -264,23 +286,7 @@ func (ins *Asset) Update(ctx *ctx.Context, selectField interface{}, selectFields
 	return nil
 }
 
-func (ins *Asset) UpdateTx(tx *gorm.DB, selectField interface{}, selectFields ...interface{}) error {
-	if err := ins.Verify(); err != nil {
-		return err
-	}
-
-	if err := tx.Model(ins).Select(selectField, selectFields...).Updates(ins).Error; err != nil {
-		tx.Rollback()
-	}
-
-	if err := tx.Model(ins).Select("status").Updates(map[string]interface{}{"status": 0}).Error; err != nil {
-		tx.Rollback()
-	}
-
-	return nil
-}
-
-func (ins *Asset) FillConfig(ctx *ctx.Context) error {
+func (ins *Asset) FillConfig(ctx *context.Context) error {
 	assetType, err := AssetTypeGet(ins.Type)
 	if err != nil {
 		return err
@@ -296,15 +302,15 @@ func (ins *Asset) FillConfig(ctx *ctx.Context) error {
 }
 
 // 通过ids修改属性
-func UpdateByIds(ctx *ctx.Context, ids []int64, name string, value interface{}) error {
+func UpdateByIds(ctx *context.Context, ids []int64, name string, value interface{}) error {
 	return DB(ctx).Model(&Asset{}).Where("id in ?", ids).Updates(map[string]interface{}{name: value}).Error
 }
 
-func AssetGetById(ctx *ctx.Context, id int64) (*Asset, error) {
+func AssetGetById(ctx *context.Context, id int64) (*Asset, error) {
 	return AssetGet(ctx, "id = ?", id)
 }
 
-func AssetGet(ctx *ctx.Context, where string, args ...interface{}) (*Asset, error) {
+func AssetGet(ctx *context.Context, where string, args ...interface{}) (*Asset, error) {
 	var lst []*Asset
 	err := DB(ctx).Where(where, args...).Find(&lst).Error
 	if err != nil {
@@ -320,7 +326,7 @@ func AssetGet(ctx *ctx.Context, where string, args ...interface{}) (*Asset, erro
 	return lst[0], nil
 }
 
-func AssetGets(ctx *ctx.Context, bgid int64, query string, organizationId int64) ([]*Asset, error) {
+func AssetGets(ctx *context.Context, bgid int64, query string, organizationId int64) ([]*Asset, error) {
 	var lst []*Asset
 	session := DB(ctx).Where("1 = 1")
 	if bgid >= 0 {
@@ -352,15 +358,15 @@ func AssetGets(ctx *ctx.Context, bgid int64, query string, organizationId int64)
 	return lst, nil
 }
 
-func AssetGetsAll(ctx *ctx.Context) ([]*Asset, error) {
+func AssetGetsAll(ctx *context.Context) ([]*Asset, error) {
 	return AssetGets(ctx, -1, "", -1)
 }
 
-func AssetCount(ctx *ctx.Context, where string, args ...interface{}) (num int64, err error) {
+func AssetCount(ctx *context.Context, where string, args ...interface{}) (num int64, err error) {
 	return Count(DB(ctx).Model(&Asset{}).Where(where, args...))
 }
 
-func AssetStatistics(ctx *ctx.Context) (*Statistics, error) {
+func AssetStatistics(ctx *context.Context) (*Statistics, error) {
 	session := DB(ctx).Model(&Asset{}).Select("count(*) as total", "max(update_at) as last_updated")
 
 	var stats []*Statistics
@@ -372,7 +378,7 @@ func AssetStatistics(ctx *ctx.Context) (*Statistics, error) {
 	return stats[0], nil
 }
 
-func AssetGetTags(ctx *ctx.Context, ids []string) ([]string, error) {
+func AssetGetTags(ctx *context.Context, ids []string) ([]string, error) {
 	session := DB(ctx).Model(new(Asset))
 
 	var arr []string
@@ -409,7 +415,7 @@ func AssetGetTags(ctx *ctx.Context, ids []string) ([]string, error) {
 	return ret, err
 }
 
-func (t *Asset) AddTags(ctx *ctx.Context, tags []string) error {
+func (t *Asset) AddTags(ctx *context.Context, tags []string) error {
 	for i := 0; i < len(tags); i++ {
 		if !strings.Contains(t.Tags, tags[i]+" ") {
 			t.Tags += tags[i] + " "
@@ -426,7 +432,7 @@ func (t *Asset) AddTags(ctx *ctx.Context, tags []string) error {
 	}).Error
 }
 
-func (t *Asset) DelTags(ctx *ctx.Context, tags []string) error {
+func (t *Asset) DelTags(ctx *context.Context, tags []string) error {
 	for i := 0; i < len(tags); i++ {
 		t.Tags = strings.ReplaceAll(t.Tags, tags[i]+" ", "")
 	}
@@ -438,7 +444,7 @@ func (t *Asset) DelTags(ctx *ctx.Context, tags []string) error {
 	}).Error
 }
 
-func AssetUpdateBgid(ctx *ctx.Context, ids []string, bgid int64, clearTags bool) error {
+func AssetUpdateBgid(ctx *context.Context, ids []string, bgid int64, clearTags bool) error {
 	fields := map[string]interface{}{
 		"group_id":  bgid,
 		"update_at": time.Now().Unix(),
@@ -452,39 +458,53 @@ func AssetUpdateBgid(ctx *ctx.Context, ids []string, bgid int64, clearTags bool)
 	return DB(ctx).Model(&Asset{}).Where("id in ?", ids).Updates(fields).Error
 }
 
-func AssetDel(ctx *ctx.Context, ids []string) error {
+func AssetBatchDel(ctx *context.Context, ids []string) error {
 	if len(ids) == 0 {
-		panic("ids empty")
+		return errors.New("ids empty")
 	}
-	return DB(ctx).Where("id in ?", ids).Delete(new(Asset)).Error
-}
 
-func AssetDelTx(tx *gorm.DB, ids []string) error {
-	if len(ids) == 0 {
-		panic("ids empty")
-	}
-	err := tx.Where("id in ?", ids).Delete(new(Asset)).Error
-	if err != nil {
-		tx.Rollback()
-	}
+	err := ctx.Transaction(func(ctx *context.Context) error {
+		if err := DB(ctx).Where("id in ?", ids).Delete(&Asset{}).Error; err != nil {
+			return err
+		}
+		if err := DB(ctx).Where("asset_id in ?", ids).Delete(&AssetsExpansion{}).Error; err != nil {
+			return err
+		}
+		if err := DB(ctx).Where("asset_id in ?", ids).Delete(&Monitoring{}).Error; err != nil {
+			return err
+		}
+		if err := DB(ctx).Where("asset_id in ?", ids).Delete(&AlertRule{}).Error; err != nil {
+			return err
+		}
+
+		var bids []int64
+		DB(ctx).Model(&Board{}).Where("asset_id in ?", ids).Pluck("id", &bids)
+		if err := DB(ctx).Where("id in ?", bids).Delete(&Board{}).Error; err != nil {
+			return err
+		}
+		if err := DB(ctx).Where("id in ?", bids).Delete(&BoardPayload{}).Error; err != nil {
+			return err
+		}
+		return nil
+	})
 	return err
 }
 
-func AssetUpdateNote(ctx *ctx.Context, ids []string, memo string) error {
+func AssetUpdateNote(ctx *context.Context, ids []string, memo string) error {
 	return DB(ctx).Model(&Asset{}).Where("id in ?", ids).Updates(map[string]interface{}{
 		"memo":      memo,
 		"update_at": time.Now().Unix(),
 	}).Error
 }
 
-func AssetSetStatus(ctx *ctx.Context, ident string, status int64) error {
+func AssetSetStatus(ctx *context.Context, ident string, status int64) error {
 	return DB(ctx).Model(&Asset{}).Where("ident = ?", ident).Updates(map[string]interface{}{
 		"status":    status,
 		"status_at": time.Now().Unix(),
 	}).Error
 }
 
-func AssetUpdateOrganization(ctx *ctx.Context, ids []string, organize_id int64) error {
+func AssetUpdateOrganization(ctx *context.Context, ids []string, organize_id int64) error {
 	return DB(ctx).Model(&Asset{}).Where("id in ?", ids).Updates(map[string]interface{}{
 		"organization_id": organize_id,
 		"update_at":       time.Now().Unix(),
@@ -508,7 +528,7 @@ func (e *Asset) FE2DB() error {
 }
 
 // 获取某一类资产上月（自然月）环比值
-func AssetMom(ctx *ctx.Context, aType string) (num int64, err error) {
+func AssetMom(ctx *context.Context, aType string) (num int64, err error) {
 	//统计上月新增资产
 	var insertNum int64
 	now := time.Now()
@@ -537,7 +557,7 @@ func AssetMom(ctx *ctx.Context, aType string) (num int64, err error) {
 }
 
 // 根据map查询
-func AssetsGetsMap(ctx *ctx.Context, where map[string]interface{}) (lst []*Asset, err error) {
+func AssetsGetsMap(ctx *context.Context, where map[string]interface{}) (lst []*Asset, err error) {
 	err = DB(ctx).Model(&Asset{}).Where(where).Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
@@ -549,19 +569,19 @@ func AssetsGetsMap(ctx *ctx.Context, where map[string]interface{}) (lst []*Asset
 }
 
 // 根据map统计数量
-func AssetsCountMap(ctx *ctx.Context, where map[string]interface{}) (num int64, err error) {
+func AssetsCountMap(ctx *context.Context, where map[string]interface{}) (num int64, err error) {
 	err = DB(ctx).Model(&Asset{}).Where(where).Count(&num).Error
 	return num, err
 }
 
 // 统计ip是否存在
-func IpCount(ctx *ctx.Context, ip string, aTypes []string) (num int64, err error) {
+func IpCount(ctx *context.Context, ip string, aTypes []string) (num int64, err error) {
 	err = DB(ctx).Model(&Asset{}).Where("ip = ? and type in ?", ip, aTypes).Count(&num).Error
 	return num, err
 }
 
 // 根据filter统计数量
-func AssetsCountFilter(ctx *ctx.Context, aType string, query, queryType string) (num int64, err error) {
+func AssetsCountFilter(ctx *context.Context, aType string, query, queryType string) (num int64, err error) {
 	session := DB(ctx)
 
 	if queryType == "" {
@@ -585,7 +605,7 @@ func AssetsCountFilter(ctx *ctx.Context, aType string, query, queryType string) 
 }
 
 // 根据filter查询
-func AssetsGetsFilter(ctx *ctx.Context, aType string, query, queryType string, limit, offset int) (lst []*Asset, err error) {
+func AssetsGetsFilter(ctx *context.Context, aType string, query, queryType string, limit, offset int) (lst []*Asset, err error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
@@ -620,7 +640,7 @@ func AssetsGetsFilter(ctx *ctx.Context, aType string, query, queryType string, l
 }
 
 // 根据filter统计数量(new)
-func AssetsCountFilterNew(ctx *ctx.Context, filter, query, aType string) (num int64, err error) {
+func AssetsCountFilterNew(ctx *context.Context, filter, query, aType string) (num int64, err error) {
 	session := DB(ctx)
 
 	if aType != "" {
@@ -653,7 +673,7 @@ func AssetsCountFilterNew(ctx *ctx.Context, filter, query, aType string) (num in
 }
 
 // 根据filter查询(new)
-func AssetsGetsFilterNew(ctx *ctx.Context, filter, query, aType string, limit, offset int) (lst []*Asset, err error) {
+func AssetsGetsFilterNew(ctx *context.Context, filter, query, aType string, limit, offset int) (lst []*Asset, err error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
@@ -699,21 +719,21 @@ func AssetsGetsFilterNew(ctx *ctx.Context, filter, query, aType string, limit, o
 }
 
 // 根据资产名称、类型、IP地址模糊匹配
-func AssetIdByNameTypeIp(ctx *ctx.Context, query string) (ids []int64, err error) {
+func AssetIdByNameTypeIp(ctx *context.Context, query string) (ids []int64, err error) {
 	query = "%" + query + "%"
 	err = DB(ctx).Model(&Asset{}).Distinct().Where("name like ? or type like ? or ip like ?", query, query, query).Pluck("id", &ids).Error
 	return ids, err
 }
 
 // 根据资产名称模糊匹配
-func AssetIdByName(ctx *ctx.Context, query string) (ids []int64, err error) {
+func AssetIdByName(ctx *context.Context, query string) (ids []int64, err error) {
 	query = "%" + query + "%"
 	err = DB(ctx).Model(&Asset{}).Distinct().Where("name like ?", query).Pluck("id", &ids).Error
 	return ids, err
 }
 
 // 根据资产类型模糊匹配
-func AssetIdByType(ctx *ctx.Context, query string) (ids []int64, err error) {
+func AssetIdByType(ctx *context.Context, query string) (ids []int64, err error) {
 	query = "%" + query + "%"
 	err = DB(ctx).Model(&Asset{}).Distinct().Where("type like ?", query).Pluck("id", &ids).Error
 	return ids, err
@@ -749,7 +769,7 @@ func GetIP(asset *Asset) (ip, name string) {
 }
 
 // 根据ids获得资产
-func AssetGetByIds(ctx *ctx.Context, ids []int64) ([]*Asset, error) {
+func AssetGetByIds(ctx *context.Context, ids []int64) ([]*Asset, error) {
 	var lst []*Asset
 	err := DB(ctx).Model(&Asset{}).Where("id in ?", ids).Find(&lst).Error
 

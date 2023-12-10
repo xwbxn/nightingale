@@ -1066,15 +1066,6 @@ func (ar *AlertRule) TimeSpanMuteStrategy() bool {
 }
 
 // 根据asset_id批量删除告警规则（事务）
-func AlertRuleDelTxByAssetId(tx *gorm.DB, assetId []string) error {
-	err := tx.Debug().Where("asset_id in ?", assetId).Delete(&AlertRule{}).Error
-	if err != nil {
-		tx.Rollback()
-	}
-	return err
-}
-
-// 根据asset_id批量删除告警规则（事务）
 func AlertRuleDelTxByMonId(tx *gorm.DB, ids []string) error {
 	for _, id := range ids {
 		str := `"monitor_id":` + id

@@ -307,15 +307,6 @@ func BatchDelTx(tx *gorm.DB, ids []string) error {
 	return tx.Debug().Where("id in ?", ids).Delete(&Monitoring{}).Error
 }
 
-// 根据asset_id批量删除监控（事务）
-func MonitoringDelTxByAssetId(tx *gorm.DB, assetId []string) error {
-	err := tx.Debug().Where("ASSET_ID in ?", assetId).Delete(&Monitoring{}).Error
-	if err != nil {
-		tx.Rollback()
-	}
-	return err
-}
-
 // 更新监控
 func (m *Monitoring) Update(ctx *ctx.Context, updateFrom interface{}, selectField interface{}, selectFields ...interface{}) error {
 	// 这里写Monitoring的业务逻辑，通过error返回错误

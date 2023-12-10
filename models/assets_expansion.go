@@ -127,18 +127,6 @@ func (a *AssetsExpansion) Del(ctx *ctx.Context) error {
 	return DB(ctx).Delete(a).Error
 }
 
-// 通过AssetsIds删除资产扩展-西航
-func AssetsExpansionDelAssetsIds(tx *gorm.DB, where []string) error {
-	// 这里写AssetsExpansion的业务逻辑，通过error返回错误
-
-	// 实际向库中写入
-	err := tx.Where("ASSETS_ID IN ?", where).Delete(&AssetsExpansion{}).Error
-	if err != nil {
-		tx.Rollback()
-	}
-	return nil
-}
-
 // 通过map删除资产扩展-西航
 func AssetsExpansionDelMap(tx *gorm.DB, where map[string]interface{}) error {
 	// 这里写AssetsExpansion的业务逻辑，通过error返回错误

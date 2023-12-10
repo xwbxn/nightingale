@@ -16,6 +16,7 @@ type Board struct {
 	Name     string `json:"name"`
 	Ident    string `json:"ident"`
 	Tags     string `json:"tags"`
+	AssetId  int64  `json:"asset_id"`
 	CreateAt int64  `json:"create_at"`
 	CreateBy string `json:"create_by"`
 	UpdateAt int64  `json:"update_at"`
@@ -119,6 +120,20 @@ func BoardGetByID(ctx *ctx.Context, id int64) (*Board, error) {
 	return lst[0], nil
 }
 
+func BoardGetByAssetId(ctx *ctx.Context, aid int64) (*Board, error) {
+	var lst []*Board
+	err := DB(ctx).Where("asset_id = ?", aid).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(lst) == 0 {
+		return nil, nil
+	}
+
+	return lst[0], nil
+}
+
 // BoardGet for detail page
 func BoardGet(ctx *ctx.Context, where string, args ...interface{}) (*Board, error) {
 	var lst []*Board
@@ -207,4 +222,40 @@ func BoardSetHide(ctx *ctx.Context, ids []int64) error {
 		}
 		return nil
 	})
+}
+
+func (p *Board) SetAssetDefault(ctx *ctx.Context, assetType string, applyAll bool) error {
+	err := DB(ctx).Model(&BoardPayload{}).Where("asset_type = ?", assetType).Update("asset_type", "").Error
+	if err != nil {
+		return err
+	}
+
+	err = DB(ctx).Model(&BoardPayload{}).Where("id = ?", p.Id).Update("asset_type", assetType).Error
+	if err != nil {
+		return err
+	}
+
+	if applyAll {
+		payload, err := BoardPayloadGet(ctx, p.Id)
+		if err != nil {
+			return err
+		}
+		assets, err := AssetsGetsMap(ctx, map[string]interface{}{"type": assetType})
+		if err != nil {
+			return err
+		}
+		for _, asset := range assets {
+			board, err := BoardGetByAssetId(ctx, asset.Id)
+			if err != nil {
+				return err
+			}
+			if board != nil {
+				board.Update(ctx, "asset_id", asset.Id)
+				BoardPayloadSave(ctx, board.Id, payload)
+			} else {
+				asset.CreateBoard(ctx)
+			}
+		}
+	}
+	return err
 }

@@ -13,7 +13,7 @@ base_props: &base_props
     type: select
     options:
       - label: 主机
-        name: 主机
+        value: 主机
   - name: manufacturers
     label: 厂商
     required: false
@@ -28,9 +28,9 @@ base_props: &base_props
     type: select
     options:
       - label: 正常
-        name: 正常
+        value: 正常
       - label: 下线
-        name: 下线
+        value: 下线
 
 config:
   - name: 主机设备
@@ -411,6 +411,27 @@ config:
         name: url
         type: input
         required: true
+      - label: 请求类型
+        name: method
+        type: select
+        required: true
+        options:
+          - label: 'GET'
+            value: 'GET'
+          - label: 'POST'
+            value: 'POST'
+      - label: 请求体
+        name: body
+        type: input
+      - label: 使用SSL/TLS
+        name: use_tls
+        type: checkbox
+      - label: basic认证用户名
+        name: username
+        type: input
+      - label: basic认证密码
+        name: password
+        type: password
     ip_unique: false
 
   - name: 网络端点
@@ -442,6 +463,7 @@ config:
       - label: 协议
         name: protocol
         type: select
+        required: true
         options: 
           - label: tcp
             value: tcp

@@ -24,6 +24,6 @@ protocol = "{{.protocol}}"
 ## optional. The plugin will send the given string to the server and then
 ## expect to receive the given 'expect' string back.
 ## string sent to the server
-# send = "ssh"
+{{if eq .protocol "udp"}}send = "ssh"{{end}}
 ## expected string in answer
-# expect = "ssh"
+{{if eq .protocol "udp"}}expect = "ssh"{{end}}

@@ -5,7 +5,8 @@ package models
 
 import (
 	"errors"
-	"time"
+	"fmt"
+	"strconv"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
@@ -31,6 +32,7 @@ type ApiService struct {
 	DatasourceId int64  `gorm:"column:DATASOURCE_ID" json:"datasource_id" `               //type:*int     comment:数据源;promql 需要指定数据源   version:2023-10-20 16:47
 	Url          string `gorm:"column:URL" json:"url" `                                   //type:string   comment:URL                            version:2023-10-20 16:47
 	Script       string `gorm:"column:SCRIPT" json:"script" `                             //type:string   comment:执行脚本                       version:2023-10-20 16:47
+	ValueField   string `gorm:"column:VALUE_FIELD" json:"value_field"`
 }
 
 // TableName 表名:api_service，接口管理。
@@ -129,9 +131,8 @@ func (as *ApiService) IsDangerous() bool {
 		}
 		switch stmt.(type) {
 		case *sqlparser.Select:
-			return true
+			return false
 		}
-
 	}
 	return true
 }
@@ -146,52 +147,52 @@ type Series struct {
 }
 
 // 执行api接口
-// 返回格式Series
+// 返回promtheus api格式
 func (as *ApiService) Execute(ctx *ctx.Context, api prom.API) (interface{}, error) {
-	series := Series{
-		Series: make([]Serie, 0),
-	}
+	data := []model.Samples{}
+	samples := model.Samples{}
+
 	if as.Type == "sql" { //sql模式
-		var dataPoint []map[string]interface{}
-		err := DB(ctx).Raw(as.Script).Find(&dataPoint).Error
+		var dataPoints []map[string]interface{}
+		err := DB(ctx).Raw(as.Script).Find(&dataPoints).Error
 		if err != nil {
 			return nil, err
 		}
 
-		s := Serie{
-			SeriesName: as.Name,
-			DataPoint:  dataPoint,
-		}
-		series.Series = append(series.Series, s)
-	}
-	if as.Type == "promql" { //promql模式
-		r := prom.Range{
-			Start: time.Now().Add(-30 * time.Minute),
-			End:   time.Now(),
-			Step:  1 * time.Minute,
-		}
-		value, warnings, err := api.QueryRange(ctx.Ctx, as.Script, r)
-		if len(warnings) > 0 {
-			logger.Error(err)
-			return nil, err
-		}
-		items, ok := value.(model.Matrix)
-		if !ok {
-			return nil, errors.New("prom查询结果无法解析")
-		}
-		for _, item := range items {
-			s := Serie{
-				SeriesName: as.Name,
-				DataPoint:  make([]map[string]interface{}, 0),
+		now := model.Now()
+		for _, row := range dataPoints {
+			sample := &model.Sample{
+				Metric:    make(model.Metric),
+				Timestamp: now,
 			}
-			for _, v := range item.Values {
-				s.DataPoint = append(s.DataPoint, map[string]interface{}{
-					"name":  v.Timestamp.Time().Format(time.Kitchen),
-					"value": float64(v.Value),
-				})
+			for name, value := range row {
+				var strVal string
+				var floatVal float64
+
+				switch value.(type) {
+				case string:
+					strVal = value.(string)
+					floatVal, _ = strconv.ParseFloat(strVal, 64)
+				case int64:
+					floatVal = float64(value.(int64))
+					strVal = fmt.Sprintf("%f", floatVal)
+				case float64:
+					floatVal = value.(float64)
+					strVal = fmt.Sprintf("%f", floatVal)
+				default:
+					logger.Errorf("execute apiservice convert v error: %v", value)
+					return nil, errors.New("execute apiservice convert v error")
+				}
+
+				sample.Metric[model.LabelName(name)] = model.LabelValue(strVal)
+				if name == as.ValueField {
+					sample.Value = model.SampleValue(floatVal)
+				}
+
 			}
-			series.Series = append(series.Series, s)
+			samples = append(samples, sample)
 		}
+		data = append(data, samples)
 	}
-	return series, nil
+	return data, nil
 }

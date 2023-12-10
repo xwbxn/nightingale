@@ -7,8 +7,9 @@ import (
 )
 
 type BoardPayload struct {
-	Id      int64  `json:"id" gorm:"primaryKey"`
-	Payload string `json:"payload"`
+	Id        int64  `json:"id" gorm:"primaryKey"`
+	Payload   string `json:"payload"`
+	AssetType string `json:"asset_type"`
 }
 
 func (p *BoardPayload) TableName() string {
@@ -40,6 +41,16 @@ func BoardPayloadGet(ctx *ctx.Context, id int64) (string, error) {
 	}
 
 	return payloads[0].Payload, nil
+}
+
+func BoardPayloadGetByAssetType(ctx *ctx.Context, assetType string) (string, error) {
+	var bp BoardPayload
+	err := DB(ctx).Where("asset_type = ?", assetType).Find(&bp).Error
+	if err != nil {
+		return "", err
+	}
+
+	return bp.Payload, nil
 }
 
 func BoardPayloadSave(ctx *ctx.Context, id int64, payload string) error {

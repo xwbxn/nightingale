@@ -37,11 +37,11 @@ gather_flow_metrics = true
 gather_cpu_metrics = true
 gather_mem_metrics = true
 gather_oper_status = true
-gather_pkt = false
+gather_pkt = true
 gather_broadcast_pkt = false
 gather_multicast_pkt = false
-gather_discards = false
-gather_errors = false
+gather_discards = true
+gather_errors = true
 gather_unknown_protos = false
 gather_out_qlen = false
 

@@ -240,7 +240,7 @@ func (rt *Router) assetPutXH(c *gin.Context) {
 	err = oldAssets.FE2DB()
 	ginx.Dangerous(err)
 
-	err = oldAssets.Update(rt.Ctx, "group_id", "name", "type", "ip", "manufacturers", "position", "params", "memo", "update_at", "update_by")
+	err = oldAssets.Update(rt.Ctx, "group_id", "name", "type", "ip", "configs", "manufacturers", "position", "params", "memo", "update_at", "update_by")
 	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Message(err)
@@ -257,11 +257,9 @@ func (rt *Router) assetDel(c *gin.Context) {
 	if len(f.Ids) == 0 {
 		ginx.Bomb(http.StatusBadRequest, "参数为空")
 	}
-	tx := models.DB(rt.Ctx).Begin()
-	err := models.AssetDelTx(tx, f.Ids)
+
+	err := models.AssetBatchDel(rt.Ctx, f.Ids)
 	ginx.Dangerous(err)
-	err = models.AssetsExpansionDelAssetsIds(tx, f.Ids)
-	tx.Commit()
 
 	ginx.NewRender(c).Message(err)
 }
@@ -427,19 +425,9 @@ func (rt *Router) assetDelXH(c *gin.Context) {
 	if len(f.Ids) == 0 {
 		ginx.Bomb(http.StatusBadRequest, "参数为空")
 	}
-	tx := models.DB(rt.Ctx).Begin()
 	//删除资产基本属性
-	err := models.AssetDelTx(tx, f.Ids)
+	err := models.AssetBatchDel(rt.Ctx, f.Ids)
 	ginx.Dangerous(err)
-	//删除资产扩展属性
-	err = models.AssetsExpansionDelAssetsIds(tx, f.Ids)
-	ginx.Dangerous(err)
-	//删除资产所属监控
-	err = models.MonitoringDelTxByAssetId(tx, f.Ids)
-	ginx.Dangerous(err)
-	//删除资产告警规则
-	err = models.AlertRuleDelTxByAssetId(tx, f.Ids)
-	tx.Commit()
 
 	ginx.NewRender(c).Message(err)
 }
@@ -748,7 +736,7 @@ func (rt *Router) importAssetXH(c *gin.Context) {
 			num, err := models.IpCount(rt.Ctx, entity.Ip, aTypes)
 			ginx.Dangerous(err)
 			if num > 0 {
-				models.AssetDel(rt.Ctx, ids)
+				models.AssetBatchDel(rt.Ctx, ids)
 				ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index)+"行数据,IP("+entity.Ip+")已存在")
 			}
 		}
@@ -756,7 +744,7 @@ func (rt *Router) importAssetXH(c *gin.Context) {
 		//校验
 		err := models.Verify(entity)
 		if err != nil {
-			models.AssetDel(rt.Ctx, ids)
+			models.AssetBatchDel(rt.Ctx, ids)
 			ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index)+"数据(资产名称："+entity.Name+"),"+err.Error())
 		}
 
@@ -765,7 +753,7 @@ func (rt *Router) importAssetXH(c *gin.Context) {
 		f.CreateBy = me.Username
 		id, err := f.AddXH(rt.Ctx)
 		if err != nil {
-			models.AssetDel(rt.Ctx, ids)
+			models.AssetBatchDel(rt.Ctx, ids)
 			ginx.Bomb(http.StatusOK, err.Error())
 		}
 		ids = append(ids, strconv.FormatInt(id, 10))

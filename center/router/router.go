@@ -293,6 +293,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/board/:bid/configs", rt.auth(), rt.user(), rt.perm("/dashboards/put"), rt.boardPutConfigs)
 		pages.PUT("/board/:bid/public", rt.auth(), rt.user(), rt.perm("/dashboards/put"), rt.boardPutPublic)
 		pages.DELETE("/boards", rt.auth(), rt.user(), rt.perm("/dashboards/del"), rt.boardDel)
+		pages.PUT("/board/:bid/asset-type", rt.auth(), rt.user(), rt.boardSetAssetType)
 
 		pages.GET("/share-charts", rt.chartShareGets)
 		pages.POST("/share-charts", rt.auth(), rt.chartShareAdd)
@@ -461,6 +462,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/xh/asset/import-xls", rt.auth(), rt.user(), rt.importAssetXH)
 		pages.POST("/xh/asset/export-xls", rt.auth(), rt.user(), rt.exportAssetXH)
 		pages.POST("/xh/asset/templet", rt.auth(), rt.user(), rt.templeAssetXH)
+		pages.GET("/xh/asset/:id/board", rt.auth(), rt.user(), rt.boardGetByAsset)
 
 		pages.GET("/organization/:id", rt.auth(), rt.user(), rt.organizationGet)    // 依据id获取组织信息
 		pages.GET("/organization", rt.auth(), rt.user(), rt.organizationGets)       // 获取组织树

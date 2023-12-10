@@ -207,6 +207,7 @@ INSERT INTO `board` VALUES (1, 1, '首页', '', '', 0, 0, 0, 1700618966, 'root',
 CREATE TABLE `board_payload` (
     `id` bigint unsigned not null comment 'dashboard id',
     `payload` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null,
+    `asset_type` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '',
     UNIQUE KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
@@ -651,6 +652,7 @@ CREATE TABLE `assets` (
   `status` int(0) NOT NULL DEFAULT 0,
   `status_at` bigint(0) NOT NULL DEFAULT 0,
   `directory_id` bigint(0) DEFAULT NULL COMMENT '所在分组',
+  `payload` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null,
   `create_at` bigint(0) NOT NULL DEFAULT 0,
   `create_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
   `update_at` bigint(0) NOT NULL DEFAULT 0,
@@ -1512,6 +1514,7 @@ CREATE TABLE `api_service`  (
   `DATASOURCE_ID` int(0) DEFAULT NULL COMMENT '数据源;promql 需要指定数据源',
   `URL` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'URL',
   `SCRIPT` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '执行脚本',
+  `VALUE_FIELD` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '值字段',
   PRIMARY KEY (`ID`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '接口管理' ROW_FORMAT = Dynamic;
 

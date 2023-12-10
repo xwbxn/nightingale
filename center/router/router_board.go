@@ -79,6 +79,17 @@ func (rt *Router) boardPureGet(c *gin.Context) {
 	ginx.NewRender(c).Data(board, nil)
 }
 
+func (rt *Router) boardGetByAsset(c *gin.Context) {
+	board, err := models.BoardGetByAssetId(rt.Ctx, ginx.UrlParamInt64(c, "id"))
+	ginx.Dangerous(err)
+
+	if board == nil {
+		ginx.Bomb(http.StatusNotFound, "No such dashboard")
+	}
+
+	ginx.NewRender(c).Data(board, nil)
+}
+
 // bgrwCheck
 func (rt *Router) boardDel(c *gin.Context) {
 	var f idsForm
@@ -232,6 +243,25 @@ func (rt *Router) boardClone(c *gin.Context) {
 	if payload != "" {
 		ginx.Dangerous(models.BoardPayloadSave(rt.Ctx, newBoard.Id, payload))
 	}
+
+	ginx.NewRender(c).Message(nil)
+}
+
+type boardAssetTypeForm struct {
+	AssetType string `json:"asset_type"`
+	ApplyAll  bool   `json:"apply_all"`
+}
+
+func (rt *Router) boardSetAssetType(c *gin.Context) {
+	var f boardAssetTypeForm
+	ginx.BindJSON(c, &f)
+
+	bid := ginx.UrlParamStr(c, "bid")
+	bo, err := models.BoardGet(rt.Ctx, "id = ?", bid)
+	ginx.Dangerous(err)
+
+	err = bo.SetAssetDefault(rt.Ctx, f.AssetType, f.ApplyAll)
+	ginx.Dangerous(err)
 
 	ginx.NewRender(c).Message(nil)
 }
