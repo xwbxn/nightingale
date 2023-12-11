@@ -114,11 +114,6 @@ func (rt *Router) licenseUpdateXH(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	//保存新文件
-	err = os.Remove(crtFilePath)
-	ginx.Dangerous(err)
-	err = os.Remove(keyFilePath)
-	ginx.Dangerous(err)
-
 	// 创建目标文件
 	dst, err := os.Create(crtFilePath)
 	ginx.Dangerous(err)

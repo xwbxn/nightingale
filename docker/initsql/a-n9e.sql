@@ -183,6 +183,7 @@ insert into busi_group_member(busi_group_id, user_group_id, perm_flag) values(1,
 CREATE TABLE `board` (
     `id` bigint unsigned not null auto_increment,
     `group_id` bigint not null default 0 comment 'busi group id',
+    `asset_id` bigint DEFAULT NULL,
     `name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null,
     `ident` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '',
     `tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null comment 'split by space',
@@ -201,7 +202,7 @@ CREATE TABLE `board` (
 -- ----------------------------
 -- Records of board
 -- ----------------------------
-INSERT INTO `board` VALUES (1, 1, '首页', '', '', 0, 0, 0, 1700618966, 'root', 1701834893, 'root');
+INSERT INTO `board` VALUES (1, 1, NULL, '首页', '', '', 0, 0, 0, 1700618966, 'root', 1701834893, 'root');
 
 -- for dashboard new version
 CREATE TABLE `board_payload` (
@@ -1521,12 +1522,12 @@ CREATE TABLE `api_service`  (
 -- ----------------------------
 -- Records of api_service
 -- ----------------------------
-INSERT INTO `api_service` VALUES (1, 'root', 1700530855, 'root', 1700550729, 0, '资产品牌分布', 'sql', 0, '/asset/brand', 'select count(*) value , type name from assets group by type');
-INSERT INTO `api_service` VALUES (2, 'root', 1701165238, 'root', 1701165277, 0, '资产健康度', 'sql', 0, '/asset_health', 'select t.alert name,count(*) value from (\nselect a.id id, if(exists (select 1 from alert_cur_event ace where ace.asset_id = a.id and ace.deleted_at is null),\'告警\',\'正常\') alert\nfrom  assets a where  a.deleted_at is null ) t\ngroup by t.alert');
-INSERT INTO `api_service` VALUES (3, 'root', 1701165847, 'root', 1701165881, 0, '资产监控状态', 'sql', 0, '/asset_monitor', 'select t.status name,count(*) value from (\nselect a.id id, if(a.`status` = 1,\'正常\',\'离线\') status\nfrom  assets a where  a.deleted_at is null ) t\ngroup by t.status');
-INSERT INTO `api_service` VALUES (4, 'root', 1701221592, 'root', 1701221605, 0, '资产告警状态', 'sql', 0, '/asset_alert', 'select t.alert name, t.type, count(*) value from (\nselect a.id id, a.type type, if(exists (select 1 from alert_cur_event ace where ace.asset_id = a.id and ace.deleted_at is null),\'告警\',\'正常\') alert\nfrom  assets a where  a.deleted_at is null ) t\ngroup by t.alert, t.type');
-INSERT INTO `api_service` VALUES (5, 'root', 1701225213, 'root', 1701225219, 0, '7日内告警统计', 'sql', 0, '/alerts_in_week', 'select dat name, count(*) value from (\nselect FROM_UNIXTIME(trigger_time, \'%Y-%m-%d\') dat from alert_his_event where trigger_time > UNIX_TIMESTAMP(date_sub(now(), interval 7 day)) )t group by t.dat');
-INSERT INTO `api_service` VALUES (6, 'root', 1701226840, '', 1701226840, 0, '品牌故障率', 'sql', 0, '/asset_fault', '\nselect t.brand name, sum(t.error)/count(*) value  from\n(select id, if(manufacturers is null or manufacturers = \'\', \'其他\', manufacturers) brand ,\nif( exists (select 1 from alert_cur_event ace  where ace.asset_id = a.ID), 1 , 0) error\nfrom assets a\nwhere deleted_at is null ) t\ngroup by t.brand');
+INSERT INTO `api_service` VALUES (1, 'root', 1700530855, 'root', 1700550729, 0, '资产品牌分布', 'sql', 0, '/asset/brand', 'select count(*) value , type name from assets group by type', '');
+INSERT INTO `api_service` VALUES (2, 'root', 1701165238, 'root', 1701165277, 0, '资产健康度', 'sql', 0, '/asset_health', 'select t.alert name,count(*) value from (\nselect a.id id, if(exists (select 1 from alert_cur_event ace where ace.asset_id = a.id and ace.deleted_at is null),\'告警\',\'正常\') alert\nfrom  assets a where  a.deleted_at is null ) t\ngroup by t.alert', '');
+INSERT INTO `api_service` VALUES (3, 'root', 1701165847, 'root', 1701165881, 0, '资产监控状态', 'sql', 0, '/asset_monitor', 'select t.status name,count(*) value from (\nselect a.id id, if(a.`status` = 1,\'正常\',\'离线\') status\nfrom  assets a where  a.deleted_at is null ) t\ngroup by t.status', '');
+INSERT INTO `api_service` VALUES (4, 'root', 1701221592, 'root', 1701221605, 0, '资产告警状态', 'sql', 0, '/asset_alert', 'select t.alert name, t.type, count(*) value from (\nselect a.id id, a.type type, if(exists (select 1 from alert_cur_event ace where ace.asset_id = a.id and ace.deleted_at is null),\'告警\',\'正常\') alert\nfrom  assets a where  a.deleted_at is null ) t\ngroup by t.alert, t.type', '');
+INSERT INTO `api_service` VALUES (5, 'root', 1701225213, 'root', 1701225219, 0, '7日内告警统计', 'sql', 0, '/alerts_in_week', 'select dat name, count(*) value from (\nselect FROM_UNIXTIME(trigger_time, \'%Y-%m-%d\') dat from alert_his_event where trigger_time > UNIX_TIMESTAMP(date_sub(now(), interval 7 day)) )t group by t.dat', '');
+INSERT INTO `api_service` VALUES (6, 'root', 1701226840, '', 1701226840, 0, '品牌故障率', 'sql', 0, '/asset_fault', '\nselect t.brand name, sum(t.error)/count(*) value  from\n(select id, if(manufacturers is null or manufacturers = \'\', \'其他\', manufacturers) brand ,\nif( exists (select 1 from alert_cur_event ace  where ace.asset_id = a.ID), 1 , 0) error\nfrom assets a\nwhere deleted_at is null ) t\ngroup by t.brand', '');
 
 
 -- ----------------------------
