@@ -13,6 +13,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	promsdk "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/prom"
+	"github.com/prometheus/prometheus/model/labels"
 
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
@@ -95,7 +96,7 @@ func (arw *AlertRuleWorker) Eval() {
 	var lst []common.AnomalyPoint
 	switch typ {
 	case models.PROMETHEUS:
-		lst = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
+		lst = arw.GetPromAnomalyPoint(cachedRule.RuleConfig, cachedRule.AssetId)
 	case models.HOST:
 		lst = arw.GetHostAnomalyPoint(cachedRule.RuleConfig)
 	default:
@@ -115,7 +116,7 @@ func (arw *AlertRuleWorker) Stop() {
 	close(arw.quit)
 }
 
-func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.AnomalyPoint {
+func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string, assetId int64) []common.AnomalyPoint {
 	var lst []common.AnomalyPoint
 	var severity int
 
@@ -137,6 +138,10 @@ func (arw *AlertRuleWorker) GetPromAnomalyPoint(ruleConfig string) []common.Anom
 		}
 
 		promql := strings.TrimSpace(query.PromQl)
+		if assetId > 0 {
+			promql, _ = promsdk.InjectLabel(promql, "asset_id", fmt.Sprintf("%d", assetId), labels.MatchEqual)
+		}
+
 		if promql == "" {
 			logger.Errorf("rule_eval:%s promql is blank", arw.Key())
 			continue
