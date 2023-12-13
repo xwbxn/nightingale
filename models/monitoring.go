@@ -4,11 +4,12 @@
 package models
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	context "github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/toolkits/pkg/logger"
@@ -58,7 +59,7 @@ func (m *Monitoring) TableName() string {
 }
 
 // 查询所有
-func MonitoringAllGets(ctx *ctx.Context, query string, limit, offset int) ([]Monitoring, error) {
+func MonitoringAllGets(ctx *context.Context, query string, limit, offset int) ([]Monitoring, error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
@@ -78,7 +79,7 @@ func MonitoringAllGets(ctx *ctx.Context, query string, limit, offset int) ([]Mon
 }
 
 // 根据条件统计个数
-func MonitoringMapCount(ctx *ctx.Context, where map[string]interface{}, query string,
+func MonitoringMapCount(ctx *context.Context, where map[string]interface{}, query string,
 	assetType string, datasource, assetId int64) (num int64, err error) {
 
 	session := DB(ctx).Joins("LEFT JOIN assets ON monitoring.ASSET_ID = assets.id").
@@ -115,7 +116,7 @@ func MonitoringMapCount(ctx *ctx.Context, where map[string]interface{}, query st
 }
 
 // 条件查询
-func MonitoringMapGets(ctx *ctx.Context, where map[string]interface{}, query string, limit, offset int,
+func MonitoringMapGets(ctx *context.Context, where map[string]interface{}, query string, limit, offset int,
 	assetType string, datasource, assetId int64) (lst []Monitoring, err error) {
 	session := DB(ctx).Joins("LEFT JOIN assets ON monitoring.ASSET_ID = assets.id").
 		Joins("LEFT JOIN datasource ON monitoring.datasource_id = datasource.id")
@@ -156,7 +157,7 @@ func MonitoringMapGets(ctx *ctx.Context, where map[string]interface{}, query str
 }
 
 // 根据条件统计个数(new)
-func MonitoringMapCountNew(ctx *ctx.Context, filter, query, assetType string, assetId int64, assetIds []int64) (num int64, err error) {
+func MonitoringMapCountNew(ctx *context.Context, filter, query, assetType string, assetId int64, assetIds []int64) (num int64, err error) {
 
 	session := DB(ctx)
 	if filter == "monitoring_name" {
@@ -193,7 +194,7 @@ func MonitoringMapCountNew(ctx *ctx.Context, filter, query, assetType string, as
 }
 
 // 条件查询(new)
-func MonitoringMapGetsNew(ctx *ctx.Context, filter, query, assetType string, assetId int64, assetIds []int64, limit, offset int) (lst []Monitoring, err error) {
+func MonitoringMapGetsNew(ctx *context.Context, filter, query, assetType string, assetId int64, assetIds []int64, limit, offset int) (lst []Monitoring, err error) {
 	session := DB(ctx)
 
 	// 分页
@@ -236,7 +237,7 @@ func MonitoringMapGetsNew(ctx *ctx.Context, filter, query, assetType string, ass
 }
 
 // 按id查询
-func MonitoringGetById(ctx *ctx.Context, id int64) (*Monitoring, error) {
+func MonitoringGetById(ctx *context.Context, id int64) (*Monitoring, error) {
 	var obj *Monitoring
 	err := DB(ctx).Take(&obj, id).Error
 	if err != nil {
@@ -247,7 +248,7 @@ func MonitoringGetById(ctx *ctx.Context, id int64) (*Monitoring, error) {
 }
 
 // 按map查询
-func MonitoringGetMap(ctx *ctx.Context, where map[string]interface{}) ([]Monitoring, error) {
+func MonitoringGetMap(ctx *context.Context, where map[string]interface{}) ([]Monitoring, error) {
 	var lst []Monitoring
 	err := DB(ctx).Where(where).Find(&lst).Error
 
@@ -255,14 +256,14 @@ func MonitoringGetMap(ctx *ctx.Context, where map[string]interface{}) ([]Monitor
 }
 
 // 按ids查询
-func MonitoringGetByBatchId(ctx *ctx.Context, ids []int64) ([]Monitoring, error) {
+func MonitoringGetByBatchId(ctx *context.Context, ids []int64) ([]Monitoring, error) {
 	var lst []Monitoring
 	err := DB(ctx).Model(&Monitoring{}).Where("id in ?", ids).Find(&lst).Error
 	return lst, err
 }
 
 // 查询所有
-func MonitoringGetsAll(ctx *ctx.Context) ([]*Monitoring, error) {
+func MonitoringGetsAll(ctx *context.Context) ([]*Monitoring, error) {
 	var lst []*Monitoring
 	err := DB(ctx).Find(&lst).Error
 
@@ -274,7 +275,7 @@ func (m *Monitoring) Verify() error {
 }
 
 // 增加监控
-func (m *Monitoring) Add(ctx *ctx.Context) error {
+func (m *Monitoring) Add(ctx *context.Context) error {
 	// 这里写Monitoring的业务逻辑，通过error返回错误
 	if err := m.Verify(); err != nil {
 		return err
@@ -297,8 +298,69 @@ func (m *Monitoring) AddTx(tx *gorm.DB) error {
 	return err
 }
 
+// 增加监控及告警规则
+func (m *Monitoring) AddAndAlertRules(ctx *context.Context, me *User) error {
+	err := ctx.Transaction(func(ctx *context.Context) error {
+		if len(m.AssetIds) == 0 {
+
+			if err := m.BuildMonitoringAndAlertRules(ctx, me, m.AssetId); err != nil {
+				return err
+			}
+
+		} else {
+			for _, id := range m.AssetIds {
+				if err := m.BuildMonitoringAndAlertRules(ctx, me, id); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+	return err
+}
+
+func (m *Monitoring) BuildMonitoringAndAlertRules(ctx *context.Context, me *User, assetId int64) error {
+	now := time.Now().Unix()
+	var monitor = &Monitoring{
+		AssetId:        assetId,
+		MonitoringName: m.MonitoringName,
+		DatasourceId:   m.DatasourceId,
+		MonitoringSql:  m.MonitoringSql,
+		Status:         1, //默认启用
+		TargetId:       m.TargetId,
+		Remark:         m.Remark,
+		Unit:           m.Unit,
+		AlertRules:     m.AlertRules,
+		CreatedBy:      me.Username,
+		CreatedAt:      now,
+		UpdatedBy:      me.Username,
+		UpdatedAt:      now,
+		Label:          m.Label,
+	}
+	// 这里写Monitoring的业务逻辑，通过error返回错误
+	if err := monitor.Verify(); err != nil {
+		return err
+	}
+
+	if err := DB(ctx).Create(monitor).Error; err != nil {
+		return err
+	}
+
+	for _, alertRuleSimplify := range m.AlertRules {
+		alertRule, err := BuildAlertRule(ctx, *monitor, alertRuleSimplify)
+		if err != nil {
+			return err
+		}
+		if err := alertRule.Add(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // 删除监控
-func (m *Monitoring) Del(ctx *ctx.Context) error {
+func (m *Monitoring) Del(ctx *context.Context) error {
 	return DB(ctx).Debug().Where("id=?", m.Id).Delete(&Monitoring{}).Error
 }
 
@@ -307,8 +369,26 @@ func BatchDelTx(tx *gorm.DB, ids []string) error {
 	return tx.Debug().Where("id in ?", ids).Delete(&Monitoring{}).Error
 }
 
+// 删除监控并删除关联的告警规则
+func BatchDel(ctx *context.Context, ids []string) error {
+	if len(ids) == 0 {
+		return errors.New("ids empty")
+	}
+
+	err := ctx.Transaction(func(ctx *context.Context) error {
+		if err := DB(ctx).Where("id in ?", ids).Delete(&Monitoring{}).Error; err != nil {
+			return err
+		}
+		if err := DB(ctx).Where("monitoring_id in ?", ids).Delete(&AlertRule{}).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	return err
+}
+
 // 更新监控
-func (m *Monitoring) Update(ctx *ctx.Context, updateFrom interface{}, selectField interface{}, selectFields ...interface{}) error {
+func (m *Monitoring) Update(ctx *context.Context, updateFrom interface{}, selectField interface{}, selectFields ...interface{}) error {
 	// 这里写Monitoring的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
@@ -328,12 +408,12 @@ func (m *Monitoring) UpdateTx(tx *gorm.DB, updateFrom interface{}, selectField i
 }
 
 // 根据条件统计个数
-func MonitoringCount(ctx *ctx.Context, where string, args ...interface{}) (num int64, err error) {
+func MonitoringCount(ctx *context.Context, where string, args ...interface{}) (num int64, err error) {
 	return Count(DB(ctx).Model(&Monitoring{}).Where(where, args...))
 }
 
 // 批量更改监控状态
-func MonitoringUpdateStatus(ctx *ctx.Context, ids []int64, status, oType int64) error {
+func MonitoringUpdateStatus(ctx *context.Context, ids []int64, status, oType int64) error {
 	if oType == 1 {
 		return DB(ctx).Debug().Model(&Monitoring{}).Where("id in ?", ids).Updates(map[string]interface{}{"status": status, "updated_at": time.Now().Unix()}).Error
 	} else if oType == 2 {
@@ -351,7 +431,7 @@ func (m *Monitoring) CompilePromQL() string {
 	return promql
 }
 
-func MonitoringStatistics(ctx *ctx.Context) (*Statistics, error) {
+func MonitoringStatistics(ctx *context.Context) (*Statistics, error) {
 	session := DB(ctx).Model(&Monitoring{}).Select("count(*) as total", "max(updated_at) as last_updated")
 
 	var stats []*Statistics

@@ -54,7 +54,6 @@ func (rt *Router) monitoringGet(c *gin.Context) {
 		queries := query["queries"].([]interface{})
 		config := queries[0].(map[string]interface{})
 
-		logger.Debug(queries)
 		var alertRule models.AlertRuleSimplify
 		alertRule.Id = val.Id
 		alertRule.RuleConfigCn = val.RuleConfigCn
@@ -130,7 +129,6 @@ func (rt *Router) monitoringGets(c *gin.Context) {
 
 	assetIds := make([]int64, 0)
 	assets := rt.assetCache.GetAll()
-	logger.Debug(len(assets))
 	for _, asset := range assets {
 		if assetType != "" && strings.Contains(asset.Type, assetType) {
 			if filter == "asset_ip" && strings.Contains(asset.Ip, query) {
@@ -144,7 +142,6 @@ func (rt *Router) monitoringGets(c *gin.Context) {
 			}
 		} else if assetType == "" {
 			if filter == "asset_ip" && strings.Contains(asset.Ip, query) {
-				logger.Debug(asset.Ip)
 				assetIds = append(assetIds, asset.Id)
 			} else if filter == "asset_type" && strings.Contains(asset.Type, query) {
 				assetIds = append(assetIds, asset.Id)
@@ -203,76 +200,75 @@ func (rt *Router) monitoringAdd(c *gin.Context) {
 	var f models.Monitoring
 	ginx.BindJSON(c, &f)
 	me := c.MustGet("user").(*models.User)
-	now := time.Now().Unix()
-	var err error
-	tx := models.DB(rt.Ctx).Begin()
-	if len(f.AssetIds) == 0 {
-		var monitor = models.Monitoring{
-			AssetId:        f.AssetId,
-			MonitoringName: f.MonitoringName,
-			DatasourceId:   f.DatasourceId,
-			MonitoringSql:  f.MonitoringSql,
-			Status:         1, //默认启用
-			TargetId:       f.TargetId,
-			Remark:         f.Remark,
-			Unit:           f.Unit,
-			AlertRules:     f.AlertRules,
-			CreatedBy:      me.Username,
-			CreatedAt:      now,
-			UpdatedBy:      me.Username,
-			UpdatedAt:      now,
-			Label:          f.Label,
-		}
+	// now := time.Now().Unix()
+	// var err error
+	// tx := models.DB(rt.Ctx).Begin()
+	// if len(f.AssetIds) == 0 {
+	// 	var monitor = models.Monitoring{
+	// 		AssetId:        f.AssetId,
+	// 		MonitoringName: f.MonitoringName,
+	// 		DatasourceId:   f.DatasourceId,
+	// 		MonitoringSql:  f.MonitoringSql,
+	// 		Status:         1, //默认启用
+	// 		TargetId:       f.TargetId,
+	// 		Remark:         f.Remark,
+	// 		Unit:           f.Unit,
+	// 		AlertRules:     f.AlertRules,
+	// 		CreatedBy:      me.Username,
+	// 		CreatedAt:      now,
+	// 		UpdatedBy:      me.Username,
+	// 		UpdatedAt:      now,
+	// 		Label:          f.Label,
+	// 	}
 
-		// 更新模型
-		err = monitor.AddTx(tx)
-		ginx.Dangerous(err)
+	// 	// 更新模型
+	// 	err = monitor.AddTx(tx)
+	// 	ginx.Dangerous(err)
 
-		for _, alertRuleSimplify := range f.AlertRules {
-			logger.Debug("开始专配")
-			logger.Debug(alertRuleSimplify)
-			alertRule, err := models.BuildAlertRule(rt.Ctx, monitor, alertRuleSimplify)
-			logger.Debug(alertRule)
-			if err != nil {
-				tx.Rollback()
-			}
-			logger.Debug("存表")
-			err = alertRule.AddTx(rt.Ctx, tx)
-			ginx.Dangerous(err)
-		}
-	} else {
-		for _, id := range f.AssetIds {
-			var monitor = models.Monitoring{
-				AssetId:        id,
-				MonitoringName: f.MonitoringName,
-				DatasourceId:   f.DatasourceId,
-				MonitoringSql:  f.MonitoringSql,
-				Status:         f.Status,
-				TargetId:       f.TargetId,
-				Remark:         f.Remark,
-				Unit:           f.Unit,
-				AlertRules:     f.AlertRules,
-				CreatedBy:      me.Username,
-				CreatedAt:      now,
-				UpdatedBy:      me.Username,
-				UpdatedAt:      now,
-				Label:          f.Label,
-			}
-			err = monitor.AddTx(tx)
-			ginx.Dangerous(err)
+	// 	for _, alertRuleSimplify := range f.AlertRules {
+	// 		alertRule, err := models.BuildAlertRule(rt.Ctx, monitor, alertRuleSimplify)
+	// 		if err != nil {
+	// 			tx.Rollback()
+	// 			ginx.Dangerous(err)
+	// 		}
+	// 		err = alertRule.AddTx(rt.Ctx, tx)
+	// 		ginx.Dangerous(err)
+	// 	}
+	// } else {
+	// 	for _, id := range f.AssetIds {
+	// 		var monitor = models.Monitoring{
+	// 			AssetId:        id,
+	// 			MonitoringName: f.MonitoringName,
+	// 			DatasourceId:   f.DatasourceId,
+	// 			MonitoringSql:  f.MonitoringSql,
+	// 			Status:         f.Status,
+	// 			TargetId:       f.TargetId,
+	// 			Remark:         f.Remark,
+	// 			Unit:           f.Unit,
+	// 			AlertRules:     f.AlertRules,
+	// 			CreatedBy:      me.Username,
+	// 			CreatedAt:      now,
+	// 			UpdatedBy:      me.Username,
+	// 			UpdatedAt:      now,
+	// 			Label:          f.Label,
+	// 		}
+	// 		err = monitor.AddTx(tx)
+	// 		ginx.Dangerous(err)
 
-			for _, alertRuleSimplify := range f.AlertRules {
-				alertRule, err := models.BuildAlertRule(rt.Ctx, monitor, alertRuleSimplify)
-				if err != nil {
-					tx.Rollback()
-				}
-				err = alertRule.AddTx(rt.Ctx, tx)
-				ginx.Dangerous(err)
-			}
-		}
+	// 		for _, alertRuleSimplify := range f.AlertRules {
+	// 			alertRule, err := models.BuildAlertRule(rt.Ctx, monitor, alertRuleSimplify)
+	// 			if err != nil {
+	// 				tx.Rollback()
+	// 				ginx.Dangerous(err)
+	// 			}
+	// 			err = alertRule.AddTx(rt.Ctx, tx)
+	// 			ginx.Dangerous(err)
+	// 		}
+	// 	}
 
-	}
-	tx.Commit()
+	// }
+	// tx.Commit()
+	err := f.AddAndAlertRules(rt.Ctx, me)
 	ginx.NewRender(c).Message(err)
 }
 
@@ -387,15 +383,17 @@ func (rt *Router) monitoringDel(c *gin.Context) {
 		ginx.NewRender(c).Message(nil)
 		return
 	}
-	tx := models.DB(rt.Ctx).Begin()
 	ids := make([]string, 0)
 	ids = append(ids, strconv.FormatInt(monitoring.Id, 10))
-	//删除监控
-	err = models.BatchDelTx(tx, ids)
-	ginx.Dangerous(err)
-	//删除资产告警规则
-	err = models.AlertRuleDelTxByMonId(tx, ids)
-	tx.Commit()
+
+	// tx := models.DB(rt.Ctx).Begin()
+	// //删除监控
+	// err = models.BatchDelTx(tx, ids)
+	// ginx.Dangerous(err)
+	// //删除资产告警规则
+	// err = models.AlertRuleDelTxByMonId(tx, ids)
+	// tx.Commit()
+	err = models.BatchDel(rt.Ctx, ids)
 	ginx.NewRender(c).Message(err)
 }
 
@@ -422,13 +420,14 @@ func (rt *Router) monitoringDelXH(c *gin.Context) {
 	} else {
 		ginx.Bomb(http.StatusOK, "参数错误")
 	}
-	tx := models.DB(rt.Ctx).Begin()
-	//删除监控
-	err := models.BatchDelTx(tx, ids)
-	ginx.Dangerous(err)
-	//删除资产告警规则
-	err = models.AlertRuleDelTxByMonId(tx, ids)
-	tx.Commit()
+	// tx := models.DB(rt.Ctx).Begin()
+	// //删除监控
+	// err := models.BatchDelTx(tx, ids)
+	// ginx.Dangerous(err)
+	// //删除资产告警规则
+	// err = models.AlertRuleDelTxByMonId(tx, ids)
+	// tx.Commit()
+	err := models.BatchDel(rt.Ctx, ids)
 
 	ginx.NewRender(c).Message(err)
 }
