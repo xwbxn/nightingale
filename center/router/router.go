@@ -117,6 +117,7 @@ func languageDetector(i18NHeaderKey string) gin.HandlerFunc {
 }
 
 func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
+	r.Any("/dataroom/bigScreenServer/*url", rt.drProxy)
 	r.NoRoute(func(c *gin.Context) {
 		arr := strings.Split(c.Request.URL.Path, ".")
 		suffix := arr[len(arr)-1]
@@ -129,6 +130,19 @@ func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
 			cwdarr = append(cwdarr, "public")
 			filename := strings.ReplaceAll(c.Request.URL.Path, "/prod-api", "")
+			if filename == "" || filename == "/" {
+				filename = "/index.html"
+			}
+			cwdarr = append(cwdarr, strings.Split(filename, "/")...)
+			c.File(path.Join(cwdarr...))
+		} else if strings.HasPrefix(arr[0], "/dataroom") {
+			cwdarr := []string{"/"}
+			if runtime.GOOS == "windows" {
+				cwdarr[0] = ""
+			}
+			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
+			cwdarr = append(cwdarr, "dataroom")
+			filename := strings.ReplaceAll(c.Request.URL.Path, "/dataroom", "")
 			if filename == "" || filename == "/" {
 				filename = "/index.html"
 			}
@@ -186,7 +200,6 @@ func (rt *Router) Config(r *gin.Engine) {
 	pagesPrefix := "/api/n9e"
 	pages := r.Group(pagesPrefix)
 	{
-
 		if rt.Center.AnonymousAccess.PromQuerier {
 			pages.Any("/proxy/:id/*url", rt.dsProxy)
 			pages.POST("/query-range-batch", rt.promBatchQueryRange)
