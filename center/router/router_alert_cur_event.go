@@ -467,13 +467,12 @@ func (rt *Router) alertCurEventBatchDel(c *gin.Context) {
 			ids = append(ids, int64(val.(float64)))
 		}
 	}
-	tx := models.DB(rt.Ctx).Begin()
-
-	err := models.AlertCurEventDelByIdsTx(tx, ids)
-	ginx.Dangerous(err)
-	err = models.AlertHisEventDelByIdsTx(tx, ids)
-
-	tx.Commit()
+	// tx := models.DB(rt.Ctx).Begin()
+	// err := models.AlertCurEventDelByIdsTx(tx, ids)
+	// ginx.Dangerous(err)
+	// err = models.AlertHisEventDelByIdsTx(tx, ids)
+	// tx.Commit()
+	err := models.AlertCurEventDelByIds(rt.Ctx, ids)
 
 	ginx.NewRender(c).Message(err)
 }

@@ -3,13 +3,14 @@ package models
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	context "github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
 	"github.com/toolkits/pkg/logger"
@@ -91,7 +92,7 @@ func (e *AlertCurEvent) TableName() string {
 	return "alert_cur_event"
 }
 
-func (e *AlertCurEvent) Add(ctx *ctx.Context) error {
+func (e *AlertCurEvent) Add(ctx *context.Context) error {
 	return Insert(ctx, e)
 }
 
@@ -202,7 +203,7 @@ func (e *AlertCurEvent) GetField(field string) string {
 	}
 }
 
-func (e *AlertCurEvent) ToHis(ctx *ctx.Context) *AlertHisEvent {
+func (e *AlertCurEvent) ToHis(ctx *context.Context) *AlertHisEvent {
 	isRecovered := 0
 	var recoverTime int64 = 0
 	// var status int = 0 //添加Status参数
@@ -297,7 +298,7 @@ func (e *AlertCurEvent) DB2Mem() {
 }
 
 // for webui
-func (e *AlertCurEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*UserGroup) error {
+func (e *AlertCurEvent) FillNotifyGroups(ctx *context.Context, cache map[int64]*UserGroup) error {
 	// some user-group already deleted ?
 	count := len(e.NotifyGroupsJSON)
 	if count == 0 {
@@ -331,7 +332,7 @@ func (e *AlertCurEvent) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*User
 	return nil
 }
 
-func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string) (int64, error) {
+func AlertCurEventTotal(ctx *context.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string) (int64, error) {
 	session := DB(ctx).Model(&AlertCurEvent{}).Where("trigger_time between ? and ?", stime, etime)
 
 	if len(prods) != 0 {
@@ -365,7 +366,7 @@ func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int
 	return Count(session)
 }
 
-func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
+func AlertCurEventGets(ctx *context.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
 	session := DB(ctx)
 
 	if stime != 0 {
@@ -412,7 +413,7 @@ func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int6
 	return lst, err
 }
 
-func AlertCurEventGetsNew(ctx *ctx.Context, prods []string, filter, query string, dsIds []int64, cates []string, start, end, group int64, limit, offset int) ([]AlertCurEvent, error) {
+func AlertCurEventGetsNew(ctx *context.Context, prods []string, filter, query string, dsIds []int64, cates []string, start, end, group int64, limit, offset int) ([]AlertCurEvent, error) {
 	session := DB(ctx)
 	if len(prods) != 0 {
 		session = session.Where("rule_prod in ?", prods)
@@ -449,7 +450,7 @@ func AlertCurEventGetsNew(ctx *ctx.Context, prods []string, filter, query string
 	return lst, err
 }
 
-func AlertCurEventDel(ctx *ctx.Context, ids []int64) error {
+func AlertCurEventDel(ctx *context.Context, ids []int64) error {
 	if len(ids) == 0 {
 		return nil
 	}
@@ -457,15 +458,15 @@ func AlertCurEventDel(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Where("id in ?", ids).Delete(&AlertCurEvent{}).Error
 }
 
-func AlertCurEventDelByHash(ctx *ctx.Context, hash string) error {
+func AlertCurEventDelByHash(ctx *context.Context, hash string) error {
 	return DB(ctx).Where("hash = ?", hash).Delete(&AlertCurEvent{}).Error
 }
 
-func AlertCurEventExists(ctx *ctx.Context, where string, args ...interface{}) (bool, error) {
+func AlertCurEventExists(ctx *context.Context, where string, args ...interface{}) (bool, error) {
 	return Exists(DB(ctx).Model(&AlertCurEvent{}).Where(where, args...))
 }
 
-func AlertCurEventGet(ctx *ctx.Context, where string, args ...interface{}) (*AlertCurEvent, error) {
+func AlertCurEventGet(ctx *context.Context, where string, args ...interface{}) (*AlertCurEvent, error) {
 	var lst []*AlertCurEvent
 	err := DB(ctx).Where(where, args...).Find(&lst).Error
 	if err != nil {
@@ -482,7 +483,7 @@ func AlertCurEventGet(ctx *ctx.Context, where string, args ...interface{}) (*Ale
 	return lst[0], nil
 }
 
-func AlertCurEventGetById(ctx *ctx.Context, id int64) (*AlertCurEvent, error) {
+func AlertCurEventGetById(ctx *context.Context, id int64) (*AlertCurEvent, error) {
 	return AlertCurEventGet(ctx, "id=?", id)
 }
 
@@ -492,7 +493,7 @@ type AlertNumber struct {
 }
 
 // for busi_group list page
-func AlertNumbers(ctx *ctx.Context, bgids []int64) (map[int64]int64, error) {
+func AlertNumbers(ctx *context.Context, bgids []int64) (map[int64]int64, error) {
 	ret := make(map[int64]int64)
 	if len(bgids) == 0 {
 		return ret, nil
@@ -511,7 +512,7 @@ func AlertNumbers(ctx *ctx.Context, bgids []int64) (map[int64]int64, error) {
 	return ret, nil
 }
 
-func AlertCurEventGetByIds(ctx *ctx.Context, ids []int64) ([]*AlertCurEvent, error) {
+func AlertCurEventGetByIds(ctx *context.Context, ids []int64) ([]*AlertCurEvent, error) {
 	var lst []*AlertCurEvent
 
 	if len(ids) == 0 {
@@ -528,7 +529,7 @@ func AlertCurEventGetByIds(ctx *ctx.Context, ids []int64) ([]*AlertCurEvent, err
 	return lst, err
 }
 
-func AlertCurEventGetByRuleIdAndDsId(ctx *ctx.Context, ruleId int64, datasourceId int64) ([]*AlertCurEvent, error) {
+func AlertCurEventGetByRuleIdAndDsId(ctx *context.Context, ruleId int64, datasourceId int64) ([]*AlertCurEvent, error) {
 	if !ctx.IsCenter {
 		lst, err := poster.GetByUrls[[]*AlertCurEvent](ctx, "/v1/n9e/alert-cur-events-get-by-rid?rid="+strconv.FormatInt(ruleId, 10)+"&dsid="+strconv.FormatInt(datasourceId, 10))
 		if err == nil {
@@ -549,7 +550,7 @@ func AlertCurEventGetByRuleIdAndDsId(ctx *ctx.Context, ruleId int64, datasourceI
 	return lst, err
 }
 
-func AlertCurEventGetMap(ctx *ctx.Context, cluster string) (map[int64]map[string]struct{}, error) {
+func AlertCurEventGetMap(ctx *context.Context, cluster string) (map[int64]map[string]struct{}, error) {
 	session := DB(ctx).Model(&AlertCurEvent{})
 	if cluster != "" {
 		session = session.Where("datasource_id = ?", cluster)
@@ -586,11 +587,11 @@ type AlertOverview struct {
 	Notice       int64
 }
 
-func (m *AlertCurEvent) UpdateFieldsMap(ctx *ctx.Context, fields map[string]interface{}) error {
+func (m *AlertCurEvent) UpdateFieldsMap(ctx *context.Context, fields map[string]interface{}) error {
 	return DB(ctx).Model(m).Updates(fields).Error
 }
 
-func AlertCurEventUpgradeToV6(ctx *ctx.Context, dsm map[string]Datasource) error {
+func AlertCurEventUpgradeToV6(ctx *context.Context, dsm map[string]Datasource) error {
 	var lst []*AlertCurEvent
 	err := DB(ctx).Where("trigger_time > ?", time.Now().Unix()-3600*24*30).Find(&lst).Error
 	if err != nil {
@@ -723,7 +724,7 @@ func MakeFeAlert(dat []*AlertCurEvent) (Fe []*FeAlert) {
 // 	return fedat, err
 // }
 
-func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
+func AlertFeList(ctx *context.Context) ([]*FeAlert, error) {
 	var dat []*AlertCurEvent
 	err := DB(ctx).Find(&dat).Error
 	Fe := MakeFeAlert(dat)
@@ -731,13 +732,13 @@ func AlertFeList(ctx *ctx.Context) ([]*FeAlert, error) {
 }
 
 //统计未处理告警
-func AlertCurCount(ctx *ctx.Context) (num int64, err error) {
+func AlertCurCount(ctx *context.Context) (num int64, err error) {
 	err = DB(ctx).Debug().Model(&AlertCurEvent{}).Count(&num).Error
 	return num, err
 }
 
 //通过资产id查询当前告警
-func AlertFeListByAssetId(ctx *ctx.Context, where string) ([]*FeAlert, error) {
+func AlertFeListByAssetId(ctx *context.Context, where string) ([]*FeAlert, error) {
 	where = "%asset_id=" + where + "%"
 	var dat []*AlertCurEvent
 	err := DB(ctx).Where("tags like ?", where).Find(&dat).Error
@@ -746,7 +747,7 @@ func AlertFeListByAssetId(ctx *ctx.Context, where string) ([]*FeAlert, error) {
 }
 
 //西航
-func AlertEventXHTotal(ctx *ctx.Context, alertType, severity, group, start, end int64, ids []int64, query string) (int64, error) {
+func AlertEventXHTotal(ctx *context.Context, alertType, severity, group, start, end int64, ids []int64, query string) (int64, error) {
 	session := DB(ctx)
 	if start != -1 {
 		session = session.Where("trigger_time >= ?", start)
@@ -782,7 +783,7 @@ func AlertEventXHTotal(ctx *ctx.Context, alertType, severity, group, start, end 
 }
 
 //西航（new）
-func AlertEventXHTotalNew(ctx *ctx.Context, alertType, start, end int64, ids []int64, filter, query string) (int64, error) {
+func AlertEventXHTotalNew(ctx *context.Context, alertType, start, end int64, ids []int64, filter, query string) (int64, error) {
 	session := DB(ctx)
 	if start != -1 {
 		session = session.Where("trigger_time >= ?", start)
@@ -830,7 +831,7 @@ func AlertEventXHTotalNew(ctx *ctx.Context, alertType, start, end int64, ids []i
 	return num, err
 }
 
-func AlertEventXHGetsNew[T any](ctx *ctx.Context, alertType, start, end int64, ids []int64, filter, query string, limit, offset int) (t []T, err error) {
+func AlertEventXHGetsNew[T any](ctx *context.Context, alertType, start, end int64, ids []int64, filter, query string, limit, offset int) (t []T, err error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
@@ -875,7 +876,7 @@ func AlertEventXHGetsNew[T any](ctx *ctx.Context, alertType, start, end int64, i
 
 }
 
-func AlertEventXHGets[T any](ctx *ctx.Context, alertType, severity, group, start, end int64, ids []int64, query string, limit, offset int) ([]T, error) {
+func AlertEventXHGets[T any](ctx *context.Context, alertType, severity, group, start, end int64, ids []int64, query string, limit, offset int) ([]T, error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
@@ -917,7 +918,7 @@ func AlertEventXHGets[T any](ctx *ctx.Context, alertType, severity, group, start
 
 }
 
-func AlertCurEventDelByIds(ctx *ctx.Context, ids []int64) error {
+func AlertCurEventDelByIds(ctx *context.Context, ids []int64) error {
 	return DB(ctx).Where("id in ?", ids).Delete(&AlertCurEvent{}).Error
 }
 
@@ -927,4 +928,26 @@ func AlertCurEventDelByIdsTx(tx *gorm.DB, ids []int64) error {
 		tx.Rollback()
 	}
 	return nil
+}
+
+func AlertEventDelByIds(ctx *context.Context, ids []int64) error {
+	if len(ids) == 0 {
+		return errors.New("ids empty")
+	}
+
+	err := ctx.Transaction(func(ctx *context.Context) error {
+		if err := DB(ctx).Where("id in ?", ids).Delete(&AlertCurEvent{}).Error; err != nil {
+			return err
+		}
+		if err := DB(ctx).Where("id in ?", ids).Delete(&AlertHisEvent{}).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	return err
+	// err := tx.Where("id in ?", ids).Delete(&AlertCurEvent{}).Error
+	// if err != nil {
+	// 	tx.Rollback()
+	// }
+	// return nil
 }
