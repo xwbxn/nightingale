@@ -113,10 +113,13 @@ func SetMessage(userId uint, content interface{}) {
 	for i := range conns {
 		i := i
 		data := Data{"", content}
+		mux.Lock()
 		err := conns[i].WriteJSON(data)
+		mux.Unlock()
 		if err != nil {
 			log.Println("write json err:", err)
 			deleteClient(userId, conns[i])
 		}
+
 	}
 }
