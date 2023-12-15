@@ -1090,7 +1090,7 @@ func AlertRuleDelTx(tx *gorm.DB, alertRule AlertRule) error {
 func AlertRuleGetsFilter(ctx *ctx.Context, groupId int64, filter, query string, ids []int64, limit, offset int) ([]AlertRule, error) {
 	session := DB(ctx).Where("group_id=?", groupId)
 	if limit > -1 {
-		session = session.Limit(limit).Offset(offset).Order("id DESC")
+		session = session.Limit(limit).Offset(offset).Order("update_at DESC")
 	}
 	query = "%" + query + "%"
 	if filter == "1" {
@@ -1139,7 +1139,7 @@ func AlertRuleGetsFilterNew(ctx *ctx.Context, groupId int64, filter, query strin
 		session = session.Where("group_id=?", groupId)
 	}
 	if limit > -1 {
-		session = session.Limit(limit).Offset(offset).Order("id DESC")
+		session = session.Limit(limit).Offset(offset).Order("update_at DESC")
 	}
 	query = "%" + query + "%"
 	if filter == "severity" {
