@@ -6,12 +6,11 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/toolkits/pkg/logger"
 )
 
 // api函数
 func (rt *Router) drProxy(c *gin.Context) {
-	var target = "127.0.0.1:8081"
+	var target = rt.Center.Dataroom.Url
 	director := func(req *http.Request) {
 		req.URL.Scheme = "http"
 		req.URL.Host = target
@@ -26,8 +25,6 @@ func (rt *Router) drProxy(c *gin.Context) {
 
 		req.URL.Path = "/" + strings.Join(arr[2:], "/")
 		req.URL.RawQuery = c.Request.URL.RawQuery
-		logger.Debug("-------------------------------------------------------------")
-		logger.Debug(req.URL.Path)
 	}
 	proxy := &httputil.ReverseProxy{Director: director}
 	proxy.ServeHTTP(c.Writer, c.Request)

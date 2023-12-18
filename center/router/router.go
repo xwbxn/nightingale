@@ -476,6 +476,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.POST("/xh/asset/export-xls", rt.auth(), rt.user(), rt.exportAssetXH)
 		pages.POST("/xh/asset/templet", rt.auth(), rt.user(), rt.templeAssetXH)
 		pages.GET("/xh/asset/:id/board", rt.auth(), rt.user(), rt.boardGetByAsset)
+		pages.GET("/xh/asset/status", rt.auth(), rt.getDashboardAssetsByFE)
 
 		pages.GET("/organization/:id", rt.auth(), rt.user(), rt.organizationGet)    // 依据id获取组织信息
 		pages.GET("/organization", rt.auth(), rt.user(), rt.organizationGets)       // 获取组织树

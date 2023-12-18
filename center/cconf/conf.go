@@ -9,6 +9,7 @@ type Center struct {
 	MetricDesc             MetricDescType
 	AnonymousAccess        AnonymousAccess
 	UseFileAssets          bool
+	Dataroom               Dataroom
 }
 
 type Plugin struct {
@@ -26,5 +27,9 @@ type AnonymousAccess struct {
 func (c *Center) PreCheck() {
 	if len(c.Plugins) == 0 {
 		c.Plugins = Plugins
+	}
+
+	if c.Dataroom.Url == "" {
+		c.Dataroom.Url = "127.0.0.1:8081"
 	}
 }

@@ -38,7 +38,7 @@ config:
     plugin: host
     metrics:
       - name: CPU使用率
-        metrics: "cpu_usage_active"
+        metrics: "cpu_usage_active{cpu=\"cpu-total\"}"
         unit: "percent-100"
         label: "{{cpu}}"
         rules:
