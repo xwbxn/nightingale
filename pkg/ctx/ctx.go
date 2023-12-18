@@ -48,8 +48,8 @@ func (c *Context) GetDB() *gorm.DB {
 func (c *Context) Transaction(fc func(ctx *Context) error) error {
 	return c.DB.Transaction(func(tx *gorm.DB) error {
 		ctx := NewContext(c.Ctx, tx, c.IsCenter, c.CenterApi)
-		fc(ctx)
-		return nil
+		err := fc(ctx)
+		return err
 	})
 }
 

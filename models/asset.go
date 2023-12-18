@@ -241,7 +241,7 @@ func (ins *Asset) Del(ctx *context.Context) error {
 			return err
 		}
 		// 扩展属性
-		if err := DB(ctx).Where("asset_id = ?", ins.Id).Delete(&AssetsExpansion{}).Error; err != nil {
+		if err := DB(ctx).Where("assets_id = ?", ins.Id).Delete(&AssetsExpansion{}).Error; err != nil {
 			return err
 		}
 		// 监控
@@ -467,7 +467,7 @@ func AssetBatchDel(ctx *context.Context, ids []string) error {
 		if err := DB(ctx).Where("id in ?", ids).Delete(&Asset{}).Error; err != nil {
 			return err
 		}
-		if err := DB(ctx).Where("asset_id in ?", ids).Delete(&AssetsExpansion{}).Error; err != nil {
+		if err := DB(ctx).Where("assets_id in ?", ids).Delete(&AssetsExpansion{}).Error; err != nil {
 			return err
 		}
 		if err := DB(ctx).Where("asset_id in ?", ids).Delete(&Monitoring{}).Error; err != nil {
