@@ -50,6 +50,7 @@ type Router struct {
 	UserGroupCache    *memsto.UserGroupCacheType
 	Ctx               *ctx.Context
 	assetCache        *memsto.AssetCacheType
+	licenseCache      *memsto.LicenseCache
 
 	DatasourceCheckHook func(*gin.Context) bool
 }

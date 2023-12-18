@@ -409,7 +409,7 @@ func EventPersist(ctx *ctx.Context, event *AlertCurEvent) error {
 				events := make([]*AlertCurEvent, 0)
 				events = append(events, event)
 
-				ws.SetMessage(2, MakeFeAlert(events)) //socket推送内容 guoxp
+				ws.SetMessage(232443, MakeFeAlert(events)) //socket推送内容 guoxp
 			}
 		}
 
@@ -430,7 +430,7 @@ func EventPersist(ctx *ctx.Context, event *AlertCurEvent) error {
 		events := make([]*AlertCurEvent, 0)
 		events = append(events, event)
 
-		ws.SetMessage(2, MakeFeAlert(events)) //socket推送内容 guoxp
+		ws.SetMessage(232443, MakeFeAlert(events)) //socket推送内容 guoxp
 	}
 
 	return nil

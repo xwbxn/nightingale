@@ -78,6 +78,10 @@ func (tc *TargetCacheType) Get(ident string) (*models.Target, bool) {
 	return val, has
 }
 
+func (tc *TargetCacheType) GetTargetNumber() int64 {
+	return tc.statTotal
+}
+
 func (tc *TargetCacheType) GetOffsetHost(targets []*models.Target, now, offset int64) map[string]int64 {
 	tc.RLock()
 	defer tc.RUnlock()

@@ -108,18 +108,19 @@ type Data struct {
 }
 
 func SetMessage(userId uint, content interface{}) {
-
+	mux.Lock()
 	conns := getClients(userId)
 	for i := range conns {
 		i := i
+
 		data := Data{"", content}
-		mux.Lock()
 		err := conns[i].WriteJSON(data)
-		mux.Unlock()
+
 		if err != nil {
 			log.Println("write json err:", err)
 			deleteClient(userId, conns[i])
 		}
 
 	}
+	mux.Unlock()
 }

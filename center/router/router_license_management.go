@@ -26,8 +26,7 @@ import (
 // @Router       /api/n9e/xh/license/list [get]
 // @Security     ApiKeyAuth
 func (rt *Router) licenseGetsXH(c *gin.Context) {
-	licenses, err := models.LicenseGets()
-	ginx.NewRender(c).Data(licenses, err)
+	ginx.NewRender(c).Data(rt.licenseCache.GetLicenseAll(), nil)
 }
 
 // @Summary      上传证书
