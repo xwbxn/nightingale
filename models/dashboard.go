@@ -26,17 +26,16 @@ type Dashboard struct {
 }
 
 type DashboardUser struct {
-	Id        int64          `gorm:"column:id;primaryKey" json:"id" `                          //type:BIGINT       comment:主键        version:2023-9-31 09:11
-	UserId    int64          `gorm:"column:user_id" json:"user_id" `                           //type:BIGINT       comment:用户id      version:2023-9-31 09:11
-	AssetsId  int64          `gorm:"column:assets_id" json:"assets_id" `                       //type:BIGINT       comment:资产id      version:2023-9-31 09:11
-	Type      string         `gorm:"column:type" json:"type" `                                 //type:string       comment:资产类型    version:2023-9-31 09:11
-	PageName  string         `gorm:"column:page_name" json:"page_name" `                       //type:string       comment:页签        version:2023-9-31 11:18
-	Sort      int64          `gorm:"column:sort" json:"sort" `                                 //type:*int         comment:序号        version:2023-9-31 09:11
-	CreatedBy string         `gorm:"column:created_by" json:"created_by" swaggerignore:"true"` //type:string       comment:创建人      version:2023-9-31 09:11
-	CreatedAt int64          `gorm:"column:created_at" json:"created_at" swaggerignore:"true"` //type:*int         comment:创建时间    version:2023-9-31 09:11
-	UpdatedBy string         `gorm:"column:updated_by" json:"updated_by" swaggerignore:"true"` //type:string       comment:更新人      version:2023-9-31 09:11
-	UpdatedAt int64          `gorm:"column:updated_at" json:"updated_at" swaggerignore:"true"` //type:*int         comment:更新时间    version:2023-9-31 09:11
-	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"` //type:*time.Time   comment:删除时间    version:2023-9-31 09:11
+	Id        int64  `gorm:"column:id;primaryKey" json:"id" `                          //type:BIGINT       comment:主键        version:2023-9-31 09:11
+	UserId    int64  `gorm:"column:user_id" json:"user_id" `                           //type:BIGINT       comment:用户id      version:2023-9-31 09:11
+	AssetsId  int64  `gorm:"column:assets_id" json:"assets_id" `                       //type:BIGINT       comment:资产id      version:2023-9-31 09:11
+	Type      string `gorm:"column:type" json:"type" `                                 //type:string       comment:资产类型    version:2023-9-31 09:11
+	PageName  string `gorm:"column:page_name" json:"page_name" `                       //type:string       comment:页签        version:2023-9-31 11:18
+	Sort      int64  `gorm:"column:sort" json:"sort" `                                 //type:*int         comment:序号        version:2023-9-31 09:11
+	CreatedBy string `gorm:"column:created_by" json:"created_by" swaggerignore:"true"` //type:string       comment:创建人      version:2023-9-31 09:11
+	CreatedAt int64  `gorm:"column:created_at" json:"created_at" swaggerignore:"true"` //type:*int         comment:创建时间    version:2023-9-31 09:11
+	UpdatedBy string `gorm:"column:updated_by" json:"updated_by" swaggerignore:"true"` //type:string       comment:更新人      version:2023-9-31 09:11
+	UpdatedAt int64  `gorm:"column:updated_at" json:"updated_at" swaggerignore:"true"` //type:*int         comment:更新时间    version:2023-9-31 09:11
 }
 
 type DashboardMetricsFront struct {

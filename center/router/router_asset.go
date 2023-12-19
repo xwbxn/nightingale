@@ -111,7 +111,7 @@ func (rt *Router) assetsAddXH(c *gin.Context) {
 	aTypeIds := rt.assetCache.GetTypeIds()
 	for _, aTypeId := range aTypeIds {
 		aType, _ := rt.assetCache.GetType(aTypeId)
-		if aType.IpUnique {
+		if aType.Unique == "true" {
 			aTypes = append(aTypes, aType.Name)
 			if aType.Name == f.Type {
 				checkIp = true
@@ -209,7 +209,7 @@ func (rt *Router) assetPutXH(c *gin.Context) {
 		aTypeIds := rt.assetCache.GetTypeIds()
 		for _, aTypeId := range aTypeIds {
 			aType, _ := rt.assetCache.GetType(aTypeId)
-			if aType.IpUnique {
+			if aType.Unique == "true" {
 				aTypes = append(aTypes, aType.Name)
 				if aType.Name == f.Type {
 					checkIp = true
@@ -696,12 +696,16 @@ func (rt *Router) templeAssetXH(c *gin.Context) {
 func (rt *Router) importAssetXH(c *gin.Context) {
 	file, _, err := c.Request.FormFile("file")
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, "上传文件出错")
+		ginx.Bomb(http.StatusOK, "上传文件出错")
 	}
 	//读excel流
 	xlsx, err := excelize.OpenReader(file)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, "读取excel文件失败")
+		ginx.Bomb(http.StatusOK, "文件类型错误，请上传EXCEL文件（.xlsx,.xls）")
+	}
+	// 判断文件中是否有有效的Sheet
+	if len(xlsx.GetSheetMap()) == 0 {
+		ginx.Bomb(http.StatusOK, "文件不存在sheet")
 	}
 
 	//解析excel的数据
@@ -717,7 +721,7 @@ func (rt *Router) importAssetXH(c *gin.Context) {
 	aTypeIds := rt.assetCache.GetTypeIds()
 	for _, aTypeId := range aTypeIds {
 		aType, _ := rt.assetCache.GetType(aTypeId)
-		if aType.IpUnique {
+		if aType.Unique == "true" {
 			aTypes = append(aTypes, aType.Name)
 		}
 	}
@@ -729,15 +733,15 @@ func (rt *Router) importAssetXH(c *gin.Context) {
 		for _, aType := range aTypes {
 			if aType == entity.Type {
 				checkIp = true
+				break
 			}
 		}
-
 		if checkIp {
 			num, err := models.IpCount(rt.Ctx, entity.Ip, aTypes)
 			ginx.Dangerous(err)
 			if num > 0 {
 				models.AssetBatchDel(rt.Ctx, ids)
-				ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index)+"行数据,IP("+entity.Ip+")已存在")
+				ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index+1)+"行数据,IP("+entity.Ip+")已存在")
 			}
 		}
 
@@ -745,7 +749,7 @@ func (rt *Router) importAssetXH(c *gin.Context) {
 		err := models.Verify(entity)
 		if err != nil {
 			models.AssetBatchDel(rt.Ctx, ids)
-			ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index)+"数据(资产名称："+entity.Name+"),"+err.Error())
+			ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index+1)+"行数据(资产名称："+entity.Name+"),"+err.Error())
 		}
 
 		// 循环体

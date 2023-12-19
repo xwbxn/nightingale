@@ -239,7 +239,7 @@ var TplMap = map[string]string{
 	<head>
 		<meta charset="UTF-8">
 		<meta http-equiv="X-UA-Compatible" content="ie=edge">
-		<title>夜莺告警通知</title>
+		<title>一体化综合运维管理平台-告警通知</title>
 		<style type="text/css">
 			.wrapper {
 				background-color: #f8f8f8;

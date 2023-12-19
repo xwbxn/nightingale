@@ -84,9 +84,9 @@ func AssetsExpansionGetsMap(ctx *ctx.Context, where map[string]interface{}) ([]A
 }
 
 // 根据map查询AssetIds
-func AssetsExpansionGetAssetIdMap(ctx *ctx.Context, where map[string]interface{}) ([]int64, error) {
+func AssetsExpansionGetAssetIdMap(ctx *ctx.Context, where map[string]interface{}, val string) ([]int64, error) {
 	var lst []int64
-	err := DB(ctx).Where(where).Distinct().Pluck("assetI_id", &lst).Error
+	err := DB(ctx).Debug().Model(&AssetsExpansion{}).Where(where).Where("value like ?", val).Distinct().Pluck("assets_id", &lst).Error
 
 	return lst, err
 }

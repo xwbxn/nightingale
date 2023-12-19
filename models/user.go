@@ -49,49 +49,47 @@ var (
 // group: User
 // version:2023-07-11 15:14
 type UserInfo struct {
-	Id             int64          `json:"id" gorm:"primaryKey"`
-	Username       string         `json:"username" cn:"用户名"`
-	Nickname       string         `json:"nickname" cn:"显示名"`
-	Password       string         `json:"-" cn:"密码"`
-	Phone          string         `json:"phone" cn:""`
-	Email          string         `json:"email" cn:""`
-	Portrait       string         `json:"portrait"`
-	Roles          string         `json:"-"`                             // 这个字段写入数据库
-	RolesLst       []string       `json:"roles" gorm:"-"`                // 这个字段和前端交互
-	Contacts       ormx.JSONObj   `json:"contacts" swaggerignore:"true"` // 内容为 map[string]string 结构
-	Maintainer     int            `json:"maintainer"`                    // 是否给管理员发消息 0:not send 1:send
-	CreateAt       int64          `json:"create_at"`
-	CreateBy       string         `json:"create_by"`
-	UpdateAt       int64          `json:"update_at"`
-	UpdateBy       string         `json:"update_by"`
-	Admin          bool           `json:"admin" gorm:"-"`                  // 方便前端使用
-	Status         int64          `json:"status"`                          //用户状态（1：启用；0：禁用）
-	OrganizationId int64          `json:"organization_id"`                 //组织id
-	DeletedAt      gorm.DeletedAt `json:"deleted_at" swaggerignore:"true"` //逻辑删除字段
-	Name           string         `json:"name" gorm:"-"`
-	GroupName      []string       `json:"group_name" gorm:"-"`
+	Id             int64        `json:"id" gorm:"primaryKey"`
+	Username       string       `json:"username" cn:"用户名"`
+	Nickname       string       `json:"nickname" cn:"显示名"`
+	Password       string       `json:"-" cn:"密码"`
+	Phone          string       `json:"phone" cn:""`
+	Email          string       `json:"email" cn:""`
+	Portrait       string       `json:"portrait"`
+	Roles          string       `json:"-"`                             // 这个字段写入数据库
+	RolesLst       []string     `json:"roles" gorm:"-"`                // 这个字段和前端交互
+	Contacts       ormx.JSONObj `json:"contacts" swaggerignore:"true"` // 内容为 map[string]string 结构
+	Maintainer     int          `json:"maintainer"`                    // 是否给管理员发消息 0:not send 1:send
+	CreateAt       int64        `json:"create_at"`
+	CreateBy       string       `json:"create_by"`
+	UpdateAt       int64        `json:"update_at"`
+	UpdateBy       string       `json:"update_by"`
+	Admin          bool         `json:"admin" gorm:"-"`  // 方便前端使用
+	Status         int64        `json:"status"`          //用户状态（1：启用；0：禁用）
+	OrganizationId int64        `json:"organization_id"` //组织id
+	Name           string       `json:"name" gorm:"-"`
+	GroupName      []string     `json:"group_name" gorm:"-"`
 }
 
 type User struct {
-	Id             int64          `json:"id" gorm:"primaryKey"`
-	Username       string         `json:"username"`
-	Nickname       string         `json:"nickname"`
-	Password       string         `json:"-"`
-	Phone          string         `json:"phone"`
-	Email          string         `json:"email"`
-	Portrait       string         `json:"portrait"`
-	Roles          string         `json:"-"`                             // 这个字段写入数据库
-	RolesLst       []string       `json:"roles" gorm:"-"`                // 这个字段和前端交互
-	Contacts       ormx.JSONObj   `json:"contacts" swaggerignore:"true"` // 内容为 map[string]string 结构
-	Maintainer     int            `json:"maintainer"`                    // 是否给管理员发消息 0:not send 1:send
-	CreateAt       int64          `json:"create_at"`
-	CreateBy       string         `json:"create_by"`
-	UpdateAt       int64          `json:"update_at"`
-	UpdateBy       string         `json:"update_by"`
-	Admin          bool           `json:"admin" gorm:"-"`                  // 方便前端使用
-	Status         int64          `json:"status"`                          //用户状态（1：启用；0：禁用）
-	OrganizationId int64          `json:"organization_id"`                 //组织id
-	DeletedAt      gorm.DeletedAt `json:"deleted_at" swaggerignore:"true"` //逻辑删除字段
+	Id             int64        `json:"id" gorm:"primaryKey"`
+	Username       string       `json:"username"`
+	Nickname       string       `json:"nickname"`
+	Password       string       `json:"-"`
+	Phone          string       `json:"phone"`
+	Email          string       `json:"email"`
+	Portrait       string       `json:"portrait"`
+	Roles          string       `json:"-"`                             // 这个字段写入数据库
+	RolesLst       []string     `json:"roles" gorm:"-"`                // 这个字段和前端交互
+	Contacts       ormx.JSONObj `json:"contacts" swaggerignore:"true"` // 内容为 map[string]string 结构
+	Maintainer     int          `json:"maintainer"`                    // 是否给管理员发消息 0:not send 1:send
+	CreateAt       int64        `json:"create_at"`
+	CreateBy       string       `json:"create_by"`
+	UpdateAt       int64        `json:"update_at"`
+	UpdateBy       string       `json:"update_by"`
+	Admin          bool         `json:"admin" gorm:"-"`  // 方便前端使用
+	Status         int64        `json:"status"`          //用户状态（1：启用；0：禁用）
+	OrganizationId int64        `json:"organization_id"` //组织id
 }
 
 type UserImport struct {
@@ -122,7 +120,7 @@ func UpdateBatch(ctx *ctx.Context, ids []int64, where map[string]interface{}) er
 }
 
 //批量删除用户
-func UpdateBatchDel(ctx *ctx.Context, ids []int64) error {
+func UserBatchDel(ctx *ctx.Context, ids []int64) error {
 	return DB(ctx).Debug().Where("id in ?", ids).Delete(&User{}).Error
 }
 
@@ -286,12 +284,55 @@ func UserGet(ctx *ctx.Context, where string, args ...interface{}) (*User, error)
 	return lst[0], nil
 }
 
+func UserGetXH(ctx *ctx.Context, id int64) (*UserInfo, error) {
+	var obj *UserInfo
+	logger.Debug(id)
+	err := DB(ctx).Debug().Model(&User{}).Where("id = ?", id).Find(&obj).Error
+	if err != nil {
+		return nil, err
+	}
+	logger.Debug(obj)
+
+	if obj == nil {
+		return nil, nil
+	}
+
+	obj.RolesLst = strings.Fields(obj.Roles)
+	obj.Admin = obj.IsAdmin()
+	names, err := UserGroupGetsByUserId(ctx, obj.Id)
+	if err != nil {
+		return nil, err
+	}
+	obj.GroupName = names
+
+	return obj, nil
+}
+
 func UserGetByUsername(ctx *ctx.Context, username string) (*User, error) {
 	return UserGet(ctx, "username=?", username)
 }
 
 func UserGetById(ctx *ctx.Context, id int64) (*User, error) {
 	return UserGet(ctx, "id=?", id)
+}
+
+func UserGetByIds(ctx *ctx.Context, ids []int64) ([]*User, error) {
+	var lst []*User
+	err := DB(ctx).Where("id in ?", ids).Find(&lst).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(lst) == 0 {
+		return nil, nil
+	}
+
+	for i := 0; i < len(lst); i++ {
+		lst[i].RolesLst = strings.Fields(lst[i].Roles)
+		lst[i].Admin = lst[i].IsAdmin()
+	}
+
+	return lst, nil
 }
 
 func InitRoot(ctx *ctx.Context) {

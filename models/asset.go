@@ -49,6 +49,7 @@ type Asset struct {
 	UpdateBy       string                 `json:"update_by"`
 	OrganizationId int64                  `json:"organization_id"`
 	DirectoryId    int64                  `json:"directory_id"`
+	Payload        string                 `json:"payload"`
 	Dashboard      string                 `json:"dashboard" gorm:"-"`
 	DeletedAt      gorm.DeletedAt         `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"`
 
@@ -576,7 +577,7 @@ func AssetsCountMap(ctx *context.Context, where map[string]interface{}) (num int
 
 // 统计ip是否存在
 func IpCount(ctx *context.Context, ip string, aTypes []string) (num int64, err error) {
-	err = DB(ctx).Model(&Asset{}).Where("ip = ? and type in ?", ip, aTypes).Count(&num).Error
+	err = DB(ctx).Debug().Model(&Asset{}).Where("ip = ? and type in ?", ip, aTypes).Count(&num).Error
 	return num, err
 }
 
@@ -662,8 +663,8 @@ func AssetsCountFilterNew(ctx *context.Context, filter, query, aType string) (nu
 		// } else if filter == "type" {
 		// 	session = session.Where("type like?", "%"+query+"%")
 	} else if filter == "os" {
-		ids, err := AssetsExpansionGetAssetIdMap(ctx, map[string]interface{}{"config_category": "os", "value": "%" + query + "%"})
-		if err != nil {
+		ids, err := AssetsExpansionGetAssetIdMap(ctx, map[string]interface{}{"config_category": "os", "name": "name"}, "%"+query+"%")
+		if err != nil || len(ids) == 0 {
 			return 0, err
 		}
 		session = session.Where("id in ?", ids)
@@ -699,9 +700,12 @@ func AssetsGetsFilterNew(ctx *context.Context, filter, query, aType string, limi
 		// } else if filter == "type" {
 		// 	session = session.Where("type like?", "%"+query+"%")
 	} else if filter == "os" {
-		ids, err := AssetsExpansionGetAssetIdMap(ctx, map[string]interface{}{"config_category": "os", "value": "%" + query + "%"})
+		ids, err := AssetsExpansionGetAssetIdMap(ctx, map[string]interface{}{"config_category": "os", "name": "name"}, "%"+query+"%")
 		if err != nil {
 			return lst, err
+		}
+		if len(ids) == 0 {
+			return make([]*Asset, 0), nil
 		}
 		session = session.Where("id in ?", ids)
 	}

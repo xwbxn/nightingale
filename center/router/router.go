@@ -241,7 +241,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/self/profile", rt.auth(), rt.user(), rt.selfProfilePut)
 		pages.PUT("/self/password", rt.auth(), rt.user(), rt.selfPasswordPut)
 
-		pages.GET("/users", rt.auth(), rt.admin(), rt.perm("/users"), rt.userFilterGets)
+		pages.GET("/users", rt.auth(), rt.admin(), rt.perm("/users"), rt.userFilterGets) //弃用
 		pages.GET("/users/xh", rt.auth(), rt.admin(), rt.userGetsXH)
 		pages.POST("/users", rt.auth(), rt.admin(), rt.userAddPost)
 		pages.GET("/user/:id/profile", rt.auth(), rt.userProfileGet)

@@ -60,9 +60,8 @@ func (rt *Router) rolePut(c *gin.Context) {
 	oldRule.Note = f.Note
 
 	tx := models.DB(rt.Ctx).Begin()
-	err = oldRule.UpdateTx(tx, "name", "note")
+	err = oldRule.UpdateTx(tx)
 	ginx.Dangerous(err)
-
 	lst, err := models.UserRoleGets(rt.Ctx, f.Name)
 	if err != nil {
 		tx.Rollback()
@@ -89,6 +88,7 @@ func (rt *Router) rolePut(c *gin.Context) {
 		err = models.UserRoleUpdateTx(tx, val.Id, str)
 		ginx.Dangerous(err)
 	}
+	tx.Commit()
 
 	ginx.NewRender(c).Message(err)
 }
