@@ -7,6 +7,7 @@ import (
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
 	"github.com/ccfos/nightingale/v6/alert/sender"
+	"github.com/ccfos/nightingale/v6/center/ws"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 )
@@ -52,14 +53,8 @@ func (s *Scheduler) syncLicense() {
 	stmp := s.notifyConfigCache.GetSMTP()
 	if license == nil {
 		//不存在符合当前时间的license
+		ws.SetMessage(758493, "当前证书已过期")
 	} else {
-		// //暂定主机数量为探针数量
-		// var count int64 = 0
-		// for _, val := range s.assetCache.GetAll() {
-		// 	if val.Type == "主机" {
-		// 		count++
-		// 	}
-		// }
 		if licenseConfig.Frequency == "once" && !s.isSend {
 			//发一次邮件
 			s.isSend = true

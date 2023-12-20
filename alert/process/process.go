@@ -14,7 +14,6 @@ import (
 	"github.com/ccfos/nightingale/v6/alert/dispatch"
 	"github.com/ccfos/nightingale/v6/alert/mute"
 	"github.com/ccfos/nightingale/v6/alert/queue"
-	"github.com/ccfos/nightingale/v6/center/ws"
 	"github.com/ccfos/nightingale/v6/memsto"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
@@ -356,9 +355,9 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 
 	p.stats.CounterAlertsTotal.WithLabelValues(fmt.Sprintf("%d", e.DatasourceId)).Inc()
 	dispatch.LogEvent(e, "push_queue")
-	var alerts []*models.AlertCurEvent
-	alerts = append(alerts, e)
-	ws.SetMessage(1, models.MakeFeAlert(alerts)) //socket推送内容 guoxp
+	// var alerts []*models.AlertCurEvent
+	// alerts = append(alerts, e)
+	// ws.SetMessage(1, models.MakeFeAlert(alerts)) //socket推送内容 guoxp
 	if !queue.EventQueue.PushFront(e) {
 		logger.Warningf("event_push_queue: queue is full, event:%+v", e)
 	}

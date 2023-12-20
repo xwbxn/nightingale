@@ -74,7 +74,7 @@ config:
             serverity: 3
     dashboard: "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Server&id=${id}&viewMode=fullscreen"
     form: []
-    ip_unique: true
+    unique: true
     base_props: *base_props
     extra_props:
       cpu:
@@ -291,7 +291,7 @@ config:
         name: community
         type: password
         required: true
-    ip_unique: true
+    unique: true
     base_props: *base_props
     extra_props:
       device:
@@ -367,7 +367,7 @@ config:
       - name: password
         label: 密码
         type: password
-    ip_unique: false
+    unique: false
     dashboard: "/dashboards-built-in/detail?__built-in-cate=MySQL&__built-in-name=MySQL&id=${id}&viewMode=fullscreen"
     base_props: *base_props
     
@@ -397,7 +397,7 @@ config:
         required: true
         name: password
         type: password
-    ip_unique: false
+    unique: false
 
   - name: HTTP服务
     category: "应用服务"
@@ -434,7 +434,7 @@ config:
       - label: basic认证密码
         name: password
         type: password
-    ip_unique: false
+    unique: false
 
   - name: 网络端点
     category: "应用服务"
@@ -451,7 +451,7 @@ config:
         name: address
         type: input
         required: true
-    ip_unique: false
+    unique: false
 
   - name: 网络服务
     category: "应用服务"
@@ -479,7 +479,7 @@ config:
         name: port
         type: input
         required: true
-    ip_unique: false
+    unique: false
 
   - name: 安全设备
     category: "安全设备"
@@ -496,4 +496,4 @@ config:
         name: community
         type: password
         required: true
-    ip_unique: true
+    unique: true

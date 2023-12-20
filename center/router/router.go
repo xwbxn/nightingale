@@ -50,6 +50,7 @@ type Router struct {
 	UserGroupCache    *memsto.UserGroupCacheType
 	Ctx               *ctx.Context
 	assetCache        *memsto.AssetCacheType
+	licenseCache      *memsto.LicenseCache
 
 	DatasourceCheckHook func(*gin.Context) bool
 }
@@ -241,7 +242,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/self/password", rt.auth(), rt.user(), rt.selfPasswordPut)
 		pages.PUT("/self/board", rt.auth(), rt.user(), rt.selfBoardPut)
 
-		pages.GET("/users", rt.auth(), rt.admin(), rt.perm("/users"), rt.userFilterGets)
+		pages.GET("/users", rt.auth(), rt.admin(), rt.perm("/users"), rt.userFilterGets) //弃用
 		pages.GET("/users/xh", rt.auth(), rt.admin(), rt.userGetsXH)
 		pages.POST("/users", rt.auth(), rt.admin(), rt.userAddPost)
 		pages.GET("/user/:id/profile", rt.auth(), rt.userProfileGet)

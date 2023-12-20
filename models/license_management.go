@@ -12,9 +12,9 @@ import (
 	"encoding/pem"
 	"errors"
 	"io/ioutil"
+	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"gorm.io/gorm"
@@ -88,6 +88,14 @@ func (l *LicenseConfig) Add(ctx *ctx.Context) error {
 
 // 更新许可配置
 func (l *LicenseConfig) Update(ctx *ctx.Context, updateFrom LicenseConfig) error {
+	// 这里写LicenseConfig的业务逻辑，通过error返回错误
+
+	// 实际向库中写入
+	return DB(ctx).Model(l).Updates(updateFrom).Error
+}
+
+// 更新许可配置Map
+func (l *LicenseConfig) LicenseConfigUpdateMap(ctx *ctx.Context, updateFrom LicenseConfig) error {
 	// 这里写LicenseConfig的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
@@ -189,6 +197,9 @@ func LicenseGets() ([]*License, error) {
 		license.PermissionNode = int64(md["permissionNode"].(float64))
 		licenses = append(licenses, &license)
 	}
+	sort.Slice(licenses, func(i, j int) bool {
+		return licenses[i].Id < licenses[j].Id
+	})
 	return licenses, nil
 }
 
@@ -197,23 +208,22 @@ func LicenseCacheGets() ([]*License, error) {
 	if err != nil {
 		return nil, err
 	}
-	var license License
-	license.Id = 0
-	for _, val := range licenses {
-		if val.StartTime < time.Now().Unix() && val.EndTime > time.Now().Unix() && val.Id > license.Id {
-			license.SerialNumber = val.SerialNumber
-			license.StartTime = val.StartTime
-			license.EndTime = val.EndTime
-			license.PermissionNode = val.PermissionNode
-			license.Id = val.Id
-			//待开发
-			license.UsedNode = 0
-			license.TargetVersion = val.TargetVersion
-		}
-	}
-	res := make([]*License, 0)
-	res = append(res, &license)
-	return res, nil
+	return licenses, nil
+	// var license License
+	// license.Id = 0
+	// for _, val := range licenses {
+	// 	if val.StartTime < time.Now().Unix() && val.EndTime > time.Now().Unix() && val.Id > license.Id {
+	// 		license.SerialNumber = val.SerialNumber
+	// 		license.StartTime = val.StartTime
+	// 		license.EndTime = val.EndTime
+	// 		license.PermissionNode = val.PermissionNode
+	// 		license.Id = val.Id
+	// 		license.TargetVersion = val.TargetVersion
+	// 	}
+	// }
+	// res := make([]*License, 0)
+	// res = append(res, &license)
+	// return res, nil
 }
 
 func LicenseStatistics() (*Statistics, error) {

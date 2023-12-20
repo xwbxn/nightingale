@@ -110,7 +110,7 @@ func MonitoringMapCount(ctx *context.Context, where map[string]interface{}, quer
 
 	}
 
-	err = session.Debug().Model(&Monitoring{}).Where(str.String(), vals...).Count(&num).Error
+	err = session.Model(&Monitoring{}).Where(str.String(), vals...).Count(&num).Error
 
 	return num, err
 }
@@ -150,7 +150,7 @@ func MonitoringMapGets(ctx *context.Context, where map[string]interface{}, query
 		vals = append(vals, query)
 	}
 
-	err = session.Debug().Model(&Monitoring{}).
+	err = session.Model(&Monitoring{}).
 		Select("monitoring.*").Where(str.String(), vals...).Find(&lst).Error
 
 	return lst, err
@@ -188,7 +188,7 @@ func MonitoringMapCountNew(ctx *context.Context, filter, query, assetType string
 	// 	session = session.Where("ASSET_ID in ? ", assetIds)
 	// }
 
-	err = session.Debug().Model(&Monitoring{}).Count(&num).Error
+	err = session.Model(&Monitoring{}).Count(&num).Error
 
 	return num, err
 }
@@ -231,7 +231,7 @@ func MonitoringMapGetsNew(ctx *context.Context, filter, query, assetType string,
 	// 	session = session.Where("ASSET_ID in ? ", assetIds)
 	// }
 
-	err = session.Debug().Model(&Monitoring{}).Find(&lst).Error
+	err = session.Model(&Monitoring{}).Find(&lst).Error
 
 	return lst, err
 }
@@ -291,7 +291,7 @@ func (m *Monitoring) AddTx(tx *gorm.DB) error {
 		tx.Rollback()
 	}
 
-	err := tx.Debug().Create(m).Error
+	err := tx.Create(m).Error
 	if err != nil {
 		tx.Rollback()
 	}
@@ -352,6 +352,10 @@ func (m *Monitoring) BuildMonitoringAndAlertRules(ctx *context.Context, me *User
 		if err != nil {
 			return err
 		}
+		err = alertRule.FE2DB(ctx)
+		if err != nil {
+			return err
+		}
 		if err := alertRule.Add(ctx); err != nil {
 			return err
 		}
@@ -361,12 +365,12 @@ func (m *Monitoring) BuildMonitoringAndAlertRules(ctx *context.Context, me *User
 
 // 删除监控
 func (m *Monitoring) Del(ctx *context.Context) error {
-	return DB(ctx).Debug().Where("id=?", m.Id).Delete(&Monitoring{}).Error
+	return DB(ctx).Where("id=?", m.Id).Delete(&Monitoring{}).Error
 }
 
 // 删除监控
 func BatchDelTx(tx *gorm.DB, ids []string) error {
-	return tx.Debug().Where("id in ?", ids).Delete(&Monitoring{}).Error
+	return tx.Where("id in ?", ids).Delete(&Monitoring{}).Error
 }
 
 // 删除监控并删除关联的告警规则
@@ -400,7 +404,7 @@ func (m *Monitoring) UpdateTx(tx *gorm.DB, updateFrom interface{}, selectField i
 	// 这里写Monitoring的业务逻辑，通过error返回错误
 
 	// 实际向库中写入
-	err := tx.Debug().Model(m).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
+	err := tx.Model(m).Select(selectField, selectFields...).Omit("CREATED_AT", "CREATED_BY").Updates(updateFrom).Error
 	if err != nil {
 		tx.Rollback()
 	}
@@ -415,9 +419,9 @@ func MonitoringCount(ctx *context.Context, where string, args ...interface{}) (n
 // 批量更改监控状态
 func MonitoringUpdateStatus(ctx *context.Context, ids []int64, status, oType int64) error {
 	if oType == 1 {
-		return DB(ctx).Debug().Model(&Monitoring{}).Where("id in ?", ids).Updates(map[string]interface{}{"status": status, "updated_at": time.Now().Unix()}).Error
+		return DB(ctx).Model(&Monitoring{}).Where("id in ?", ids).Updates(map[string]interface{}{"status": status, "updated_at": time.Now().Unix()}).Error
 	} else if oType == 2 {
-		return DB(ctx).Debug().Model(&Monitoring{}).Where("id in ?", ids).Updates(map[string]interface{}{"is_alarm": status, "updated_at": time.Now().Unix()}).Error
+		return DB(ctx).Model(&Monitoring{}).Where("id in ?", ids).Updates(map[string]interface{}{"is_alarm": status, "updated_at": time.Now().Unix()}).Error
 	}
 	return nil
 }

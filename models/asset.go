@@ -49,6 +49,7 @@ type Asset struct {
 	UpdateBy       string                 `json:"update_by"`
 	OrganizationId int64                  `json:"organization_id"`
 	DirectoryId    int64                  `json:"directory_id"`
+	Payload        string                 `json:"payload"`
 	Dashboard      string                 `json:"dashboard" gorm:"-"`
 	DeletedAt      gorm.DeletedAt         `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"`
 
@@ -541,8 +542,8 @@ func AssetMom(ctx *context.Context, aType string) (num int64, err error) {
 	}
 	//统计上月删除资产
 	var delLst []Asset
-	// err = DB(ctx).Debug().Unscoped().Find(&delLst).Error
-	// err = DB(ctx).Debug().Unscoped().Where("IFNULL('deleted_at','kong')!='kong'").Find(&delLst).Error
+	// err = DB(ctx).Unscoped().Find(&delLst).Error
+	// err = DB(ctx).Unscoped().Where("IFNULL('deleted_at','kong')!='kong'").Find(&delLst).Error
 	err = DB(ctx).Unscoped().Where("type = ?", aType).Where("`assets`.`deleted_at` IS NOT NULL").Find(&delLst).Error
 	if err != nil {
 		return 0, errors.New("查询环比数据出错")
@@ -662,13 +663,13 @@ func AssetsCountFilterNew(ctx *context.Context, filter, query, aType string) (nu
 		// } else if filter == "type" {
 		// 	session = session.Where("type like?", "%"+query+"%")
 	} else if filter == "os" {
-		ids, err := AssetsExpansionGetAssetIdMap(ctx, map[string]interface{}{"config_category": "os", "value": "%" + query + "%"})
-		if err != nil {
+		ids, err := AssetsExpansionGetAssetIdMap(ctx, map[string]interface{}{"config_category": "os", "name": "name"}, "%"+query+"%")
+		if err != nil || len(ids) == 0 {
 			return 0, err
 		}
 		session = session.Where("id in ?", ids)
 	}
-	err = session.Debug().Model(&Asset{}).Count(&num).Error
+	err = session.Model(&Asset{}).Count(&num).Error
 	return num, err
 }
 
@@ -699,14 +700,17 @@ func AssetsGetsFilterNew(ctx *context.Context, filter, query, aType string, limi
 		// } else if filter == "type" {
 		// 	session = session.Where("type like?", "%"+query+"%")
 	} else if filter == "os" {
-		ids, err := AssetsExpansionGetAssetIdMap(ctx, map[string]interface{}{"config_category": "os", "value": "%" + query + "%"})
+		ids, err := AssetsExpansionGetAssetIdMap(ctx, map[string]interface{}{"config_category": "os", "name": "name"}, "%"+query+"%")
 		if err != nil {
 			return lst, err
+		}
+		if len(ids) == 0 {
+			return make([]*Asset, 0), nil
 		}
 		session = session.Where("id in ?", ids)
 	}
 
-	err = session.Debug().Model(&Asset{}).Find(&lst).Error
+	err = session.Model(&Asset{}).Find(&lst).Error
 
 	if err == nil {
 		for i := 0; i < len(lst); i++ {

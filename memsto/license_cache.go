@@ -5,8 +5,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/center/ws"
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	"github.com/ccfos/nightingale/v6/pkg/version"
 	"github.com/pkg/errors"
 	"github.com/toolkits/pkg/logger"
 )
@@ -18,8 +20,9 @@ type LicenseCache struct {
 	stats           *Stats
 
 	sync.RWMutex
-	config  map[int64]*models.LicenseConfig
-	license map[int64]*models.License
+	config   map[int64]*models.LicenseConfig
+	license  map[int64]*models.License
+	lastTime time.Time
 }
 
 func NewLicenseCache(ctx *ctx.Context, stats *Stats) *LicenseCache {
@@ -30,6 +33,7 @@ func NewLicenseCache(ctx *ctx.Context, stats *Stats) *LicenseCache {
 		stats:           stats,
 		config:          make(map[int64]*models.LicenseConfig),
 		license:         make(map[int64]*models.License),
+		lastTime:        time.Now(),
 	}
 	cache.SyncLicenseConfig()
 	cache.SyncLicense()
@@ -48,10 +52,27 @@ func (cache *LicenseCache) GetByLicenseConfig() *models.LicenseConfig {
 func (cache *LicenseCache) GetByLicense() *models.License {
 	cache.RLock()
 	defer cache.RUnlock()
-	for key := range cache.license {
-		return cache.license[key]
+	max := int64(-1)
+	now := time.Now().Unix()
+	for key, val := range cache.license {
+		if val.StartTime < now && val.EndTime > now && key > max {
+			max = key
+		}
 	}
-	return nil
+	if len(cache.license) == 0 {
+		return nil
+	}
+	return cache.license[max]
+}
+
+func (cache *LicenseCache) GetLicenseAll() []*models.License {
+	cache.RLock()
+	defer cache.RUnlock()
+	licenses := make([]*models.License, 0)
+	for _, val := range cache.license {
+		licenses = append(licenses, val)
+	}
+	return licenses
 }
 
 func (cache *LicenseCache) SyncLicenseConfig() {
@@ -146,15 +167,32 @@ func (cache *LicenseCache) syncLicense() error {
 		return nil
 	}
 
+	//获取探针数量
+	usedNode, err := models.TargetTotalCount(cache.ctx)
+	if err != nil {
+		logger.Errorf("failed to exec TargetTotalCount: %s", err.Error())
+		return nil
+	}
+
 	lst, err := models.LicenseCacheGets()
 	if err != nil {
 		logger.Errorf("failed to exec LicenseGetsAll: %s", err.Error())
 		return nil
 	}
 
+	max := int64(-1)
 	m := make(map[int64]*models.License)
 	for i := 0; i < len(lst); i++ {
+		lst[i].UsedNode = usedNode
+		lst[i].TargetVersion = version.Version
 		m[lst[i].Id] = lst[i]
+		if max < lst[i].Id {
+			max = lst[i].Id
+		}
+	}
+	if m[max].PermissionNode < usedNode && time.Since(cache.lastTime).Hours() > 6 {
+		ws.SetMessage(758493, "已用节点数超出许可节点数")
+		cache.lastTime = time.Now()
 	}
 
 	cache.SetLicense(m, stat.Total, stat.LastUpdated)

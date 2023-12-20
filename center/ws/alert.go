@@ -84,22 +84,18 @@ func addClient(id uint, conn *websocket.Conn) {
 }
 
 func getClients(id uint) (conns []*websocket.Conn) {
-	mux.Lock()
 	_conns, ok := clients[id]
 	if ok {
 		for k := range _conns {
 			conns = append(conns, k)
 		}
 	}
-	mux.Unlock()
 	return
 }
 
 func deleteClient(id uint, conn *websocket.Conn) {
-	mux.Lock()
 	_ = conn.Close()
 	delete(clients[id], conn)
-	mux.Unlock()
 }
 
 type Data struct {
@@ -108,18 +104,19 @@ type Data struct {
 }
 
 func SetMessage(userId uint, content interface{}) {
-
+	mux.Lock()
 	conns := getClients(userId)
 	for i := range conns {
 		i := i
+
 		data := Data{"", content}
-		mux.Lock()
 		err := conns[i].WriteJSON(data)
-		mux.Unlock()
+
 		if err != nil {
 			log.Println("write json err:", err)
 			deleteClient(userId, conns[i])
 		}
 
 	}
+	mux.Unlock()
 }

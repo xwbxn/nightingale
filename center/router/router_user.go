@@ -113,7 +113,6 @@ func (rt *Router) userFilterGets(c *gin.Context) {
 
 	var err error
 
-
 	total, err := models.UserFilterCountMap(rt.Ctx, role, query, status, typeF)
 	ginx.Dangerous(err)
 
@@ -174,8 +173,8 @@ func (rt *Router) userAddPost(c *gin.Context) {
 }
 
 func (rt *Router) userProfileGet(c *gin.Context) {
-	user := User(rt.Ctx, ginx.UrlParamInt64(c, "id"))
-	ginx.NewRender(c).Data(user, nil)
+	user, err := models.UserGetXH(rt.Ctx, ginx.UrlParamInt64(c, "id"))
+	ginx.NewRender(c).Data(user, err)
 }
 
 type userProfileForm struct {
@@ -227,6 +226,9 @@ func (rt *Router) userPasswordPut(c *gin.Context) {
 
 func (rt *Router) userDel(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
+	if id == 1 {
+		ginx.Bomb(http.StatusOK, "管理员账号不能被删除")
+	}
 	target, err := models.UserGetById(rt.Ctx, id)
 	ginx.Dangerous(err)
 
@@ -303,8 +305,13 @@ func (rt *Router) userDels(c *gin.Context) {
 
 	var ids []int64
 	ginx.BindJSON(c, &ids)
+	for _, id := range ids {
+		if id == 1 {
+			ginx.Bomb(http.StatusOK, "管理员账号不能被删除")
+		}
+	}
 
-	err := models.UpdateBatchDel(rt.Ctx, ids)
+	err := models.UserBatchDel(rt.Ctx, ids)
 
 	ginx.NewRender(c).Message(err)
 }
@@ -336,18 +343,23 @@ func (rt *Router) templeUserXH(c *gin.Context) {
 func (rt *Router) importUserXH(c *gin.Context) {
 	file, _, err := c.Request.FormFile("file")
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, "上传文件出错")
+		ginx.Bomb(http.StatusOK, "上传文件出错")
 	}
+	//go gin 校验文件是否是excel文件
 	//读excel流
 	xlsx, err := excelize.OpenReader(file)
 	if err != nil {
-		ginx.Bomb(http.StatusBadRequest, "读取excel文件失败")
+		ginx.Bomb(http.StatusOK, "文件类型错误，请上传EXCEL文件（.xlsx,.xls）")
+	}
+	// 判断文件中是否有有效的Sheet
+	if len(xlsx.GetSheetMap()) == 0 {
+		ginx.Bomb(http.StatusOK, "文件不存在sheet")
 	}
 
 	//解析excel的数据
 	userImports, _, lxRrr := excels.ReadExce[models.UserImport](xlsx, rt.Ctx)
 	if lxRrr != nil {
-		ginx.Bomb(http.StatusBadRequest, "解析excel文件失败")
+		ginx.Bomb(http.StatusOK, "解析excel文件失败")
 		return
 	}
 	logger.Debug(userImports)
@@ -358,7 +370,7 @@ func (rt *Router) importUserXH(c *gin.Context) {
 	for index, entity := range userImports {
 
 		if entity.Password != entity.IsPassword {
-			ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index)+"行数据，密码不一致")
+			ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index+1)+"行数据，密码不一致")
 		}
 
 		password, err := models.CryptoPass(rt.Ctx, entity.Password)

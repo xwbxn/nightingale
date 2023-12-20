@@ -58,8 +58,11 @@ func (ug *Role) Update(ctx *ctx.Context, selectField interface{}, selectFields .
 }
 
 // 更新角色(事务)
-func (ug *Role) UpdateTx(tx *gorm.DB, selectField interface{}, selectFields ...interface{}) error {
-	err := tx.Model(ug).Select(selectField, selectFields...).Updates(ug).Error
+func (ug *Role) UpdateTx(tx *gorm.DB) error {
+	err := tx.Debug().Model(ug).Where("id = ?", ug.Id).Updates(map[string]interface{}{
+		"name": ug.Name,
+		"note": ug.Note,
+	}).Error
 	if err != nil {
 		tx.Rollback()
 	}
