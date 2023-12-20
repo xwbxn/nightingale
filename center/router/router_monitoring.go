@@ -349,6 +349,10 @@ func (rt *Router) monitoringPut(c *gin.Context) {
 			if err != nil {
 				tx.Rollback()
 			}
+			err = alertRule.FE2DB(rt.Ctx)
+			if err != nil {
+				tx.Rollback()
+			}
 			err = alertRule.AddTx(rt.Ctx, tx)
 			ginx.Dangerous(err)
 		}

@@ -305,7 +305,7 @@ func (ar *AlertRule) AddTx(ctx *ctx.Context, tx *gorm.DB) error {
 	ar.CreateAt = now
 	ar.UpdateAt = now
 
-	err = tx.Debug().Create(ar).Error
+	err = tx.Create(ar).Error
 	if err != nil {
 		tx.Rollback()
 	}
@@ -369,7 +369,7 @@ func (ar *AlertRule) UpdateTx(ctx *ctx.Context, tx *gorm.DB, arf AlertRule) erro
 	if err != nil {
 		return err
 	}
-	err = tx.Debug().Model(ar).Select("*").Updates(arf).Error
+	err = tx.Model(ar).Select("*").Updates(arf).Error
 	if err != nil {
 		tx.Rollback()
 	}
@@ -567,6 +567,7 @@ func (ar *AlertRule) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*UserGro
 }
 
 func (ar *AlertRule) FE2DB(ctx *ctx.Context) error {
+	logger.Debug(*ar)
 
 	if len(ar.EnableStimesJSON) > 0 {
 		ar.EnableStime = strings.Join(ar.EnableStimesJSON, " ")
@@ -610,6 +611,7 @@ func (ar *AlertRule) FE2DB(ctx *ctx.Context) error {
 		ar.DatasourceIds = string(idsByte)
 	}
 
+	logger.Debug(ar.RuleConfigJson)
 	if ar.RuleConfigJson == nil {
 		query := PromQuery{
 			PromQl:   ar.PromQl,
@@ -708,7 +710,7 @@ func (ar *AlertRule) DB2FE() error {
 func AlertRuleDels(ctx *ctx.Context, ids []int64, bgid ...int64) error {
 	for i := 0; i < len(ids); i++ {
 		session := DB(ctx).Where("id = ?", ids[i])
-		if len(bgid) > 0 {
+		if len(bgid) > 0 && bgid[0] > 0 {
 			session = session.Where("group_id = ?", bgid[0])
 		}
 		ret := session.Delete(&AlertRule{})
@@ -1069,7 +1071,7 @@ func (ar *AlertRule) TimeSpanMuteStrategy() bool {
 func AlertRuleDelTxByMonId(tx *gorm.DB, ids []string) error {
 	for _, id := range ids {
 		str := `"monitor_id":` + id
-		err := tx.Debug().Where("rule_config_fe like ?", str).Delete(&AlertRule{}).Error
+		err := tx.Where("rule_config_fe like ?", str).Delete(&AlertRule{}).Error
 		if err != nil {
 			tx.Rollback()
 		}
@@ -1079,7 +1081,7 @@ func AlertRuleDelTxByMonId(tx *gorm.DB, ids []string) error {
 }
 
 func AlertRuleDelTx(tx *gorm.DB, alertRule AlertRule) error {
-	err := tx.Debug().Delete(&alertRule).Error
+	err := tx.Delete(&alertRule).Error
 	if err != nil {
 		tx.Rollback()
 	}
@@ -1155,7 +1157,7 @@ func AlertRuleGetsFilterNew(ctx *ctx.Context, groupId int64, filter, query strin
 	}
 
 	var lst []AlertRule
-	err := session.Debug().Model(&AlertRule{}).Find(&lst).Error
+	err := session.Model(&AlertRule{}).Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()
@@ -1184,7 +1186,7 @@ func AlertRuleGetsTotalNew(ctx *ctx.Context, groupId int64, filter, query string
 	}
 
 	var num int64
-	err := session.Debug().Model(&AlertRule{}).Count(&num).Error
+	err := session.Model(&AlertRule{}).Count(&num).Error
 
 	return num, err
 }
@@ -1230,21 +1232,32 @@ func BuildAlertRule(ctx *ctx.Context, monitoring Monitoring, alertRule AlertRule
 		Severity:         alertRule.Severity,
 		MonitoringId:     monitoring.Id,
 	}
-	config := map[string][]map[string]interface{}{}
-	config["queries"] = []map[string]interface{}{
-		{
-			"prom_ql":    monitoring.MonitoringSql,
-			"severity":   alertRule.Severity,
-			"monitor_id": monitoring.Id,
-			"relation":   alertRule.Relation,
-			"value":      fmt.Sprintf("%d", alertRule.Value),
-		},
-	}
+	// config := map[string][]map[string]interface{}{}
+	config := make(map[string]interface{})
+	config["queries"] = make([]interface{}, 0)
+	configData := make(map[string]interface{})
+	configData["promql"] = monitoring.MonitoringSql
+	severityN, _ := strconv.ParseFloat(strconv.Itoa(alertRule.Severity), 64)
+	configData["severity"] = severityN
+	monId, _ := strconv.ParseFloat(strconv.FormatInt(monitoring.Id, 10), 64)
+	configData["monitor_id"] = monId
+	configData["relation"] = alertRule.Relation
+	configData["value"] = fmt.Sprintf("%d", alertRule.Value)
+	config["queries"] = append(config["queries"].([]interface{}), configData)
+	// configJson, err := json.Marshal(config){
+	// 	{
+	// 		"prom_ql":    monitoring.MonitoringSql,
+	// 		"severity":   alertRule.Severity,
+	// 		"monitor_id": monitoring.Id,
+	// 		"relation":   alertRule.Relation,
+	// 		"value":      fmt.Sprintf("%d", alertRule.Value),
+	// 	},
+	// }
 	configJson, err := json.Marshal(config)
 	if err != nil {
 		return &AlertRule{}, nil
 	}
-	rule.RuleConfig = string(configJson)
+	rule.RuleConfigJson = interface{}(config)
 	rule.RuleConfigFe = string(configJson)
 	// if err := rule.Add(ctx); err != nil {
 	// 	return &AlertRule{}, nil

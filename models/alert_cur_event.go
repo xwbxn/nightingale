@@ -439,7 +439,7 @@ func AlertCurEventGetsNew(ctx *context.Context, prods []string, filter, query st
 	}
 
 	var lst []AlertCurEvent
-	err := session.Debug().Order("id desc").Limit(limit).Offset(offset).Find(&lst).Error
+	err := session.Order("id desc").Limit(limit).Offset(offset).Find(&lst).Error
 
 	if err == nil {
 		for i := 0; i < len(lst); i++ {

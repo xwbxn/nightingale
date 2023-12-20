@@ -542,8 +542,8 @@ func AssetMom(ctx *context.Context, aType string) (num int64, err error) {
 	}
 	//统计上月删除资产
 	var delLst []Asset
-	// err = DB(ctx).Debug().Unscoped().Find(&delLst).Error
-	// err = DB(ctx).Debug().Unscoped().Where("IFNULL('deleted_at','kong')!='kong'").Find(&delLst).Error
+	// err = DB(ctx).Unscoped().Find(&delLst).Error
+	// err = DB(ctx).Unscoped().Where("IFNULL('deleted_at','kong')!='kong'").Find(&delLst).Error
 	err = DB(ctx).Unscoped().Where("type = ?", aType).Where("`assets`.`deleted_at` IS NOT NULL").Find(&delLst).Error
 	if err != nil {
 		return 0, errors.New("查询环比数据出错")
@@ -577,7 +577,7 @@ func AssetsCountMap(ctx *context.Context, where map[string]interface{}) (num int
 
 // 统计ip是否存在
 func IpCount(ctx *context.Context, ip string, aTypes []string) (num int64, err error) {
-	err = DB(ctx).Debug().Model(&Asset{}).Where("ip = ? and type in ?", ip, aTypes).Count(&num).Error
+	err = DB(ctx).Model(&Asset{}).Where("ip = ? and type in ?", ip, aTypes).Count(&num).Error
 	return num, err
 }
 
@@ -669,7 +669,7 @@ func AssetsCountFilterNew(ctx *context.Context, filter, query, aType string) (nu
 		}
 		session = session.Where("id in ?", ids)
 	}
-	err = session.Debug().Model(&Asset{}).Count(&num).Error
+	err = session.Model(&Asset{}).Count(&num).Error
 	return num, err
 }
 
@@ -710,7 +710,7 @@ func AssetsGetsFilterNew(ctx *context.Context, filter, query, aType string, limi
 		session = session.Where("id in ?", ids)
 	}
 
-	err = session.Debug().Model(&Asset{}).Find(&lst).Error
+	err = session.Model(&Asset{}).Find(&lst).Error
 
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
