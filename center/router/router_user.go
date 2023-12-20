@@ -226,15 +226,15 @@ func (rt *Router) userPasswordPut(c *gin.Context) {
 
 func (rt *Router) userDel(c *gin.Context) {
 	id := ginx.UrlParamInt64(c, "id")
+	if id == 1 {
+		ginx.Bomb(http.StatusOK, "管理员账号不能被删除")
+	}
 	target, err := models.UserGetById(rt.Ctx, id)
 	ginx.Dangerous(err)
 
 	if target == nil {
 		ginx.NewRender(c).Message(nil)
 		return
-	}
-	if target.IsAdmin() {
-		ginx.Bomb(http.StatusOK, "管理员账号不能被删除")
 	}
 
 	ginx.NewRender(c).Message(target.Del(rt.Ctx))
@@ -305,15 +305,13 @@ func (rt *Router) userDels(c *gin.Context) {
 
 	var ids []int64
 	ginx.BindJSON(c, &ids)
-	users, err := models.UserGetByIds(rt.Ctx, ids)
-	ginx.Dangerous(err)
-	for _, user := range users {
-		if user.IsAdmin() {
+	for _, id := range ids {
+		if id == 1 {
 			ginx.Bomb(http.StatusOK, "管理员账号不能被删除")
 		}
 	}
 
-	err = models.UserBatchDel(rt.Ctx, ids)
+	err := models.UserBatchDel(rt.Ctx, ids)
 
 	ginx.NewRender(c).Message(err)
 }
