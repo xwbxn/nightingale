@@ -16,6 +16,7 @@ CREATE TABLE `users` (
     `organization_id` int DEFAULT NULL COMMENT '组织id',
     `contacts` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci comment 'json e.g. {wecom:xx, dingtalk_robot_token:yy}',
     `maintainer` tinyint(1) not null default 0,
+    `board_id` bigint unsigned not null default 0 COMMENT '默认首页模板id',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '',
     `update_at` bigint not null default 0,

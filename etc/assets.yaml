@@ -127,6 +127,7 @@ config:
             - name: capacity
               label: 容量(M)
               type: input
+              unit: byte
         
       disk:
         label: 磁盘信息
@@ -146,6 +147,7 @@ config:
               - name: capacity
                 label: 容量
                 type: input
+                unit: byte
 
       net:
         label: 网络信息

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ccfos/nightingale/v6/pkg/ctx"
+	context "github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/ldapx"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
@@ -91,6 +91,7 @@ type User struct {
 	Admin          bool           `json:"admin" gorm:"-"`                  // 方便前端使用
 	Status         int64          `json:"status"`                          //用户状态（1：启用；0：禁用）
 	OrganizationId int64          `json:"organization_id"`                 //组织id
+	BoardId        int64          `json:"board_id"`                        // 默认首页id
 	DeletedAt      gorm.DeletedAt `json:"deleted_at" swaggerignore:"true"` //逻辑删除字段
 }
 
@@ -116,13 +117,14 @@ func (u *User) TableName() string {
 	return "users"
 }
 
-//批量修改
-func UpdateBatch(ctx *ctx.Context, ids []int64, where map[string]interface{}) error {
+// 批量修改
+func UpdateBatch(ctx *context.Context, ids []int64, where map[string]interface{}) error {
 	return DB(ctx).Debug().Model(&User{}).Where("id in ?", ids).Updates(where).Error
 }
 
-//批量删除用户
-func UpdateBatchDel(ctx *ctx.Context, ids []int64) error {
+// 批量删除用户
+func UpdateBatchDel(ctx *context.Context, ids []int64) error {
+	// TODO: 此处删除逻辑不全，需要用户组中移除用户，删除用户默认看板
 	return DB(ctx).Debug().Where("id in ?", ids).Delete(&User{}).Error
 }
 
@@ -183,7 +185,7 @@ func (u *User) Verify() error {
 	return nil
 }
 
-func (u User) Add(ctx *ctx.Context) error {
+func (u User) Add(ctx *context.Context) error {
 	user, err := UserGetByUsername(ctx, u.Username)
 	if err != nil {
 		return errors.WithMessage(err, "failed to query user")
@@ -196,10 +198,47 @@ func (u User) Add(ctx *ctx.Context) error {
 	now := time.Now().Unix()
 	u.CreateAt = now
 	u.UpdateAt = now
-	return Insert(ctx, &u)
+
+	newBoard := Board{
+		Name:     u.Username + " home",
+		Tags:     "homepage",
+		GroupId:  1, // TODO: 硬编码 1为默认业务组
+		CreateBy: u.CreateBy,
+		UpdateBy: u.UpdateBy,
+	}
+
+	err = ctx.Transaction(func(ctx *context.Context) error {
+		err := newBoard.Add(ctx)
+		if err != nil {
+			return err
+		}
+
+		// clone payload
+		payload, err := BoardPayloadGet(ctx, 1) // TODO: 硬编码 1为默认看板
+		if err != nil {
+			return err
+		}
+
+		if payload != "" {
+			err = BoardPayloadSave(ctx, newBoard.Id, payload)
+		}
+
+		u.BoardId = newBoard.Id
+		err = Insert(ctx, &u)
+		if err != nil {
+			return err
+		}
+
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return err
 }
 
-func (u *User) AddTx(ctx *ctx.Context, tx *gorm.DB) error {
+func (u *User) AddTx(ctx *context.Context, tx *gorm.DB) error {
 
 	now := time.Now().Unix()
 	u.CreateAt = now
@@ -212,7 +251,7 @@ func (u *User) AddTx(ctx *ctx.Context, tx *gorm.DB) error {
 	return nil
 }
 
-func (u *User) Update(ctx *ctx.Context, selectField interface{}, selectFields ...interface{}) error {
+func (u *User) Update(ctx *context.Context, selectField interface{}, selectFields ...interface{}) error {
 	if err := u.Verify(); err != nil {
 		return err
 	}
@@ -220,7 +259,7 @@ func (u *User) Update(ctx *ctx.Context, selectField interface{}, selectFields ..
 	return DB(ctx).Model(u).Select(selectField, selectFields...).Updates(u).Error
 }
 
-func (u *User) UpdateAllFields(ctx *ctx.Context) error {
+func (u *User) UpdateAllFields(ctx *context.Context) error {
 	if err := u.Verify(); err != nil {
 		return err
 	}
@@ -229,7 +268,7 @@ func (u *User) UpdateAllFields(ctx *ctx.Context) error {
 	return DB(ctx).Model(u).Select("*").Updates(u).Error
 }
 
-func (u *User) UpdatePassword(ctx *ctx.Context, password, updateBy string) error {
+func (u *User) UpdatePassword(ctx *context.Context, password, updateBy string) error {
 	return DB(ctx).Model(u).Updates(map[string]interface{}{
 		"password":  password,
 		"update_at": time.Now().Unix(),
@@ -237,10 +276,20 @@ func (u *User) UpdatePassword(ctx *ctx.Context, password, updateBy string) error
 	}).Error
 }
 
-func (u *User) Del(ctx *ctx.Context) error {
+func (u *User) Del(ctx *context.Context) error {
 	return DB(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("user_id=?", u.Id).Delete(&UserGroupMember{}).Error; err != nil {
 			return err
+		}
+
+		if u.BoardId != 1 {
+			if err := tx.Where("id=?", u.BoardId).Delete(&Board{}).Error; err != nil {
+				return err
+			}
+
+			if err := tx.Where("id=?", u.BoardId).Delete(&BoardPayload{}).Error; err != nil {
+				return err
+			}
 		}
 
 		if err := tx.Where("id=?", u.Id).Delete(&User{}).Error; err != nil {
@@ -251,7 +300,7 @@ func (u *User) Del(ctx *ctx.Context) error {
 	})
 }
 
-func (u *User) ChangePassword(ctx *ctx.Context, oldpass, newpass string) error {
+func (u *User) ChangePassword(ctx *context.Context, oldpass, newpass string) error {
 	_oldpass, err := CryptoPass(ctx, oldpass)
 	if err != nil {
 		return err
@@ -269,7 +318,7 @@ func (u *User) ChangePassword(ctx *ctx.Context, oldpass, newpass string) error {
 	return u.UpdatePassword(ctx, _newpass, u.Username)
 }
 
-func UserGet(ctx *ctx.Context, where string, args ...interface{}) (*User, error) {
+func UserGet(ctx *context.Context, where string, args ...interface{}) (*User, error) {
 	var lst []*User
 	err := DB(ctx).Where(where, args...).Find(&lst).Error
 	if err != nil {
@@ -286,15 +335,15 @@ func UserGet(ctx *ctx.Context, where string, args ...interface{}) (*User, error)
 	return lst[0], nil
 }
 
-func UserGetByUsername(ctx *ctx.Context, username string) (*User, error) {
+func UserGetByUsername(ctx *context.Context, username string) (*User, error) {
 	return UserGet(ctx, "username=?", username)
 }
 
-func UserGetById(ctx *ctx.Context, id int64) (*User, error) {
+func UserGetById(ctx *context.Context, id int64) (*User, error) {
 	return UserGet(ctx, "id=?", id)
 }
 
-func InitRoot(ctx *ctx.Context) {
+func InitRoot(ctx *context.Context) {
 	user, err := UserGetByUsername(ctx, "root")
 	if err != nil {
 		fmt.Println("failed to query user root:", err)
@@ -325,7 +374,7 @@ func InitRoot(ctx *ctx.Context) {
 	fmt.Println("root password init done")
 }
 
-func PassLogin(ctx *ctx.Context, username, pass string) (*User, error) {
+func PassLogin(ctx *context.Context, username, pass string) (*User, error) {
 	user, err := UserGetByUsername(ctx, username)
 	if err != nil {
 		return nil, err
@@ -347,7 +396,7 @@ func PassLogin(ctx *ctx.Context, username, pass string) (*User, error) {
 	return user, nil
 }
 
-func LdapLogin(ctx *ctx.Context, username, pass, roles string, ldap *ldapx.SsoClient) (*User, error) {
+func LdapLogin(ctx *context.Context, username, pass, roles string, ldap *ldapx.SsoClient) (*User, error) {
 	sr, err := ldap.LdapReq(username, pass)
 	if err != nil {
 		return nil, err
@@ -411,7 +460,7 @@ func LdapLogin(ctx *ctx.Context, username, pass, roles string, ldap *ldapx.SsoCl
 	return user, err
 }
 
-func UserTotal(ctx *ctx.Context, query string) (num int64, err error) {
+func UserTotal(ctx *context.Context, query string) (num int64, err error) {
 	if query != "" {
 		q := "%" + query + "%"
 		num, err = Count(DB(ctx).Model(&User{}).Where("username like ? or nickname like ? or phone like ? or email like ?", q, q, q, q))
@@ -426,7 +475,7 @@ func UserTotal(ctx *ctx.Context, query string) (num int64, err error) {
 	return num, nil
 }
 
-func UserGets(ctx *ctx.Context, query string, limit, offset int) ([]User, error) {
+func UserGets(ctx *context.Context, query string, limit, offset int) ([]User, error) {
 	session := DB(ctx).Limit(limit).Offset(offset).Order("username")
 	if query != "" {
 		q := "%" + query + "%"
@@ -448,7 +497,7 @@ func UserGets(ctx *ctx.Context, query string, limit, offset int) ([]User, error)
 	return users, nil
 }
 
-func UserGetAll(ctx *ctx.Context) ([]*User, error) {
+func UserGetAll(ctx *context.Context) ([]*User, error) {
 	if !ctx.IsCenter {
 		lst, err := poster.GetByUrls[[]*User](ctx, "/v1/n9e/users")
 		return lst, err
@@ -465,7 +514,7 @@ func UserGetAll(ctx *ctx.Context) ([]*User, error) {
 	return lst, err
 }
 
-func UserGetsByIds(ctx *ctx.Context, ids []int64) ([]User, error) {
+func UserGetsByIds(ctx *context.Context, ids []int64) ([]User, error) {
 	if len(ids) == 0 {
 		return []User{}, nil
 	}
@@ -482,7 +531,7 @@ func UserGetsByIds(ctx *ctx.Context, ids []int64) ([]User, error) {
 	return lst, err
 }
 
-func (u *User) CanModifyUserGroup(ctx *ctx.Context, ug *UserGroup) (bool, error) {
+func (u *User) CanModifyUserGroup(ctx *context.Context, ug *UserGroup) (bool, error) {
 	// 我是管理员，自然可以
 	if u.IsAdmin() {
 		return true, nil
@@ -502,7 +551,7 @@ func (u *User) CanModifyUserGroup(ctx *ctx.Context, ug *UserGroup) (bool, error)
 	return num > 0, nil
 }
 
-func (u *User) CanDoBusiGroup(ctx *ctx.Context, bg *BusiGroup, permFlag ...string) (bool, error) {
+func (u *User) CanDoBusiGroup(ctx *context.Context, bg *BusiGroup, permFlag ...string) (bool, error) {
 	if u.IsAdmin() {
 		return true, nil
 	}
@@ -521,7 +570,7 @@ func (u *User) CanDoBusiGroup(ctx *ctx.Context, bg *BusiGroup, permFlag ...strin
 	return num > 0, err
 }
 
-func (u *User) CheckPerm(ctx *ctx.Context, operation string) (bool, error) {
+func (u *User) CheckPerm(ctx *context.Context, operation string) (bool, error) {
 	if u.IsAdmin() {
 		return true, nil
 	}
@@ -529,7 +578,7 @@ func (u *User) CheckPerm(ctx *ctx.Context, operation string) (bool, error) {
 	return RoleHasOperation(ctx, u.RolesLst, operation)
 }
 
-func UserStatistics(ctx *ctx.Context) (*Statistics, error) {
+func UserStatistics(ctx *context.Context) (*Statistics, error) {
 	if !ctx.IsCenter {
 		s, err := poster.GetByUrls[*Statistics](ctx, "/v1/n9e/statistic?name=user")
 		return s, err
@@ -546,7 +595,7 @@ func UserStatistics(ctx *ctx.Context) (*Statistics, error) {
 	return stats[0], nil
 }
 
-func (u *User) NopriIdents(ctx *ctx.Context, idents []string) ([]string, error) {
+func (u *User) NopriIdents(ctx *context.Context, idents []string) ([]string, error) {
 	if u.IsAdmin() {
 		return []string{}, nil
 	}
@@ -580,7 +629,7 @@ func (u *User) NopriIdents(ctx *ctx.Context, idents []string) ([]string, error) 
 
 // 我是管理员，返回所有
 // 或者我是成员
-func (u *User) BusiGroups(ctx *ctx.Context, limit int, query string, all ...bool) ([]BusiGroup, error) {
+func (u *User) BusiGroups(ctx *context.Context, limit int, query string, all ...bool) ([]BusiGroup, error) {
 	session := DB(ctx).Order("name").Limit(limit)
 
 	var lst []BusiGroup
@@ -642,7 +691,7 @@ func (u *User) BusiGroups(ctx *ctx.Context, limit int, query string, all ...bool
 	return lst, err
 }
 
-func (u *User) UserGroups(ctx *ctx.Context, limit int, query string) ([]UserGroup, error) {
+func (u *User) UserGroups(ctx *context.Context, limit int, query string) ([]UserGroup, error) {
 	session := DB(ctx).Order("name").Limit(limit)
 
 	var lst []UserGroup
@@ -718,15 +767,15 @@ func (u *User) ExtractToken(key string) (string, bool) {
 }
 
 // 查询所有人名
-func UserNameGets(ctx *ctx.Context) ([]userNameVo, error) {
+func UserNameGets(ctx *context.Context) ([]userNameVo, error) {
 	var lst []userNameVo
 	err := DB(ctx).Model(&User{}).Select("id", "nickname").Find(&lst).Error
 
 	return lst, err
 }
 
-//过滤器统计数量
-func UserFilterCountMap(ctx *ctx.Context, role, query string, status int64, typeF string) (num int64, err error) {
+// 过滤器统计数量
+func UserFilterCountMap(ctx *context.Context, role, query string, status int64, typeF string) (num int64, err error) {
 	session := DB(ctx)
 	query = "%" + query + "%"
 
@@ -765,7 +814,7 @@ func UserFilterCountMap(ctx *ctx.Context, role, query string, status int64, type
 	return num, err
 }
 
-func UserFilterMap(ctx *ctx.Context, role, query string, status int64, limit, offset int, typeF string) (lst []UserInfo, err error) {
+func UserFilterMap(ctx *context.Context, role, query string, status int64, limit, offset int, typeF string) (lst []UserInfo, err error) {
 	session := DB(ctx)
 	query = "%" + query + "%"
 
@@ -825,8 +874,8 @@ func UserFilterMap(ctx *ctx.Context, role, query string, status int64, limit, of
 	return lst, err
 }
 
-//过滤器统计数量
-func UserCountMap(ctx *ctx.Context, role, query string, useGroupId, status int64, ids []int64) (num int64, err error) {
+// 过滤器统计数量
+func UserCountMap(ctx *context.Context, role, query string, useGroupId, status int64, ids []int64) (num int64, err error) {
 	session := DB(ctx)
 
 	if query != "" {
@@ -859,7 +908,7 @@ func UserCountMap(ctx *ctx.Context, role, query string, useGroupId, status int64
 	return num, err
 }
 
-func UserMap(ctx *ctx.Context, role, query string, useGroupId, status int64, ids []int64, limit, offset int) (lst []UserInfo, err error) {
+func UserMap(ctx *context.Context, role, query string, useGroupId, status int64, ids []int64, limit, offset int) (lst []UserInfo, err error) {
 	session := DB(ctx)
 	// 分页
 	if limit > -1 {
@@ -912,8 +961,8 @@ func UserMap(ctx *ctx.Context, role, query string, useGroupId, status int64, ids
 	return lst, err
 }
 
-//查询role
-func UserRoleGets(ctx *ctx.Context, oldRole string) ([]User, error) {
+// 查询role
+func UserRoleGets(ctx *context.Context, oldRole string) ([]User, error) {
 	var lst []User
 	oldRole = "%" + oldRole + "%"
 	err := DB(ctx).Model(&User{}).Where("roles like ?", oldRole).Find(&lst).Error

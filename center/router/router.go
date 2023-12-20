@@ -239,6 +239,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/self/profile", rt.auth(), rt.user(), rt.selfProfileGet)
 		pages.PUT("/self/profile", rt.auth(), rt.user(), rt.selfProfilePut)
 		pages.PUT("/self/password", rt.auth(), rt.user(), rt.selfPasswordPut)
+		pages.PUT("/self/board", rt.auth(), rt.user(), rt.selfBoardPut)
 
 		pages.GET("/users", rt.auth(), rt.admin(), rt.perm("/users"), rt.userFilterGets)
 		pages.GET("/users/xh", rt.auth(), rt.admin(), rt.userGetsXH)

@@ -43,11 +43,20 @@ type AssetConfigs struct {
 	Config []*AssetType `json:"config"`
 }
 
+type Unit string
+
+const (
+	Byte Unit = "byte"
+	Bit  Unit = "bit"
+	Time Unit = "time"
+)
+
 type BaseProp struct {
 	Name     string `json:"name" yaml:"name"`
 	Label    string `json:"label"`
 	Required string `json:"required"`
 	Type     string `json:"type"`
+	Unit     Unit   `json:"unit"`
 	Options  []*struct {
 		Label string `json:"label" yaml:"label"`
 		Value string `json:"value" yaml:"value"`

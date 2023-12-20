@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	prom_tool "github.com/ccfos/nightingale/v6/pkg/prom"
 	"github.com/ccfos/nightingale/v6/prom"
+	"github.com/dustin/go-humanize"
 	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/labels"
@@ -102,7 +103,23 @@ func (as *Attr) updateExtraProps(asset *models.Asset) {
 			for _, p := range prop.Props[0].Items {
 				l := item.Metric
 				v, exists := l[model.LabelName(p.Name)]
-				safeVal := strings.ReplaceAll(string(v), "\\", "/")
+
+				var safeVal string = string(v)
+				switch p.Unit {
+				case models.Byte:
+					if val, err := strconv.Atoi(string(v)); err == nil {
+						safeVal = humanize.Bytes(uint64(val))
+					}
+				case models.Bit:
+					if val, err := strconv.Atoi(string(v)); err == nil {
+						safeVal = humanize.SI(float64(val), "b")
+					}
+				case models.Time:
+
+				default:
+					safeVal = strings.ReplaceAll(string(v), "\\", "/")
+				}
+
 				if exists {
 					attr := createAttr(asset.Id, cate, p.Label, p.Name, uid, safeVal)
 					attrs = append(attrs, attr)

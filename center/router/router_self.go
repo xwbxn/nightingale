@@ -50,3 +50,15 @@ func (rt *Router) selfPasswordPut(c *gin.Context) {
 	user := c.MustGet("user").(*models.User)
 	ginx.NewRender(c).Message(user.ChangePassword(rt.Ctx, f.OldPass, f.NewPass))
 }
+
+type selfBoardForm struct {
+	BoardId int64 `json:"board_id" binding:"required"`
+}
+
+func (rt *Router) selfBoardPut(c *gin.Context) {
+	var f selfBoardForm
+	ginx.BindJSON(c, &f)
+	user := c.MustGet("user").(*models.User)
+	user.BoardId = f.BoardId
+	ginx.NewRender(c).Message(user.Update(rt.Ctx, "board_id"))
+}
