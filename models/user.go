@@ -122,7 +122,7 @@ func UpdateBatch(ctx *context.Context, ids []int64, where map[string]interface{}
 }
 
 // 批量删除用户
-func UpdateBatchDel(ctx *context.Context, ids []int64) error {
+func UserBatchDel(ctx *context.Context, ids []int64) error {
 	// TODO: 此处删除逻辑不全，需要用户组中移除用户，删除用户默认看板
 	return DB(ctx).Debug().Where("id in ?", ids).Delete(&User{}).Error
 }
