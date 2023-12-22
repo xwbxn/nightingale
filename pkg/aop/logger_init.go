@@ -85,8 +85,8 @@ func LoggerToFile() gin.HandlerFunc {
 		// remoteIP, _ := c.Request.Response.Location()
 
 		log_obj = map[string]string{
-			"xh/assets": "资产", "xh/monitoring": "监控", "alert": "告警", "user-config": "用户配置",
-			"user": "用户信息", "api-service": "接口管理", "/xh/license": "许可管理", "login": "登录", "operation-log": "操作日志",
+			"xh/assets": "资产", "xh/monitoring": "监控", "alert": "告警", "user-config": "用户配置", "user": "用户信息",
+			"self": "用户信息", "api-service": "接口管理", "/xh/license": "许可管理", "login": "登录", "operation-log": "操作日志",
 		}
 
 		log_post = map[string]string{
@@ -104,6 +104,7 @@ func LoggerToFile() gin.HandlerFunc {
 			"xh/assets": "更新资产", "xh/assets-expansion": "更新资产扩展", "xh/assets/batch-update": "批量修改资产",
 			"xh/monitoring": "更新监控", "user-config": "更新用户配置", "user-config/logo": "更新用户图标",
 			"xh/license/update": "更新证书", "xh/license-config": "更新许可配置", "api-service": "更新接口",
+			"profile": "修改用户信息", "password": "修改用户密码", "self/board": "修改首页展示",
 		}
 		log_delete = map[string]string{
 			"xh/monitoring": "删除监控", "user-config": "删除用户配置", "api-service": "删除接口",
@@ -209,15 +210,10 @@ func GetOperObj(r string, user string) string {
 	var str strings.Builder
 	for k, v := range log_obj {
 		if strings.Contains(r, k) {
-			if k == "login" {
-				str.WriteString(user)
-				break
-			} else {
-				str.Reset()
-				str.WriteString(v)
-				str.WriteString("模块")
-				break
-			}
+			str.Reset()
+			str.WriteString(v)
+			str.WriteString("模块")
+			break
 		}
 	}
 	return str.String()
