@@ -291,8 +291,9 @@ func (rt *Router) loginCallback(c *gin.Context) {
 			UpdateBy: "oidc",
 		}
 
+		groupIds := make([]int64, 0)
 		// create user from oidc
-		ginx.Dangerous(user.Add(rt.Ctx))
+		ginx.Dangerous(user.Add(rt.Ctx, groupIds))
 	}
 
 	// set user login state
@@ -401,7 +402,8 @@ func (rt *Router) loginCallbackCas(c *gin.Context) {
 			UpdateBy: "CAS",
 		}
 		// create user from cas
-		ginx.Dangerous(user.Add(rt.Ctx))
+		groupIds := make([]int64, 0)
+		ginx.Dangerous(user.Add(rt.Ctx, groupIds))
 	}
 
 	// set user login state
@@ -503,8 +505,9 @@ func (rt *Router) loginCallbackOAuth(c *gin.Context) {
 			UpdateBy: "oauth2",
 		}
 
+		groupIds := make([]int64, 0)
 		// create user from oidc
-		ginx.Dangerous(user.Add(rt.Ctx))
+		ginx.Dangerous(user.Add(rt.Ctx, groupIds))
 	}
 
 	// set user login state

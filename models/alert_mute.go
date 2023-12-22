@@ -134,8 +134,20 @@ func AlertMuteGets(ctx *ctx.Context, prods []string, bgid int64, query string) (
 	return
 }
 
-func AlertMuteGetsByBG(ctx *ctx.Context, groupId int64) (lst []AlertMute, err error) {
-	err = DB(ctx).Where("group_id=?", groupId).Order("id desc").Find(&lst).Error
+func AlertMuteGetsByBG(ctx *ctx.Context, groupId int64, id int64) (lst []AlertMute, err error) {
+	session := DB(ctx)
+	if groupId != -1 {
+
+		session = session.Where("group_id =?", groupId)
+	} else {
+		var groupIds []int64
+		groupIds, err = MyGroupIds(ctx, id)
+		if err != nil {
+			return
+		}
+		session = session.Where("group_id in ?", groupIds)
+	}
+	err = session.Order("id desc").Find(&lst).Error
 	for i := 0; i < len(lst); i++ {
 		lst[i].DB2FE()
 	}

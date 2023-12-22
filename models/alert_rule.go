@@ -567,7 +567,6 @@ func (ar *AlertRule) FillNotifyGroups(ctx *ctx.Context, cache map[int64]*UserGro
 }
 
 func (ar *AlertRule) FE2DB(ctx *ctx.Context) error {
-	logger.Debug(*ar)
 
 	if len(ar.EnableStimesJSON) > 0 {
 		ar.EnableStime = strings.Join(ar.EnableStimesJSON, " ")
@@ -611,7 +610,6 @@ func (ar *AlertRule) FE2DB(ctx *ctx.Context) error {
 		ar.DatasourceIds = string(idsByte)
 	}
 
-	logger.Debug(ar.RuleConfigJson)
 	if ar.RuleConfigJson == nil {
 		query := PromQuery{
 			PromQl:   ar.PromQl,
@@ -621,7 +619,6 @@ func (ar *AlertRule) FE2DB(ctx *ctx.Context) error {
 			Queries: []PromQuery{query},
 		}
 	} else {
-		logger.Debug(ar.RuleConfigJson)
 		// configOld, err := json.Marshal(ar.RuleConfigJson)
 		// if err != nil {
 		// 	return fmt.Errorf("格式化数据错误:%v", err)

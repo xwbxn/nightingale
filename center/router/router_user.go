@@ -139,6 +139,7 @@ type userAddForm struct {
 	Contacts       ormx.JSONObj `json:"contacts"`
 	Status         int64        `json:"status"`          //用户状态（1：启用；0：禁用）
 	OrganizationId int64        `json:"organization_id"` //组织id
+	GroupName      []int64      `json:"group_name"`
 }
 
 func (rt *Router) userAddPost(c *gin.Context) {
@@ -169,7 +170,7 @@ func (rt *Router) userAddPost(c *gin.Context) {
 		UpdateBy:       user.Username,
 	}
 
-	ginx.NewRender(c).Message(u.Add(rt.Ctx))
+	ginx.NewRender(c).Message(u.Add(rt.Ctx, f.GroupName))
 }
 
 func (rt *Router) userProfileGet(c *gin.Context) {
@@ -185,6 +186,7 @@ type userProfileForm struct {
 	Contacts       ormx.JSONObj `json:"contacts"`
 	Status         int64        `json:"status"`          //用户状态（1：启用；0：禁用）
 	OrganizationId int64        `json:"organization_id"` //组织id
+	GroupName      []int64      `json:"group_name"`
 }
 
 func (rt *Router) userProfilePut(c *gin.Context) {
@@ -205,7 +207,7 @@ func (rt *Router) userProfilePut(c *gin.Context) {
 	target.OrganizationId = f.OrganizationId
 	target.UpdateBy = c.MustGet("username").(string)
 
-	ginx.NewRender(c).Message(target.UpdateAllFields(rt.Ctx))
+	ginx.NewRender(c).Message(target.UpdateAllFields(rt.Ctx, f.GroupName))
 }
 
 type userPasswordForm struct {
@@ -416,6 +418,7 @@ func (rt *Router) importUserXH(c *gin.Context) {
 			ginx.Bomb(http.StatusOK, "第"+strconv.Itoa(index)+"数据，用户名已存在")
 		}
 		err = u.AddTx(rt.Ctx, tx)
+		ginx.Dangerous(err)
 	}
 	tx.Commit()
 	ginx.NewRender(c).Data(err, nil)

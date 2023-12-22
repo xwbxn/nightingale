@@ -46,7 +46,8 @@ func (rt *Router) handleProxyUser(c *gin.Context) *models.User {
 			CreateBy: "system",
 			UpdateBy: "system",
 		}
-		err = user.Add(rt.Ctx)
+		groupIds := make([]int64, 0)
+		err = user.Add(rt.Ctx, groupIds)
 		if err != nil {
 			ginx.Bomb(http.StatusInternalServerError, err.Error())
 		}
@@ -175,7 +176,12 @@ func (rt *Router) userGroupWrite() gin.HandlerFunc {
 		ginx.Dangerous(err)
 
 		if !can {
-			ginx.Bomb(http.StatusForbidden, "forbidden")
+			ginx.Bomb(http.StatusForbidden, "禁止删除")
+		}
+		userIds, err := models.MemberIds(rt.Ctx, ug.Id)
+		ginx.Dangerous(err)
+		if len(userIds) > 0 {
+			ginx.Bomb(http.StatusForbidden, "请先删除团队成员")
 		}
 
 		c.Set("user_group", ug)
@@ -186,16 +192,20 @@ func (rt *Router) userGroupWrite() gin.HandlerFunc {
 func (rt *Router) bgro() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		me := c.MustGet("user").(*models.User)
-		bg := BusiGroup(rt.Ctx, ginx.UrlParamInt64(c, "id"))
+		id := ginx.UrlParamInt64(c, "id")
+		if id != -1 {
+			bg := BusiGroup(rt.Ctx, id)
 
-		can, err := me.CanDoBusiGroup(rt.Ctx, bg)
-		ginx.Dangerous(err)
+			can, err := me.CanDoBusiGroup(rt.Ctx, bg)
+			ginx.Dangerous(err)
 
-		if !can {
-			ginx.Bomb(http.StatusForbidden, "forbidden")
+			if !can {
+				ginx.Bomb(http.StatusForbidden, "forbidden")
+			}
+
+			c.Set("busi_group", bg)
 		}
 
-		c.Set("busi_group", bg)
 		c.Next()
 	}
 }
@@ -204,16 +214,20 @@ func (rt *Router) bgro() gin.HandlerFunc {
 func (rt *Router) bgrw() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		me := c.MustGet("user").(*models.User)
-		bg := BusiGroup(rt.Ctx, ginx.UrlParamInt64(c, "id"))
+		id := ginx.UrlParamInt64(c, "id")
+		if id != -1 {
+			bg := BusiGroup(rt.Ctx, id)
 
-		can, err := me.CanDoBusiGroup(rt.Ctx, bg, "rw")
-		ginx.Dangerous(err)
+			can, err := me.CanDoBusiGroup(rt.Ctx, bg, "rw")
+			ginx.Dangerous(err)
 
-		if !can {
-			ginx.Bomb(http.StatusForbidden, "forbidden")
+			if !can {
+				ginx.Bomb(http.StatusForbidden, "forbidden")
+			}
+
+			c.Set("busi_group", bg)
 		}
 
-		c.Set("busi_group", bg)
 		c.Next()
 	}
 }

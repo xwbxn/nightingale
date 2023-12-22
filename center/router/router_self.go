@@ -1,6 +1,8 @@
 package router
 
 import (
+	"net/http"
+
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ormx"
 
@@ -36,7 +38,10 @@ func (rt *Router) selfProfilePut(c *gin.Context) {
 	user.Contacts = f.Contacts
 	user.UpdateBy = user.Username
 
-	ginx.NewRender(c).Message(user.UpdateAllFields(rt.Ctx))
+	groupIds, err := models.MyGroupIds(rt.Ctx, user.Id)
+	ginx.Dangerous(err)
+
+	ginx.NewRender(c).Message(user.UpdateAllFields(rt.Ctx, groupIds))
 }
 
 type selfPasswordForm struct {
@@ -47,6 +52,9 @@ type selfPasswordForm struct {
 func (rt *Router) selfPasswordPut(c *gin.Context) {
 	var f selfPasswordForm
 	ginx.BindJSON(c, &f)
+	if f.OldPass == f.NewPass {
+		ginx.Bomb(http.StatusOK, "新密码不能与旧密码相同")
+	}
 	user := c.MustGet("user").(*models.User)
 	ginx.NewRender(c).Message(user.ChangePassword(rt.Ctx, f.OldPass, f.NewPass))
 }

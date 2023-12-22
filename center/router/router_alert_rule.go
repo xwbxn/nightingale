@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/i18n"
-	"github.com/toolkits/pkg/logger"
 )
 
 // Return all, front-end search and paging
@@ -151,11 +150,10 @@ func (rt *Router) alertRuleAddByFE(c *gin.Context) {
 
 	var lst []models.AlertRule
 	ginx.BindJSON(c, &lst)
-	logger.Debug(lst)
 
 	count := len(lst)
 	if count == 0 {
-		ginx.Bomb(http.StatusBadRequest, "参数为空")
+		ginx.Bomb(http.StatusOK, "参数为空")
 	}
 
 	bgid := ginx.UrlParamInt64(c, "id")
@@ -233,7 +231,6 @@ func (rt *Router) alertRuleAdd(lst []models.AlertRule, username string, bgid int
 			continue
 		}
 
-		logger.Debug(lst[i])
 		if err = lst[i].Add(rt.Ctx); err == nil {
 			reterr[lst[i].Name] = ""
 		}
@@ -266,7 +263,7 @@ func (rt *Router) alertRulePutByFE(c *gin.Context) {
 	ginx.Dangerous(err)
 
 	if ar == nil {
-		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
+		ginx.NewRender(c, http.StatusNotFound).Message("未找到告警规则")
 		return
 	}
 

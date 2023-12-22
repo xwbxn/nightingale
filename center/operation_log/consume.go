@@ -94,7 +94,6 @@ func (e *Consumer) consumeOne(event *models.OperationLog) {
 
 func (e *Consumer) persist(event *models.OperationLog) {
 
-	logger.Debug("操作日志数据开始入库:", *event)
 	err := event.Add(e.ctx)
 	if err != nil {
 		logger.Errorf("event%+v persist err:%v", event, err)

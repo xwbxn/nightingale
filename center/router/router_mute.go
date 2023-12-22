@@ -9,12 +9,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
+	"github.com/toolkits/pkg/logger"
 )
 
 // Return all, front-end search and paging
 func (rt *Router) alertMuteGetsByBG(c *gin.Context) {
 	bgid := ginx.UrlParamInt64(c, "id")
-	lst, err := models.AlertMuteGetsByBG(rt.Ctx, bgid)
+	me := c.MustGet("user").(*models.User)
+	logger.Debug(bgid)
+	lst, err := models.AlertMuteGetsByBG(rt.Ctx, bgid, me.Id)
 
 	ginx.NewRender(c).Data(lst, err)
 }

@@ -146,7 +146,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 	go version.GetGithubVersion()
 
 	alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
-	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, notifyConfigCache, promClients, redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, assetCache)
+	centerRouter := centerrt.New(config.HTTP, config.Center, cconf.Operations, dsCache, notifyConfigCache, promClients, redis, sso, ctx, metas, idents, targetCache, userCache, userGroupCache, assetCache, licenseCache)
 	pushgwRouter := pushgwrt.New(config.HTTP, config.Pushgw, targetCache, busiGroupCache, idents, writers, ctx)
 	providerRouter := providerrt.New(config.HTTP, targetCache, busiGroupCache, assetCache, ctx)
 	attrs.StartAttrSync(ctx, promClients, assetCache)

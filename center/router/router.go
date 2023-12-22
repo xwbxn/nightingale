@@ -60,7 +60,7 @@ type Router struct {
 // @name Authorization
 func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
 	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType,
-	uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, ac *memsto.AssetCacheType) *Router {
+	uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, ac *memsto.AssetCacheType, lc *memsto.LicenseCache) *Router {
 	return &Router{
 		HTTP:              httpConfig,
 		Center:            center,
@@ -77,6 +77,7 @@ func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operatio
 		UserGroupCache:    ugc,
 		Ctx:               ctx,
 		assetCache:        ac,
+		licenseCache:      lc,
 
 		DatasourceCheckHook: func(ctx *gin.Context) bool { return false },
 	}

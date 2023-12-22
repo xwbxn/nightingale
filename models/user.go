@@ -184,7 +184,7 @@ func (u *User) Verify() error {
 	return nil
 }
 
-func (u User) Add(ctx *context.Context) error {
+func (u User) Add(ctx *context.Context, groupIds []int64) error {
 	user, err := UserGetByUsername(ctx, u.Username)
 	if err != nil {
 		return errors.WithMessage(err, "failed to query user")
@@ -231,6 +231,12 @@ func (u User) Add(ctx *context.Context) error {
 		if err != nil {
 			return err
 		}
+
+		for _, groupId := range groupIds {
+			if err := UserGroupMemberAdd(ctx, groupId, u.Id); err != nil {
+				return err
+			}
+		}
 		return nil
 	})
 
@@ -258,13 +264,28 @@ func (u *User) Update(ctx *context.Context, selectField interface{}, selectField
 	return DB(ctx).Model(u).Select(selectField, selectFields...).Updates(u).Error
 }
 
-func (u *User) UpdateAllFields(ctx *context.Context) error {
+func (u *User) UpdateAllFields(ctx *context.Context, groupIds []int64) error {
 	if err := u.Verify(); err != nil {
 		return err
 	}
 
 	u.UpdateAt = time.Now().Unix()
-	return DB(ctx).Model(u).Select("*").Updates(u).Error
+	err := ctx.Transaction(func(ctx *context.Context) error {
+		if err := DB(ctx).Model(u).Select("*").Updates(u).Error; err != nil {
+			return err
+		}
+		if err := DB(ctx).Where("user_id = ?", u.Id).Delete(&UserGroupMember{}).Error; err != nil {
+			return err
+		}
+		for _, groupId := range groupIds {
+			if err := UserGroupMemberAdd(ctx, groupId, u.Id); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	return err
 }
 
 func (u *User) UpdatePassword(ctx *context.Context, password, updateBy string) error {
@@ -311,7 +332,7 @@ func (u *User) ChangePassword(ctx *context.Context, oldpass, newpass string) err
 	}
 
 	if u.Password != _oldpass {
-		return errors.New("Incorrect old password")
+		return errors.New("旧密码输入错误")
 	}
 
 	return u.UpdatePassword(ctx, _newpass, u.Username)

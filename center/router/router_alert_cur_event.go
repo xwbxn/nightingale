@@ -348,7 +348,6 @@ func (rt *Router) alertEventsListXH(c *gin.Context) {
 	limit := ginx.QueryInt(c, "limit", 20)
 	page := ginx.QueryInt(c, "page", 1)
 	ids := make([]int64, 0)
-	logger.Debug(alertType)
 
 	if filter == "ip" {
 		assets := rt.assetCache.GetAll()
