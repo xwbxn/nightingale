@@ -12,7 +12,6 @@ import (
 
 	context "github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/prometheus/common/model"
-	"github.com/toolkits/pkg/ginx"
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
@@ -49,7 +48,6 @@ type Asset struct {
 	UpdateBy       string                 `json:"update_by"`
 	OrganizationId int64                  `json:"organization_id"`
 	DirectoryId    int64                  `json:"directory_id"`
-	Payload        string                 `json:"payload"`
 	Dashboard      string                 `json:"dashboard" gorm:"-"`
 	DeletedAt      gorm.DeletedAt         `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"`
 
@@ -208,7 +206,6 @@ func (ins *Asset) AddXH(ctx *context.Context) (int64, error) {
 		return nil
 	})
 
-	ginx.Dangerous(err)
 	return ins.Id, err
 }
 
