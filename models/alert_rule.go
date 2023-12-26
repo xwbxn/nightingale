@@ -1212,22 +1212,22 @@ func BuildAlertRule(ctx *ctx.Context, monitoring Monitoring, alertRule AlertRule
 		return &AlertRule{}, nil
 	}
 	rule := &AlertRule{
-		AssetId:          monitoring.AssetId,
-		GroupId:          lst[0].GroupId,
-		Cate:             "prometheus",
-		DatasourceIds:    "[1]",
-		Name:             alertRule.RuleConfigCn,
-		Prod:             "metric",
-		PromForDuration:  60,
-		PromEvalInterval: 30,
-		EnableStime:      "00:00",
-		EnableEtime:      "00:00",
-		EnableDaysOfWeek: "0 1 2 3 4 5 6",
-		NotifyRecovered:  1,
-		RuleConfigCn:     alertRule.RuleConfigCn,
-		NotifyRepeatStep: 60,
-		Severity:         alertRule.Severity,
-		MonitoringId:     monitoring.Id,
+		AssetId:              monitoring.AssetId,
+		GroupId:              lst[0].GroupId,
+		Cate:                 "prometheus",
+		DatasourceIds:        "[1]",
+		Name:                 alertRule.RuleConfigCn,
+		Prod:                 "metric",
+		PromForDuration:      60,
+		PromEvalInterval:     30,
+		EnableStimeJSON:      "00:00",
+		EnableEtimeJSON:      "00:00",
+		EnableDaysOfWeekJSON: []string{"0", "1", "2", "3", "4", "5", "6"},
+		NotifyRecovered:      1,
+		RuleConfigCn:         alertRule.RuleConfigCn,
+		NotifyRepeatStep:     60,
+		Severity:             alertRule.Severity,
+		MonitoringId:         monitoring.Id,
 	}
 	// config := map[string][]map[string]interface{}{}
 	config := make(map[string]interface{})

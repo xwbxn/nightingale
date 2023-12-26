@@ -46,14 +46,18 @@ func (rt *Router) loginPost(c *gin.Context) {
 	userGet, errGet := models.UserGetByUsername(rt.Ctx, f.Username)
 	ginx.Dangerous(errGet)
 	if (userGet == &models.User{}) {
+		//写入操作日志
+		rt.loginLog(c, f.Username, "该账号未找到", false)
 		ginx.Bomb(http.StatusOK, "该账号未找到！")
 	}
 	if (*userGet).Status == 0 {
+		rt.loginLog(c, f.Username, "该用户已被禁用", false)
 		ginx.Bomb(http.StatusOK, "该用户已被禁用！")
 	}
 
 	if rt.HTTP.ShowCaptcha.Enable {
 		if !CaptchaVerify(f.Captchaid, f.Verifyvalue) {
+			rt.loginLog(c, f.Username, "验证码错误", false)
 			ginx.NewRender(c).Message("incorrect verification code")
 			return
 		}
@@ -63,6 +67,7 @@ func (rt *Router) loginPost(c *gin.Context) {
 	if rt.HTTP.RSA.OpenRSA {
 		decPassWord, err := secu.Decrypt(f.Password, rt.HTTP.RSA.RSAPrivateKey, rt.HTTP.RSA.RSAPassWord)
 		if err != nil {
+			rt.loginLog(c, f.Username, "RSA解密失败", false)
 			logger.Errorf("RSA Decrypt failed: %v username: %s", err, f.Username)
 			ginx.NewRender(c).Message(err)
 			return
@@ -76,12 +81,14 @@ func (rt *Router) loginPost(c *gin.Context) {
 			roles := strings.Join(rt.Sso.LDAP.DefaultRoles, " ")
 			user, err = models.LdapLogin(rt.Ctx, f.Username, authPassWord, roles, rt.Sso.LDAP)
 			if err != nil {
+				rt.loginLog(c, f.Username, "单点登录失败", false)
 				logger.Debugf("ldap login failed: %v username: %s", err, f.Username)
 				ginx.NewRender(c).Message(err)
 				return
 			}
 			user.RolesLst = strings.Fields(user.Roles)
 		} else {
+			rt.loginLog(c, f.Username, "用户名或密码无效", false)
 			ginx.NewRender(c).Message(err)
 			return
 		}
@@ -89,7 +96,8 @@ func (rt *Router) loginPost(c *gin.Context) {
 
 	if user == nil {
 		// Theoretically impossible
-		ginx.NewRender(c).Message("Username or password invalid")
+		rt.loginLog(c, f.Username, "用户名或密码无效", false)
+		ginx.NewRender(c).Message("用户名或密码无效")
 		return
 	}
 
@@ -99,11 +107,43 @@ func (rt *Router) loginPost(c *gin.Context) {
 	ginx.Dangerous(err)
 	ginx.Dangerous(rt.createAuth(c.Request.Context(), userIdentity, ts))
 
+	//写入操作日志
+	rt.loginLog(c, user.Username, "", true)
+
 	ginx.NewRender(c).Data(gin.H{
 		"user":          user,
 		"access_token":  ts.AccessToken,
 		"refresh_token": ts.RefreshToken,
 	}, nil)
+}
+
+//登录日志记录
+func (rt *Router) loginLog(c *gin.Context, userName, errMsg string, login bool) {
+	msg := "登录"
+	if login {
+		msg += "成功"
+	} else {
+		msg += "失败:" + errMsg
+	}
+	//写入操作日志
+	oprLog := &models.OperationLog{
+		Type:        "登录",
+		Object:      "登录模块",
+		Description: msg + ",操作IP:" + c.ClientIP(),
+		User:        userName,
+		OperTime:    time.Now().Unix(),
+		OperUrl:     "/api/n9e/auth/login",
+		OperParam:   "",
+		JsonResult:  "",
+		ReqMethod:   "POST",
+		Status:      200,
+		ErrorMsg:    "",
+		CreatedBy:   userName,
+	}
+	err := oprLog.Add(rt.Ctx)
+	if err != nil {
+		logger.Errorf("event%+v persist err:%v", oprLog, err)
+	}
 }
 
 func (rt *Router) logoutPost(c *gin.Context) {

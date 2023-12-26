@@ -109,7 +109,13 @@ func (rt *Router) userGroupGet(c *gin.Context) {
 }
 
 func (rt *Router) userGroupDel(c *gin.Context) {
+
 	ug := c.MustGet("user_group").(*models.UserGroup)
+	userIds, err := models.MemberIds(rt.Ctx, ug.Id)
+	ginx.Dangerous(err)
+	if len(userIds) > 0 {
+		ginx.Bomb(http.StatusOK, "请先删除团队成员")
+	}
 	ginx.NewRender(c).Message(ug.Del(rt.Ctx))
 }
 
