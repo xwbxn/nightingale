@@ -55,7 +55,7 @@ func (rt *Router) userConfigGets(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Success      200  {array}  string
-// @Router       /api/n9e/user-config/login/title [get]
+// @Router       /api/n9e/auth/login/title [get]
 // @Security     ApiKeyAuth
 func (rt *Router) loginTitleGet(c *gin.Context) {
 

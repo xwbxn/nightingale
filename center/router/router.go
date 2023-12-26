@@ -778,7 +778,7 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.PUT("/user-config/logo", rt.auth(), rt.admin(), rt.logoPut)
 		pages.PUT("/user-config", rt.auth(), rt.admin(), rt.userConfigPut)
 		pages.DELETE("/user-config/:id", rt.auth(), rt.admin(), rt.userConfigDel)
-		pages.GET("/user-config/login/title", rt.loginTitleGet)
+		pages.GET("/auth/login/title", rt.loginTitleGet)
 
 		//操作日志
 		pages.GET("/operation-log", rt.auth(), rt.admin(), rt.operationLogGets)
