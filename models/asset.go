@@ -191,6 +191,12 @@ func (ins *Asset) AddXH(ctx *context.Context) (int64, error) {
 					return err
 				}
 				rule.RuleConfig = string(configJson)
+				config["queries"][0]["prom_ql"] = m.Metrics
+				configJson, err = json.Marshal(config)
+				if err != nil {
+					logger.Error("新增默认告警错误:", err)
+					return err
+				}
 				rule.RuleConfigFe = string(configJson)
 				if err := rule.Add(ctx); err != nil {
 					logger.Error("新增默认告警错误:", err)
