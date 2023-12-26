@@ -130,7 +130,7 @@ func LoggerToFile() gin.HandlerFunc {
 
 		if strings.Contains(reqUri, "/api/n9e") && reqMethod != "GET" {
 
-			if operType != "" {
+			if operType != "" && !strings.Contains(reqUri, "/api/n9e/auth/login") {
 				if !OperationlogQueue.PushFront(data) {
 					logger.Warningf("event_push_queue: queue is full, event:%+v", data)
 				}

@@ -176,12 +176,7 @@ func (rt *Router) userGroupWrite() gin.HandlerFunc {
 		ginx.Dangerous(err)
 
 		if !can {
-			ginx.Bomb(http.StatusForbidden, "禁止删除")
-		}
-		userIds, err := models.MemberIds(rt.Ctx, ug.Id)
-		ginx.Dangerous(err)
-		if len(userIds) > 0 {
-			ginx.Bomb(http.StatusForbidden, "请先删除团队成员")
+			ginx.Bomb(http.StatusForbidden, "无权限")
 		}
 
 		c.Set("user_group", ug)

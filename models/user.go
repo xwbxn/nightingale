@@ -444,7 +444,7 @@ func PassLogin(ctx *context.Context, username, pass string) (*User, error) {
 	}
 
 	if user == nil {
-		return nil, fmt.Errorf("Username or password invalid")
+		return nil, fmt.Errorf("用户名或密码无效")
 	}
 
 	loginPass, err := CryptoPass(ctx, pass)
@@ -453,7 +453,7 @@ func PassLogin(ctx *context.Context, username, pass string) (*User, error) {
 	}
 
 	if loginPass != user.Password {
-		return nil, fmt.Errorf("Username or password invalid")
+		return nil, fmt.Errorf("用户名或密码无效")
 	}
 
 	return user, nil

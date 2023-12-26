@@ -740,12 +740,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.GET("/dashboard/count/ceshi", rt.getDashboardDataCount) //首页数据统计接口
 		pages.POST("/dashboard/asset/details/ceshi", rt.AssetDetails) //资产详情接口
 		// pages.GET("/dashboard/alarm/details", rt.AlarmDetails)                    //告警详情接口
-		pages.GET("/dashboard/his-alarms/his-query/ceshi", rt.AlarmHisQueryGet)                      //历史告警搜索记录查询
-		pages.DELETE("/dashboard/his-alarms/his-query/ceshi", rt.AlarmHisDel)                        //历史告警搜索记录删除
-		pages.GET("/dashboard/his-alarm/filter/ceshi", rt.AlarmHisFilter)                            //历史告警过滤条件查询
-		pages.GET("/dashboard/his-alarms/ceshi", rt.AlarmHisGet)                                     //历史告警查询
-		pages.GET("/dashboard/data/ceshi", rt.DataBoardPerson)                                       //列表数据测试
-		pages.GET("/dashboard/user/list/ceshi", rt.DataBoardAssetList)                               //数据看板筛选资产
 		pages.POST("/dashboard/user/add", rt.auth(), rt.user(), rt.DataBoardAsset)                   //创建/删除用户看板
 		pages.GET("/dashboard/user/data", rt.auth(), rt.user(), rt.DataBoardAssetsGet)               //数据面板
 		pages.GET("/dashboard/user/page-name/get", rt.auth(), rt.user(), rt.DataBoardPageNameGets)   //获取pageName列表
@@ -779,11 +773,12 @@ func (rt *Router) Config(r *gin.Engine) {
 		//用户配置
 		pages.GET("/user-config", rt.auth(), rt.admin(), rt.userConfigGets)
 		//pages.GET("/user-config/:id", rt.auth(), rt.admin(), rt.userConfigGet)
-		pages.GET("/user-config/getInfo", rt.userLogoGet)
+		pages.GET("/user-config/getInfo", rt.auth(), rt.admin(), rt.userLogoGet)
 		pages.POST("/user-config/picture", rt.auth(), rt.admin(), rt.userPictureAdd)
 		pages.PUT("/user-config/logo", rt.auth(), rt.admin(), rt.logoPut)
 		pages.PUT("/user-config", rt.auth(), rt.admin(), rt.userConfigPut)
 		pages.DELETE("/user-config/:id", rt.auth(), rt.admin(), rt.userConfigDel)
+		pages.GET("/user-config/login/title", rt.loginTitleGet)
 
 		//操作日志
 		pages.GET("/operation-log", rt.auth(), rt.admin(), rt.operationLogGets)
