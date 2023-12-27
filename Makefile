@@ -42,7 +42,7 @@ release: build
 	cp ./etc/default ./release/etc -r
 	cp ./docker/mysqletc ./release -r
 	cp ./docker/redis ./release -r
-	cp ./pub ./release -r
+	cp ../fe/pub ./release -r
 	cp ./dataroom ./release -r
 	cp ./thirdparty ./release -r
 	cp ./categraf-server ./release -r
