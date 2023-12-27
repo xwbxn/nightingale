@@ -31,6 +31,7 @@ type LicenseConfig struct {
 	Nodes     int64          `gorm:"column:NODES" json:"nodes" `                               //type:*int         comment:剩余节点数    version:2023-10-29 15:12
 	Frequency string         `gorm:"column:FREQUENCY" json:"frequency" `                       //type:string       comment:提醒频率      version:2023-10-29 15:12
 	Email     string         `gorm:"column:EMAIL" json:"email" `                               //type:string       comment:邮箱          version:2023-10-29 15:12
+	Client    string         `gorm:"column:CLIENT" json:"client" `                             //type:string       comment:客户         version:2023-10-29 15:12
 	CreatedBy string         `gorm:"column:CREATED_BY" json:"created_by" swaggerignore:"true"` //type:string       comment:创建人        version:2023-10-29 15:12
 	CreatedAt int64          `gorm:"column:CREATED_AT" json:"created_at" swaggerignore:"true"` //type:*int         comment:创建时间      version:2023-10-29 15:12
 	UpdatedBy string         `gorm:"column:UPDATED_BY" json:"updated_by" swaggerignore:"true"` //type:string       comment:更新人        version:2023-10-29 15:12

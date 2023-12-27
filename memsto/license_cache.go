@@ -175,7 +175,6 @@ func (cache *LicenseCache) syncLicense() error {
 	}
 
 	lst, err := models.LicenseCacheGets()
-	logger.Debug(lst)
 	if err != nil {
 		logger.Errorf("failed to exec LicenseGetsAll: %s", err.Error())
 		return nil

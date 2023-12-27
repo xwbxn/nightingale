@@ -702,7 +702,7 @@ func (l *lzExcelExport) writeTemplet(params []map[string]string, data []interfac
 						for index := range strVal {
 							val = append(val, strVal[index])
 						}
-						session.Debug().Table(m["table"]).Where(prop, val...).Where("DELETED_AT IS NULL").Pluck(m["field"], &results)
+						session.Table(m["table"]).Where(prop, val...).Where("DELETED_AT IS NULL").Pluck(m["field"], &results)
 					} else {
 						session.Table(m["table"]).Pluck(m["field"], &results)
 					}

@@ -37,5 +37,5 @@ func TargetVersionGet(ctx *ctx.Context, version string, goos string, arch string
 }
 
 func UpdataVersion(ctx *ctx.Context, m map[string]interface{}, ident string) error {
-	return DB(ctx).Debug().Table("target").Where("ident = ?", ident).Updates(m).Error
+	return DB(ctx).Table("target").Where("ident = ?", ident).Updates(m).Error
 }

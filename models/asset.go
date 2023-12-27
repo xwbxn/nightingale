@@ -31,7 +31,7 @@ type Asset struct {
 	Ip             string                 `json:"ip" cn:"IP" xml:""`
 	Manufacturers  string                 `json:"manufacturers" cn:"厂商" xml:"manufacturers"`
 	Position       string                 `json:"position" cn:"资产位置" xml:"position"`
-	Status         int64                  `json:"status" xml:"status" cn:"状态" validate:"omitempty,oneof=0 1" source:"type=option,value=[下线;正常]" ignore:"true"` // 纳管状态 0: 未生效, 1: 已生效
+	Status         int64                  `json:"status" xml:"status" cn:"状态" validate:"omitempty,oneof=0 1" source:"type=option,value=[离线;正常]" ignore:"true"` // 纳管状态 0: 未生效, 1: 已生效
 	StatusAt       int64                  `json:"status_at"`
 	GroupId        int64                  `json:"group_id" cn:"业务组" source:"type=table,table=busi_group,property=id,field=name"`
 	Label          string                 `json:"label"`

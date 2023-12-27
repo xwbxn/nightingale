@@ -230,7 +230,7 @@ func AlertHisEventXHTotal(ctx *ctx.Context, fType, start, end, group int64, ids 
 		}
 	}
 	var num int64
-	err := session.Debug().Model(&AlertHisEvent{}).Count(&num).Error
+	err := session.Model(&AlertHisEvent{}).Count(&num).Error
 	return num, err
 }
 
@@ -260,7 +260,7 @@ func AlertHisEventXHGets(ctx *ctx.Context, fType, start, end, group int64, ids [
 		}
 	}
 	var lst []AlertHisEvent
-	err := session.Debug().Model(&AlertHisEvent{}).Find(&lst).Error
+	err := session.Model(&AlertHisEvent{}).Find(&lst).Error
 
 	for index := range lst {
 		lst[index].DB2FE()
@@ -271,11 +271,11 @@ func AlertHisEventXHGets(ctx *ctx.Context, fType, start, end, group int64, ids [
 }
 
 func AlertHisEventDelByIds(ctx *ctx.Context, ids []int64) error {
-	return DB(ctx).Debug().Where("id in ?", ids).Delete(&AlertHisEvent{}).Error
+	return DB(ctx).Where("id in ?", ids).Delete(&AlertHisEvent{}).Error
 }
 
 func AlertHisEventDelByIdsTx(tx *gorm.DB, ids []int64) error {
-	err := tx.Debug().Where("id in ?", ids).Delete(&AlertHisEvent{}).Error
+	err := tx.Where("id in ?", ids).Delete(&AlertHisEvent{}).Error
 	if err != nil {
 		tx.Rollback()
 	}
@@ -438,13 +438,13 @@ func EventPersist(ctx *ctx.Context, event *AlertCurEvent) error {
 
 // 统计未处理告警
 func AlertHisCount(ctx *ctx.Context) (num int64, err error) {
-	err = DB(ctx).Debug().Model(&AlertHisEvent{}).Where("status != 0").Count(&num).Error
+	err = DB(ctx).Model(&AlertHisEvent{}).Where("status != 0").Count(&num).Error
 	return num, err
 }
 
 // map统计历史告警
 func AlertHisCountMap(ctx *ctx.Context, where map[string]interface{}) (num int64, err error) {
-	err = DB(ctx).Debug().Model(&AlertHisEvent{}).Where(where).Count(&num).Error
+	err = DB(ctx).Model(&AlertHisEvent{}).Where(where).Count(&num).Error
 	return num, err
 }
 
@@ -456,7 +456,7 @@ func TodayAlertCount(ctx *ctx.Context) (num int64, err error) {
 	zeroTime := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	// 获取零点时间戳
 	zeroTimestamp := zeroTime.Unix()
-	err = DB(ctx).Debug().Model(&AlertHisEvent{}).Where("trigger_time >= ?", zeroTimestamp).Count(&num).Error
+	err = DB(ctx).Model(&AlertHisEvent{}).Where("trigger_time >= ?", zeroTimestamp).Count(&num).Error
 	return num, err
 }
 
@@ -493,7 +493,7 @@ func AlertHisCountFilter(ctx *ctx.Context, where map[string]interface{}, dateRan
 		session = session.Where(sql, idsStr...)
 
 	}
-	err = session.Debug().Model(&AlertHisEvent{}).Where(where).Count(&num).Error
+	err = session.Model(&AlertHisEvent{}).Where(where).Count(&num).Error
 	return num, err
 }
 
@@ -534,7 +534,7 @@ func AlertHisFilter(ctx *ctx.Context, where map[string]interface{}, dateRange in
 
 	}
 	var dat []*AlertHisEvent
-	err := session.Debug().Model(&AlertHisEvent{}).Where(where).Find(&dat).Error
+	err := session.Model(&AlertHisEvent{}).Where(where).Find(&dat).Error
 	Fe := MakeHisFeAlert(dat)
 	return Fe, err
 }

@@ -214,7 +214,7 @@ func DashboardGetAll(ctx *ctx.Context) ([]Dashboard, error) {
 
 //删除用户看板
 func DeleteByUserAndPageName(tx *gorm.DB, userId int64, pageNam string) error {
-	err := tx.Debug().Where("user_id = ? AND page_name = ?", userId, pageNam).Delete(&DashboardUser{}).Error
+	err := tx.Where("user_id = ? AND page_name = ?", userId, pageNam).Delete(&DashboardUser{}).Error
 	if err != nil {
 		tx.Rollback()
 	}
@@ -223,7 +223,7 @@ func DeleteByUserAndPageName(tx *gorm.DB, userId int64, pageNam string) error {
 
 //添加数据看板
 func AddDashBoardUser(tx *gorm.DB, lst []DashboardUser) error {
-	err := tx.Debug().Create(&lst).Error
+	err := tx.Create(&lst).Error
 	if err != nil {
 		tx.Rollback()
 	}
@@ -234,14 +234,14 @@ func AddDashBoardUser(tx *gorm.DB, lst []DashboardUser) error {
 func DashBoardUserPageNameByUser(ctx *ctx.Context, userId int64) ([]string, error) {
 	var lst []string
 
-	err := DB(ctx).Debug().Model(&DashboardUser{}).Distinct().Where("user_id = ?", userId).Pluck("page_name", &lst).Error
+	err := DB(ctx).Model(&DashboardUser{}).Distinct().Where("user_id = ?", userId).Pluck("page_name", &lst).Error
 	return lst, err
 }
 
 //根据userId和pageName更新页签
 func DashBoardUserPageNameUpdate(ctx *ctx.Context, userId int64, pageName, oldPageName string) error {
 
-	return DB(ctx).Debug().Model(&DashboardUser{}).Where("user_id = ? AND page_name = ?", userId, oldPageName).Update("page_name", pageName).Error
+	return DB(ctx).Model(&DashboardUser{}).Where("user_id = ? AND page_name = ?", userId, oldPageName).Update("page_name", pageName).Error
 }
 
 //根据userId和pageName分页查询
@@ -254,12 +254,12 @@ func DashBoardUserByUserAndPageName(ctx *ctx.Context, userId int64, pageNam stri
 		session = session.Limit(limit).Offset(offset).Order("sort")
 	}
 
-	err := session.Debug().Model(&DashboardUser{}).Where("user_id = ? AND page_name = ?", userId, pageNam).Find(&lst).Error
+	err := session.Model(&DashboardUser{}).Where("user_id = ? AND page_name = ?", userId, pageNam).Find(&lst).Error
 	return lst, err
 }
 
 //根据userId和pageName统计个数
 func DashBoardUserCountByUserAndPageName(ctx *ctx.Context, userId int64, pageNam string) (num int64, err error) {
-	err = DB(ctx).Debug().Model(&DashboardUser{}).Where("user_id = ? AND page_name = ?", userId, pageNam).Count(&num).Error
+	err = DB(ctx).Model(&DashboardUser{}).Where("user_id = ? AND page_name = ?", userId, pageNam).Count(&num).Error
 	return num, err
 }
