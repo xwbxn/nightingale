@@ -1,0 +1,56 @@
+version: "3"
+
+networks:
+  nightingale:
+    driver: bridge
+
+services:
+  mysql:
+    image: "registry.cn-hangzhou.aliyuncs.com/xwbxn/mysql:5.7"
+    container_name: mysql
+    hostname: mysql
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: iAYVmu3qj*9XzYd
+    volumes:
+      - ./mysqldata:/var/lib/mysql/
+      - ./initsql:/docker-entrypoint-initdb.d/
+      - ./mysqletc/my.cnf:/etc/my.cnf
+    networks:
+      - nightingale
+    ports:
+      - "3306:3306"
+
+  redis:
+    image: "registry.cn-hangzhou.aliyuncs.com/xwbxn/redis:6.2"
+    container_name: redis
+    hostname: redis
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - ./redis:/usr/local/etc/redis
+    networks:
+      - nightingale
+    command:
+      - /usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+
+  victoria-metrics:
+    image: registry.cn-hangzhou.aliyuncs.com/xwbxn/victoria-metrics:v1.79.0
+    container_name: victoria-metrics
+    hostname: victoria-metrics
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - ./victoria-metrics-data:/victoria-metrics-data
+    networks:
+      - nightingale
+    ports:
+      - "8428:8428"
+    command:
+      - "--httpAuth.username=vm"
+      - "--httpAuth.password=vmdctbcab"
