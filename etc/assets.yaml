@@ -42,10 +42,10 @@ config:
         unit: "percent-100"
         label: "{{cpu}}"
         rules:
-          - name: "CPU使用率大于90%"
+          - name: "CPU使用率大于80%"
             relation: ">"
-            value: 90
-            serverity: 3
+            value: 80
+            serverity: 2
       - name: 内存使用率
         metrics: "mem_used_percent"
         unit: "percent-100"
@@ -54,15 +54,25 @@ config:
           - name: "CPU使用率大于80%"
             relation: ">"
             value: 80
-            serverity: 3
+            serverity: 2
       - name: 网卡入流量
         metrics: 'sum(rate(net_bits_recv[1m])) by (interface)'
         unit: "bit"
         label: "{{interface}}"
+        rules:
+          - name: "入流量大于100m/s"
+            relation: ">"
+            value: 100000000
+            serverity: 2
       - name: 网卡出流量
         metrics: "sum(rate(net_bits_sent[1m])) by (interface)"
         unit: "bit"
         label: "{{interface}}"
+        rules:
+          - name: "出流量大于100m/s"
+            relation: ">"
+            value: 100000000
+            serverity: 2
       - name: 分区使用率
         metrics: "disk_used_percent"
         unit: "percent-100"
@@ -71,7 +81,31 @@ config:
           - name: "分区使用率大于80%"
             relation: ">"
             value: 80
-            serverity: 3
+            serverity: 2
+      - name: 电源状态
+        metrics: "w_aviation_power"
+        label: "{{sensor}}"
+        rules:
+          - name: "电源状态异常"
+            relation: "=="
+            value: 0
+            serverity: 1
+      - name: 网卡丢包
+        metrics: "increase(net_drop_in[1m]) + increase(net_drop_out[1m])"
+        label: {{interface}}
+        rules:
+          - name: "网卡丢包"
+            relation: ">"
+            value: 0
+            serverity: 2
+      - name: 网卡错包
+        metrics: "increase(net_err_in[1m]) + increase(net_err_out[1m])"
+        label: {{interface}}
+        rules:
+          - name: "网卡错包"
+            relation: ">"
+            value: 0
+            serverity: 2
     dashboard: "/dashboards-built-in/detail?__built-in-cate=Linux&__built-in-name=Linux%20Server&id=${id}&viewMode=fullscreen"
     form: []
     unique: true
@@ -252,7 +286,10 @@ config:
               - name: env
                 label: 环境变量
                 type: input
-
+              - name: install_date
+                label: 安装时间
+                type: input
+     
       power:
         label: 电源信息
         sort: 9

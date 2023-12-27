@@ -54,7 +54,7 @@ collect_platform_fields = true
 
 disable_summary_stats = false
 ## if machine has many network connections, use this plugin may exhaust your cpu resource, diable connection stat to avoid this
-disable_connection_stats = true
+disable_connection_stats = false
 
 tcp_ext = false
 ip_ext = false
