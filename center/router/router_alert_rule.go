@@ -94,7 +94,7 @@ func (rt *Router) alertRuleGetsXH(c *gin.Context) {
 	total, err := models.AlertRuleGetsTotalNew(rt.Ctx, busiGroupId, filter, query, ids)
 	ginx.Dangerous(err)
 
-	ars, err := models.AlertRuleGetsFilterNew(rt.Ctx, busiGroupId, filter, query, ids, limit, (page - 1*limit))
+	ars, err := models.AlertRuleGetsFilterNew(rt.Ctx, busiGroupId, filter, query, ids, limit, (page-1)*limit)
 	ginx.Dangerous(err)
 	if err == nil {
 		cache := make(map[int64]*models.UserGroup)

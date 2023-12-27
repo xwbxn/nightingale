@@ -288,11 +288,12 @@ func (rt *Router) monitoringPut(c *gin.Context) {
 	old, err := models.MonitoringGetById(rt.Ctx, f.Id)
 	ginx.Dangerous(err)
 	if old == nil {
-		ginx.Bomb(http.StatusOK, "monitoring not found")
+		ginx.Bomb(http.StatusOK, "监控数据未找到")
 	}
 
 	// 添加审计信息
 	me := c.MustGet("user").(*models.User)
+	f.Status = old.Status
 	f.UpdatedBy = me.Username
 
 	tx := models.DB(rt.Ctx).Begin()
@@ -312,15 +313,26 @@ func (rt *Router) monitoringPut(c *gin.Context) {
 		alertRule, ok := m[alertRuleSimplify.Id]
 		if ok {
 			if alertRule.RuleConfigCn != alertRuleSimplify.RuleConfigCn || alertRule.Severity != alertRuleSimplify.Severity {
-				config := map[string][]map[string]interface{}{}
-				config["queries"] = []map[string]interface{}{
-					{
-						"severity":   alertRuleSimplify.Severity,
-						"monitor_id": f.Id,
-						"relation":   alertRuleSimplify.Relation,
-						"value":      fmt.Sprintf("%d", alertRuleSimplify.Value),
-					},
-				}
+				// config := map[string][]map[string]interface{}{}
+				// config["queries"] = []map[string]interface{}{
+				// 	{
+				// 		"severity":   alertRuleSimplify.Severity,
+				// 		"monitor_id": f.Id,
+				// 		"relation":   alertRuleSimplify.Relation,
+				// 		"value":      fmt.Sprintf("%d", alertRuleSimplify.Value),
+				// 	},
+				// }
+				config := make(map[string]interface{})
+				config["queries"] = make([]interface{}, 0)
+				configData := make(map[string]interface{})
+				// configData["promql"] = monitoring.MonitoringSql
+				severityN, _ := strconv.ParseFloat(strconv.Itoa(alertRule.Severity), 64)
+				configData["severity"] = severityN
+				monId, _ := strconv.ParseFloat(strconv.FormatInt(f.Id, 10), 64)
+				configData["monitor_id"] = monId
+				configData["relation"] = alertRuleSimplify.Relation
+				configData["value"] = fmt.Sprintf("%d", alertRuleSimplify.Value)
+				config["queries"] = append(config["queries"].([]interface{}), configData)
 				configJson, err := json.Marshal(config)
 				ginx.Dangerous(err)
 				alertRule.Name = alertRuleSimplify.RuleConfigCn
