@@ -92,7 +92,7 @@ config:
             serverity: 1
       - name: 网卡丢包
         metrics: "increase(net_drop_in[1m]) + increase(net_drop_out[1m])"
-        label: {{interface}}
+        label: "{{interface}}"
         rules:
           - name: "网卡丢包"
             relation: ">"
@@ -100,7 +100,7 @@ config:
             serverity: 2
       - name: 网卡错包
         metrics: "increase(net_err_in[1m]) + increase(net_err_out[1m])"
-        label: {{interface}}
+        label: "{{interface}}"
         rules:
           - name: "网卡错包"
             relation: ">"
