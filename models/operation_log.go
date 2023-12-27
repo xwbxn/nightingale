@@ -143,10 +143,10 @@ func FilterLogCount(ctx *ctx.Context, query string, start int64, end int64,
 		str.WriteString("USER like ? ")
 		vals = append(vals, query)
 
-		err = DB(ctx).Debug().Model(&OperationLog{}).Where(str.String(), vals...).
+		err = DB(ctx).Model(&OperationLog{}).Where(str.String(), vals...).
 			Where("`OPER_TIME` BETWEEN ? AND ?", start, end).Count(&num).Error
 	} else {
-		err = DB(ctx).Debug().Model(&OperationLog{}).Where(filterType+" LIKE ? ", query).
+		err = DB(ctx).Model(&OperationLog{}).Where(filterType+" LIKE ? ", query).
 			Where("`OPER_TIME` BETWEEN ? AND ?", start, end).Count(&num).Error
 	}
 	return num, err
@@ -176,10 +176,10 @@ func FilterLogGets(ctx *ctx.Context, query string, offset int, limit int,
 		str.WriteString("USER like ? ")
 		vals = append(vals, query)
 
-		err = session.Debug().Model(&OperationLog{}).Where(str.String(), vals...).
+		err = session.Model(&OperationLog{}).Where(str.String(), vals...).
 			Where("`OPER_TIME` BETWEEN ? AND ?", start, end).Find(&lst).Error
 	} else {
-		err = session.Debug().Model(&OperationLog{}).Where(filterType+" LIKE ? ", query).
+		err = session.Model(&OperationLog{}).Where(filterType+" LIKE ? ", query).
 			Where("`OPER_TIME` BETWEEN ? AND ?", start, end).Find(&lst).Error
 	}
 	return lst, err

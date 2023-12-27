@@ -45,10 +45,10 @@ func (rt *Router) loginPost(c *gin.Context) {
 	//增加用户账号是否禁用校验
 	userGet, errGet := models.UserGetByUsername(rt.Ctx, f.Username)
 	ginx.Dangerous(errGet)
-	if (userGet == &models.User{}) {
+	if userGet == nil {
 		//写入操作日志
-		rt.loginLog(c, f.Username, "该账号未找到", false)
-		ginx.Bomb(http.StatusOK, "该账号未找到！")
+		rt.loginLog(c, f.Username, "用户名或密码无效", false)
+		ginx.Bomb(http.StatusOK, "用户名或密码无效！")
 	}
 	if (*userGet).Status == 0 {
 		rt.loginLog(c, f.Username, "该用户已被禁用", false)
@@ -58,7 +58,7 @@ func (rt *Router) loginPost(c *gin.Context) {
 	if rt.HTTP.ShowCaptcha.Enable {
 		if !CaptchaVerify(f.Captchaid, f.Verifyvalue) {
 			rt.loginLog(c, f.Username, "验证码错误", false)
-			ginx.NewRender(c).Message("incorrect verification code")
+			ginx.NewRender(c).Message("验证码错误")
 			return
 		}
 	}

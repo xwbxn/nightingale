@@ -519,7 +519,7 @@ func AlertCurEventGetByIds(ctx *context.Context, ids []int64) ([]*AlertCurEvent,
 		return lst, nil
 	}
 
-	err := DB(ctx).Debug().Where("id in ?", ids).Order("id desc").Find(&lst).Error
+	err := DB(ctx).Where("id in ?", ids).Order("id desc").Find(&lst).Error
 	if err == nil {
 		for i := 0; i < len(lst); i++ {
 			lst[i].DB2FE()
@@ -733,7 +733,7 @@ func AlertFeList(ctx *context.Context) ([]*FeAlert, error) {
 
 //统计未处理告警
 func AlertCurCount(ctx *context.Context) (num int64, err error) {
-	err = DB(ctx).Debug().Model(&AlertCurEvent{}).Count(&num).Error
+	err = DB(ctx).Model(&AlertCurEvent{}).Count(&num).Error
 	return num, err
 }
 
@@ -823,9 +823,9 @@ func AlertEventXHTotalNew(ctx *context.Context, alertType, start, end int64, ids
 	var num int64
 	var err error
 	if alertType == 1 {
-		err = session.Debug().Model(&AlertCurEvent{}).Count(&num).Error
+		err = session.Model(&AlertCurEvent{}).Count(&num).Error
 	} else if alertType == 2 {
-		err = session.Debug().Where("is_recovered != 0").Model(&AlertHisEvent{}).Count(&num).Error
+		err = session.Where("is_recovered != 0").Model(&AlertHisEvent{}).Count(&num).Error
 	}
 
 	return num, err
@@ -865,9 +865,9 @@ func AlertEventXHGetsNew[T any](ctx *context.Context, alertType, start, end int6
 	// var lst []T
 	// var err error
 	if alertType == 1 {
-		err = session.Debug().Model(&AlertCurEvent{}).Find(&t).Error
+		err = session.Model(&AlertCurEvent{}).Find(&t).Error
 	} else if alertType == 2 {
-		err = session.Debug().Where("is_recovered != 0").Model(&AlertHisEvent{}).Find(&t).Error
+		err = session.Where("is_recovered != 0").Model(&AlertHisEvent{}).Find(&t).Error
 	}
 	// for index := range lst {
 	// 	lst[index].DB2FE()

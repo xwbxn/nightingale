@@ -1564,6 +1564,7 @@ CREATE TABLE `license_config`  (
   `NODES` int(0) DEFAULT NULL COMMENT '剩余节点数',
   `FREQUENCY` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '提醒频率',
   `EMAIL` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '邮箱',
+  `CLIENT` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '客户',
   `CREATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '创建人',
   `CREATED_AT` int(0) NOT NULL DEFAULT 0 COMMENT '创建时间',
   `UPDATED_BY` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT '0' COMMENT '更新人',
@@ -1572,4 +1573,4 @@ CREATE TABLE `license_config`  (
   PRIMARY KEY (`ID`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '许可配置' ROW_FORMAT = Dynamic;
 
-INSERT INTO `license_config` VALUES (1, 10, 30, 'once', '', 'root', 1701243521, 'root', 1701312136, NULL);
+INSERT INTO `license_config` VALUES (1, 10, 30, 'once', '', '', 'root', 1701243521, 'root', 1701312136, NULL);

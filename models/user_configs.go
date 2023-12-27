@@ -68,7 +68,7 @@ type LogoConfig struct {
 // 查询用户Logo相关信息
 func UserLogoConfigGet(ctx *ctx.Context) (*UserConfig, error) {
 	var lst *UserConfig
-	err := DB(ctx).Debug().Model(&UserConfig{}).Where("id", 1).Find(&lst).Error
+	err := DB(ctx).Model(&UserConfig{}).Where("id", 1).Find(&lst).Error
 
 	return lst, err
 }
@@ -87,7 +87,7 @@ func UserConfigGetById(ctx *ctx.Context, id int64) (*UserConfig, error) {
 func UserConfigGet(ctx *ctx.Context) (*UserConfig, error) {
 	var lst []*UserConfig
 
-	err := ctx.DB.Debug().Where("id", 1).Find(&lst).Error
+	err := ctx.DB.Where("id", 1).Find(&lst).Error
 
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func UserConfigGet(ctx *ctx.Context) (*UserConfig, error) {
 // 按id更新
 func UserConfigUpdateById(ctx *ctx.Context, id int64) error {
 	var lst *UserConfig
-	err := DB(ctx).Debug().Where("id", 1).Find(&lst).Error
+	err := DB(ctx).Where("id", 1).Find(&lst).Error
 	if lst.HttpHost != "" {
 		lst.HttpHost = ""
 	}
@@ -119,14 +119,14 @@ func UserConfigUpdateById(ctx *ctx.Context, id int64) error {
 
 // 更新Logo信息
 func (lst *UserConfig) UserLogoUpdate(ctx *ctx.Context) error {
-	err := ctx.DB.Debug().Model(&UserConfig{}).Where("ID", 1).Omit("CREATED_BY", "CREATED_AT", "UPDATED_BY", "UPDATED_AT").Updates(lst).Error
+	err := ctx.DB.Model(&UserConfig{}).Where("ID", 1).Omit("CREATED_BY", "CREATED_AT", "UPDATED_BY", "UPDATED_AT").Updates(lst).Error
 	return err
 }
 
 // 查询图片路径
 func LogoPathGet(ctx *ctx.Context) (*LogoConfig, error) {
 	var res *LogoConfig
-	err := ctx.DB.Debug().Model(&UserConfig{}).Where("ID", 1).Find(&res).Error
+	err := ctx.DB.Model(&UserConfig{}).Where("ID", 1).Find(&res).Error
 	return res, err
 }
 

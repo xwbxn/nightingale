@@ -118,13 +118,13 @@ func (u *User) TableName() string {
 
 // 批量修改
 func UpdateBatch(ctx *context.Context, ids []int64, where map[string]interface{}) error {
-	return DB(ctx).Debug().Model(&User{}).Where("id in ?", ids).Updates(where).Error
+	return DB(ctx).Model(&User{}).Where("id in ?", ids).Updates(where).Error
 }
 
 // 批量删除用户
 func UserBatchDel(ctx *context.Context, ids []int64) error {
 	// TODO: 此处删除逻辑不全，需要用户组中移除用户，删除用户默认看板
-	return DB(ctx).Debug().Where("id in ?", ids).Delete(&User{}).Error
+	return DB(ctx).Where("id in ?", ids).Delete(&User{}).Error
 }
 
 func (u *User) DB2FE() error {
@@ -358,7 +358,7 @@ func UserGet(ctx *context.Context, where string, args ...interface{}) (*User, er
 func UserGetXH(ctx *ctx.Context, id int64) (*UserInfo, error) {
 	var obj *UserInfo
 	logger.Debug(id)
-	err := DB(ctx).Debug().Model(&User{}).Where("id = ?", id).Find(&obj).Error
+	err := DB(ctx).Model(&User{}).Where("id = ?", id).Find(&obj).Error
 	if err != nil {
 		return nil, err
 	}
@@ -873,7 +873,7 @@ func UserFilterCountMap(ctx *context.Context, role, query string, status int64, 
 		}
 	}
 
-	err = session.Debug().Model(&User{}).Count(&num).Error
+	err = session.Model(&User{}).Count(&num).Error
 	return num, err
 }
 
@@ -917,9 +917,9 @@ func UserFilterMap(ctx *context.Context, role, query string, status int64, limit
 		}
 	}
 
-	err = session.Debug().Model(&User{}).Find(&lst).Error
+	err = session.Model(&User{}).Find(&lst).Error
 
-	// err = session.Debug().Model(&User{}).Joins("LEFT JOIN user_group_member ugm ON ugm.user_id = users.id").
+	// err = session.Model(&User{}).Joins("LEFT JOIN user_group_member ugm ON ugm.user_id = users.id").
 	// 	Joins("LEFT JOIN user_group ug ON ugm.group_id = ug.id").Select("users.*,GROUP_CONCAT(ug.name) AS name").Where(where).
 	// 	Where(str.String(), vals...).Group("users.id").Find(&lst).Error
 
@@ -967,7 +967,7 @@ func UserCountMap(ctx *context.Context, role, query string, useGroupId, status i
 		session = session.Where("roles like ?", "%"+role+"%")
 	}
 
-	err = session.Debug().Model(&User{}).Count(&num).Error
+	err = session.Model(&User{}).Count(&num).Error
 	return num, err
 }
 
@@ -1004,9 +1004,9 @@ func UserMap(ctx *context.Context, role, query string, useGroupId, status int64,
 		session = session.Where("roles like ?", "%"+role+"%")
 	}
 
-	err = session.Debug().Model(&User{}).Find(&lst).Error
+	err = session.Model(&User{}).Find(&lst).Error
 
-	// err = session.Debug().Model(&User{}).Joins("LEFT JOIN user_group_member ugm ON ugm.user_id = users.id").
+	// err = session.Model(&User{}).Joins("LEFT JOIN user_group_member ugm ON ugm.user_id = users.id").
 	// 	Joins("LEFT JOIN user_group ug ON ugm.group_id = ug.id").Select("users.*,GROUP_CONCAT(ug.name) AS name").Where(where).
 	// 	Where(str.String(), vals...).Group("users.id").Find(&lst).Error
 

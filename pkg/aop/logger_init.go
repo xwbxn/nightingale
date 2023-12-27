@@ -42,10 +42,10 @@ func LoggerToFile() gin.HandlerFunc {
 		c.Next()
 
 		// 结束时间
-		endTime := time.Now()
+		// endTime := time.Now()
 
 		// 执行时间
-		latencyTime := endTime.Sub(startTime)
+		// latencyTime := endTime.Sub(startTime)
 
 		// 请求方式
 		reqMethod := c.Request.Method
@@ -59,11 +59,11 @@ func LoggerToFile() gin.HandlerFunc {
 
 		key := c.Keys
 
-		accepted := c.Accepted
+		// accepted := c.Accepted
 
-		url := c.Request.URL
+		// url := c.Request.URL
 
-		body := c.Request.PostForm
+		// body := c.Request.PostForm
 
 		userName := ""
 		user, ok := key["username"]
@@ -139,19 +139,19 @@ func LoggerToFile() gin.HandlerFunc {
 
 		}
 		// 日志格式
-		logger.WithFields(logrus.Fields{
-			"status_code":  statusCode,
-			"latency_time": latencyTime,
-			"client_ip":    clientIP,
-			"req_method":   reqMethod,
-			"req_uri":      reqUri,
-			"type":         operType,
-			"params":       params,
-			"key":          key,
-			"accepted":     accepted,
-			"url":          url,
-			"body":         body,
-		}).Info()
+		// logger.WithFields(logrus.Fields{
+		// 	"status_code":  statusCode,
+		// 	"latency_time": latencyTime,
+		// 	"client_ip":    clientIP,
+		// 	"req_method":   reqMethod,
+		// 	"req_uri":      reqUri,
+		// 	"type":         operType,
+		// 	"params":       params,
+		// 	"key":          key,
+		// 	"accepted":     accepted,
+		// 	"url":          url,
+		// 	"body":         body,
+		// }).Info()
 	}
 }
 
