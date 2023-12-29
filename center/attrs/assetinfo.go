@@ -110,6 +110,10 @@ func (as *Attr) updateExtraProps(asset *models.Asset) {
 					if val, err := strconv.Atoi(string(v)); err == nil {
 						safeVal = humanize.Bytes(uint64(val))
 					}
+				case models.MB:
+					if val, err := strconv.Atoi(string(v)); err == nil {
+						safeVal = humanize.IBytes(uint64(val) * 1024 * 1024)
+					}
 				case models.Bit:
 					if val, err := strconv.Atoi(string(v)); err == nil {
 						safeVal = humanize.SI(float64(val), "b")

@@ -144,7 +144,8 @@ func (rt *Router) configNoRoute(r *gin.Engine, fs *http.FileSystem) {
 			}
 			cwdarr = append(cwdarr, strings.Split(runner.Cwd, "/")...)
 			cwdarr = append(cwdarr, "dataroom")
-			filename := strings.ReplaceAll(c.Request.URL.Path, "/dataroom/", "")
+			filename := strings.ReplaceAll(c.Request.URL.Path, "/dataroom", "")
+			filename = strings.ReplaceAll(filename, "..", "") // bug fix
 			if filename == "" || filename == "/" {
 				filename = "/index.html"
 			}

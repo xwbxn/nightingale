@@ -159,9 +159,9 @@ config:
               label: 主频(Mhz)
               type: input
             - name: capacity
-              label: 容量(M)
+              label: 容量
               type: input
-              unit: byte
+              unit: mb
         
       disk:
         label: 磁盘信息

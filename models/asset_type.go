@@ -49,6 +49,7 @@ const (
 	Byte Unit = "byte"
 	Bit  Unit = "bit"
 	Time Unit = "time"
+	MB   Unit = "mb"
 )
 
 type BaseProp struct {
