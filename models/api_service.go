@@ -137,13 +137,13 @@ func (as *ApiService) IsDangerous() bool {
 	return true
 }
 
-type Serie struct {
+type ApiSerie struct {
 	SeriesName string                   `json:"seriesName"`
 	DataPoint  []map[string]interface{} `json:"data"`
 }
 
-type Series struct {
-	Series []Serie `json:"series"`
+type ApiSeries struct {
+	Series []ApiSerie `json:"series"`
 }
 
 // 执行api接口

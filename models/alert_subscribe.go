@@ -40,6 +40,7 @@ type AlertSubscribe struct {
 	WebhooksJson      []string     `json:"webhooks" gorm:"-"`
 	ExtraConfig       string       `json:"-" grom:"extra_config"`
 	ExtraConfigJson   interface{}  `json:"extra_config" gorm:"-"` // for fe
+	Note              string       `json:"note"`
 	CreateBy          string       `json:"create_by"`
 	CreateAt          int64        `json:"create_at"`
 	UpdateBy          string       `json:"update_by"`
@@ -55,6 +56,11 @@ func (s *AlertSubscribe) TableName() string {
 
 func AlertSubscribeGets(ctx *ctx.Context, groupId int64) (lst []AlertSubscribe, err error) {
 	err = DB(ctx).Where("group_id=?", groupId).Order("id desc").Find(&lst).Error
+	return
+}
+
+func AlertSubscribeGetsByBGIds(ctx *ctx.Context, bgIds []int64) (lst []AlertSubscribe, err error) {
+	err = DB(ctx).Where("group_id in (?)", bgIds).Order("id desc").Find(&lst).Error
 	return
 }
 
@@ -96,8 +102,9 @@ func (s *AlertSubscribe) Verify() error {
 	if err := s.Parse(); err != nil {
 		return err
 	}
-	if len(s.IBusiGroups) == 0 && len(s.ITags) == 0 && s.RuleId == 0 {
-		return errors.New("none of busi_groups, rule_id, and tags have been assigned any values.")
+
+	if len(s.SeveritiesJson) == 0 {
+		return errors.New("severities is required")
 	}
 
 	ugids := strings.Fields(s.UserGroupIds)
@@ -111,11 +118,10 @@ func (s *AlertSubscribe) Verify() error {
 }
 
 func (s *AlertSubscribe) FE2DB() error {
-	idsByte, err := json.Marshal(s.DatasourceIdsJson)
-	if err != nil {
-		return err
+	if len(s.DatasourceIdsJson) > 0 {
+		idsByte, _ := json.Marshal(s.DatasourceIdsJson)
+		s.DatasourceIds = string(idsByte)
 	}
-	s.DatasourceIds = string(idsByte)
 
 	if len(s.WebhooksJson) > 0 {
 		b, _ := json.Marshal(s.WebhooksJson)
@@ -323,6 +329,10 @@ func AlertSubscribeGetsAll(ctx *ctx.Context) ([]*AlertSubscribe, error) {
 }
 
 func (s *AlertSubscribe) MatchProd(prod string) bool {
+	//Replace 'prod' with optional item
+	if s.Prod == "" {
+		return true
+	}
 	return s.Prod == prod
 }
 

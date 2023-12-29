@@ -3,12 +3,8 @@ package sender
 import (
 	"html/template"
 	"strings"
-	"time"
 
 	"github.com/ccfos/nightingale/v6/models"
-	"github.com/ccfos/nightingale/v6/pkg/poster"
-
-	"github.com/toolkits/pkg/logger"
 )
 
 type feishuContent struct {
@@ -35,7 +31,7 @@ func (fs *FeishuSender) Send(ctx MessageContext) {
 		return
 	}
 	urls, ats := fs.extract(ctx.Users)
-	message := BuildTplMessage(fs.tpl, ctx.Events)
+	message := BuildTplMessage(models.Feishu, fs.tpl, ctx.Events)
 	for _, url := range urls {
 		body := feishu{
 			Msgtype: "text",
@@ -49,7 +45,7 @@ func (fs *FeishuSender) Send(ctx MessageContext) {
 				IsAtAll:   false,
 			}
 		}
-		fs.doSend(url, body)
+		doSend(url, body, models.Feishu, ctx.Stats)
 	}
 }
 
@@ -63,20 +59,11 @@ func (fs *FeishuSender) extract(users []*models.User) ([]string, []string) {
 		}
 		if token, has := user.ExtractToken(models.Feishu); has {
 			url := token
-			if !strings.HasPrefix(token, "https://") {
+			if !strings.HasPrefix(token, "https://") && !strings.HasPrefix(token, "http://") {
 				url = "https://open.feishu.cn/open-apis/bot/v2/hook/" + token
 			}
 			urls = append(urls, url)
 		}
 	}
 	return urls, ats
-}
-
-func (fs *FeishuSender) doSend(url string, body feishu) {
-	res, code, err := poster.PostJSON(url, time.Second*5, body, 3)
-	if err != nil {
-		logger.Errorf("feishu_sender: result=fail url=%s code=%d error=%v response=%s", url, code, err, string(res))
-	} else {
-		logger.Infof("feishu_sender: result=succ url=%s code=%d response=%s", url, code, string(res))
-	}
 }

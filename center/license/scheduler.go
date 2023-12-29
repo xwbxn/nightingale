@@ -80,6 +80,5 @@ func send(license *models.License, licenseConfig *models.LicenseConfig, now int6
 	}
 	tos := strings.Split(licenseConfig.Email, ",")
 
-	var es *sender.EmailSender
-	es.SendEmail(subject, content, tos, stmp)
+	sender.SendEmail(subject, content, tos, stmp)
 }

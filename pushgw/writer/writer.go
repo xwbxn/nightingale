@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/golang/snappy"
 	"github.com/prometheus/client_golang/api"
 	"github.com/prometheus/prometheus/prompb"
-	"github.com/toolkits/pkg/concurrent/semaphore"
 	"github.com/toolkits/pkg/logger"
 )
 
@@ -25,12 +25,12 @@ type WriterType struct {
 	Client           api.Client
 }
 
-func (w WriterType) writeRelabel(items []*prompb.TimeSeries) []*prompb.TimeSeries {
-	ritems := make([]*prompb.TimeSeries, 0, len(items))
+func (w WriterType) writeRelabel(items []prompb.TimeSeries) []prompb.TimeSeries {
+	ritems := make([]prompb.TimeSeries, 0, len(items))
 	for _, item := range items {
-		refLables := []*prompb.Label{}
+		refLables := []prompb.Label{}
 		for _, l := range item.Labels {
-			refLables = append(refLables, &l)
+			refLables = append(refLables, l)
 		}
 		lbls := Process(refLables, w.Opts.WriteRelabels...)
 		if len(lbls) == 0 {
@@ -41,8 +41,7 @@ func (w WriterType) writeRelabel(items []*prompb.TimeSeries) []*prompb.TimeSerie
 	return ritems
 }
 
-func (w WriterType) Write(items []*prompb.TimeSeries, sema *semaphore.Semaphore, headers ...map[string]string) {
-	defer sema.Release()
+func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[string]string) {
 	if len(items) == 0 {
 		return
 	}
@@ -51,6 +50,12 @@ func (w WriterType) Write(items []*prompb.TimeSeries, sema *semaphore.Semaphore,
 	if len(items) == 0 {
 		return
 	}
+
+	CounterWirteTotal.WithLabelValues(key).Add(float64(len(items)))
+	start := time.Now()
+	defer func() {
+		ForwardDuration.WithLabelValues(key).Observe(time.Since(start).Seconds())
+	}()
 
 	if w.ForceUseServerTS {
 		ts := time.Now().UnixMilli()
@@ -64,7 +69,7 @@ func (w WriterType) Write(items []*prompb.TimeSeries, sema *semaphore.Semaphore,
 
 	refItems := []prompb.TimeSeries{}
 	for _, item := range items {
-		refItems = append(refItems, *item)
+		refItems = append(refItems, item)
 	}
 	req := &prompb.WriteRequest{
 		Timeseries: refItems,
@@ -77,62 +82,71 @@ func (w WriterType) Write(items []*prompb.TimeSeries, sema *semaphore.Semaphore,
 	}
 
 	if err := w.Post(snappy.Encode(nil, data), headers...); err != nil {
+		CounterWirteErrorTotal.WithLabelValues(key).Add(float64(len(items)))
 		logger.Warningf("post to %s got error: %v", w.Opts.Url, err)
 		logger.Warning("example timeseries:", items[0].String())
 	}
 }
 
 func (w WriterType) Post(req []byte, headers ...map[string]string) error {
-	httpReq, err := http.NewRequest("POST", w.Opts.Url, bytes.NewReader(req))
-	if err != nil {
-		logger.Warningf("create remote write request got error: %s", err.Error())
-		return err
-	}
-
-	httpReq.Header.Add("Content-Encoding", "snappy")
-	httpReq.Header.Set("Content-Type", "application/x-protobuf")
-	httpReq.Header.Set("User-Agent", "n9e")
-	httpReq.Header.Set("X-Prometheus-Remote-Write-Version", "0.1.0")
-
-	if len(headers) > 0 {
-		for k, v := range headers[0] {
-			httpReq.Header.Set(k, v)
+	urls := strings.Split(w.Opts.Url, ",")
+	var err error
+	var httpReq *http.Request
+	for _, url := range urls {
+		httpReq, err = http.NewRequest("POST", url, bytes.NewReader(req))
+		if err != nil {
+			logger.Warningf("create remote write:%s request got error: %s", url, err.Error())
+			continue
 		}
-	}
 
-	if w.Opts.BasicAuthUser != "" {
-		httpReq.SetBasicAuth(w.Opts.BasicAuthUser, w.Opts.BasicAuthPass)
-	}
+		httpReq.Header.Add("Content-Encoding", "snappy")
+		httpReq.Header.Set("Content-Type", "application/x-protobuf")
+		httpReq.Header.Set("User-Agent", "n9e")
+		httpReq.Header.Set("X-Prometheus-Remote-Write-Version", "0.1.0")
 
-	headerCount := len(w.Opts.Headers)
-	if headerCount > 0 && headerCount%2 == 0 {
-		for i := 0; i < len(w.Opts.Headers); i += 2 {
-			httpReq.Header.Add(w.Opts.Headers[i], w.Opts.Headers[i+1])
-			if w.Opts.Headers[i] == "Host" {
-				httpReq.Host = w.Opts.Headers[i+1]
+		if len(headers) > 0 {
+			for k, v := range headers[0] {
+				httpReq.Header.Set(k, v)
 			}
 		}
+
+		if w.Opts.BasicAuthUser != "" {
+			httpReq.SetBasicAuth(w.Opts.BasicAuthUser, w.Opts.BasicAuthPass)
+		}
+
+		headerCount := len(w.Opts.Headers)
+		if headerCount > 0 && headerCount%2 == 0 {
+			for i := 0; i < len(w.Opts.Headers); i += 2 {
+				httpReq.Header.Add(w.Opts.Headers[i], w.Opts.Headers[i+1])
+				if w.Opts.Headers[i] == "Host" {
+					httpReq.Host = w.Opts.Headers[i+1]
+				}
+			}
+		}
+
+		resp, body, e := w.Client.Do(context.Background(), httpReq)
+		if e != nil {
+			logger.Warningf("push data with remote write:%s request got error: %v, response body: %s", url, e, string(body))
+			err = e
+			continue
+		}
+
+		if resp.StatusCode >= 400 {
+			err = fmt.Errorf("push data with remote write:%s request got status code: %v, response body: %s", url, resp.StatusCode, string(body))
+			logger.Warning(err)
+			continue
+		}
+
+		break
 	}
 
-	resp, body, err := w.Client.Do(context.Background(), httpReq)
-	if err != nil {
-		logger.Warningf("push data with remote write request got error: %v, response body: %s", err, string(body))
-		return err
-	}
-
-	if resp.StatusCode >= 400 {
-		err = fmt.Errorf("push data with remote write request got status code: %v, response body: %s", resp.StatusCode, string(body))
-		return err
-	}
-
-	return nil
+	return err
 }
 
 type WritersType struct {
 	pushgw   pconf.Pushgw
 	backends map[string]WriterType
 	queues   map[string]*IdentQueue
-	sema     *semaphore.Semaphore
 	sync.RWMutex
 }
 
@@ -142,12 +156,21 @@ type IdentQueue struct {
 	ts      int64
 }
 
+func (ws *WritersType) ReportQueueStats(ident string, identQueue *IdentQueue) (interface{}, bool) {
+	for {
+		time.Sleep(60 * time.Second)
+		count := identQueue.list.Len()
+		if count > ws.pushgw.IdentStatsThreshold {
+			GaugeSampleQueueSize.WithLabelValues(ident).Set(float64(count))
+		}
+	}
+}
+
 func NewWriters(pushgwConfig pconf.Pushgw) *WritersType {
 	writers := &WritersType{
 		backends: make(map[string]WriterType),
 		queues:   make(map[string]*IdentQueue),
 		pushgw:   pushgwConfig,
-		sema:     semaphore.NewSemaphore(pushgwConfig.WriteConcurrency),
 	}
 
 	writers.Init()
@@ -195,6 +218,7 @@ func (ws *WritersType) PushSample(ident string, v interface{}) {
 		ws.queues[ident] = identQueue
 		ws.Unlock()
 
+		go ws.ReportQueueStats(ident, identQueue)
 		go ws.StartConsumer(identQueue)
 	}
 
@@ -202,6 +226,7 @@ func (ws *WritersType) PushSample(ident string, v interface{}) {
 	succ := identQueue.list.PushFront(v)
 	if !succ {
 		logger.Warningf("Write channel(%s) full, current channel size: %d", ident, identQueue.list.Len())
+		CounterPushQueueErrorTotal.WithLabelValues(ident).Inc()
 	}
 }
 
@@ -218,8 +243,7 @@ func (ws *WritersType) StartConsumer(identQueue *IdentQueue) {
 				continue
 			}
 			for key := range ws.backends {
-				ws.sema.Acquire()
-				go ws.backends[key].Write(series, ws.sema)
+				ws.backends[key].Write(key, series)
 			}
 		}
 	}

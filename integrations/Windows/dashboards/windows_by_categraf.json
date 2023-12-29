@@ -1290,10 +1290,13 @@
                 "name": "ident",
                 "type": "query",
                 "datasource": {
-                    "cate": "prometheus",
-                    "value": "${prom}"
+                    "cate": "prometheus"
                 },
+<<<<<<< HEAD
                 "definition": "label_values(system_load1{disk_used_percent{device=~\".+:\"},ident)",
+=======
+                "definition": "label_values(disk_used_percent{device=~\".+:\"},ident)",
+>>>>>>> 0f937ad6d07879c4fb94191b7d27bbe64c4e2ad7
                 "multi": true,
                 "allOption": true
             }

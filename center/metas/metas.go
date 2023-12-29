@@ -77,7 +77,7 @@ func (s *Set) updateMeta(items map[string]models.HostMeta) {
 	num := 0
 
 	for _, meta := range items {
-		m[meta.IpAddress] = meta
+		m[meta.HostIp] = meta
 		num++
 		if num == 100 {
 			if err := s.updateTargets(m); err != nil {
@@ -111,12 +111,12 @@ func (s *Set) updateTargets(m map[string]models.HostMeta) error {
 			asset := models.Asset{
 				Ident:   new.Hostname,
 				Name:    new.Hostname,
-				Label:   new.IpAddress,
+				Label:   new.HostIp,
 				GroupId: 1,
 				Type:    "主机设备",
 				Memo:    "自动注册",
 				Plugin:  "host",
-				Ip:      new.IpAddress,
+				Ip:      new.HostIp,
 			}
 			params, _ := json.Marshal(asset)
 			asset.Params = string(params)
@@ -136,9 +136,30 @@ func (s *Set) updateTargets(m map[string]models.HostMeta) error {
 	}
 
 	newMap := make(map[string]interface{}, count)
+	extendMap := make(map[string]interface{})
 	for ident, meta := range m {
+		if meta.ExtendInfo != nil {
+			extendMeta := meta.ExtendInfo
+			meta.ExtendInfo = make(map[string]interface{})
+			extendMetaStr, err := json.Marshal(extendMeta)
+			if err != nil {
+				return err
+			}
+			extendMap[models.WrapExtendIdent(ident)] = extendMetaStr
+		}
 		newMap[models.WrapIdent(ident)] = meta
 	}
 	err := storage.MSet(context.Background(), s.redis, newMap)
+	if err != nil {
+		return err
+	}
+
+	if len(extendMap) > 0 {
+		err = storage.MSet(context.Background(), s.redis, extendMap)
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 }

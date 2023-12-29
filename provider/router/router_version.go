@@ -31,15 +31,15 @@ func getNewVersion(c *gin.Context, rt *Router) *models.TargetVersion {
 		ginx.Bomb(404, "not found")
 	}
 
-	if target.LatestVersion == "" {
+	if target.AgentVersion == "" {
 		ginx.Bomb(200, "not upgradable")
 	}
 
-	if target.LatestVersion == version {
+	if target.AgentVersion == version {
 		ginx.Bomb(200, "already latest")
 	}
 
-	new_version, err := models.TargetVersionGet(rt.Ctx, target.LatestVersion, os, arch)
+	new_version, err := models.TargetVersionGet(rt.Ctx, target.AgentVersion, os, arch)
 	if err != nil {
 		ginx.Bomb(500, "latest version error")
 	}

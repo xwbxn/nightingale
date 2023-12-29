@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ccfos/nightingale/v6/alert/aconf"
+	"github.com/ccfos/nightingale/v6/alert/astats"
 	"github.com/ccfos/nightingale/v6/alert/common"
 	"github.com/ccfos/nightingale/v6/alert/sender"
 	"github.com/ccfos/nightingale/v6/memsto"
@@ -33,7 +34,8 @@ type Dispatch struct {
 	ExtraSenders     map[string]sender.Sender
 	BeforeSenderHook func(*models.AlertCurEvent) bool
 
-	ctx *ctx.Context
+	ctx    *ctx.Context
+	Astats *astats.Stats
 
 	RwLock sync.RWMutex
 }
@@ -41,7 +43,7 @@ type Dispatch struct {
 // 创建一个 Notify 实例
 func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.UserCacheType, userGroupCache *memsto.UserGroupCacheType,
 	alertSubscribeCache *memsto.AlertSubscribeCacheType, targetCache *memsto.TargetCacheType, notifyConfigCache *memsto.NotifyConfigCacheType,
-	alerting aconf.Alerting, ctx *ctx.Context) *Dispatch {
+	alerting aconf.Alerting, ctx *ctx.Context, astats *astats.Stats) *Dispatch {
 	notify := &Dispatch{
 		alertRuleCache:      alertRuleCache,
 		userCache:           userCache,
@@ -57,7 +59,8 @@ func NewDispatch(alertRuleCache *memsto.AlertRuleCacheType, userCache *memsto.Us
 		ExtraSenders:     make(map[string]sender.Sender),
 		BeforeSenderHook: func(*models.AlertCurEvent) bool { return true },
 
-		ctx: ctx,
+		ctx:    ctx,
+		Astats: astats,
 	}
 	return notify
 }
@@ -86,12 +89,12 @@ func (e *Dispatch) relaodTpls() error {
 
 	senders := map[string]sender.Sender{
 		models.Email:      sender.NewSender(models.Email, tmpTpls, smtp),
-		models.Dingtalk:   sender.NewSender(models.Dingtalk, tmpTpls, smtp),
-		models.Wecom:      sender.NewSender(models.Wecom, tmpTpls, smtp),
-		models.Feishu:     sender.NewSender(models.Feishu, tmpTpls, smtp),
-		models.Mm:         sender.NewSender(models.Mm, tmpTpls, smtp),
-		models.Telegram:   sender.NewSender(models.Telegram, tmpTpls, smtp),
-		models.FeishuCard: sender.NewSender(models.FeishuCard, tmpTpls, smtp),
+		models.Dingtalk:   sender.NewSender(models.Dingtalk, tmpTpls),
+		models.Wecom:      sender.NewSender(models.Wecom, tmpTpls),
+		models.Feishu:     sender.NewSender(models.Feishu, tmpTpls),
+		models.Mm:         sender.NewSender(models.Mm, tmpTpls),
+		models.Telegram:   sender.NewSender(models.Telegram, tmpTpls),
+		models.FeishuCard: sender.NewSender(models.FeishuCard, tmpTpls),
 	}
 
 	e.RwLock.RLock()
@@ -206,7 +209,10 @@ func (e *Dispatch) handleSub(sub *models.AlertSubscribe, event models.AlertCurEv
 		}
 	}
 
+	e.Astats.CounterSubEventTotal.WithLabelValues(event.GroupName).Inc()
 	sub.ModifyEvent(&event)
+	event.SubRuleId = sub.Id
+
 	LogEvent(&event, "subscribe")
 
 	event.SubRuleId = sub.Id
@@ -217,7 +223,7 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	needSend := e.BeforeSenderHook(event)
 	if needSend {
 		for channel, uids := range notifyTarget.ToChannelUserMap() {
-			msgCtx := sender.BuildMessageContext(rule, []*models.AlertCurEvent{event}, uids, e.userCache)
+			msgCtx := sender.BuildMessageContext(rule, []*models.AlertCurEvent{event}, uids, e.userCache, e.Astats)
 			e.RwLock.RLock()
 			s := e.Senders[channel]
 			e.RwLock.RUnlock()
@@ -230,13 +236,13 @@ func (e *Dispatch) Send(rule *models.AlertRule, event *models.AlertCurEvent, not
 	}
 
 	// handle event callbacks
-	sender.SendCallbacks(e.ctx, notifyTarget.ToCallbackList(), event, e.targetCache, e.userCache, e.notifyConfigCache.GetIbex())
+	sender.SendCallbacks(e.ctx, notifyTarget.ToCallbackList(), event, e.targetCache, e.userCache, e.notifyConfigCache.GetIbex(), e.Astats)
 
 	// handle global webhooks
-	sender.SendWebhooks(notifyTarget.ToWebhookList(), event)
+	sender.SendWebhooks(notifyTarget.ToWebhookList(), event, e.Astats)
 
 	// handle plugin call
-	go sender.MayPluginNotify(e.genNoticeBytes(event), e.notifyConfigCache.GetNotifyScript())
+	go sender.MayPluginNotify(e.genNoticeBytes(event), e.notifyConfigCache.GetNotifyScript(), e.Astats)
 }
 
 type Notice struct {
