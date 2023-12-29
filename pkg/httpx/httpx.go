@@ -12,6 +12,7 @@ import (
 	"github.com/ccfos/nightingale/v6/center/ws"
 	"github.com/ccfos/nightingale/v6/pkg/aop"
 	"github.com/ccfos/nightingale/v6/pkg/version"
+
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -24,6 +25,7 @@ type Config struct {
 	KeyFile          string
 	PProf            bool
 	PrintAccessLog   bool
+	PrintBody        bool
 	ExposeMetrics    bool
 	ShutdownTimeout  int
 	MaxContentLength int64
@@ -76,7 +78,7 @@ type JWTAuth struct {
 func GinEngine(mode string, cfg Config) *gin.Engine {
 	gin.SetMode(mode)
 
-	loggerMid := aop.Logger()
+	loggerMid := aop.Logger(aop.LoggerConfig{PrintBody: cfg.PrintBody})
 	recoveryMid := aop.Recovery()
 
 	if strings.ToLower(mode) == "release" {
@@ -166,23 +168,4 @@ func Init(cfg Config, handler http.Handler) func() {
 			fmt.Println("http server stopped")
 		}
 	}
-}
-
-func InitRSAConfig(rsaConfig *RSAConfig) {
-	if !rsaConfig.OpenRSA {
-		return
-	}
-	// 读取公钥配置文件
-	//获取文件内容
-	publicBuf, err := os.ReadFile(rsaConfig.RSAPublicKeyPath)
-	if err != nil {
-		panic(fmt.Errorf("could not read RSAPublicKeyPath %q: %v", rsaConfig.RSAPublicKeyPath, err))
-	}
-	rsaConfig.RSAPublicKey = publicBuf
-	// 读取私钥配置文件
-	privateBuf, err := os.ReadFile(rsaConfig.RSAPrivateKeyPath)
-	if err != nil {
-		panic(fmt.Errorf("could not read RSAPrivateKeyPath %q: %v", rsaConfig.RSAPrivateKeyPath, err))
-	}
-	rsaConfig.RSAPrivateKey = privateBuf
 }

@@ -18,7 +18,6 @@ import (
 	"github.com/ccfos/nightingale/v6/models"
 	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
-	"github.com/ccfos/nightingale/v6/prom"
 	"github.com/toolkits/pkg/logger"
 	"github.com/toolkits/pkg/str"
 )
@@ -67,9 +66,8 @@ type Processor struct {
 	alertMuteCache  *memsto.AlertMuteCacheType
 	datasourceCache *memsto.DatasourceCacheType
 
-	promClients *prom.PromClientMap
-	ctx         *ctx.Context
-	stats       *astats.Stats
+	ctx   *ctx.Context
+	Stats *astats.Stats
 
 	HandleFireEventHook    HandleEventFunc
 	HandleRecoverEventHook HandleEventFunc
@@ -94,7 +92,7 @@ func (p *Processor) Hash() string {
 }
 
 func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *memsto.AlertRuleCacheType, targetCache *memsto.TargetCacheType,
-	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType, promClients *prom.PromClientMap, ctx *ctx.Context,
+	busiGroupCache *memsto.BusiGroupCacheType, alertMuteCache *memsto.AlertMuteCacheType, datasourceCache *memsto.DatasourceCacheType, ctx *ctx.Context,
 	stats *astats.Stats) *Processor {
 
 	p := &Processor{
@@ -107,9 +105,8 @@ func NewProcessor(rule *models.AlertRule, datasourceId int64, atertRuleCache *me
 		atertRuleCache:  atertRuleCache,
 		datasourceCache: datasourceCache,
 
-		promClients: promClients,
-		ctx:         ctx,
-		stats:       stats,
+		ctx:   ctx,
+		Stats: stats,
 
 		HandleFireEventHook:    func(event *models.AlertCurEvent) {},
 		HandleRecoverEventHook: func(event *models.AlertCurEvent) {},
@@ -128,8 +125,10 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 	cachedRule := p.atertRuleCache.Get(p.rule.Id)
 	if cachedRule == nil {
 		logger.Errorf("rule not found %+v", anomalyPoints)
+		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "handle_event").Inc()
 		return
 	}
+
 	p.rule = cachedRule
 	now := time.Now().Unix()
 	alertingKeys := map[string]struct{}{}
@@ -142,11 +141,14 @@ func (p *Processor) Handle(anomalyPoints []common.AnomalyPoint, from string, inh
 		hash := event.Hash
 		alertingKeys[hash] = struct{}{}
 		if mute.IsMuted(cachedRule, event, p.TargetCache, p.alertMuteCache) {
+			p.Stats.CounterMuteTotal.WithLabelValues(event.GroupName).Inc()
 			logger.Debugf("rule_eval:%s event:%v is muted", p.Key(), event)
 			continue
 		}
 
 		if p.EventMuteHook(event) {
+			p.Stats.CounterMuteTotal.WithLabelValues(event.GroupName).Inc()
+			logger.Debugf("rule_eval:%s event:%v is muted by hook", p.Key(), event)
 			continue
 		}
 
@@ -171,6 +173,8 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 		dsName = ds.Name
 	}
 
+	bg := p.BusiGroupCache.GetByBusiGroupId(p.rule.GroupId)
+
 	event := p.rule.GenerateNewEvent(p.ctx)
 	event.TriggerTime = anomalyPoint.Timestamp
 	event.TagsMap = p.tagsMap
@@ -180,8 +184,9 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.TargetIdent = p.target
 	event.TargetNote = p.targetNote
 	event.TriggerValue = anomalyPoint.ReadableValue()
+	event.TriggerValues = anomalyPoint.Values
 	event.TagsJSON = p.tagsArr
-	event.GroupName = p.groupName
+	event.GroupName = bg.Name
 	event.Tags = strings.Join(p.tagsArr, ",,")
 	event.IsRecovered = false
 	event.Callbacks = p.rule.Callbacks
@@ -193,9 +198,6 @@ func (p *Processor) BuildEvent(anomalyPoint common.AnomalyPoint, from string, no
 	event.Severity = anomalyPoint.Severity
 	event.ExtraConfig = p.rule.ExtraConfigJSON
 	event.PromQl = anomalyPoint.Query
-
-	event.AssetId = p.rule.AssetId
-	event.AssetName = p.tagsMap["asset_name"]
 
 	if from == "inner" {
 		event.LastEvalTime = now
@@ -353,13 +355,13 @@ func (p *Processor) pushEventToQueue(e *models.AlertCurEvent) {
 		p.fires.Set(e.Hash, e)
 	}
 
-	p.stats.CounterAlertsTotal.WithLabelValues(fmt.Sprintf("%d", e.DatasourceId)).Inc()
 	dispatch.LogEvent(e, "push_queue")
 	// var alerts []*models.AlertCurEvent
 	// alerts = append(alerts, e)
 	// ws.SetMessage(1, models.MakeFeAlert(alerts)) //socket推送内容 guoxp
 	if !queue.EventQueue.PushFront(e) {
 		logger.Warningf("event_push_queue: queue is full, event:%+v", e)
+		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "push_event_queue").Inc()
 	}
 }
 
@@ -369,6 +371,7 @@ func (p *Processor) RecoverAlertCurEventFromDb() {
 	curEvents, err := models.AlertCurEventGetByRuleIdAndDsId(p.ctx, p.rule.Id, p.datasourceId)
 	if err != nil {
 		logger.Errorf("recover event from db for rule:%s failed, err:%s", p.Key(), err)
+		p.Stats.CounterRuleEvalErrorTotal.WithLabelValues(fmt.Sprintf("%v", p.DatasourceId()), "get_recover_event").Inc()
 		p.fires = NewAlertCurEventMap(nil)
 		return
 	}
@@ -434,7 +437,13 @@ func (p *Processor) mayHandleIdent() {
 		if target, exists := p.TargetCache.Get(ident); exists {
 			p.target = target.Ident
 			p.targetNote = target.Note
+		} else {
+			p.target = ident
+			p.targetNote = ""
 		}
+	} else {
+		p.target = ""
+		p.targetNote = ""
 	}
 }
 

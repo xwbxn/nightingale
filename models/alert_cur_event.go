@@ -10,9 +10,11 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/ccfos/nightingale/v6/pkg/ctx"
 	context "github.com/ccfos/nightingale/v6/pkg/ctx"
 	"github.com/ccfos/nightingale/v6/pkg/poster"
 	"github.com/ccfos/nightingale/v6/pkg/tplx"
+
 	"github.com/toolkits/pkg/logger"
 	"gorm.io/gorm"
 )
@@ -52,6 +54,7 @@ type AlertCurEvent struct {
 	TargetNote               string            `json:"target_note"`
 	TriggerTime              int64             `json:"trigger_time"`
 	TriggerValue             string            `json:"trigger_value"`
+	TriggerValues            string            `json:"trigger_values" gorm:"-"`
 	Tags                     string            `json:"-"`                         // for db
 	TagsJSON                 []string          `json:"tags" gorm:"-"`             // for fe
 	TagsMap                  map[string]string `json:"-" gorm:"-"`                // for internal usage
@@ -109,6 +112,49 @@ func (e *AlertCurEvent) ParseRule(field string) error {
 		return nil
 	}
 
+	if field == "annotations" {
+		err := json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
+		if err != nil {
+			logger.Warningf("ruleid:%d failed to parse annotations: %v", e.RuleId, err)
+			e.AnnotationsJSON = make(map[string]string)
+			e.AnnotationsJSON["error"] = e.Annotations
+		}
+
+		for k, v := range e.AnnotationsJSON {
+			f = v
+			var defs = []string{
+				"{{$labels := .TagsMap}}",
+				"{{$value := .TriggerValue}}",
+			}
+
+			text := strings.Join(append(defs, f), "")
+			t, err := template.New(fmt.Sprint(e.RuleId)).Funcs(template.FuncMap(tplx.TemplateFuncMap)).Parse(text)
+			if err != nil {
+				e.AnnotationsJSON[k] = fmt.Sprintf("failed to parse annotations: %v", err)
+				continue
+			}
+
+			var body bytes.Buffer
+			err = t.Execute(&body, e)
+			if err != nil {
+				e.AnnotationsJSON[k] = fmt.Sprintf("failed to parse annotations: %v", err)
+				continue
+			}
+
+			e.AnnotationsJSON[k] = body.String()
+		}
+
+		b, err := json.Marshal(e.AnnotationsJSON)
+		if err != nil {
+			e.AnnotationsJSON = make(map[string]string)
+			e.AnnotationsJSON["error"] = fmt.Sprintf("failed to parse annotations: %v", err)
+		} else {
+			e.Annotations = string(b)
+		}
+
+		return nil
+	}
+
 	var defs = []string{
 		"{{$labels := .TagsMap}}",
 		"{{$value := .TriggerValue}}",
@@ -132,11 +178,6 @@ func (e *AlertCurEvent) ParseRule(field string) error {
 
 	if field == "rule_note" {
 		e.RuleNote = body.String()
-	}
-
-	if field == "annotations" {
-		e.Annotations = body.String()
-		json.Unmarshal([]byte(e.Annotations), &e.AnnotationsJSON)
 	}
 
 	return nil
@@ -332,9 +373,11 @@ func (e *AlertCurEvent) FillNotifyGroups(ctx *context.Context, cache map[int64]*
 	return nil
 }
 
-func AlertCurEventTotal(ctx *context.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string) (int64, error) {
-	session := DB(ctx).Model(&AlertCurEvent{}).Where("trigger_time between ? and ?", stime, etime)
-
+func AlertCurEventTotal(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string) (int64, error) {
+	session := DB(ctx).Model(&AlertCurEvent{})
+	if stime != 0 && etime != 0 {
+		session = session.Where("trigger_time between ? and ?", stime, etime)
+	}
 	if len(prods) != 0 {
 		session = session.Where("rule_prod in ?", prods)
 	}
@@ -366,13 +409,11 @@ func AlertCurEventTotal(ctx *context.Context, prods []string, bgid, stime, etime
 	return Count(session)
 }
 
-func AlertCurEventGets(ctx *context.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
-	session := DB(ctx)
-
-	if stime != 0 {
+func AlertCurEventGets(ctx *ctx.Context, prods []string, bgid, stime, etime int64, severity int, dsIds []int64, cates []string, query string, limit, offset int) ([]AlertCurEvent, error) {
+	session := DB(ctx).Model(&AlertCurEvent{})
+	if stime != 0 && etime != 0 {
 		session = session.Where("trigger_time between ? and ?", stime, etime)
 	}
-
 	if len(prods) != 0 {
 		session = session.Where("rule_prod in ?", prods)
 	}
@@ -731,13 +772,13 @@ func AlertFeList(ctx *context.Context) ([]*FeAlert, error) {
 	return Fe, err
 }
 
-//统计未处理告警
+// 统计未处理告警
 func AlertCurCount(ctx *context.Context) (num int64, err error) {
 	err = DB(ctx).Model(&AlertCurEvent{}).Count(&num).Error
 	return num, err
 }
 
-//通过资产id查询当前告警
+// 通过资产id查询当前告警
 func AlertFeListByAssetId(ctx *context.Context, where string) ([]*FeAlert, error) {
 	where = "%asset_id=" + where + "%"
 	var dat []*AlertCurEvent
@@ -746,7 +787,7 @@ func AlertFeListByAssetId(ctx *context.Context, where string) ([]*FeAlert, error
 	return Fe, err
 }
 
-//西航
+// 西航
 func AlertEventXHTotal(ctx *context.Context, alertType, severity, group, start, end int64, ids []int64, query string) (int64, error) {
 	session := DB(ctx)
 	if start != -1 {
@@ -782,7 +823,7 @@ func AlertEventXHTotal(ctx *context.Context, alertType, severity, group, start, 
 	return num, err
 }
 
-//西航（new）
+// 西航（new）
 func AlertEventXHTotalNew(ctx *context.Context, alertType, start, end int64, ids []int64, filter, query string) (int64, error) {
 	session := DB(ctx)
 	if start != -1 {
@@ -950,4 +991,58 @@ func AlertEventDelByIds(ctx *context.Context, ids []int64) error {
 	// 	tx.Rollback()
 	// }
 	// return nil
+}
+
+// AlertCurEventGetsFromAlertMute find current events from db.
+func AlertCurEventGetsFromAlertMute(ctx *ctx.Context, alertMute *AlertMute) ([]*AlertCurEvent, error) {
+	var lst []*AlertCurEvent
+
+	tx := DB(ctx).Where("group_id = ? and rule_prod = ?", alertMute.GroupId, alertMute.Prod)
+
+	if len(alertMute.SeveritiesJson) != 0 {
+		tx = tx.Where("severity IN (?)", alertMute.SeveritiesJson)
+	}
+	if alertMute.Prod != HOST {
+		tx = tx.Where("cate = ?", alertMute.Cate)
+		if alertMute.DatasourceIdsJson != nil && !IsAllDatasource(alertMute.DatasourceIdsJson) {
+			tx = tx.Where("datasource_id IN (?)", alertMute.DatasourceIdsJson)
+		}
+	}
+
+	err := tx.Order("id desc").Find(&lst).Error
+	return lst, err
+}
+
+func AlertCurEventStatistics(ctx *ctx.Context, stime time.Time) map[string]interface{} {
+	stime24HoursAgoUnix := stime.Add(-24 * time.Hour).Unix()
+	//Beginning of today
+	stimeMidnightUnix := time.Date(stime.Year(), stime.Month(), stime.Day(), 0, 0, 0, 0, stime.Location()).Unix()
+	///Monday of the current week, starting at 00:00
+	daysToMonday := (int(stime.Weekday()) - 1 + 7) % 7 // (DayOfTheWeek - Monday(1) + DaysAWeek(7))/DaysAWeek(7)
+	stimeOneWeekAgoUnix := time.Date(stime.Year(), stime.Month(), stime.Day()-daysToMonday, 0, 0, 0, 0, stime.Location()).Unix()
+
+	var err error
+	res := make(map[string]interface{})
+
+	res["total"], err = Count(DB(ctx).Model(&AlertCurEvent{}))
+	if err != nil {
+		logger.Debugf("count alert current rule failed(total), %v", err)
+	}
+
+	res["total_24_ago"], err = Count(DB(ctx).Model(&AlertCurEvent{}).Where("trigger_time < ?", stime24HoursAgoUnix))
+	if err != nil {
+		logger.Debugf("count alert current rule failed(total_24ago), %v", err)
+	}
+
+	res["total_today"], err = Count(DB(ctx).Model(&AlertHisEvent{}).Where("trigger_time >= ? and is_recovered = ? ", stimeMidnightUnix, 0))
+	if err != nil {
+		logger.Debugf("count alert his rule failed(total_today), %v", err)
+	}
+
+	res["total_week"], err = Count(DB(ctx).Model(&AlertHisEvent{}).Where("trigger_time >= ? and is_recovered = ? ", stimeOneWeekAgoUnix, 0))
+	if err != nil {
+		logger.Debugf("count alert his rule failed(total_today), %v", err)
+	}
+
+	return res
 }

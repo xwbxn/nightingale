@@ -97,13 +97,70 @@ func (rt *Router) debugSample(remoteAddr string, v *prompb.TimeSeries) {
 	logger.Debugf("--> debug sample from: %s, sample: %s", remoteAddr, v.String())
 }
 
+func (rt *Router) DropSample(remoteAddr string, v *prompb.TimeSeries) bool {
+	filters := rt.Pushgw.DropSample
+	if len(filters) == 0 {
+		return false
+	}
+
+	labelMap := make(map[string]string)
+	for i := 0; i < len(v.Labels); i++ {
+		labelMap[v.Labels[i].Name] = v.Labels[i].Value
+	}
+
+	for _, filter := range filters {
+		if len(filter) == 0 {
+			continue
+		}
+
+		if matchSample(filter, labelMap) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func matchSample(filterMap, sampleMap map[string]string) bool {
+	for k, v := range filterMap {
+		labelValue, exists := sampleMap[k]
+		if !exists {
+			return false
+		}
+
+		if labelValue != v {
+			return false
+		}
+	}
+	return true
+}
+
 func (rt *Router) ForwardByIdent(clientIP string, ident string, v *prompb.TimeSeries) {
 	rt.BeforePush(clientIP, v)
-	rt.Writers.PushSample(ident, v)
+	if v == nil {
+		return
+	}
+
+	IdentStatsInc(ident)
+	if rt.DropSample(clientIP, v) {
+		CounterDropSampleTotal.WithLabelValues(clientIP).Inc()
+		return
+	}
+
+	rt.Writers.PushSample(ident, *v)
 }
 
 func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.TimeSeries) {
 	rt.BeforePush(clientIP, v)
+	if v == nil {
+		return
+	}
+
+	IdentStatsInc(metric)
+	if rt.DropSample(clientIP, v) {
+		CounterDropSampleTotal.WithLabelValues(clientIP).Inc()
+		return
+	}
 
 	var hashkey string
 	if len(metric) >= 2 {
@@ -111,10 +168,10 @@ func (rt *Router) ForwardByMetric(clientIP string, metric string, v *prompb.Time
 	} else {
 		hashkey = metric[0:1]
 	}
-	rt.Writers.PushSample(hashkey, v)
+	rt.Writers.PushSample(hashkey, *v)
 }
 
 func (rt *Router) BeforePush(clientIP string, v *prompb.TimeSeries) {
-	rt.EnrichLabels(v)
+	rt.HandleTS(v)
 	rt.debugSample(clientIP, v)
 }

@@ -288,7 +288,7 @@ func (rt *Router) loginCallback(c *gin.Context) {
 
 	ret, err := rt.Sso.OIDC.Callback(rt.Redis, c.Request.Context(), code, state)
 	if err != nil {
-		logger.Debugf("sso.callback() get ret %+v error %v", ret, err)
+		logger.Errorf("sso_callback fail. code:%s, state:%s, get ret: %+v. error: %v", code, state, ret, err)
 		ginx.NewRender(c).Data(CallbackOutput{}, err)
 		return
 	}
@@ -576,10 +576,23 @@ type SsoConfigOutput struct {
 }
 
 func (rt *Router) ssoConfigNameGet(c *gin.Context) {
+	var oidcDisplayName, casDisplayName, oauthDisplayName string
+	if rt.Sso.OIDC != nil {
+		oidcDisplayName = rt.Sso.OIDC.GetDisplayName()
+	}
+
+	if rt.Sso.CAS != nil {
+		casDisplayName = rt.Sso.CAS.GetDisplayName()
+	}
+
+	if rt.Sso.OAuth2 != nil {
+		oauthDisplayName = rt.Sso.OAuth2.GetDisplayName()
+	}
+
 	ginx.NewRender(c).Data(SsoConfigOutput{
-		OidcDisplayName:  rt.Sso.OIDC.GetDisplayName(),
-		CasDisplayName:   rt.Sso.CAS.GetDisplayName(),
-		OauthDisplayName: rt.Sso.OAuth2.GetDisplayName(),
+		OidcDisplayName:  oidcDisplayName,
+		CasDisplayName:   casDisplayName,
+		OauthDisplayName: oauthDisplayName,
 	}, nil)
 }
 
@@ -604,8 +617,7 @@ func (rt *Router) ssoConfigUpdate(c *gin.Context) {
 		var config oidcx.Config
 		err := toml.Unmarshal([]byte(f.Content), &config)
 		ginx.Dangerous(err)
-
-		err = rt.Sso.OIDC.Reload(config)
+		rt.Sso.OIDC, err = oidcx.New(config)
 		ginx.Dangerous(err)
 	case "CAS":
 		var config cas.Config
@@ -629,7 +641,7 @@ type RSAConfigOutput struct {
 
 func (rt *Router) rsaConfigGet(c *gin.Context) {
 	publicKey := ""
-	if rt.HTTP.RSA.OpenRSA {
+	if len(rt.HTTP.RSA.RSAPublicKey) > 0 {
 		publicKey = base64.StdEncoding.EncodeToString(rt.HTTP.RSA.RSAPublicKey)
 	}
 	ginx.NewRender(c).Data(RSAConfigOutput{

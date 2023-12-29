@@ -18,9 +18,12 @@ import (
 
 const (
 	METRIC = "metric"
+	LOG    = "logging"
 	HOST   = "host"
+	LOKI   = "loki"
 
 	PROMETHEUS = "prometheus"
+	TDENGINE   = "tdengine"
 )
 
 type AlertRule struct {
@@ -113,6 +116,7 @@ type HostTrigger struct {
 }
 
 type RuleQuery struct {
+	Inhibit  bool          `json:"inhibit"`
 	Queries  []interface{} `json:"queries"`
 	Triggers []Trigger     `json:"triggers"`
 }
@@ -175,8 +179,20 @@ func GetHostsQuery(queries []HostQuery) []map[string]interface{} {
 			}
 			if q.Op == "==" {
 				m["ident in (?)"] = lst
-			} else {
+			} else if q.Op == "!=" {
 				m["ident not in (?)"] = lst
+			} else if q.Op == "=~" {
+				blank := " "
+				for _, host := range lst {
+					m["ident like ?"+blank] = strings.ReplaceAll(host, "*", "%")
+					blank += " "
+				}
+			} else if q.Op == "!~" {
+				blank := " "
+				for _, host := range lst {
+					m["ident not like ?"+blank] = strings.ReplaceAll(host, "*", "%")
+					blank += " "
+				}
 			}
 		}
 		query = append(query, m)
@@ -495,7 +511,7 @@ func (ar *AlertRule) FillDatasourceIds() error {
 
 func (ar *AlertRule) FillSeverities() error {
 	if ar.RuleConfig != "" {
-		if ar.Cate == PROMETHEUS {
+		if ar.Cate == PROMETHEUS || ar.Cate == LOKI {
 			var rule PromRuleConfig
 			if err := json.Unmarshal([]byte(ar.RuleConfig), &rule); err != nil {
 				return err
@@ -762,6 +778,20 @@ func AlertRuleGets(ctx *ctx.Context, groupId int64) ([]AlertRule, error) {
 	return lst, err
 }
 
+func AlertRuleGetsByBGIds(ctx *ctx.Context, bgids []int64) ([]AlertRule, error) {
+	session := DB(ctx).Where("group_id in (?)", bgids).Order("name")
+
+	var lst []AlertRule
+	err := session.Find(&lst).Error
+	if err == nil {
+		for i := 0; i < len(lst); i++ {
+			lst[i].DB2FE()
+		}
+	}
+
+	return lst, err
+}
+
 func AlertRuleGetsAll(ctx *ctx.Context) ([]*AlertRule, error) {
 	if !ctx.IsCenter {
 		lst, err := poster.GetByUrls[[]*AlertRule](ctx, "/v1/n9e/alert-rules?disabled=0")
@@ -895,12 +925,20 @@ func (ar *AlertRule) IsPrometheusRule() bool {
 	return ar.Prod == METRIC && ar.Cate == PROMETHEUS
 }
 
+func (ar *AlertRule) IsLokiRule() bool {
+	return ar.Prod == LOKI || ar.Cate == LOKI
+}
+
 func (ar *AlertRule) IsHostRule() bool {
 	return ar.Prod == HOST
 }
 
+func (ar *AlertRule) IsTdengineRule() bool {
+	return ar.Cate == TDENGINE
+}
+
 func (ar *AlertRule) GetRuleType() string {
-	if ar.Prod == METRIC {
+	if ar.Prod == METRIC || ar.Prod == LOG {
 		return ar.Cate
 	}
 
@@ -927,7 +965,6 @@ func (ar *AlertRule) UpdateEvent(event *AlertCurEvent) {
 	event.RuleProd = ar.Prod
 	event.RuleAlgo = ar.Algorithm
 	event.PromForDuration = ar.PromForDuration
-	event.PromQl = ar.PromQl
 	event.RuleConfig = ar.RuleConfig
 	event.RuleConfigJson = ar.RuleConfigJson
 	event.PromEvalInterval = ar.PromEvalInterval

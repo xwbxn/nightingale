@@ -9,8 +9,12 @@
       {
         "name": "DATASOURCE",
         "type": "datasource",
+<<<<<<< HEAD
         "definition": "prometheus",
         "defaultValue": 5
+=======
+        "definition": "prometheus"
+>>>>>>> 0f937ad6d07879c4fb94191b7d27bbe64c4e2ad7
       },
       {
         "name": "cluster",

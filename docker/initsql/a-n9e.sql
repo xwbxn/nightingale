@@ -312,11 +312,11 @@ CREATE TABLE `alert_rule` (
     `notify_repeat_step` int not null default 0 comment 'unit: min',
     `notify_max_number` int not null default 0 comment '',
     `recover_duration` int not null default 0 comment 'unit: s',
-    `callbacks` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '' comment 'split by space: http://a.com/api/x http://a.com/api/y',
-    `runbook_url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
-    `append_tags` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '' comment 'split by space: service=n9e mod=api',
-    `annotations` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null comment 'annotations',
-    `extra_config` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null comment 'extra_config',
+    `callbacks` varchar(1024) not null default '' comment 'split by space: http://a.com/api/x http://a.com/api/y',
+    `runbook_url` varchar(255),
+    `append_tags` varchar(255) not null default '' comment 'split by space: service=n9e mod=api',
+    `annotations` text not null comment 'annotations',
+    `extra_config` text not null comment 'extra_config',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '',
     `update_at` bigint not null default 0,
@@ -341,8 +341,8 @@ CREATE TABLE `alert_mute` (
     `etime` bigint not null default 0 comment 'end time',
     `disabled` tinyint(1) not null default 0 comment '0:enabled 1:disabled',
     `mute_time_type` tinyint(1) not null default 0,
-    `periodic_mutes` varchar(4096) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '',
-    `severities` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '',
+    `periodic_mutes` varchar(4096) not null default '',
+    `severities` varchar(32) not null default '',
     `create_at` bigint not null default 0,
     `create_by` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '',
     `update_at` bigint not null default 0,
@@ -362,15 +362,15 @@ CREATE TABLE `alert_subscribe` (
     `datasource_ids` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '' comment 'datasource ids',
     `cluster` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null,
     `rule_id` bigint not null default 0,
-    `severities` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '',
-    `tags` varchar(4096) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '' comment 'json,map,tagkey->regexp|value',
+    `severities` varchar(32) not null default '',
+    `tags` varchar(4096) not null default '' comment 'json,map,tagkey->regexp|value',
     `redefine_severity` tinyint(1) default 0 comment 'is redefine severity?',
     `new_severity` tinyint(1) not null comment '0:Emergency 1:Warning 2:Notice',
     `redefine_channels` tinyint(1) default 0 comment 'is redefine channels?',
-    `new_channels` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null default '' comment 'split by space: sms voice email dingtalk wecom',
-    `user_group_ids` varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null comment 'split by space 1 34 5, notify cc to user_group_ids',
-    `webhooks` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null,
-    `extra_config` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci not null comment 'extra_config',
+    `new_channels` varchar(255) not null default '' comment 'split by space: sms voice email dingtalk wecom',
+    `user_group_ids` varchar(250) not null comment 'split by space 1 34 5, notify cc to user_group_ids',
+    `webhooks` text not null,
+    `extra_config` text not null comment 'extra_config',
     `redefine_webhooks` tinyint(1) default 0,
     `for_duration` bigint not null default 0,
     `create_at` bigint not null default 0,
@@ -395,6 +395,27 @@ CREATE TABLE `target` (
     KEY (`group_id`)
 ) ENGINE = InnoDB DEFAULT CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
+
+-- case1: target_idents; case2: target_tags
+-- CREATE TABLE `collect_rule` (
+--     `id` bigint unsigned not null auto_increment,
+--     `group_id` bigint not null default 0 comment 'busi group id',
+--     `cluster` varchar(128) not null,
+--     `target_idents` varchar(512) not null default '' comment 'ident list, split by space',
+--     `target_tags` varchar(512) not null default '' comment 'filter targets by tags, split by space',
+--     `name` varchar(191) not null default '',
+--     `note` varchar(255) not null default '',
+--     `step` int not null,
+--     `type` varchar(64) not null comment 'e.g. port proc log plugin',
+--     `data` text not null,
+--     `append_tags` varchar(255) not null default '' comment 'split by space: e.g. mod=n9e dept=cloud',
+--     `create_at` bigint not null default 0,
+--     `create_by` varchar(64) not null default '',
+--     `update_at` bigint not null default 0,
+--     `update_by` varchar(64) not null default '',
+--     PRIMARY KEY (`id`),
+--     KEY (`group_id`, `type`, `name`)
+-- ) ENGINE=InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE `metric_view` (
     `id` bigint unsigned not null auto_increment,
@@ -1588,3 +1609,18 @@ CREATE TABLE `license_config`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci COMMENT = '许可配置' ROW_FORMAT = Dynamic;
 
 INSERT INTO `license_config` VALUES (1, 10, 30, 'once', '', '', 'root', 1701243521, 'root', 1701312136, NULL);
+
+CREATE TABLE `es_index_pattern` (
+    `id` bigint unsigned not null auto_increment,
+    `datasource_id` bigint not null default 0 comment 'datasource id',
+    `name` varchar(191) not null,
+    `time_field` varchar(128) not null default '@timestamp',
+    `allow_hide_system_indices` tinyint(1) not null default 0,
+    `fields_format` varchar(4096) not null default '',
+    `create_at` bigint default '0',
+    `create_by` varchar(64) default '',
+    `update_at` bigint default '0',
+    `update_by` varchar(64) default '',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY (`datasource_id`, `name`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

@@ -14,6 +14,7 @@ import (
 	"github.com/jpillora/overseer/fetcher"
 	"github.com/xwbxn/overseer"
 
+	"github.com/toolkits/pkg/net/tcpx"
 	"github.com/toolkits/pkg/runner"
 )
 
@@ -55,6 +56,8 @@ func program() {
 	flag.Parse()
 
 	printEnv()
+
+	tcpx.WaitHosts()
 
 	cleanFunc, err := center.Initialize(*configDir, *cryptoKey)
 	if err != nil {
