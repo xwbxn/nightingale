@@ -176,17 +176,3 @@ type NotifyTpl struct {
 	UpdateAt int64  `gorm:"column:update_at;type:int;default:0;comment:update_at"`
 	UpdateBy string `gorm:"column:update_by;type:varchar(64);default:'';comment:update_by"`
 }
-
-type AlertRule struct {
-	ExtraConfig string `gorm:"type:text;not null;column:extra_config"` // extra config
-}
-
-type AlertSubscribe struct {
-	ExtraConfig string       `gorm:"type:text;not null;column:extra_config"` // extra config
-	Severities  string       `gorm:"column:severities;type:varchar(32);not null;default:''"`
-	BusiGroups  ormx.JSONArr `gorm:"column:busi_groups;type:varchar(4096);not null;default:'[]'"`
-}
-
-type AlertMute struct {
-	Severities string `gorm:"column:severities;type:varchar(32);not null;default:''"`
-}

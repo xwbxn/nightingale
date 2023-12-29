@@ -62,7 +62,6 @@ type AlertHisEvent struct {
 	Remark             string            `json:"remark"`    // 备注
 	HandleAt           int64             `json:"handle_at"` // 创建时间
 	HandleBy           string            `json:"handle_by"` // 创建人
-	ExtraConfig        interface{}       `json:"extra_config" gorm:"-"`
 	DeletedAt          gorm.DeletedAt    `gorm:"column:deleted_at" json:"deleted_at" swaggerignore:"true"`
 }
 

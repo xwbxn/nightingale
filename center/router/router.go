@@ -61,7 +61,7 @@ type Router struct {
 // @in header
 // @name Authorization
 func New(httpConfig httpx.Config, center cconf.Center, operations cconf.Operation, ds *memsto.DatasourceCacheType, ncc *memsto.NotifyConfigCacheType,
-	pc *prom.PromClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType,
+	pc *prom.PromClientMap, tdendgineClients *tdengine.TdengineClientMap, redis storage.Redis, sso *sso.SsoClient, ctx *ctx.Context, metaSet *metas.Set, idents *idents.Set, tc *memsto.TargetCacheType,
 	uc *memsto.UserCacheType, ugc *memsto.UserGroupCacheType, ac *memsto.AssetCacheType, lc *memsto.LicenseCache) *Router {
 	return &Router{
 		HTTP:              httpConfig,
@@ -536,12 +536,6 @@ func (rt *Router) Config(r *gin.Engine) {
 		pages.DELETE("/organization/:id", rt.auth(), rt.user(), rt.organizationDel) // 删除组织信息
 		pages.POST("/organization", rt.auth(), rt.user(), rt.organizationAdd)       // 上传组织信息
 		pages.POST("/organization/name", rt.auth(), rt.user(), rt.organizationGetsByIds)
-
-		pages.GET("/es-index-pattern", rt.auth(), rt.esIndexPatternGet)
-		pages.GET("/es-index-pattern-list", rt.auth(), rt.esIndexPatternGetList)
-		pages.POST("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternAdd)
-		pages.PUT("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternPut)
-		pages.DELETE("/es-index-pattern", rt.auth(), rt.admin(), rt.esIndexPatternDel)
 
 		//设备类型管理
 		pages.GET("/device-type", rt.auth(), rt.user(), rt.deviceTypeGets)

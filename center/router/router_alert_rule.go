@@ -10,7 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/toolkits/pkg/ginx"
-	"github.com/toolkits/pkg/i18n"
 	"github.com/toolkits/pkg/str"
 )
 
@@ -209,15 +208,15 @@ func (rt *Router) alertRuleAddByService(c *gin.Context) {
 	if count == 0 {
 		ginx.Bomb(http.StatusBadRequest, "参数为空")
 	}
-	reterr, err := rt.alertRuleAddForService(lst, "")
-	ginx.NewRender(c).Data(reterr, err)
+	reterr := rt.alertRuleAddForService(lst, "")
+	ginx.NewRender(c).Data(reterr, nil)
 }
 
 func (rt *Router) alertRuleAddOneByService(c *gin.Context) {
 	var f models.AlertRule
 	ginx.BindJSON(c, &f)
 
-	err := f.FE2DB()
+	err := f.FE2DB(rt.Ctx)
 	ginx.Dangerous(err)
 
 	err = f.Add(rt.Ctx)
@@ -244,7 +243,7 @@ func (rt *Router) alertRuleAddForService(lst []models.AlertRule, username string
 			reterr[lst[i].Name] = ""
 		}
 	}
-	return reterr, err
+	return reterr
 }
 
 func (rt *Router) alertRuleAdd(lst []models.AlertRule, username string, bgid int64, lang string) (map[string]string, error) {
@@ -509,57 +508,4 @@ func (rt *Router) alertRuleGetsByIds(c *gin.Context) {
 	}
 
 	ginx.NewRender(c).Data(ars, err)
-}
-
-// pre validation before save rule
-func (rt *Router) alertRuleValidation(c *gin.Context) {
-	var f models.AlertRule //new
-	ginx.BindJSON(c, &f)
-
-	arid := ginx.UrlParamInt64(c, "arid")
-	ar, err := models.AlertRuleGetById(rt.Ctx, arid)
-	ginx.Dangerous(err)
-
-	if ar == nil {
-		ginx.NewRender(c, http.StatusNotFound).Message("No such AlertRule")
-		return
-	}
-
-	rt.bgrwCheck(c, ar.GroupId)
-
-	if len(f.NotifyChannelsJSON) > 0 && len(f.NotifyGroupsJSON) > 0 { //Validation NotifyChannels
-		ngids := make([]int64, 0, len(f.NotifyChannelsJSON))
-		for i := range f.NotifyGroupsJSON {
-			id, _ := strconv.ParseInt(f.NotifyGroupsJSON[i], 10, 64)
-			ngids = append(ngids, id)
-		}
-		userGroups := rt.UserGroupCache.GetByUserGroupIds(ngids)
-		uids := make([]int64, 0)
-		for i := range userGroups {
-			uids = append(uids, userGroups[i].UserIds...)
-		}
-		users := rt.UserCache.GetByUserIds(uids)
-		//If any users have a certain notify channel's token, it will be okay. Otherwise, this notify channel is absent of tokens.
-		ancs := make([]string, 0, len(f.NotifyChannelsJSON)) //absent Notify Channels
-		for i := range f.NotifyChannelsJSON {
-			flag := true
-			for ui := range users {
-				if _, b := users[ui].ExtractToken(f.NotifyChannelsJSON[i]); b {
-					flag = false
-					break
-				}
-			}
-			if flag {
-				ancs = append(ancs, f.NotifyChannelsJSON[i])
-			}
-		}
-
-		if len(ancs) > 0 {
-			ginx.NewRender(c).Message(i18n.Sprintf(c.GetHeader("X-Language"), "All users are missing notify channel configurations. Please check for missing tokens (each channel should be configured with at least one user). %s", ancs))
-			return
-		}
-
-	}
-
-	ginx.NewRender(c).Message("")
 }

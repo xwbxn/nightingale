@@ -34,7 +34,7 @@ func (w WriterType) Write(items []prompb.TimeSeries, headers ...map[string]strin
 
 	refItems := []prompb.TimeSeries{}
 	for _, item := range items {
-		refItems = append(refItems, *item)
+		refItems = append(refItems, item)
 	}
 
 	req := &prompb.WriteRequest{

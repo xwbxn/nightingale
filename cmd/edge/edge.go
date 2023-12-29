@@ -55,7 +55,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		dsCache := memsto.NewDatasourceCache(ctx, syncStats)
 		alertMuteCache := memsto.NewAlertMuteCache(ctx, syncStats)
 		alertRuleCache := memsto.NewAlertRuleCache(ctx, syncStats)
-		notifyConfigCache := memsto.NewNotifyConfigCache(ctx)
+		notifyConfigCache := memsto.NewNotifyConfigCache(ctx, configCache)
 		assetCache := memsto.NewAssetCache(ctx, syncStats)
 		userCache := memsto.NewUserCache(ctx, syncStats)
 		userGroupCache := memsto.NewUserGroupCache(ctx, syncStats)
@@ -65,7 +65,7 @@ func Initialize(configDir string, cryptoKey string) (func(), error) {
 		externalProcessors := process.NewExternalProcessors()
 
 		alert.Start(config.Alert, config.Pushgw, syncStats, alertStats, externalProcessors, targetCache, busiGroupCache, alertMuteCache,
-			alertRuleCache, notifyConfigCache, dsCache, ctx, promClients, assetCache, userCache, userGroupCache, tdengineClients, userCache, userGroupCache)
+			alertRuleCache, notifyConfigCache, dsCache, ctx, promClients, tdengineClients, userCache, userGroupCache, assetCache)
 
 		alertrtRouter := alertrt.New(config.HTTP, config.Alert, alertMuteCache, targetCache, busiGroupCache, alertStats, ctx, externalProcessors)
 

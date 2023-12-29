@@ -111,13 +111,13 @@ func (arw *AlertRuleWorker) Eval() {
 	var recoverPoints []common.AnomalyPoint
 	switch typ {
 	case models.PROMETHEUS:
-		anomalyPoints = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
+		anomalyPoints = arw.GetPromAnomalyPoint(cachedRule.RuleConfig, cachedRule.AssetId)
 	case models.HOST:
 		anomalyPoints = arw.GetHostAnomalyPoint(cachedRule.RuleConfig)
 	case models.TDENGINE:
 		anomalyPoints, recoverPoints = arw.GetTdengineAnomalyPoint(cachedRule, arw.processor.DatasourceId())
 	case models.LOKI:
-		anomalyPoints = arw.GetPromAnomalyPoint(cachedRule.RuleConfig)
+		anomalyPoints = arw.GetPromAnomalyPoint(cachedRule.RuleConfig, cachedRule.AssetId)
 	default:
 		return
 	}

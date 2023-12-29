@@ -28,9 +28,9 @@ type WriterType struct {
 func (w WriterType) writeRelabel(items []prompb.TimeSeries) []prompb.TimeSeries {
 	ritems := make([]prompb.TimeSeries, 0, len(items))
 	for _, item := range items {
-		refLables := []*prompb.Label{}
+		refLables := []prompb.Label{}
 		for _, l := range item.Labels {
-			refLables = append(refLables, &l)
+			refLables = append(refLables, l)
 		}
 		lbls := Process(refLables, w.Opts.WriteRelabels...)
 		if len(lbls) == 0 {
@@ -69,7 +69,7 @@ func (w WriterType) Write(key string, items []prompb.TimeSeries, headers ...map[
 
 	refItems := []prompb.TimeSeries{}
 	for _, item := range items {
-		refItems = append(refItems, *item)
+		refItems = append(refItems, item)
 	}
 	req := &prompb.WriteRequest{
 		Timeseries: refItems,

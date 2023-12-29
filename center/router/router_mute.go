@@ -40,22 +40,6 @@ func (rt *Router) alertMuteGetsByGids(c *gin.Context) {
 	ginx.NewRender(c).Data(lst, err)
 }
 
-func (rt *Router) alertMuteGetsByGids(c *gin.Context) {
-	gids := str.IdsInt64(ginx.QueryStr(c, "gids"), ",")
-	if len(gids) == 0 {
-		ginx.NewRender(c, http.StatusBadRequest).Message("arg(gids) is empty")
-		return
-	}
-
-	for _, gid := range gids {
-		rt.bgroCheck(c, gid)
-	}
-
-	lst, err := models.AlertMuteGetsByBGIds(rt.Ctx, gids)
-
-	ginx.NewRender(c).Data(lst, err)
-}
-
 func (rt *Router) alertMuteGets(c *gin.Context) {
 	prods := strings.Fields(ginx.QueryStr(c, "prods", ""))
 	bgid := ginx.QueryInt64(c, "bgid", -1)
