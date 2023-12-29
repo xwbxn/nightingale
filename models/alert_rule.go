@@ -1183,21 +1183,19 @@ func AlertRuleGetsTotalNew(ctx *ctx.Context, groupId int64, filter, query string
 	}
 
 	var num int64
-	err := session.Model(&AlertRule{}).Count(&num).Error
+	err := session.Debug().Model(&AlertRule{}).Count(&num).Error
 
 	return num, err
 }
 
 // 根据规则名称模糊匹配
 func AlertRuleIdByName(ctx *ctx.Context, query string) (ids []int64, err error) {
-	query = "%" + query + "%"
 	err = DB(ctx).Model(&AlertRule{}).Distinct().Where("name like ?", query).Pluck("id", &ids).Error
 	return ids, err
 }
 
 // 根据告警规则模糊匹配
 func AlertRuleIdByAlertRule(ctx *ctx.Context, query string) (ids []int64, err error) {
-	query = "%" + query + "%"
 	err = DB(ctx).Model(&AlertRule{}).Distinct().Where("rule_config_cn like ?", query).Pluck("id", &ids).Error
 	return ids, err
 }

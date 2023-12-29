@@ -6,6 +6,7 @@ package router
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	models "github.com/ccfos/nightingale/v6/models"
@@ -212,6 +213,12 @@ func (rt *Router) exportOperationLog(c *gin.Context) {
 		}
 		lst, err = models.OperationLogGetByIds(rt.Ctx, ids)
 		ginx.Dangerous(err)
+		for key := range lst {
+			otime, err := strconv.ParseInt(lst[key].OperTime, 10, 64)
+			ginx.Dangerous(err)
+			lst[key].OperTime = time.Unix(otime, 0).Format("2006-01-02 15:04:05")
+		}
+
 	} else {
 		query := ginx.QueryStr(c, "query", "")
 		start := ginx.QueryInt64(c, "start", 0)
@@ -266,7 +273,6 @@ func (rt *Router) exportOperationLog(c *gin.Context) {
 		str := "日志编号\t操作类型\t系统模块\t描述\t操作人员\t操作时间\n"
 		dataTxt = append(dataTxt, str)
 		for _, log := range lst {
-
 			str = fmt.Sprintf("%d\t%s\t%s\t%s\t%s\t%s\n", log.Id, log.Type, log.Object, log.Description, log.User, log.OperTime)
 			dataTxt = append(dataTxt, str)
 		}
